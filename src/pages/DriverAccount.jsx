@@ -23,6 +23,13 @@ export default function DriverAccount() {
       setUser(u);
       setFormData({ phone: u.phone || '' });
       setLoading(false);
+      
+      // Redirect if wrong profile
+      if (u.current_profile !== 'livreur') {
+        window.location.href = createPageUrl(
+          u.current_profile === 'client' ? 'Home' : 'EnterpriseDashboard'
+        );
+      }
     }).catch(() => setLoading(false));
   }, []);
 

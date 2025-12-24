@@ -23,6 +23,13 @@ export default function EnterpriseAccount() {
       setUser(u);
       setFormData({ phone: u.phone || '' });
       setLoading(false);
+      
+      // Redirect if wrong profile
+      if (u.current_profile !== 'entreprise') {
+        window.location.href = createPageUrl(
+          u.current_profile === 'client' ? 'Home' : 'DriverDashboard'
+        );
+      }
     }).catch(() => setLoading(false));
   }, []);
 
