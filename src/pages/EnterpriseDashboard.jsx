@@ -12,8 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatHaitiDate } from '@/utils/dateFormat';
 import { motion, AnimatePresence } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
@@ -309,7 +308,7 @@ export default function EnterpriseDashboard() {
                           <div>
                             <p className="font-semibold">#{order.order_number}</p>
                             <p className="text-sm text-slate-500">
-                              {format(new Date(order.created_date), "HH:mm", { locale: fr })}
+                              {formatHaitiDate(order.created_date, "HH:mm")}
                             </p>
                           </div>
                           <span className="font-bold text-orange-500">{order.total} HTG</span>
@@ -364,7 +363,7 @@ export default function EnterpriseDashboard() {
                           <OrderStatusBadge status={order.status} />
                         </div>
                         <p className="text-sm text-slate-500 mt-1">
-                          {format(new Date(order.created_date), "d MMM HH:mm", { locale: fr })}
+                          {formatHaitiDate(order.created_date, "d MMM HH:mm")}
                         </p>
                       </div>
                       <span className="font-bold text-orange-500">{order.total} HTG</span>

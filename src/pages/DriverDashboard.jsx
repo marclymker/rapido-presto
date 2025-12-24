@@ -9,8 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatHaitiDate } from '@/utils/dateFormat';
 import { motion, AnimatePresence } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
@@ -256,7 +255,7 @@ export default function DriverDashboard() {
                       <div>
                         <p className="font-semibold">#{order.order_number}</p>
                         <p className="text-sm text-slate-500">
-                          {format(new Date(order.created_date), "HH:mm", { locale: fr })}
+                          {formatHaitiDate(order.created_date, "HH:mm")}
                         </p>
                       </div>
                       <span className="font-bold text-green-600">{order.total} HTG</span>
@@ -391,7 +390,7 @@ export default function DriverDashboard() {
                       <OrderStatusBadge status={order.status} />
                     </div>
                     <p className="text-sm text-slate-500 mt-1">
-                      {format(new Date(order.created_date), "d MMM yyyy", { locale: fr })}
+                      {formatHaitiDate(order.created_date, "d MMM yyyy")}
                     </p>
                   </div>
                   <span className="font-bold text-slate-600">{order.total} HTG</span>

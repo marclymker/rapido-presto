@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Phone, User, CreditCard, Package, CheckCircle } from 'lucide-react';
 import OrderStatusBadge from "@/components/ui/OrderStatusBadge";
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatHaitiDate } from '@/utils/dateFormat';
 
 export default function OrderDetailModal({ 
   order, 
@@ -48,7 +47,7 @@ export default function OrderDetailModal({
             <OrderStatusBadge status={order.status} />
           </div>
           <p className="text-sm text-slate-500">
-            {format(new Date(order.created_date), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+            {formatHaitiDate(order.created_date)}
           </p>
         </DialogHeader>
         

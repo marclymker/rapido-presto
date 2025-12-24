@@ -6,8 +6,7 @@ import { createPageUrl } from '@/utils';
 import { ArrowLeft, Package, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { formatHaitiDate } from '@/utils/dateFormat';
 import { motion } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
@@ -75,7 +74,7 @@ export default function Orders() {
             <OrderStatusBadge status={order.status} />
           </div>
           <p className="text-sm text-slate-500 mt-1">
-            {format(new Date(order.created_date), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+            {formatHaitiDate(order.created_date)}
           </p>
         </div>
         <span className="font-bold text-orange-500">{order.total} HTG</span>
