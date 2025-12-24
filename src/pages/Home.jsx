@@ -93,9 +93,9 @@ export default function Home() {
           unit_price: product.promo_price && product.promo_price < product.price 
             ? product.promo_price 
             : product.price,
-          shop_id: selectedShop.user_id,
+          shop_id: selectedShop.id,
           shop_name: selectedShop.company_name,
-          shop_commune: shopCommune
+          shop_commune: selectedShop.commune
         });
       }
     },
@@ -111,7 +111,7 @@ export default function Home() {
       return;
     }
     // Check if cart has items from different shop
-    if (cartItems.length > 0 && cartItems[0].shop_id !== selectedShop.user_id) {
+    if (cartItems.length > 0 && cartItems[0].shop_id !== selectedShop.id) {
       toast.error('Votre panier contient des articles d\'une autre boutique');
       return;
     }
@@ -123,9 +123,6 @@ export default function Home() {
     );
 
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
-    // Get shop owner's commune
-    const shopCommune = selectedShop?.commune || '';
 
   return (
     <div className="min-h-screen bg-slate-50">
