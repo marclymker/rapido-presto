@@ -162,7 +162,7 @@ export default function Home() {
               <h1 className="text-xl font-bold text-orange-500">Rapido Presto</h1>
             </div>
             <Link to={createPageUrl('Cart')}>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative translate-y-0.5">
                 <ShoppingCart className="w-5 h-5" />
                 {cartCount > 0 && (
                   <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-orange-500">
