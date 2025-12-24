@@ -6,7 +6,7 @@ import { createPageUrl } from '@/utils';
 import { ArrowLeft, Package, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { formatHaitiDate } from '@/utils/dateFormat';
+import { formatHaitiDate } from '@/components/utils/dateFormat';
 import { motion } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';

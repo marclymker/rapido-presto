@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Phone, User, CreditCard, Package, CheckCircle } from 'lucide-react';
 import OrderStatusBadge from "@/components/ui/OrderStatusBadge";
-import { formatHaitiDate } from '@/utils/dateFormat';
+import { formatHaitiDate } from '@/components/utils/dateFormat';
 
 export default function OrderDetailModal({ 
   order, 
