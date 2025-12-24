@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Package, Plus, Bell, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Package, Plus, Bell, Edit, Trash2, Eye, EyeOff, Volume2, VolumeX } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import { fr } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
+import { useOrderNotifications, useBrowserNotifications } from '@/components/notifications/NotificationManager';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
@@ -24,7 +25,9 @@ export default function EnterpriseDashboard() {
     name: '', price: '', promo_price: '', description: '', image_url: '', is_available: true
   });
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const queryClient = useQueryClient();
+  const { requestPermission } = useBrowserNotifications();
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -39,6 +42,13 @@ export default function EnterpriseDashboard() {
       }
     }).catch(() => {});
   }, []);
+
+  // Demander la permission pour les notifications au chargement
+  useEffect(() => {
+    if (user) {
+      requestPermission();
+    }
+  }, [user, requestPermission]);
 
   // Fetch products
   const { data: products = [] } = useQuery({
@@ -140,6 +150,12 @@ export default function EnterpriseDashboard() {
   const pendingOrders = orders.filter(o => o.status === 'pending');
   const activeOrders = orders.filter(o => ['preparing', 'ready', 'searching_driver'].includes(o.status));
 
+  // Activer les notifications sonores pour nouvelles commandes
+  useOrderNotifications({
+    enabled: notificationsEnabled,
+    onNewOrder: pendingOrders
+  });
+
   if (!user || user.current_profile !== 'entreprise') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -161,6 +177,18 @@ export default function EnterpriseDashboard() {
               <p className="text-sm text-slate-500">{entrepriseData.company_category}</p>
             </div>
             <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                title={notificationsEnabled ? 'Désactiver le son' : 'Activer le son'}
+              >
+                {notificationsEnabled ? (
+                  <Volume2 className="w-5 h-5 text-orange-500" />
+                ) : (
+                  <VolumeX className="w-5 h-5 text-slate-400" />
+                )}
+              </Button>
               {pendingOrders.length > 0 && (
                 <div className="flex items-center gap-2 bg-red-100 text-red-700 px-3 py-1.5 rounded-full">
                   <Bell className="w-4 h-4" />

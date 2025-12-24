@@ -1,29 +1,29 @@
-import Home from './pages/Home';
-import Cart from './pages/Cart';
-import Orders from './pages/Orders';
 import Account from './pages/Account';
-import EnterpriseDashboard from './pages/EnterpriseDashboard';
-import DriverDashboard from './pages/DriverDashboard';
-import EnterpriseAccount from './pages/EnterpriseAccount';
-import DriverAccount from './pages/DriverAccount';
-import ProfileSetup from './pages/ProfileSetup';
-import ManageProfiles from './pages/ManageProfiles';
 import AdminValidation from './pages/AdminValidation';
+import Cart from './pages/Cart';
+import DriverAccount from './pages/DriverAccount';
+import EnterpriseAccount from './pages/EnterpriseAccount';
+import ManageProfiles from './pages/ManageProfiles';
+import Orders from './pages/Orders';
+import ProfileSetup from './pages/ProfileSetup';
+import DriverDashboard from './pages/DriverDashboard';
+import EnterpriseDashboard from './pages/EnterpriseDashboard';
+import Home from './pages/Home';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
-    "Cart": Cart,
-    "Orders": Orders,
     "Account": Account,
-    "EnterpriseDashboard": EnterpriseDashboard,
-    "DriverDashboard": DriverDashboard,
-    "EnterpriseAccount": EnterpriseAccount,
-    "DriverAccount": DriverAccount,
-    "ProfileSetup": ProfileSetup,
-    "ManageProfiles": ManageProfiles,
     "AdminValidation": AdminValidation,
+    "Cart": Cart,
+    "DriverAccount": DriverAccount,
+    "EnterpriseAccount": EnterpriseAccount,
+    "ManageProfiles": ManageProfiles,
+    "Orders": Orders,
+    "ProfileSetup": ProfileSetup,
+    "DriverDashboard": DriverDashboard,
+    "EnterpriseDashboard": EnterpriseDashboard,
+    "Home": Home,
 }
 
 export const pagesConfig = {

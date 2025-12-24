@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Clock, CreditCard, Check, X, Navigation, Phone, Package } from 'lucide-react';
+import { MapPin, Clock, CreditCard, Check, X, Navigation, Phone, Package, Volume2, VolumeX } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -12,12 +12,15 @@ import { fr } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
+import { useOrderNotifications, useBrowserNotifications } from '@/components/notifications/NotificationManager';
 
 export default function DriverDashboard() {
   const [user, setUser] = useState(null);
   const [isAvailable, setIsAvailable] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const queryClient = useQueryClient();
+  const { requestPermission } = useBrowserNotifications();
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -34,6 +37,13 @@ export default function DriverDashboard() {
       }
     }).catch(() => {});
   }, []);
+
+  // Demander la permission pour les notifications au chargement
+  useEffect(() => {
+    if (user && isAvailable) {
+      requestPermission();
+    }
+  }, [user, isAvailable, requestPermission]);
 
   // Fetch available orders (searching for driver in driver's commune)
   const { data: availableOrders = [] } = useQuery({
@@ -103,6 +113,12 @@ export default function DriverDashboard() {
   const activeOrders = myOrders.filter(o => ['driver_assigned', 'in_delivery'].includes(o.status));
   const historyOrders = myOrders.filter(o => ['delivered', 'cancelled'].includes(o.status));
 
+  // Activer les notifications sonores pour nouvelles commandes disponibles
+  useOrderNotifications({
+    enabled: notificationsEnabled && isAvailable,
+    onNewOrder: availableOrders
+  });
+
   if (!user || user.current_profile !== 'livreur') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -124,6 +140,18 @@ export default function DriverDashboard() {
               <p className="text-sm text-slate-500">Livreur • {livreurData.vehicle_type}</p>
             </div>
             <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                title={notificationsEnabled ? 'Désactiver le son' : 'Activer le son'}
+              >
+                {notificationsEnabled ? (
+                  <Volume2 className="w-5 h-5 text-orange-500" />
+                ) : (
+                  <VolumeX className="w-5 h-5 text-slate-400" />
+                )}
+              </Button>
               <Label className="text-sm text-slate-600">
                 {isAvailable ? 'Disponible' : 'Hors ligne'}
               </Label>
