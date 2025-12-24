@@ -58,7 +58,9 @@ export default function Cart() {
   const { data: cartItems = [], isLoading } = useQuery({
     queryKey: ['cart', user?.id],
     queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true
   });
 
   const updateQuantityMutation = useMutation({

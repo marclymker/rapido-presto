@@ -86,7 +86,9 @@ export default function EnterpriseDashboard() {
   const { data: products = [] } = useQuery({
     queryKey: ['my-products', myShop?.id],
     queryFn: () => base44.entities.Product.filter({ shop_id: myShop.id }),
-    enabled: !!myShop?.id
+    enabled: !!myShop?.id,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true
   });
 
   // Fetch orders avec animation

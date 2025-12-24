@@ -73,21 +73,27 @@ export default function Home() {
     queryFn: () => base44.entities.Shop.filter({ 
       company_category: selectedCategory,
       is_active: true 
-    })
+    }),
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true
   });
 
   // Fetch products for selected shop
   const { data: products = [] } = useQuery({
     queryKey: ['products', selectedShop?.id],
     queryFn: () => base44.entities.Product.filter({ shop_id: selectedShop?.id }),
-    enabled: !!selectedShop
+    enabled: !!selectedShop,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true
   });
 
   // Fetch cart items
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
     queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true
   });
 
   const addToCartMutation = useMutation({
