@@ -78,15 +78,16 @@ export default function DriverDashboard() {
 
   // Fetch available orders (searching for driver in driver's commune)
   const { data: availableOrders = [] } = useQuery({
-    queryKey: ['available-orders', user?.commune],
+    queryKey: ['available-orders', user?.profiles?.livreur?.commune],
     queryFn: async () => {
       const orders = await base44.entities.Order.filter({ 
         status: 'searching_driver'
       }, '-created_date');
       // Filter by commune match
-      return orders.filter(o => o.shop_commune === user?.commune || o.client_commune === user?.commune);
+      const driverCommune = user?.profiles?.livreur?.commune;
+      return orders.filter(o => o.shop_commune === driverCommune || o.client_commune === driverCommune);
     },
-    enabled: !!user?.commune && isAvailable,
+    enabled: !!user?.profiles?.livreur?.commune && isAvailable,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
   });
