@@ -36,12 +36,12 @@ export default function Layout({ children, currentPageName }) {
         ];
       case 'entreprise':
         return [
-          { icon: Store, label: 'Dashboard', page: 'EnterpriseDashboard' },
+          { icon: ShoppingBag, label: 'Commandes', page: 'Orders' },
           { icon: User, label: 'Compte', page: 'EnterpriseAccount' },
         ];
       case 'livreur':
         return [
-          { icon: Bike, label: 'Dashboard', page: 'DriverDashboard' },
+          { icon: ShoppingBag, label: 'Commandes', page: 'Orders' },
           { icon: User, label: 'Compte', page: 'DriverAccount' },
         ];
       default:
