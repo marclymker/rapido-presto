@@ -1,4 +1,5 @@
 import Account from './pages/Account';
+import AdminProducts from './pages/AdminProducts';
 import AdminShops from './pages/AdminShops';
 import AdminValidation from './pages/AdminValidation';
 import Cart from './pages/Cart';
@@ -11,12 +12,12 @@ import ManageProfiles from './pages/ManageProfiles';
 import Orders from './pages/Orders';
 import PaymentCallback from './pages/PaymentCallback';
 import ProfileSetup from './pages/ProfileSetup';
-import AdminProducts from './pages/AdminProducts';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Account": Account,
+    "AdminProducts": AdminProducts,
     "AdminShops": AdminShops,
     "AdminValidation": AdminValidation,
     "Cart": Cart,
@@ -29,7 +30,6 @@ export const PAGES = {
     "Orders": Orders,
     "PaymentCallback": PaymentCallback,
     "ProfileSetup": ProfileSetup,
-    "AdminProducts": AdminProducts,
 }
 
 export const pagesConfig = {

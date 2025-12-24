@@ -29,6 +29,15 @@ export default function Layout({ children, currentPageName }) {
     const currentProfile = user?.current_profile || user?.profiles?.client?.is_active ? 'client' : null;
     if (!currentProfile) return [];
 
+    // Admin navigation
+    if (user?.role === 'admin') {
+      return [
+        { icon: Store, label: 'Boutiques', page: 'AdminShops' },
+        { icon: Package, label: 'Articles', page: 'AdminProducts' },
+        { icon: User, label: 'Compte', page: 'Account' },
+      ];
+    }
+
     switch (currentProfile) {
       case 'client':
         return [
