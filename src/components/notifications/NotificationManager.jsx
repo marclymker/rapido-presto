@@ -38,41 +38,13 @@ export function useNotificationSound() {
 
 export function useBrowserNotifications() {
   const requestPermission = async () => {
-    if (!('Notification' in window)) {
-      toast.error('Les notifications ne sont pas supportées par votre navigateur');
-      return false;
-    }
-
-    if (Notification.permission === 'granted') {
-      return true;
-    }
-
-    if (Notification.permission !== 'denied') {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        toast.success('Notifications activées');
-        return true;
-      }
-    }
-
-    return false;
+    // Ne pas vérifier l'API Notification, OneSignal gère cela
+    return true;
   };
 
-  const showNotification = (title, options = {}) => {
-    if (Notification.permission === 'granted') {
-      const notification = new Notification(title, {
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        ...options
-      });
-
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-      };
-
-      return notification;
-    }
+  const showNotification = () => {
+    // OneSignal gère les notifications
+    return null;
   };
 
   return { requestPermission, showNotification };
@@ -80,7 +52,6 @@ export function useBrowserNotifications() {
 
 export function useOrderNotifications({ enabled, onNewOrder }) {
   const { playSound } = useNotificationSound();
-  const { showNotification } = useBrowserNotifications();
   const previousCountRef = useRef(0);
 
   useEffect(() => {
@@ -91,14 +62,6 @@ export function useOrderNotifications({ enabled, onNewOrder }) {
       if (currentCount > previousCountRef.current && previousCountRef.current > 0) {
         // Jouer le son
         playSound();
-        
-        // Afficher la notification navigateur
-        const newOrdersCount = currentCount - previousCountRef.current;
-        showNotification('Nouvelle commande!', {
-          body: `Vous avez ${newOrdersCount} nouvelle(s) commande(s)`,
-          tag: 'new-order',
-          requireInteraction: false
-        });
 
         // Toast visuel dans l'app
         toast.success(`🔔 Nouvelle commande reçue!`, {
@@ -108,5 +71,5 @@ export function useOrderNotifications({ enabled, onNewOrder }) {
       
       previousCountRef.current = currentCount;
     }
-  }, [enabled, onNewOrder, playSound, showNotification]);
+  }, [enabled, onNewOrder, playSound]);
 }
