@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createPageUrl } from '@/utils';
 import { MapPin, Clock, CreditCard, Check, X, Navigation, Phone, Package } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -13,16 +12,12 @@ import { fr } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
-import { useOrderNotifications } from '@/components/notifications/NotificationSystem';
 
 export default function DriverDashboard() {
   const [user, setUser] = useState(null);
   const [isAvailable, setIsAvailable] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const queryClient = useQueryClient();
-  
-  // Enable notifications
-  useOrderNotifications(user);
 
   useEffect(() => {
     base44.auth.me().then(u => {

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createPageUrl } from '@/utils';
 import { Package, Plus, Bell, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,6 @@ import { fr } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
-import { useOrderNotifications } from '@/components/notifications/NotificationSystem';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
@@ -27,9 +25,6 @@ export default function EnterpriseDashboard() {
   });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const queryClient = useQueryClient();
-  
-  // Enable notifications
-  const { pendingShopOrders } = useOrderNotifications(user);
 
   useEffect(() => {
     base44.auth.me().then(u => {
