@@ -2,6 +2,10 @@ import Home from './pages/Home';
 import Cart from './pages/Cart';
 import Orders from './pages/Orders';
 import Account from './pages/Account';
+import EnterpriseDashboard from './pages/EnterpriseDashboard';
+import DriverDashboard from './pages/DriverDashboard';
+import EnterpriseAccount from './pages/EnterpriseAccount';
+import DriverAccount from './pages/DriverAccount';
 
 
 export const PAGES = {
@@ -9,6 +13,10 @@ export const PAGES = {
     "Cart": Cart,
     "Orders": Orders,
     "Account": Account,
+    "EnterpriseDashboard": EnterpriseDashboard,
+    "DriverDashboard": DriverDashboard,
+    "EnterpriseAccount": EnterpriseAccount,
+    "DriverAccount": DriverAccount,
 }
 
 export const pagesConfig = {
