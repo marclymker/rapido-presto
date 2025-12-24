@@ -34,7 +34,7 @@ export default function EnterpriseDashboard() {
   const queryClient = useQueryClient();
   const { requestPermission } = useBrowserNotifications();
   const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound();
-  
+
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
@@ -48,26 +48,6 @@ export default function EnterpriseDashboard() {
       }
     }).catch(() => {});
   }, []);
-  
-  // WebSocket temps réel
-  const { isConnected, broadcast } = useWebSocket({
-    channel: 'orders',
-    userId: user?.id,
-    enabled: !!user
-  });
-  
-  // Auto-refresh toutes les 60 secondes
-  useAutoRefresh({ 
-    queryKey: ['shop-orders'], 
-    refetchInterval: 60000,
-    enabled: !!myShop?.id 
-  });
-  
-  // Background sync intelligent
-  const { syncStatus, lastSync, connectionType } = useBackgroundSync({
-    userType: 'entreprise',
-    enabled: !!user && user.current_profile === 'entreprise'
-  });
 
   // Demander la permission pour les notifications au chargement
   useEffect(() => {
@@ -114,6 +94,26 @@ export default function EnterpriseDashboard() {
     queryKey: ['shop-orders', myShop?.id],
     queryFn: () => base44.entities.Order.filter({ shop_id: myShop?.id }, '-created_date'),
     enabled: !!myShop?.id
+  });
+
+  // WebSocket temps réel
+  const { isConnected, broadcast } = useWebSocket({
+    channel: 'orders',
+    userId: user?.id,
+    enabled: !!user
+  });
+  
+  // Auto-refresh toutes les 60 secondes
+  useAutoRefresh({ 
+    queryKey: ['shop-orders'], 
+    refetchInterval: 60000,
+    enabled: !!myShop?.id 
+  });
+  
+  // Background sync intelligent
+  const { syncStatus, lastSync, connectionType } = useBackgroundSync({
+    userType: 'entreprise',
+    enabled: !!user && user.current_profile === 'entreprise'
   });
 
   const productMutation = useMutation({
