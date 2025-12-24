@@ -1,0 +1,87 @@
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Minus, Plus } from 'lucide-react';
+
+export default function ProductDetailModal({ product, open, onClose, onAddToCart }) {
+  const [quantity, setQuantity] = useState(1);
+  
+  if (!product) return null;
+  
+  const price = product.promo_price && product.promo_price < product.price 
+    ? product.promo_price 
+    : product.price;
+
+  const handleAdd = () => {
+    onAddToCart(product, quantity);
+    setQuantity(1);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+        <div className="h-48 bg-gradient-to-br from-orange-50 to-orange-100">
+          {product.image_url ? (
+            <img 
+              src={product.image_url} 
+              alt={product.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-5xl">📦</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl">{product.name}</DialogTitle>
+          </DialogHeader>
+          
+          <p className="text-slate-600 mt-2 text-sm leading-relaxed">
+            {product.description || 'Aucune description disponible.'}
+          </p>
+          
+          <div className="flex items-center gap-3 mt-4">
+            <span className="text-2xl font-bold text-orange-500">{price} HTG</span>
+            {product.promo_price && product.promo_price < product.price && (
+              <span className="text-lg text-slate-400 line-through">{product.price} HTG</span>
+            )}
+          </div>
+          
+          <div className="flex items-center justify-between mt-6 pt-4 border-t">
+            <div className="flex items-center gap-3 bg-slate-100 rounded-full p-1">
+              <Button 
+                size="icon" 
+                variant="ghost"
+                className="h-8 w-8 rounded-full"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              >
+                <Minus className="w-4 h-4" />
+              </Button>
+              <span className="w-8 text-center font-semibold">{quantity}</span>
+              <Button 
+                size="icon" 
+                variant="ghost"
+                className="h-8 w-8 rounded-full"
+                onClick={() => setQuantity(quantity + 1)}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <Button 
+              className="bg-orange-500 hover:bg-orange-600 px-6"
+              onClick={handleAdd}
+              disabled={product.is_available === false}
+            >
+              Ajouter • {price * quantity} HTG
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
