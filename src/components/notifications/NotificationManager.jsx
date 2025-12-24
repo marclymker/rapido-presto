@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 
 export function useNotificationSound() {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const hasInteractedRef = useRef(false);
 
@@ -10,7 +10,8 @@ export function useNotificationSound() {
   const createShortBeep = useCallback(() => {
     try {
       // Essayer d'abord avec l'API Audio plus permissive
-      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const context = new AudioContextClass();
       const oscillator = context.createOscillator();
       const gainNode = context.createGain();
       
@@ -193,7 +194,7 @@ export function useNotificationSound() {
   return { playSound };
 }
 
-export function useOrderNotifications({ enabled, onNewOrder }: { enabled: boolean; onNewOrder: any[] }) {
+export function useOrderNotifications({ enabled, onNewOrder }) {
   const { playSound } = useNotificationSound();
   const previousCountRef = useRef(0);
   const notificationCooldownRef = useRef(false);
@@ -234,7 +235,8 @@ export function useForceSound() {
   const forcePlay = useCallback(() => {
     // Créer un contexte audio caché et le maintenir actif
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioContextClass();
       
       // Créer un nœud de gain silencieux pour maintenir le contexte actif
       const oscillator = audioContext.createOscillator();
