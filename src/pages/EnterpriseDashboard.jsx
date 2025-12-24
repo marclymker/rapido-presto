@@ -35,6 +35,20 @@ export default function EnterpriseDashboard() {
   const { requestPermission } = useBrowserNotifications();
   const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound();
   
+  useEffect(() => {
+    base44.auth.me().then(u => {
+      setUser(u);
+      // Redirect if wrong profile
+      if (u.current_profile !== 'entreprise') {
+        const redirectPages = {
+          client: 'Home',
+          livreur: 'DriverDashboard'
+        };
+        window.location.href = createPageUrl(redirectPages[u.current_profile] || 'Home');
+      }
+    }).catch(() => {});
+  }, []);
+  
   // WebSocket temps réel
   const { isConnected, broadcast } = useWebSocket({
     channel: 'orders',
@@ -54,20 +68,6 @@ export default function EnterpriseDashboard() {
     userType: 'entreprise',
     enabled: !!user && user.current_profile === 'entreprise'
   });
-
-  useEffect(() => {
-    base44.auth.me().then(u => {
-      setUser(u);
-      // Redirect if wrong profile
-      if (u.current_profile !== 'entreprise') {
-        const redirectPages = {
-          client: 'Home',
-          livreur: 'DriverDashboard'
-        };
-        window.location.href = createPageUrl(redirectPages[u.current_profile] || 'Home');
-      }
-    }).catch(() => {});
-  }, []);
 
   // Demander la permission pour les notifications au chargement
   useEffect(() => {
