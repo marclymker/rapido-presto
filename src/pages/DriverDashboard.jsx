@@ -22,7 +22,7 @@ export default function DriverDashboard() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
-      setIsAvailable(u.is_available || false);
+      setIsAvailable(u.profiles?.livreur?.is_available || false);
     }).catch(() => {});
   }, []);
 
@@ -170,6 +170,12 @@ export default function DriverDashboard() {
                           <p className="font-medium">Client</p>
                           <p className="text-slate-600">{order.client_address}, {order.client_commune}</p>
                         </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-slate-400" />
+                        <span className="text-slate-600">
+                          Temps estimé: {order.shop_commune === order.client_commune ? '15-20' : '25-35'} min
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CreditCard className="w-4 h-4 text-slate-400" />
