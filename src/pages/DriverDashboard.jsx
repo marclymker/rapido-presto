@@ -114,12 +114,20 @@ export default function DriverDashboard() {
   });
 
   const acceptOrderMutation = useMutation({
-    mutationFn: (order) => base44.entities.Order.update(order.id, {
-      status: 'driver_assigned',
-      driver_id: user.id,
-      driver_name: user.full_name,
-      driver_phone: user.phone
-    }),
+    mutationFn: async (order) => {
+      await base44.entities.Order.update(order.id, {
+        status: 'driver_assigned',
+        driver_id: user.id,
+        driver_name: user.full_name,
+        driver_phone: user.phone
+      });
+      // Envoyer notifications
+      await base44.functions.invoke('sendOrderNotification', {
+        orderId: order.id,
+        status: 'driver_assigned'
+      }).catch(err => console.error('Notification error:', err));
+      return order;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['available-orders']);
       queryClient.invalidateQueries(['driver-orders']);
@@ -128,7 +136,15 @@ export default function DriverDashboard() {
   });
 
   const updateOrderMutation = useMutation({
-    mutationFn: ({ id, status }) => base44.entities.Order.update(id, { status }),
+    mutationFn: async ({ id, status }) => {
+      await base44.entities.Order.update(id, { status });
+      // Envoyer notifications
+      await base44.functions.invoke('sendOrderNotification', {
+        orderId: id,
+        status
+      }).catch(err => console.error('Notification error:', err));
+      return { id, status };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['driver-orders']);
       setSelectedOrder(null);
@@ -137,7 +153,15 @@ export default function DriverDashboard() {
   });
 
   const confirmDeliveryMutation = useMutation({
-    mutationFn: (id) => base44.entities.Order.update(id, { status: 'delivered' }),
+    mutationFn: async (id) => {
+      await base44.entities.Order.update(id, { status: 'delivered' });
+      // Envoyer notifications
+      await base44.functions.invoke('sendOrderNotification', {
+        orderId: id,
+        status: 'delivered'
+      }).catch(err => console.error('Notification error:', err));
+      return id;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['driver-orders']);
       setSelectedOrder(null);
