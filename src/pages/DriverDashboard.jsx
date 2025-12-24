@@ -87,14 +87,18 @@ export default function DriverDashboard() {
       // Filter by commune match
       return orders.filter(o => o.shop_commune === user?.commune || o.client_commune === user?.commune);
     },
-    enabled: !!user?.commune && isAvailable
+    enabled: !!user?.commune && isAvailable,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true
   });
 
   // Fetch driver's orders
   const { data: myOrders = [] } = useQuery({
     queryKey: ['driver-orders', user?.id],
     queryFn: () => base44.entities.Order.filter({ driver_id: user?.id }, '-created_date'),
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true
   });
 
   const toggleAvailabilityMutation = useMutation({
