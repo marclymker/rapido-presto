@@ -102,8 +102,8 @@ export default function EnterpriseDashboard() {
       return base44.entities.Product.create({
         ...data,
         shop_id: myShop.id,
-        shop_name: entrepriseData.company_name,
-        category: entrepriseData.company_category
+        shop_name: myShop.company_name,
+        category: myShop.company_category
       });
     },
     onSuccess: () => {
