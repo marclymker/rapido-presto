@@ -59,6 +59,15 @@ export default function AdminShops() {
     enabled: !!user
   });
 
+  const { data: enterpriseUsers = [] } = useQuery({
+    queryKey: ['enterprise-users'],
+    queryFn: async () => {
+      const allUsers = await base44.asServiceRole.entities.User.list();
+      return allUsers.filter(u => u.profiles?.entreprise?.is_active);
+    },
+    enabled: !!user
+  });
+
   const createShopMutation = useMutation({
     mutationFn: (data) => base44.asServiceRole.entities.Shop.create(data),
     onSuccess: () => {
@@ -231,6 +240,23 @@ export default function AdminShops() {
                   onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                   required
                 />
+              </div>
+
+              <div className="col-span-2">
+                <Label>Assigner à un utilisateur entreprise</Label>
+                <Select value={formData.user_id} onValueChange={(val) => setFormData({ ...formData, user_id: val })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un utilisateur (optionnel)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>Aucun utilisateur</SelectItem>
+                    {enterpriseUsers.map(u => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.full_name} ({u.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
