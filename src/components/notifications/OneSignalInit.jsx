@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import OneSignal from 'react-onesignal';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
@@ -7,7 +6,7 @@ export default function OneSignalInit({ user }) {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (!user || initialized) return;
+    if (!user || initialized || typeof window === 'undefined') return;
 
     const initOneSignal = async () => {
       try {
@@ -18,52 +17,54 @@ export default function OneSignalInit({ user }) {
         
         if (!data.appId) {
           console.error('❌ OneSignal App ID not found');
-          toast.error('Erreur: ID OneSignal manquant');
           return;
         }
 
         console.log('✅ OneSignal App ID récupéré:', data.appId);
 
-        // Initialize OneSignal
-        await OneSignal.init({
-          appId: data.appId,
-          allowLocalhostAsSecureOrigin: true,
-          notifyButton: {
-            enable: false,
-          },
+        // Initialize OneSignal via script
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        
+        window.OneSignalDeferred.push(async function(OneSignal) {
+          await OneSignal.init({
+            appId: data.appId,
+            allowLocalhostAsSecureOrigin: true,
+            notifyButton: {
+              enable: false,
+            },
+          });
+
+          console.log('✅ OneSignal SDK initialisé');
+
+          // Set external user ID
+          OneSignal.setExternalUserId(user.id);
+          console.log('✅ User ID défini:', user.id);
+
+          // Add tags for targeting
+          OneSignal.sendTags({
+            user_id: user.id,
+            email: user.email,
+            role: user.current_profile || 'client',
+            commune: user.commune || 'unknown'
+          });
+
+          console.log('✅ Tags ajoutés');
         });
 
-        console.log('✅ OneSignal SDK initialisé');
-
-        // Demander la permission de notification
-        const permission = await OneSignal.Notifications.requestPermission();
-        console.log('🔔 Permission notifications:', permission);
-
-        if (!permission) {
-          toast.error('Veuillez autoriser les notifications pour recevoir les alertes');
-          return;
+        // Load OneSignal script
+        if (!document.getElementById('onesignal-script')) {
+          const script = document.createElement('script');
+          script.id = 'onesignal-script';
+          script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+          script.defer = true;
+          document.head.appendChild(script);
         }
 
-        // Set external user ID
-        await OneSignal.login(user.id);
-        console.log('✅ User ID défini:', user.id);
-
-        // Add tags for targeting
-        await OneSignal.User.addTags({
-          user_id: user.id,
-          email: user.email,
-          role: user.current_profile || 'client',
-          commune: user.commune || 'unknown'
-        });
-
-        console.log('✅ Tags ajoutés');
-
         setInitialized(true);
-        toast.success('🔔 Notifications activées');
+        console.log('✅ OneSignal initialisé');
         
       } catch (error) {
         console.error('❌ Erreur OneSignal:', error);
-        toast.error('Erreur lors de l\'activation des notifications');
       }
     };
 
