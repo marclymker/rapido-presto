@@ -48,7 +48,9 @@ export default function Orders() {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', user?.id],
     queryFn: () => base44.entities.Order.filter({ client_id: user?.id }, '-created_date'),
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true
   });
 
   const activeOrders = orders.filter(o => 

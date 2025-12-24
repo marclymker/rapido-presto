@@ -93,7 +93,9 @@ export default function EnterpriseDashboard() {
   const { data: orders = [] } = useQuery({
     queryKey: ['shop-orders', myShop?.id],
     queryFn: () => base44.entities.Order.filter({ shop_id: myShop?.id }, '-created_date'),
-    enabled: !!myShop?.id
+    enabled: !!myShop?.id,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true
   });
 
   // WebSocket temps réel
