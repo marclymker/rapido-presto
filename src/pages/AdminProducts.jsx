@@ -27,6 +27,7 @@ export default function AdminProducts() {
     description: '',
     image_url: '',
     category: '',
+    taille_emballage: '',
     is_available: true
   });
 
@@ -159,6 +160,7 @@ export default function AdminProducts() {
       description: '',
       image_url: '',
       category: '',
+      taille_emballage: '',
       is_available: true
     });
     setEditingProduct(null);
@@ -173,6 +175,7 @@ export default function AdminProducts() {
       description: product.description || '',
       image_url: product.image_url || '',
       category: product.category || '',
+      taille_emballage: product.taille_emballage || '',
       is_available: product.is_available !== false
     });
     setShowForm(true);
@@ -342,6 +345,22 @@ export default function AdminProducts() {
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   placeholder={selectedShop?.company_category}
                 />
+              </div>
+
+              <div className="col-span-2">
+                <Label>Taille d'emballage</Label>
+                <Select value={formData.taille_emballage} onValueChange={(value) => setFormData({ ...formData, taille_emballage: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une taille" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Petit">Petit</SelectItem>
+                    <SelectItem value="Moyen">Moyen</SelectItem>
+                    <SelectItem value="Grand">Grand</SelectItem>
+                    <SelectItem value="Lourd">Lourd</SelectItem>
+                    <SelectItem value="Encombrant">Encombrant</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="col-span-2">
