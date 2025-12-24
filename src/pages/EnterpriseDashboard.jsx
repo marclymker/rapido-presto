@@ -20,6 +20,7 @@ import OrderDetailModal from '@/components/modals/OrderDetailModal';
 import { useOrderNotifications, useBrowserNotifications, useNotificationSound } from '@/components/notifications/NotificationManager';
 import { useWebSocket, useAutoRefresh } from '@/components/realtime/useWebSocket';
 import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
+import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
@@ -46,6 +47,12 @@ export default function EnterpriseDashboard() {
     queryKey: ['shop-orders'], 
     refetchInterval: 5000,
     enabled: !!myShop?.id 
+  });
+  
+  // Background sync intelligent
+  const { syncStatus, lastSync, connectionType } = useBackgroundSync({
+    userType: 'entreprise',
+    enabled: !!user && user.current_profile === 'entreprise'
   });
 
   useEffect(() => {
@@ -494,6 +501,12 @@ export default function EnterpriseDashboard() {
         onClose={() => setSelectedOrder(null)}
         userType="entreprise"
         onUpdateStatus={(id, status) => updateOrderMutation.mutate({ id, status })}
+      />
+      
+      <BackgroundSyncIndicator 
+        syncStatus={syncStatus} 
+        lastSync={lastSync} 
+        connectionType={connectionType}
       />
     </div>
   );

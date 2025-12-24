@@ -22,6 +22,12 @@ export default function Orders() {
     refetchInterval: 5000,
     enabled: !!user?.id 
   });
+  
+  // Background sync intelligent
+  const { syncStatus, lastSync, connectionType } = useBackgroundSync({
+    userType: 'client',
+    enabled: !!user && user.current_profile === 'client'
+  });
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -159,6 +165,12 @@ export default function Orders() {
         onClose={() => setSelectedOrder(null)}
         userType="client"
       />
-    </div>
-  );
-}
+
+      <BackgroundSyncIndicator 
+        syncStatus={syncStatus} 
+        lastSync={lastSync} 
+        connectionType={connectionType}
+      />
+      </div>
+      );
+      }

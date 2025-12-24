@@ -17,6 +17,7 @@ import OrderDetailModal from '@/components/modals/OrderDetailModal';
 import { useOrderNotifications, useBrowserNotifications, useNotificationSound } from '@/components/notifications/NotificationManager';
 import { useWebSocket, useAutoRefresh } from '@/components/realtime/useWebSocket';
 import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
+import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
 
 export default function DriverDashboard() {
   const [user, setUser] = useState(null);
@@ -45,6 +46,12 @@ export default function DriverDashboard() {
     queryKey: ['driver-orders'], 
     refetchInterval: 5000,
     enabled: !!user?.id 
+  });
+  
+  // Background sync intelligent
+  const { syncStatus, lastSync, connectionType } = useBackgroundSync({
+    userType: 'livreur',
+    enabled: !!user && user.current_profile === 'livreur'
   });
 
   useEffect(() => {
@@ -378,6 +385,12 @@ export default function DriverDashboard() {
         userType="livreur"
         onUpdateStatus={(id, status) => updateOrderMutation.mutate({ id, status })}
         onConfirmDelivery={(id) => confirmDeliveryMutation.mutate(id)}
+      />
+      
+      <BackgroundSyncIndicator 
+        syncStatus={syncStatus} 
+        lastSync={lastSync} 
+        connectionType={connectionType}
       />
     </div>
   );
