@@ -19,6 +19,29 @@ export default function Layout({ children, currentPageName }) {
       .catch(() => setLoading(false));
   }, []);
 
+  // PushEngage initialization
+  useEffect(() => {
+    window.PushEngage = window.PushEngage || [];
+    window._peq = window._peq || [];
+    window.PushEngage.push(['init', {
+      appId: 'a447542f-697d-400b-8a06-f5b098a4f601'
+    }]);
+
+    const script = document.createElement('script');
+    script.src = 'https://clientcdn.pushengage.com/sdks/pushengage-web-sdk.js';
+    script.async = true;
+    script.type = 'text/javascript';
+    document.head.appendChild(script);
+
+    return () => {
+      // Cleanup if needed
+      const existingScript = document.querySelector('script[src="https://clientcdn.pushengage.com/sdks/pushengage-web-sdk.js"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, []);
+
   // Pages that don't need navigation
   const noNavPages = ['ProfileSetup', 'ManageProfiles', 'AdminValidation'];
   const showNav = !noNavPages.includes(currentPageName) && user;

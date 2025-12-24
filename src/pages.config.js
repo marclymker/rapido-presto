@@ -2,13 +2,13 @@ import Account from './pages/Account';
 import AdminValidation from './pages/AdminValidation';
 import Cart from './pages/Cart';
 import DriverAccount from './pages/DriverAccount';
+import DriverDashboard from './pages/DriverDashboard';
 import EnterpriseAccount from './pages/EnterpriseAccount';
+import EnterpriseDashboard from './pages/EnterpriseDashboard';
 import Home from './pages/Home';
 import ManageProfiles from './pages/ManageProfiles';
-import ProfileSetup from './pages/ProfileSetup';
-import DriverDashboard from './pages/DriverDashboard';
-import EnterpriseDashboard from './pages/EnterpriseDashboard';
 import Orders from './pages/Orders';
+import ProfileSetup from './pages/ProfileSetup';
 import __Layout from './Layout.jsx';
 
 
@@ -17,13 +17,13 @@ export const PAGES = {
     "AdminValidation": AdminValidation,
     "Cart": Cart,
     "DriverAccount": DriverAccount,
+    "DriverDashboard": DriverDashboard,
     "EnterpriseAccount": EnterpriseAccount,
+    "EnterpriseDashboard": EnterpriseDashboard,
     "Home": Home,
     "ManageProfiles": ManageProfiles,
-    "ProfileSetup": ProfileSetup,
-    "DriverDashboard": DriverDashboard,
-    "EnterpriseDashboard": EnterpriseDashboard,
     "Orders": Orders,
+    "ProfileSetup": ProfileSetup,
 }
 
 export const pagesConfig = {
