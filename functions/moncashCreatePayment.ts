@@ -48,7 +48,8 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         amount: amount,
-        orderId: orderId
+        orderId: orderId,
+        return_url: 'https://rapido-presto.base44.app/PaymentCallback'
       })
     });
 
