@@ -55,8 +55,8 @@ export default function Layout({ children, currentPageName }) {
     <div className="min-h-screen bg-slate-50 pb-20">
       <Toaster position="top-center" />
       
-      {/* Profile Switcher (top right for desktop) */}
-      {user && !noNavPages.includes(currentPageName) && (
+      {/* Profile Switcher (top right for desktop - clients only) */}
+      {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (
         <div className="fixed top-4 right-4 z-50">
           <ProfileSwitcher user={user} />
         </div>
