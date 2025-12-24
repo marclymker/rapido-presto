@@ -55,21 +55,27 @@ export default function AdminShops() {
 
   const { data: shops = [] } = useQuery({
     queryKey: ['admin-shops'],
-    queryFn: () => base44.asServiceRole.entities.Shop.list('-created_date'),
+    queryFn: async () => {
+      const { data } = await base44.functions.invoke('adminShops', { action: 'list' });
+      return data.shops;
+    },
     enabled: !!user
   });
 
   const { data: enterpriseUsers = [] } = useQuery({
     queryKey: ['enterprise-users'],
     queryFn: async () => {
-      const allUsers = await base44.asServiceRole.entities.User.list();
-      return allUsers.filter(u => u.profiles?.entreprise?.is_active);
+      const { data } = await base44.functions.invoke('adminShops', { action: 'listEnterpriseUsers' });
+      return data.users;
     },
     enabled: !!user
   });
 
   const createShopMutation = useMutation({
-    mutationFn: (data) => base44.asServiceRole.entities.Shop.create(data),
+    mutationFn: async (shopData) => {
+      const { data } = await base44.functions.invoke('adminShops', { action: 'create', data: shopData });
+      return data.shop;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-shops']);
       toast.success('Boutique créée avec succès');
@@ -82,7 +88,10 @@ export default function AdminShops() {
   });
 
   const updateShopMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.asServiceRole.entities.Shop.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      const result = await base44.functions.invoke('adminShops', { action: 'update', shopId: id, data });
+      return result.data.shop;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-shops']);
       toast.success('Boutique mise à jour');
@@ -95,7 +104,9 @@ export default function AdminShops() {
   });
 
   const deleteShopMutation = useMutation({
-    mutationFn: (id) => base44.asServiceRole.entities.Shop.delete(id),
+    mutationFn: async (id) => {
+      await base44.functions.invoke('adminShops', { action: 'delete', shopId: id });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-shops']);
       toast.success('Boutique supprimée');
