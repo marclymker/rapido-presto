@@ -112,6 +112,12 @@ export default function Cart() {
       // Clear cart
       await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
       
+      // Envoyer notifications
+      await base44.functions.invoke('sendOrderNotification', {
+        orderId: order.id,
+        status: 'pending'
+      }).catch(err => console.error('Notification error:', err));
+      
       return { orderNum, code };
     },
     onSuccess: (data) => {

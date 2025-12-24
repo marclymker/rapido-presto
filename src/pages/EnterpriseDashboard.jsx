@@ -147,12 +147,20 @@ export default function EnterpriseDashboard() {
   });
 
   const updateOrderMutation = useMutation({
-    mutationFn: ({ id, status }) => {
+    mutationFn: async ({ id, status }) => {
       const updates = { status };
       if (status === 'ready') {
         updates.status = 'searching_driver';
       }
-      return base44.entities.Order.update(id, updates);
+      await base44.entities.Order.update(id, updates);
+      
+      // Envoyer notifications
+      await base44.functions.invoke('sendOrderNotification', {
+        orderId: id,
+        status: updates.status
+      }).catch(err => console.error('Notification error:', err));
+      
+      return { id, status: updates.status };
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['shop-orders']);
