@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
+import { getHaitiTime } from '@/components/utils/dateFormat';
 
 function calculateDeliveryFee(clientCommune, shopCommune) {
-  const hour = new Date().getHours();
+  const hour = getHaitiTime().getHours();
   const sameCommune = clientCommune === shopCommune;
   
   if (hour >= 8 && hour < 11) {
