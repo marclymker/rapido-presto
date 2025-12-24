@@ -83,13 +83,15 @@ export default function DriverAccount() {
     );
   }
 
-  if (!user || user.user_type !== 'livreur') {
+  if (!user || user.current_profile !== 'livreur') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-slate-500">Accès réservé aux livreurs</p>
       </div>
     );
   }
+
+  const livreurData = user.profiles?.livreur || {};
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -118,7 +120,7 @@ export default function DriverAccount() {
               <h2 className="font-semibold text-lg text-slate-800">{user.full_name}</h2>
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <Bike className="w-4 h-4" />
-                <span>{user.vehicle_type}</span>
+                <span>{livreurData.vehicle_type}</span>
               </div>
             </div>
           </div>

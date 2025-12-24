@@ -26,15 +26,22 @@ export default function Home() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  // Fetch shops (entreprises)
+  // Fetch shops (entreprises) - using profiles structure
   const { data: shops = [] } = useQuery({
     queryKey: ['shops', selectedCategory],
     queryFn: async () => {
-      const users = await base44.entities.User.filter({
-        user_type: 'entreprise',
-        company_category: selectedCategory
-      });
-      return users;
+      const users = await base44.entities.User.list();
+      return users.filter(u => 
+        u.profiles?.entreprise?.is_active && 
+        u.profiles?.entreprise?.company_category === selectedCategory
+      ).map(u => ({
+        ...u,
+        company_name: u.profiles.entreprise.company_name,
+        company_category: u.profiles.entreprise.company_category,
+        company_logo_url: u.profiles.entreprise.company_logo_url,
+        rating: u.profiles.entreprise.rating,
+        delivery_time_minutes: u.profiles.entreprise.delivery_time_minutes
+      }));
     }
   });
 

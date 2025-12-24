@@ -53,8 +53,8 @@ export default function EnterpriseDashboard() {
       return base44.entities.Product.create({
         ...data,
         shop_id: user.id,
-        shop_name: user.company_name,
-        category: user.company_category
+        shop_name: entrepriseData.company_name,
+        category: entrepriseData.company_category
       });
     },
     onSuccess: () => {
@@ -130,13 +130,15 @@ export default function EnterpriseDashboard() {
   const pendingOrders = orders.filter(o => o.status === 'pending');
   const activeOrders = orders.filter(o => ['preparing', 'ready', 'searching_driver'].includes(o.status));
 
-  if (!user || user.user_type !== 'entreprise') {
+  if (!user || user.current_profile !== 'entreprise') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-slate-500">Accès réservé aux entreprises</p>
       </div>
     );
   }
+
+  const entrepriseData = user.profiles?.entreprise || {};
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -145,8 +147,8 @@ export default function EnterpriseDashboard() {
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-orange-500">{user.company_name}</h1>
-              <p className="text-sm text-slate-500">{user.company_category}</p>
+              <h1 className="text-xl font-bold text-orange-500">{entrepriseData.company_name}</h1>
+              <p className="text-sm text-slate-500">{entrepriseData.company_category}</p>
             </div>
             <div className="flex items-center gap-3">
               {pendingOrders.length > 0 && (

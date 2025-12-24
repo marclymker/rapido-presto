@@ -48,7 +48,11 @@ export default function DriverDashboard() {
   });
 
   const toggleAvailabilityMutation = useMutation({
-    mutationFn: (available) => base44.auth.updateMe({ is_available: available }),
+    mutationFn: (available) => {
+      const profiles = { ...user.profiles };
+      profiles.livreur = { ...profiles.livreur, is_available: available };
+      return base44.auth.updateMe({ profiles });
+    },
     onSuccess: (_, available) => {
       setIsAvailable(available);
       toast.success(available ? 'Vous êtes maintenant disponible' : 'Vous êtes hors ligne');
@@ -90,13 +94,15 @@ export default function DriverDashboard() {
   const activeOrders = myOrders.filter(o => ['driver_assigned', 'in_delivery'].includes(o.status));
   const historyOrders = myOrders.filter(o => ['delivered', 'cancelled'].includes(o.status));
 
-  if (!user || user.user_type !== 'livreur') {
+  if (!user || user.current_profile !== 'livreur') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-slate-500">Accès réservé aux livreurs</p>
       </div>
     );
   }
+
+  const livreurData = user.profiles?.livreur || {};
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -106,7 +112,7 @@ export default function DriverDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-orange-500">Rapido Presto</h1>
-              <p className="text-sm text-slate-500">Livreur • {user.vehicle_type}</p>
+              <p className="text-sm text-slate-500">Livreur • {livreurData.vehicle_type}</p>
             </div>
             <div className="flex items-center gap-3">
               <Label className="text-sm text-slate-600">

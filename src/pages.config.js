@@ -8,6 +8,7 @@ import EnterpriseAccount from './pages/EnterpriseAccount';
 import DriverAccount from './pages/DriverAccount';
 import ProfileSetup from './pages/ProfileSetup';
 import ManageProfiles from './pages/ManageProfiles';
+import AdminValidation from './pages/AdminValidation';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +23,7 @@ export const PAGES = {
     "DriverAccount": DriverAccount,
     "ProfileSetup": ProfileSetup,
     "ManageProfiles": ManageProfiles,
+    "AdminValidation": AdminValidation,
 }
 
 export const pagesConfig = {

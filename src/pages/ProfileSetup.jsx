@@ -46,9 +46,9 @@ export default function ProfileSetup() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
-      // If user already has a type, redirect to appropriate page
-      if (u.user_type) {
-        redirectToUserDashboard(u.user_type);
+      // If user already has a profile, redirect to appropriate page
+      if (u.current_profile) {
+        redirectToUserDashboard(u.current_profile);
       } else {
         setLoading(false);
       }
@@ -86,28 +86,72 @@ export default function ProfileSetup() {
   const handleSubmit = async () => {
     setSaving(true);
     try {
-      const dataToSave = {
-        user_type: formData.user_type,
-        commune: formData.commune,
-        phone: formData.phone,
-        address: formData.address
+      const now = new Date().toISOString();
+      const profiles = {
+        client: { is_active: false, created_at: null },
+        entreprise: { is_active: false, created_at: null },
+        livreur: { is_active: false, status: 'pending', created_at: null }
       };
 
-      if (formData.user_type === 'entreprise') {
-        dataToSave.company_name = formData.company_name;
-        dataToSave.company_category = formData.company_category;
-        dataToSave.company_logo_url = formData.company_logo_url;
+      // Activate selected profile
+      if (formData.user_type === 'client') {
+        profiles.client = {
+          is_active: true,
+          created_at: now,
+          last_used: now
+        };
+      } else if (formData.user_type === 'entreprise') {
+        profiles.entreprise = {
+          is_active: true,
+          created_at: now,
+          last_used: now,
+          company_name: formData.company_name,
+          company_category: formData.company_category,
+          company_logo_url: formData.company_logo_url || '',
+          rating: 5,
+          delivery_time_minutes: 30
+        };
+      } else if (formData.user_type === 'livreur') {
+        profiles.livreur = {
+          is_active: false,
+          status: 'pending',
+          created_at: now,
+          vehicle_type: formData.vehicle_type,
+          id_document_url: formData.id_document_url,
+          is_available: false
+        };
+        
+        // Create validation request
+        await base44.entities.ProfileSwitch.create({
+          user_id: user.id,
+          user_name: user.full_name,
+          from_profile: null,
+          to_profile: 'livreur',
+          status: 'pending',
+          data: {
+            vehicle_type: formData.vehicle_type,
+            id_document_url: formData.id_document_url,
+            phone: formData.phone,
+            commune: formData.commune
+          }
+        });
       }
+
+      await base44.auth.updateMe({
+        current_profile: formData.user_type === 'livreur' ? 'client' : formData.user_type,
+        commune: formData.commune,
+        phone: formData.phone,
+        address: formData.address,
+        profiles: profiles
+      });
 
       if (formData.user_type === 'livreur') {
-        dataToSave.vehicle_type = formData.vehicle_type;
-        dataToSave.id_document_url = formData.id_document_url;
-        dataToSave.is_available = false;
+        toast.success('Demande soumise! En attente de validation.');
+        redirectToUserDashboard('client'); // Redirect to client while waiting
+      } else {
+        toast.success('Profil créé avec succès!');
+        redirectToUserDashboard(formData.user_type);
       }
-
-      await base44.auth.updateMe(dataToSave);
-      toast.success('Profil créé avec succès!');
-      redirectToUserDashboard(formData.user_type);
     } catch (error) {
       toast.error('Erreur lors de la création du profil');
     } finally {

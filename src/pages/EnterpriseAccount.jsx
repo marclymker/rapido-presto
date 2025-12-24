@@ -83,13 +83,15 @@ export default function EnterpriseAccount() {
     );
   }
 
-  if (!user || user.user_type !== 'entreprise') {
+  if (!user || user.current_profile !== 'entreprise') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-slate-500">Accès réservé aux entreprises</p>
       </div>
     );
   }
+
+  const entrepriseData = user.profiles?.entreprise || {};
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -112,15 +114,15 @@ export default function EnterpriseAccount() {
         <div className="bg-white rounded-xl p-4">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden">
-              {user.company_logo_url ? (
-                <img src={user.company_logo_url} alt="" className="w-full h-full object-cover" />
+              {entrepriseData.company_logo_url ? (
+                <img src={entrepriseData.company_logo_url} alt="" className="w-full h-full object-cover" />
               ) : (
                 <Building2 className="w-8 h-8 text-orange-500" />
               )}
             </div>
             <div>
-              <h2 className="font-semibold text-lg text-slate-800">{user.company_name}</h2>
-              <p className="text-sm text-slate-500">{user.company_category}</p>
+              <h2 className="font-semibold text-lg text-slate-800">{entrepriseData.company_name}</h2>
+              <p className="text-sm text-slate-500">{entrepriseData.company_category}</p>
             </div>
           </div>
 

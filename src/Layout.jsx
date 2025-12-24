@@ -4,6 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { Home, ShoppingBag, User, Package, Store, Bike } from 'lucide-react';
 import { Toaster } from "@/components/ui/sonner";
+import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -20,12 +21,12 @@ export default function Layout({ children, currentPageName }) {
 
   // Pages that don't need navigation
   const noNavPages = ['ProfileSetup'];
-  const showNav = !noNavPages.includes(currentPageName) && user?.user_type;
+  const showNav = !noNavPages.includes(currentPageName) && user?.current_profile;
 
   const getNavItems = () => {
-    if (!user?.user_type) return [];
+    if (!user?.current_profile) return [];
 
-    switch (user.user_type) {
+    switch (user.current_profile) {
       case 'client':
         return [
           { icon: Home, label: 'Accueil', page: 'Home' },
@@ -52,6 +53,13 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <Toaster position="top-center" />
+      
+      {/* Profile Switcher (top right for desktop) */}
+      {user && showNav && currentPageName !== 'ManageProfiles' && currentPageName !== 'AdminValidation' && (
+        <div className="fixed top-4 right-4 z-50">
+          <ProfileSwitcher user={user} />
+        </div>
+      )}
       
       {children}
 
