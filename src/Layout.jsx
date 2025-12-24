@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Home, ShoppingBag, User, Package, Store, Bike } from 'lucide-react';
 import { Toaster } from "@/components/ui/sonner";
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
+import OneSignalInit from '@/components/notifications/OneSignalInit';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -17,29 +18,6 @@ export default function Layout({ children, currentPageName }) {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
-
-  // PushEngage initialization
-  useEffect(() => {
-    window.PushEngage = window.PushEngage || [];
-    window._peq = window._peq || [];
-    window.PushEngage.push(['init', {
-      appId: 'a447542f-697d-400b-8a06-f5b098a4f601'
-    }]);
-
-    const script = document.createElement('script');
-    script.src = 'https://clientcdn.pushengage.com/sdks/pushengage-web-sdk.js';
-    script.async = true;
-    script.type = 'text/javascript';
-    document.head.appendChild(script);
-
-    return () => {
-      // Cleanup if needed
-      const existingScript = document.querySelector('script[src="https://clientcdn.pushengage.com/sdks/pushengage-web-sdk.js"]');
-      if (existingScript) {
-        existingScript.remove();
-      }
-    };
   }, []);
 
   // Pages that don't need navigation
@@ -77,6 +55,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <Toaster position="top-center" />
+      <OneSignalInit user={user} />
       
       {/* Profile Switcher (top right for desktop - clients only) */}
       {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (
