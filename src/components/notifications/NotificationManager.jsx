@@ -22,15 +22,16 @@ export function useNotificationSound() {
   };
 
   const playSound = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(err => {
-        console.log('Sound play failed:', err);
-        if (!isInitialized) {
-          toast.error('Cliquez sur l\'icône son pour activer les notifications sonores');
-        }
-      });
+    // Auto-initialiser si pas encore fait
+    if (!audioRef.current) {
+      audioRef.current = new Audio(NOTIFICATION_SOUND);
+      audioRef.current.volume = 0.7;
     }
+    
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch(err => {
+      console.log('Sound play failed:', err);
+    });
   };
 
   return { playSound, initialize, isInitialized };
