@@ -1,0 +1,345 @@
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { Plus, Store, Trash2, Edit } from 'lucide-react';
+import { Textarea } from "@/components/ui/textarea";
+
+const communes = [
+  "Port-au-Prince", "Pétion-Ville", "Delmas", "Carrefour", "Tabarre",
+  "Croix-des-Bouquets", "Gressier", "Kenscoff", "Cité Soleil"
+];
+
+const categories = [
+  "Fastfood", "Restaurants", "Pharmacie", "Vêtements", 
+  "Epicerie", "Café", "Boulangerie"
+];
+
+export default function AdminShops() {
+  const [user, setUser] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingShop, setEditingShop] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const queryClient = useQueryClient();
+
+  const [formData, setFormData] = useState({
+    company_name: '',
+    company_category: '',
+    commune: '',
+    company_logo_url: '',
+    email: '',
+    phone: '',
+    opening_hours: '',
+    account_number: '',
+    bank_name: '',
+    account_holder_name: '',
+    user_id: ''
+  });
+
+  React.useEffect(() => {
+    base44.auth.me().then(u => {
+      setUser(u);
+      if (u.role !== 'admin') {
+        window.location.href = '/';
+      }
+    }).catch(() => {
+      window.location.href = '/';
+    });
+  }, []);
+
+  const { data: shops = [] } = useQuery({
+    queryKey: ['admin-shops'],
+    queryFn: () => base44.asServiceRole.entities.Shop.list('-created_date'),
+    enabled: !!user
+  });
+
+  const createShopMutation = useMutation({
+    mutationFn: (data) => base44.asServiceRole.entities.Shop.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-shops']);
+      toast.success('Boutique créée avec succès');
+      setShowForm(false);
+      resetForm();
+    },
+    onError: (error) => {
+      toast.error('Erreur: ' + error.message);
+    }
+  });
+
+  const updateShopMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.asServiceRole.entities.Shop.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-shops']);
+      toast.success('Boutique mise à jour');
+      setShowForm(false);
+      resetForm();
+    },
+    onError: (error) => {
+      toast.error('Erreur: ' + error.message);
+    }
+  });
+
+  const deleteShopMutation = useMutation({
+    mutationFn: (id) => base44.asServiceRole.entities.Shop.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-shops']);
+      toast.success('Boutique supprimée');
+    }
+  });
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { data } = await base44.functions.invoke('uploadFile', { file });
+      setFormData({ ...formData, company_logo_url: data.file_url });
+      toast.success('Image téléchargée');
+    } catch (error) {
+      toast.error('Erreur lors du téléchargement');
+    }
+    setUploading(false);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!formData.company_name || !formData.company_category || !formData.commune) {
+      toast.error('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    if (editingShop) {
+      updateShopMutation.mutate({ id: editingShop.id, data: formData });
+    } else {
+      createShopMutation.mutate({ ...formData, user_id: formData.user_id || user.id });
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      company_name: '',
+      company_category: '',
+      commune: '',
+      company_logo_url: '',
+      email: '',
+      phone: '',
+      opening_hours: '',
+      account_number: '',
+      bank_name: '',
+      account_holder_name: '',
+      user_id: ''
+    });
+    setEditingShop(null);
+  };
+
+  const handleEdit = (shop) => {
+    setEditingShop(shop);
+    setFormData({
+      company_name: shop.company_name || '',
+      company_category: shop.company_category || '',
+      commune: shop.commune || '',
+      company_logo_url: shop.company_logo_url || '',
+      email: shop.email || '',
+      phone: shop.phone || '',
+      opening_hours: shop.opening_hours || '',
+      account_number: shop.account_number || '',
+      bank_name: shop.bank_name || '',
+      account_holder_name: shop.account_holder_name || '',
+      user_id: shop.user_id || ''
+    });
+    setShowForm(true);
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-slate-800">Gestion des Boutiques</h1>
+          <Button onClick={() => { resetForm(); setShowForm(true); }} className="bg-orange-500 hover:bg-orange-600">
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter une boutique
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {shops.map(shop => (
+            <Card key={shop.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center overflow-hidden">
+                      {shop.company_logo_url ? (
+                        <img src={shop.company_logo_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <Store className="w-6 h-6 text-orange-500" />
+                      )}
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{shop.company_name}</CardTitle>
+                      <p className="text-sm text-slate-500">{shop.company_category}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(shop)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => deleteShopMutation.mutate(shop.id)}>
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="text-sm space-y-1">
+                <p><strong>Commune:</strong> {shop.commune}</p>
+                <p><strong>Email:</strong> {shop.email || 'Non renseigné'}</p>
+                <p><strong>Téléphone:</strong> {shop.phone || 'Non renseigné'}</p>
+                <p><strong>Horaires:</strong> {shop.opening_hours || 'Non renseigné'}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {shops.length === 0 && (
+          <div className="text-center py-12 text-slate-500">
+            Aucune boutique pour le moment
+          </div>
+        )}
+      </div>
+
+      <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) resetForm(); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingShop ? 'Modifier' : 'Ajouter'} une boutique</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label>Nom de la boutique *</Label>
+                <Input
+                  value={formData.company_name}
+                  onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label>Catégorie *</Label>
+                <Select value={formData.company_category} onValueChange={(val) => setFormData({ ...formData, company_category: val })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Commune *</Label>
+                <Select value={formData.commune} onValueChange={(val) => setFormData({ ...formData, commune: val })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {communes.map(com => (
+                      <SelectItem key={com} value={com}>{com}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label>Téléphone</Label>
+                <Input
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label>Horaires</Label>
+                <Textarea
+                  value={formData.opening_hours}
+                  onChange={(e) => setFormData({ ...formData, opening_hours: e.target.value })}
+                  placeholder="Ex: Lun-Ven: 8h-18h, Sam: 9h-17h"
+                />
+              </div>
+
+              <div className="col-span-2 border-t pt-4">
+                <h3 className="font-semibold mb-3">Informations bancaires</h3>
+              </div>
+
+              <div>
+                <Label>Numéro de compte</Label>
+                <Input
+                  value={formData.account_number}
+                  onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label>Nom de la banque</Label>
+                <Input
+                  value={formData.bank_name}
+                  onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label>Nom du titulaire du compte</Label>
+                <Input
+                  value={formData.account_holder_name}
+                  onChange={(e) => setFormData({ ...formData, account_holder_name: e.target.value })}
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label>Photo de profil</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                />
+                {formData.company_logo_url && (
+                  <img src={formData.company_logo_url} alt="Preview" className="mt-2 h-20 w-20 object-cover rounded-lg" />
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => { setShowForm(false); resetForm(); }}>
+                Annuler
+              </Button>
+              <Button type="submit" className="bg-orange-500 hover:bg-orange-600">
+                {editingShop ? 'Mettre à jour' : 'Créer'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
