@@ -172,10 +172,12 @@ export default function DriverDashboard() {
   const activeOrders = myOrders.filter(o => ['driver_assigned', 'in_delivery'].includes(o.status));
   const historyOrders = myOrders.filter(o => ['delivered', 'cancelled'].includes(o.status));
 
-  // Activer les notifications sonores pour nouvelles commandes disponibles
+  // Activer les notifications pour nouvelles commandes disponibles
   useOrderNotifications({
     enabled: notificationsEnabled && isAvailable,
-    onNewOrder: availableOrders
+    onNewOrder: availableOrders,
+    title: '🚴 Nouvelle livraison disponible',
+    message: 'Une nouvelle commande est prête pour livraison'
   });
 
   if (!user || user.current_profile !== 'livreur') {

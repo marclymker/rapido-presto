@@ -2,49 +2,35 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 
 export function useNotificationSound() {
-  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  useEffect(() => {
-    if ('Notification' in window) {
-      setPermissionGranted(Notification.permission === 'granted');
-      console.log('🔔 Permission notifications:', Notification.permission);
-    }
+  const initialize = useCallback(() => {
+    setIsInitialized(true);
   }, []);
 
-  const playSound = useCallback(async () => {
-    console.log('🔊 Tentative de jouer le son...');
+  const playSound = useCallback(async (title = '🔔 Nouvelle notification', body = 'Vous avez une nouvelle activité') => {
+    console.log('🔊 Tentative notification:', title);
     
-    // Demander la permission si pas encore accordée
-    if ('Notification' in window && Notification.permission === 'default') {
-      console.log('📝 Demande de permission...');
-      const permission = await Notification.requestPermission();
-      setPermissionGranted(permission === 'granted');
-      console.log('✅ Permission accordée:', permission);
-    }
-
-    // Créer une notification avec son
     if ('Notification' in window && Notification.permission === 'granted') {
-      console.log('📢 Affichage notification...');
-      const notification = new Notification('🔔 Nouvelle commande!', {
-        body: 'Vous avez une nouvelle activité',
+      console.log('📢 Affichage notification navigateur...');
+      const notification = new Notification(title, {
+        body,
         icon: '/favicon.ico',
         badge: '/favicon.ico',
-        tag: 'order-notification-' + Date.now(),
+        tag: 'notification-' + Date.now(),
         requireInteraction: false,
         silent: false,
         vibrate: [200, 100, 200]
       });
 
-      // Fermer après 5 secondes
       setTimeout(() => notification.close(), 5000);
-      
       console.log('✅ Notification affichée');
     } else {
       console.warn('⚠️ Notifications non autorisées');
     }
   }, []);
 
-  return { playSound, permissionGranted };
+  return { playSound, initialize, isInitialized };
 }
 
 export function useBrowserNotifications() {
@@ -83,38 +69,61 @@ export function useBrowserNotifications() {
   return { requestPermission, showNotification };
 }
 
-export function useOrderNotifications({ enabled, onNewOrder }) {
-  const { playSound } = useNotificationSound();
-  const { showNotification } = useBrowserNotifications();
+export function useOrderNotifications({ enabled, onNewOrder, title, message }) {
   const previousCountRef = useRef(0);
   const notificationCooldownRef = useRef(false);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
     if (!enabled || !onNewOrder) return;
 
     const currentCount = onNewOrder.length || 0;
     
-    // Vérifier s'il y a de nouvelles commandes et éviter les notifications trop fréquentes
-    if (currentCount > previousCountRef.current && previousCountRef.current > 0 && !notificationCooldownRef.current) {
+    // Initialiser au premier chargement sans notification
+    if (!hasInitializedRef.current) {
+      previousCountRef.current = currentCount;
+      hasInitializedRef.current = true;
+      return;
+    }
+    
+    // Vérifier s'il y a de nouvelles commandes
+    if (currentCount > previousCountRef.current && !notificationCooldownRef.current) {
       notificationCooldownRef.current = true;
       
       const newOrdersCount = currentCount - previousCountRef.current;
       
-      // Jouer le son avec notification native du système
-      playSound();
+      console.log('🔔 Nouvelle(s) commande(s) détectée(s):', newOrdersCount);
+      
+      // Notification navigateur native
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const notifTitle = title || '🔔 Nouvelle commande!';
+        const notifBody = message || `${newOrdersCount} nouvelle(s) commande(s) disponible(s)`;
+        
+        const notification = new Notification(notifTitle, {
+          body: notifBody,
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: 'order-notification-' + Date.now(),
+          requireInteraction: false,
+          silent: false,
+          vibrate: [200, 100, 200, 100, 200]
+        });
+        
+        setTimeout(() => notification.close(), 6000);
+      }
 
-      // Notification toast
+      // Toast dans l'app
       toast.success(`🔔 ${newOrdersCount} nouvelle(s) commande(s)!`, {
-        duration: 4000,
+        duration: 5000,
         important: true,
       });
 
-      // Réinitialiser le cooldown après 2 secondes
+      // Réinitialiser le cooldown
       setTimeout(() => {
         notificationCooldownRef.current = false;
-      }, 2000);
+      }, 3000);
     }
     
     previousCountRef.current = currentCount;
-  }, [enabled, onNewOrder, playSound, showNotification]);
+  }, [enabled, onNewOrder, title, message]);
 }

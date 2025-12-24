@@ -214,10 +214,12 @@ export default function EnterpriseDashboard() {
   const pendingOrders = orders.filter(o => o.status === 'pending');
   const activeOrders = orders.filter(o => ['preparing', 'ready', 'searching_driver'].includes(o.status));
 
-  // Activer les notifications sonores pour nouvelles commandes
+  // Activer les notifications pour nouvelles commandes
   useOrderNotifications({
     enabled: notificationsEnabled,
-    onNewOrder: pendingOrders
+    onNewOrder: pendingOrders,
+    title: '🔔 Nouvelle commande entreprise',
+    message: 'Vous avez une nouvelle commande à traiter'
   });
 
   if (!user || user.current_profile !== 'entreprise') {
