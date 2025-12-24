@@ -17,6 +17,7 @@ export default function OrderDetailModal({
 }) {
   const [confirmCode, setConfirmCode] = useState('');
   const [codeError, setCodeError] = useState('');
+  const [attempts, setAttempts] = useState(0);
   
   if (!order) return null;
 
@@ -25,8 +26,16 @@ export default function OrderDetailModal({
       onConfirmDelivery(order.id);
       setConfirmCode('');
       setCodeError('');
+      setAttempts(0);
     } else {
-      setCodeError('Code incorrect. Réessayez.');
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      
+      if (newAttempts >= 3) {
+        setCodeError('Trop de tentatives. Contactez le client.');
+      } else {
+        setCodeError(`Code incorrect. ${3 - newAttempts} tentative(s) restante(s).`);
+      }
     }
   };
 
@@ -134,9 +143,10 @@ export default function OrderDetailModal({
               <Button 
                 className="w-full bg-green-600 hover:bg-green-700"
                 onClick={handleConfirmDelivery}
+                disabled={attempts >= 3}
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Confirmer la livraison
+                {attempts >= 3 ? 'Tentatives épuisées' : 'Confirmer la livraison'}
               </Button>
             </div>
           )}
@@ -171,12 +181,21 @@ export default function OrderDetailModal({
           
           {/* Livreur Status Actions */}
           {userType === 'livreur' && order.status === 'driver_assigned' && (
-            <Button 
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              onClick={() => onUpdateStatus(order.id, 'in_delivery')}
-            >
-              Démarrer la livraison
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                onClick={() => onUpdateStatus(order.id, 'in_delivery')}
+              >
+                Démarrer la livraison
+              </Button>
+              <Button 
+                variant="outline"
+                className="w-full border-red-200 text-red-600 hover:bg-red-50"
+                onClick={() => onUpdateStatus(order.id, 'searching_driver')}
+              >
+                Refuser la livraison
+              </Button>
+            </div>
           )}
         </div>
       </DialogContent>

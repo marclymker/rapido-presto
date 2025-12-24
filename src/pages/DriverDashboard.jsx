@@ -194,13 +194,6 @@ export default function DriverDashboard() {
 
                     <div className="flex gap-2 mt-4">
                       <Button 
-                        variant="outline"
-                        className="flex-1 border-red-200 text-red-600"
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Refuser
-                      </Button>
-                      <Button 
                         className="flex-1 bg-green-600 hover:bg-green-700"
                         onClick={() => acceptOrderMutation.mutate(order)}
                         disabled={acceptOrderMutation.isPending}
