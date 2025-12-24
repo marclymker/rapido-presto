@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Home, ShoppingBag, User, Package, Store, Bike } from 'lucide-react';
 import { Toaster } from "@/components/ui/sonner";
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
+import NotificationPermission from '@/components/notifications/NotificationPermission';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -55,9 +56,10 @@ export default function Layout({ children, currentPageName }) {
     <div className="min-h-screen bg-slate-50 pb-20">
       <Toaster position="top-center" />
       
-      {/* Profile Switcher (top right for desktop) */}
+      {/* Profile Switcher & Notifications (top right for desktop) */}
       {user && !noNavPages.includes(currentPageName) && (
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+          <NotificationPermission userType={user.current_profile} />
           <ProfileSwitcher user={user} />
         </div>
       )}

@@ -3,6 +3,65 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+// Play notification sound
+function playNotificationSound(type = 'default') {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Different sounds for different types
+    const frequencies = {
+      entreprise: 1000,
+      livreur: 900,
+      client: 800,
+      default: 850
+    };
+    
+    oscillator.frequency.value = frequencies[type] || frequencies.default;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.4);
+  } catch (error) {
+    console.error('Audio error:', error);
+  }
+}
+
+// Show browser notification
+function showBrowserNotification(title, options = {}) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      const notification = new Notification(title, {
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        vibrate: [200, 100, 200],
+        requireInteraction: false,
+        ...options
+      });
+      
+      notification.onclick = function() {
+        window.focus();
+        if (options.data?.url) {
+          window.location.href = options.data.url;
+        }
+        this.close();
+      };
+      
+      return notification;
+    } catch (error) {
+      console.error('Notification error:', error);
+    }
+  }
+  return null;
+}
+
 export function useOrderNotifications(user) {
   const lastCheckRef = useRef(Date.now());
   const notifiedOrdersRef = useRef(new Set());
@@ -53,22 +112,38 @@ export function useOrderNotifications(user) {
           toast.success('Votre commande est en préparation!', {
             description: `Commande #${order.order_number}`
           });
-          playNotificationSound();
+          playNotificationSound('client');
+          showBrowserNotification('🍽️ Commande en préparation', {
+            body: `Votre commande #${order.order_number} est en cours de préparation`,
+            tag: order.id
+          });
         } else if (order.status === 'driver_assigned') {
           toast.info('Un livreur a été assigné!', {
             description: `${order.driver_name} va livrer votre commande`
           });
-          playNotificationSound();
+          playNotificationSound('client');
+          showBrowserNotification('🚴 Livreur assigné', {
+            body: `${order.driver_name} va livrer votre commande`,
+            tag: order.id
+          });
         } else if (order.status === 'in_delivery') {
           toast.info('Votre commande est en route!', {
             description: `${order.driver_name} est en chemin`
           });
-          playNotificationSound();
+          playNotificationSound('client');
+          showBrowserNotification('🚚 Commande en route', {
+            body: `${order.driver_name} est en chemin vers vous`,
+            tag: order.id
+          });
         } else if (order.status === 'cancelled') {
           toast.error('Commande annulée', {
             description: `Commande #${order.order_number} a été annulée`
           });
-          playNotificationSound();
+          playNotificationSound('client');
+          showBrowserNotification('❌ Commande annulée', {
+            body: `La commande #${order.order_number} a été annulée`,
+            tag: order.id
+          });
         }
       }
     });
@@ -90,7 +165,12 @@ export function useOrderNotifications(user) {
           description: `Commande #${order.order_number} - ${order.total} HTG`,
           duration: 8000
         });
-        playNotificationSound();
+        playNotificationSound('entreprise');
+        showBrowserNotification('🛒 Nouvelle commande!', {
+          body: `Commande #${order.order_number} - ${order.total} HTG\n${order.items?.length || 0} article(s)`,
+          tag: order.id,
+          requireInteraction: true
+        });
       }
     });
   }, [shopOrders, user]);
@@ -110,7 +190,12 @@ export function useOrderNotifications(user) {
           description: `${order.shop_name} → ${order.client_commune} - ${order.total} HTG`,
           duration: 10000
         });
-        playNotificationSound();
+        playNotificationSound('livreur');
+        showBrowserNotification('📦 Nouvelle livraison!', {
+          body: `${order.shop_name} → ${order.client_commune}\nGagnez ${order.total} HTG`,
+          tag: order.id,
+          requireInteraction: true
+        });
       }
     });
   }, [availableOrders, user]);
@@ -119,12 +204,4 @@ export function useOrderNotifications(user) {
     pendingShopOrders: shopOrders.length,
     availableDeliveries: availableOrders.length
   };
-}
-
-function playNotificationSound() {
-  try {
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZUQ0PVqvn77BdGQU+ltrywnMnBSh+zfHaizsIGGS59uighRALUKXh8bllHgU2k9n0y38tBSp3y/HdlkILEl+y6OyrWRYLRp3e8b9uJAU0hdPz1YU1Bhxrvu7mnlcOD1Sr5O+zYRsGPJPX88F3KwUpe8zw24w+CBhkvPTonFENDlOo4/K4aB8GM5DY88V7LgUqd8rx3Y9BCxFdsuru+yI+CBhkvPXmn1UOEFWq5O+1YhsGOo/V88J4LAUpe8vw24s+CBdk');
-    audio.volume = 0.3;
-    audio.play().catch(() => {});
-  } catch (e) {}
 }
