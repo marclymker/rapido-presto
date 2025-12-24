@@ -86,7 +86,56 @@ export default function Cart() {
       const shop = cartItems[0];
       const deliveryFee = calculateDeliveryFee(user.commune, shop.shop_commune);
       const subtotal = cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+      const totalAmount = subtotal + deliveryFee;
       
+      // Si MonCash, initier le paiement
+      if (paymentMethod === 'moncash') {
+        const { data: paymentData } = await base44.functions.invoke('moncashCreatePayment', {
+          orderId: orderNum,
+          amount: totalAmount
+        });
+        
+        if (paymentData.success) {
+          // Créer la commande avec statut en attente de paiement
+          const order = await base44.entities.Order.create({
+            order_number: orderNum,
+            client_id: user.id,
+            client_name: user.full_name,
+            client_phone: user.phone,
+            client_address: user.address || '',
+            client_commune: user.commune,
+            shop_id: shop.shop_id,
+            shop_name: shop.shop_name,
+            shop_commune: shop.shop_commune,
+            items: cartItems.map(item => ({
+              product_id: item.product_id,
+              name: item.product_name,
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+              total: item.unit_price * item.quantity
+            })),
+            subtotal: subtotal,
+            delivery_fee: deliveryFee,
+            total: totalAmount,
+            payment_method: paymentMethod,
+            status: 'pending',
+            payment_status: 'pending',
+            confirmation_code: code,
+            moncash_transaction_id: paymentData.transactionId
+          });
+          
+          // Vider le panier
+          await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+          
+          // Rediriger vers MonCash
+          window.location.href = paymentData.paymentUrl;
+          return { orderNum, code, redirecting: true };
+        } else {
+          throw new Error('Erreur lors de l\'initialisation du paiement MonCash');
+        }
+      }
+      
+      // Paiement autre que MonCash
       const order = await base44.entities.Order.create({
         order_number: orderNum,
         client_id: user.id,
@@ -106,7 +155,7 @@ export default function Cart() {
         })),
         subtotal: subtotal,
         delivery_fee: deliveryFee,
-        total: subtotal + deliveryFee,
+        total: totalAmount,
         payment_method: paymentMethod,
         status: 'pending',
         confirmation_code: code
@@ -124,14 +173,16 @@ export default function Cart() {
       return { orderNum, code };
     },
     onSuccess: (data) => {
+      if (data.redirecting) return; // Ne rien faire si on redirige vers MonCash
+      
       queryClient.invalidateQueries(['cart']);
       setOrderNumber(data.orderNum);
       setConfirmCode(data.code);
       setStep('confirmed');
       toast.success('Commande confirmée!');
     },
-    onError: () => {
-      toast.error('Erreur lors de la création de la commande');
+    onError: (error) => {
+      toast.error(error.message || 'Erreur lors de la création de la commande');
     }
   });
 
