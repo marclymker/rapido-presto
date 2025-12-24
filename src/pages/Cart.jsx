@@ -41,7 +41,16 @@ export default function Cart() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {
+    base44.auth.me().then(u => {
+      setUser(u);
+      
+      // Redirect if wrong profile
+      if (u.current_profile !== 'client') {
+        window.location.href = createPageUrl(
+          u.current_profile === 'entreprise' ? 'EnterpriseDashboard' : 'DriverDashboard'
+        );
+      }
+    }).catch(() => {
       navigate(createPageUrl('Home'));
     });
   }, []);

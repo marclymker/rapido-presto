@@ -32,6 +32,13 @@ export default function Account() {
         commune: u.commune || ''
       });
       setLoading(false);
+      
+      // Redirect if wrong profile
+      if (u.current_profile !== 'client') {
+        window.location.href = createPageUrl(
+          u.current_profile === 'entreprise' ? 'EnterpriseDashboard' : 'DriverDashboard'
+        );
+      }
     }).catch(() => setLoading(false));
   }, []);
 
