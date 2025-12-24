@@ -15,6 +15,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
 import { useOrderNotifications, useBrowserNotifications, useNotificationSound } from '@/components/notifications/NotificationManager';
+import { useWebSocket, useAutoRefresh } from '@/components/realtime/useWebSocket';
+import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 
 export default function DriverDashboard() {
   const [user, setUser] = useState(null);
