@@ -1,130 +1,261 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 
-// Créer un contexte audio global
-let audioContext = null;
-let oscillatorBuffer = null;
-let isAudioUnlocked = false;
-
 export function useNotificationSound() {
-  const [isInitialized, setIsInitialized] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const hasInteractedRef = useRef(false);
 
-  useEffect(() => {
-    // Initialiser au premier clic/touch sur la page
-    const unlockAudio = async () => {
-      if (isAudioUnlocked) return;
-
-      try {
-        if (!audioContext) {
-          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  // Technique 1: Créer un son très court qui peut passer les restrictions
+  const createShortBeep = useCallback(() => {
+    try {
+      // Essayer d'abord avec l'API Audio plus permissive
+      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(context.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, context.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.1);
+      
+      oscillator.start(context.currentTime);
+      oscillator.stop(context.currentTime + 0.1);
+      
+      // Fermer le contexte après utilisation pour éviter la suspension
+      setTimeout(() => {
+        if (context.state !== 'closed') {
+          context.close();
         }
-
-        // Créer un son de notification
-        if (!oscillatorBuffer) {
-          const sampleRate = audioContext.sampleRate;
-          const duration = 0.2;
-          const bufferSize = sampleRate * duration;
-          oscillatorBuffer = audioContext.createBuffer(1, bufferSize, sampleRate);
-          const channelData = oscillatorBuffer.getChannelData(0);
-
-          // Générer une tonalité simple (800Hz)
-          for (let i = 0; i < bufferSize; i++) {
-            const t = i / sampleRate;
-            channelData[i] = Math.sin(2 * Math.PI * 800 * t) * Math.exp(-t * 5);
-          }
-        }
-
-        // Jouer un son silencieux pour débloquer
-        const source = audioContext.createBufferSource();
-        source.buffer = oscillatorBuffer;
-        const gainNode = audioContext.createGain();
-        gainNode.gain.value = 0;
-        source.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        source.start(0);
-
-        await audioContext.resume();
-        isAudioUnlocked = true;
-        setIsInitialized(true);
-      } catch (err) {
-        console.log('Audio unlock failed:', err);
-      }
-    };
-
-    // Écouter les interactions utilisateur
-    const events = ['click', 'touchstart', 'keydown'];
-    events.forEach(event => {
-      document.addEventListener(event, unlockAudio, { once: true });
-    });
-
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, unlockAudio);
-      });
-    };
+      }, 200);
+      
+      return true;
+    } catch (e) {
+      console.log('Web Audio API failed, trying fallback');
+      return false;
+    }
   }, []);
 
-  const playSound = () => {
-    if (!audioContext || !oscillatorBuffer || !isAudioUnlocked) {
-      console.log('Audio not ready yet');
-      return;
-    }
-
+  // Technique 2: Audio element avec plusieurs tentatives
+  const playAudioElement = useCallback(async () => {
     try {
-      const source = audioContext.createBufferSource();
-      source.buffer = oscillatorBuffer;
-      const gainNode = audioContext.createGain();
-      gainNode.gain.value = 0.3;
-      source.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      source.start(0);
-    } catch (err) {
-      console.log('Sound play failed:', err);
-    }
-  };
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+        // Son très court encodé en base64
+        audioRef.current.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6v////////////////////////////////8AAAAATGF2YzU4LjE5AAAAAAAAAAAAAAAAJAAAAAAAAAAAASDs90hvAAAAAAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6v////////////////////////////////8AAAAATGF2YzU4LjE5AAAAAAAAAAAAAAAAJAAAAAAAAAAAASDs90hvAAAAAAAAAAAAAAAAAAAA';
+        audioRef.current.volume = 0.5;
+        audioRef.current.preload = 'auto';
+      }
 
-  const initialize = () => {
-    // Compatibilité avec l'ancienne API
-    setIsInitialized(isAudioUnlocked);
-  };
-
-  return { playSound, initialize, isInitialized };
-}
-
-export function useBrowserNotifications() {
-  const requestPermission = async () => {
-    // Ne pas vérifier l'API Notification, OneSignal gère cela
-    return true;
-  };
-
-  const showNotification = () => {
-    // OneSignal gère les notifications
-    return null;
-  };
-
-  return { requestPermission, showNotification };
-}
-
-export function useOrderNotifications({ enabled, onNewOrder }) {
-  const { playSound } = useNotificationSound();
-  const previousCountRef = useRef(0);
-
-  useEffect(() => {
-    if (enabled && onNewOrder) {
-      const currentCount = onNewOrder.length || 0;
+      // Réinitialiser et jouer
+      audioRef.current.currentTime = 0;
       
-      // Vérifier s'il y a de nouvelles commandes
-      if (currentCount > previousCountRef.current && previousCountRef.current > 0) {
-        // Jouer le son
-        playSound();
-
-        // Toast visuel dans l'app
-        toast.success(`🔔 Nouvelle commande reçue!`, {
-          duration: 5000
+      // Important: Ne pas attendre la promesse, laisser échouer silencieusement
+      const playPromise = audioRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Échec silencieux - on continue avec d'autres méthodes
         });
       }
       
-      previousCountRef.current = currentCount;
+      return true;
+    } catch (e) {
+      return false;
     }
+  }, []);
+
+  // Technique 3: Video element (moins restrictif que audio)
+  const playVideoElement = useCallback(() => {
+    try {
+      const video = document.createElement('video');
+      video.style.display = 'none';
+      video.volume = 0.3;
+      video.muted = false;
+      
+      // Créer une vidéo silencieuse avec une piste audio
+      const blob = new Blob([new Uint8Array([0])], { type: 'video/mp4' });
+      video.src = URL.createObjectURL(blob);
+      
+      document.body.appendChild(video);
+      
+      video.play().catch(() => {
+        // Échec attendu
+      });
+      
+      // Nettoyer après
+      setTimeout(() => {
+        video.pause();
+        document.body.removeChild(video);
+        URL.revokeObjectURL(video.src);
+      }, 100);
+      
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }, []);
+
+  // Technique 4: Utiliser un iframe pour contourner les restrictions
+  const playViaIframe = useCallback(() => {
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.sandbox = 'allow-scripts allow-same-origin';
+      
+      // Générer une page HTML avec du son
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Audio</title>
+        </head>
+        <body>
+          <audio id="audio" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="></audio>
+          <script>
+            document.getElementById('audio').play().catch(() => {});
+          </script>
+        </body>
+        </html>
+      `;
+      
+      iframe.srcdoc = html;
+      document.body.appendChild(iframe);
+      
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+      
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }, []);
+
+  const playSound = useCallback(async () => {
+    if (isPlaying) return;
+    
+    setIsPlaying(true);
+    
+    // Essayer toutes les méthodes en parallèle
+    const methods = [
+      createShortBeep,
+      playAudioElement,
+      playVideoElement,
+      playViaIframe
+    ];
+    
+    // Essayer chaque méthode jusqu'à ce qu'une réussisse
+    for (const method of methods) {
+      try {
+        const success = await Promise.resolve(method());
+        if (success) {
+          console.log('Sound played successfully with method:', method.name);
+          break;
+        }
+      } catch (error) {
+        // Continuer avec la méthode suivante
+      }
+    }
+    
+    // Réinitialiser après un court délai
+    setTimeout(() => setIsPlaying(false), 100);
+  }, [createShortBeep, playAudioElement, playVideoElement, playViaIframe, isPlaying]);
+
+  // Initialiser au chargement en essayant de débloquer l'audio
+  useEffect(() => {
+    // Essayer immédiatement
+    setTimeout(() => {
+      playSound();
+    }, 1000);
+
+    // Marquer l'interaction au premier événement utilisateur
+    const markInteraction = () => {
+      hasInteractedRef.current = true;
+    };
+
+    window.addEventListener('click', markInteraction, { once: true });
+    window.addEventListener('keydown', markInteraction, { once: true });
+    window.addEventListener('touchstart', markInteraction, { once: true });
+    window.addEventListener('scroll', markInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener('click', markInteraction);
+      window.removeEventListener('keydown', markInteraction);
+      window.removeEventListener('touchstart', markInteraction);
+      window.removeEventListener('scroll', markInteraction);
+    };
+  }, [playSound]);
+
+  return { playSound };
+}
+
+export function useOrderNotifications({ enabled, onNewOrder }: { enabled: boolean; onNewOrder: any[] }) {
+  const { playSound } = useNotificationSound();
+  const previousCountRef = useRef(0);
+  const notificationCooldownRef = useRef(false);
+
+  useEffect(() => {
+    if (!enabled || !onNewOrder) return;
+
+    const currentCount = onNewOrder.length || 0;
+    
+    // Vérifier s'il y a de nouvelles commandes et éviter les notifications trop fréquentes
+    if (currentCount > previousCountRef.current && previousCountRef.current > 0 && !notificationCooldownRef.current) {
+      notificationCooldownRef.current = true;
+      
+      // Jouer le son immédiatement
+      playSound();
+
+      // Notification toast
+      const newOrdersCount = currentCount - previousCountRef.current;
+      toast.success(`🔔 ${newOrdersCount} nouvelle(s) commande(s)!`, {
+        duration: 4000,
+        important: true,
+      });
+
+      // Réinitialiser le cooldown après 2 secondes
+      setTimeout(() => {
+        notificationCooldownRef.current = false;
+      }, 2000);
+    }
+    
+    previousCountRef.current = currentCount;
   }, [enabled, onNewOrder, playSound]);
+}
+
+// Hook additionnel pour forcer le son au besoin
+export function useForceSound() {
+  const { playSound } = useNotificationSound();
+  
+  const forcePlay = useCallback(() => {
+    // Créer un contexte audio caché et le maintenir actif
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Créer un nœud de gain silencieux pour maintenir le contexte actif
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 0;
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.start(0);
+      oscillator.stop(0.001);
+      
+      // Maintenant jouer le vrai son
+      setTimeout(() => {
+        playSound();
+        audioContext.close();
+      }, 50);
+    } catch (e) {
+      // Fallback simple
+      playSound();
+    }
+  }, [playSound]);
+  
+  return { forcePlay };
 }
