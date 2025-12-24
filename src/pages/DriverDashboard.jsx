@@ -24,6 +24,26 @@ export default function DriverDashboard() {
   const queryClient = useQueryClient();
   const { requestPermission } = useBrowserNotifications();
   const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound();
+  
+  // WebSocket temps réel
+  const { isConnected, broadcast } = useWebSocket({
+    channel: 'orders',
+    userId: user?.id,
+    enabled: !!user && isAvailable
+  });
+  
+  // Auto-refresh
+  useAutoRefresh({ 
+    queryKey: ['available-orders'], 
+    refetchInterval: 5000,
+    enabled: isAvailable 
+  });
+  
+  useAutoRefresh({ 
+    queryKey: ['driver-orders'], 
+    refetchInterval: 5000,
+    enabled: !!user?.id 
+  });
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -143,6 +163,7 @@ export default function DriverDashboard() {
               <p className="text-sm text-slate-500">Livreur • {livreurData.vehicle_type}</p>
             </div>
             <div className="flex items-center gap-3">
+              <RealtimeIndicator isConnected={isConnected} />
               <ProfileSwitcher user={user} />
               <Button
                 variant="ghost"

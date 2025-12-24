@@ -13,6 +13,8 @@ import CategoryTabs from '@/components/ui/CategoryTabs';
 import ShopCard from '@/components/ui/ShopCard';
 import ProductCard from '@/components/ui/ProductCard';
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
+import { useAutoRefresh } from '@/components/realtime/useWebSocket';
+import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -21,6 +23,19 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const queryClient = useQueryClient();
+  
+  // Auto-refresh des données
+  useAutoRefresh({ 
+    queryKey: ['shops'], 
+    refetchInterval: 5000,
+    enabled: !selectedShop 
+  });
+  
+  useAutoRefresh({ 
+    queryKey: ['products'], 
+    refetchInterval: 5000,
+    enabled: !!selectedShop 
+  });
 
   useEffect(() => {
     base44.auth.me().then(u => {

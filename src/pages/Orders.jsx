@@ -15,6 +15,13 @@ import OrderDetailModal from '@/components/modals/OrderDetailModal';
 export default function Orders() {
   const [user, setUser] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  
+  // Auto-refresh toutes les 5 secondes
+  useAutoRefresh({ 
+    queryKey: ['my-orders'], 
+    refetchInterval: 5000,
+    enabled: !!user?.id 
+  });
 
   useEffect(() => {
     base44.auth.me().then(u => {

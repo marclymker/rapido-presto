@@ -18,6 +18,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
 import { useOrderNotifications, useBrowserNotifications, useNotificationSound } from '@/components/notifications/NotificationManager';
+import { useWebSocket, useAutoRefresh } from '@/components/realtime/useWebSocket';
+import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
@@ -31,6 +33,20 @@ export default function EnterpriseDashboard() {
   const queryClient = useQueryClient();
   const { requestPermission } = useBrowserNotifications();
   const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound();
+  
+  // WebSocket temps réel
+  const { isConnected, broadcast } = useWebSocket({
+    channel: 'orders',
+    userId: user?.id,
+    enabled: !!user
+  });
+  
+  // Auto-refresh toutes les 5 secondes
+  useAutoRefresh({ 
+    queryKey: ['shop-orders'], 
+    refetchInterval: 5000,
+    enabled: !!myShop?.id 
+  });
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -86,12 +102,11 @@ export default function EnterpriseDashboard() {
     enabled: !!myShop?.id
   });
 
-  // Fetch orders
+  // Fetch orders avec animation
   const { data: orders = [] } = useQuery({
     queryKey: ['shop-orders', myShop?.id],
     queryFn: () => base44.entities.Order.filter({ shop_id: myShop?.id }, '-created_date'),
-    enabled: !!myShop?.id,
-    refetchInterval: 10000 // Refresh every 10 seconds
+    enabled: !!myShop?.id
   });
 
   const productMutation = useMutation({
@@ -132,6 +147,7 @@ export default function EnterpriseDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['shop-orders']);
+      broadcast('Order', 'updated');
       setSelectedOrder(null);
       toast.success('Statut mis à jour');
     }
@@ -206,6 +222,7 @@ export default function EnterpriseDashboard() {
               <p className="text-sm text-slate-500">{entrepriseData.company_category}</p>
             </div>
             <div className="flex items-center gap-3">
+              <RealtimeIndicator isConnected={isConnected} />
               <ProfileSwitcher user={user} />
               <Button
                 variant="ghost"
