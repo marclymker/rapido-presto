@@ -38,6 +38,7 @@ export default function Cart() {
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [orderNumber, setOrderNumber] = useState('');
   const [confirmCode, setConfirmCode] = useState('');
+  const [redirectingToMoncash, setRedirectingToMoncash] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -90,14 +91,20 @@ export default function Cart() {
       
       // Si MonCash, initier le paiement
       if (paymentMethod === 'moncash') {
-        const { data: paymentData } = await base44.functions.invoke('moncashCreatePayment', {
-          orderId: orderNum,
-          amount: totalAmount
-        });
-        
-        if (paymentData.success) {
+        try {
+          const response = await base44.functions.invoke('moncashCreatePayment', {
+            orderId: orderNum,
+            amount: totalAmount
+          });
+          
+          const paymentData = response.data;
+          
+          if (!paymentData || !paymentData.success) {
+            throw new Error(paymentData?.error || 'Erreur lors de l\'initialisation du paiement MonCash');
+          }
+          
           // Créer la commande avec statut en attente de paiement
-          const order = await base44.entities.Order.create({
+          await base44.entities.Order.create({
             order_number: orderNum,
             client_id: user.id,
             client_name: user.full_name,
@@ -127,11 +134,11 @@ export default function Cart() {
           // Vider le panier
           await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
           
-          // Rediriger vers MonCash
-          window.location.href = paymentData.paymentUrl;
-          return { orderNum, code, redirecting: true };
-        } else {
-          throw new Error('Erreur lors de l\'initialisation du paiement MonCash');
+          // Retourner les données pour redirection
+          return { orderNum, code, moncashUrl: paymentData.paymentUrl, redirecting: true };
+        } catch (error) {
+          console.error('MonCash payment error:', error);
+          throw new Error(error.message || 'Erreur MonCash');
         }
       }
       
@@ -173,7 +180,15 @@ export default function Cart() {
       return { orderNum, code };
     },
     onSuccess: (data) => {
-      if (data.redirecting) return; // Ne rien faire si on redirige vers MonCash
+      if (data.redirecting && data.moncashUrl) {
+        // Redirection vers MonCash
+        setRedirectingToMoncash(true);
+        toast.success('Redirection vers MonCash...');
+        setTimeout(() => {
+          window.location.href = data.moncashUrl;
+        }, 500);
+        return;
+      }
       
       queryClient.invalidateQueries(['cart']);
       setOrderNumber(data.orderNum);
@@ -414,9 +429,9 @@ export default function Cart() {
                 <Button 
                   className="flex-1 bg-orange-500 hover:bg-orange-600"
                   onClick={() => createOrderMutation.mutate()}
-                  disabled={createOrderMutation.isPending}
+                  disabled={createOrderMutation.isPending || redirectingToMoncash}
                 >
-                  {createOrderMutation.isPending ? 'Traitement...' : 'Confirmer'}
+                  {redirectingToMoncash ? 'Redirection MonCash...' : createOrderMutation.isPending ? 'Traitement...' : 'Confirmer'}
                 </Button>
               </div>
             </motion.div>
