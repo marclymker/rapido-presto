@@ -51,18 +51,44 @@ export default function EnterpriseDashboard() {
     }
   }, [user, requestPermission]);
 
+  // Fetch or create shop for this user
+  const { data: myShop } = useQuery({
+    queryKey: ['my-shop', user?.id],
+    queryFn: async () => {
+      const shops = await base44.entities.Shop.filter({ user_id: user.id });
+      if (shops.length > 0) return shops[0];
+      
+      // Create shop if doesn't exist
+      const entrepriseData = user.profiles?.entreprise || {};
+      if (entrepriseData.is_active) {
+        return base44.entities.Shop.create({
+          user_id: user.id,
+          company_name: entrepriseData.company_name,
+          company_category: entrepriseData.company_category,
+          company_logo_url: entrepriseData.company_logo_url,
+          commune: user.commune,
+          rating: entrepriseData.rating || 4.5,
+          delivery_time_minutes: entrepriseData.delivery_time_minutes || 30,
+          is_active: true
+        });
+      }
+      return null;
+    },
+    enabled: !!user?.id
+  });
+
   // Fetch products
   const { data: products = [] } = useQuery({
-    queryKey: ['my-products', user?.id],
-    queryFn: () => base44.entities.Product.filter({ shop_id: user?.id }),
-    enabled: !!user?.id
+    queryKey: ['my-products', myShop?.id],
+    queryFn: () => base44.entities.Product.filter({ shop_id: myShop.id }),
+    enabled: !!myShop?.id
   });
 
   // Fetch orders
   const { data: orders = [] } = useQuery({
-    queryKey: ['shop-orders', user?.id],
-    queryFn: () => base44.entities.Order.filter({ shop_id: user?.id }, '-created_date'),
-    enabled: !!user?.id,
+    queryKey: ['shop-orders', myShop?.id],
+    queryFn: () => base44.entities.Order.filter({ shop_id: myShop?.id }, '-created_date'),
+    enabled: !!myShop?.id,
     refetchInterval: 10000 // Refresh every 10 seconds
   });
 
@@ -73,7 +99,7 @@ export default function EnterpriseDashboard() {
       }
       return base44.entities.Product.create({
         ...data,
-        shop_id: user.id,
+        shop_id: myShop.id,
         shop_name: entrepriseData.company_name,
         category: entrepriseData.company_category
       });

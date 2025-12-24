@@ -52,23 +52,13 @@ export default function Home() {
     }).catch(() => {});
   }, []);
 
-  // Fetch shops (entreprises) - using profiles structure
+  // Fetch shops (boutiques) - public entity
   const { data: shops = [] } = useQuery({
     queryKey: ['shops', selectedCategory],
-    queryFn: async () => {
-      const users = await base44.entities.User.list();
-      return users.filter(u => 
-        u.profiles?.entreprise?.is_active && 
-        u.profiles?.entreprise?.company_category === selectedCategory
-      ).map(u => ({
-        ...u,
-        company_name: u.profiles.entreprise.company_name,
-        company_category: u.profiles.entreprise.company_category,
-        company_logo_url: u.profiles.entreprise.company_logo_url,
-        rating: u.profiles.entreprise.rating,
-        delivery_time_minutes: u.profiles.entreprise.delivery_time_minutes
-      }));
-    }
+    queryFn: () => base44.entities.Shop.filter({ 
+      company_category: selectedCategory,
+      is_active: true 
+    })
   });
 
   // Fetch products for selected shop
@@ -103,9 +93,9 @@ export default function Home() {
           unit_price: product.promo_price && product.promo_price < product.price 
             ? product.promo_price 
             : product.price,
-          shop_id: selectedShop.id,
+          shop_id: selectedShop.user_id,
           shop_name: selectedShop.company_name,
-          shop_commune: selectedShop.commune
+          shop_commune: shopCommune
         });
       }
     },
@@ -121,18 +111,21 @@ export default function Home() {
       return;
     }
     // Check if cart has items from different shop
-    if (cartItems.length > 0 && cartItems[0].shop_id !== selectedShop.id) {
+    if (cartItems.length > 0 && cartItems[0].shop_id !== selectedShop.user_id) {
       toast.error('Votre panier contient des articles d\'une autre boutique');
       return;
     }
     addToCartMutation.mutate({ product, quantity });
-  };
+    };
 
-  const filteredProducts = products.filter(p => 
+    const filteredProducts = products.filter(p => 
     p.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    );
 
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+    // Get shop owner's commune
+    const shopCommune = selectedShop?.commune || '';
 
   return (
     <div className="min-h-screen bg-slate-50">
