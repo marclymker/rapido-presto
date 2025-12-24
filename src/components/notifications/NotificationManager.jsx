@@ -1,37 +1,91 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-// Son de notification simple en data URI (courte tonalité)
-const NOTIFICATION_SOUND = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZjDgIHGm98OScTgwOUKvm7rltIAU7k9n0z3krBSl+zPLaizsIHGu88OWcTQsNUavm7rltIAU7k9n0zn4rBSh9y/HaiTsIHGy98OWcTQsNUKrm7rltIAU7lNj0z34rBSh9y/HaizsIHG298OWcTQwOUavm7bptIAU7lNn0zn4rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0zn4rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7rltIAU7k9n0z34rBSh9y/HaizsIHGy98OWcTQsNUavm7g==';
+// Créer un contexte audio global
+let audioContext = null;
+let oscillatorBuffer = null;
+let isAudioUnlocked = false;
 
 export function useNotificationSound() {
-  const audioRef = useRef(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const initialize = () => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio(NOTIFICATION_SOUND);
-      audioRef.current.volume = 0.7;
-    }
-    // Jouer et arrêter immédiatement pour initialiser le contexte audio
-    audioRef.current.play().then(() => {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsInitialized(true);
-    }).catch(err => console.log('Audio init failed:', err));
-  };
+  useEffect(() => {
+    // Initialiser au premier clic/touch sur la page
+    const unlockAudio = async () => {
+      if (isAudioUnlocked) return;
+
+      try {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        // Créer un son de notification
+        if (!oscillatorBuffer) {
+          const sampleRate = audioContext.sampleRate;
+          const duration = 0.2;
+          const bufferSize = sampleRate * duration;
+          oscillatorBuffer = audioContext.createBuffer(1, bufferSize, sampleRate);
+          const channelData = oscillatorBuffer.getChannelData(0);
+
+          // Générer une tonalité simple (800Hz)
+          for (let i = 0; i < bufferSize; i++) {
+            const t = i / sampleRate;
+            channelData[i] = Math.sin(2 * Math.PI * 800 * t) * Math.exp(-t * 5);
+          }
+        }
+
+        // Jouer un son silencieux pour débloquer
+        const source = audioContext.createBufferSource();
+        source.buffer = oscillatorBuffer;
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = 0;
+        source.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        source.start(0);
+
+        await audioContext.resume();
+        isAudioUnlocked = true;
+        setIsInitialized(true);
+      } catch (err) {
+        console.log('Audio unlock failed:', err);
+      }
+    };
+
+    // Écouter les interactions utilisateur
+    const events = ['click', 'touchstart', 'keydown'];
+    events.forEach(event => {
+      document.addEventListener(event, unlockAudio, { once: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, unlockAudio);
+      });
+    };
+  }, []);
 
   const playSound = () => {
-    // Auto-initialiser si pas encore fait
-    if (!audioRef.current) {
-      audioRef.current = new Audio(NOTIFICATION_SOUND);
-      audioRef.current.volume = 0.7;
+    if (!audioContext || !oscillatorBuffer || !isAudioUnlocked) {
+      console.log('Audio not ready yet');
+      return;
     }
-    
-    audioRef.current.currentTime = 0;
-    audioRef.current.play().catch(err => {
+
+    try {
+      const source = audioContext.createBufferSource();
+      source.buffer = oscillatorBuffer;
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 0.3;
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      source.start(0);
+    } catch (err) {
       console.log('Sound play failed:', err);
-    });
+    }
+  };
+
+  const initialize = () => {
+    // Compatibilité avec l'ancienne API
+    setIsInitialized(isAudioUnlocked);
   };
 
   return { playSound, initialize, isInitialized };
