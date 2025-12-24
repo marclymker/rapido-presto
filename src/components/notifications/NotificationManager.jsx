@@ -194,6 +194,18 @@ export function useNotificationSound() {
   return { playSound };
 }
 
+export function useBrowserNotifications() {
+  const requestPermission = async () => {
+    return true;
+  };
+
+  const showNotification = () => {
+    return null;
+  };
+
+  return { requestPermission, showNotification };
+}
+
 export function useOrderNotifications({ enabled, onNewOrder }) {
   const { playSound } = useNotificationSound();
   const previousCountRef = useRef(0);
