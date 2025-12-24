@@ -38,13 +38,13 @@ export default function DriverDashboard() {
   // Auto-refresh
   useAutoRefresh({ 
     queryKey: ['available-orders'], 
-    refetchInterval: 5000,
+    refetchInterval: 60000,
     enabled: isAvailable 
   });
   
   useAutoRefresh({ 
     queryKey: ['driver-orders'], 
-    refetchInterval: 5000,
+    refetchInterval: 60000,
     enabled: !!user?.id 
   });
   
@@ -87,8 +87,7 @@ export default function DriverDashboard() {
       // Filter by commune match
       return orders.filter(o => o.shop_commune === user?.commune || o.client_commune === user?.commune);
     },
-    enabled: !!user?.commune && isAvailable,
-    refetchInterval: 5000
+    enabled: !!user?.commune && isAvailable
   });
 
   // Fetch driver's orders

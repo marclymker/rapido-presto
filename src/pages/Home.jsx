@@ -27,13 +27,13 @@ export default function Home() {
   // Auto-refresh des données
   useAutoRefresh({ 
     queryKey: ['shops'], 
-    refetchInterval: 5000,
+    refetchInterval: 60000,
     enabled: !selectedShop 
   });
   
   useAutoRefresh({ 
     queryKey: ['products'], 
-    refetchInterval: 5000,
+    refetchInterval: 60000,
     enabled: !!selectedShop 
   });
 

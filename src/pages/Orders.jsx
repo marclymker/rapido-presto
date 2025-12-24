@@ -18,10 +18,10 @@ export default function Orders() {
   const [user, setUser] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   
-  // Auto-refresh toutes les 5 secondes
+  // Auto-refresh toutes les 60 secondes
   useAutoRefresh({ 
     queryKey: ['my-orders'], 
-    refetchInterval: 5000,
+    refetchInterval: 60000,
     enabled: !!user?.id 
   });
   

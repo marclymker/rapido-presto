@@ -42,10 +42,10 @@ export default function EnterpriseDashboard() {
     enabled: !!user
   });
   
-  // Auto-refresh toutes les 5 secondes
+  // Auto-refresh toutes les 60 secondes
   useAutoRefresh({ 
     queryKey: ['shop-orders'], 
-    refetchInterval: 5000,
+    refetchInterval: 60000,
     enabled: !!myShop?.id 
   });
   
