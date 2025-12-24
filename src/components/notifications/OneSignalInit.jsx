@@ -6,11 +6,11 @@ export default function OneSignalInit({ user }) {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (!user || initialized || typeof window === 'undefined') return;
+    if (!user || typeof window === 'undefined') return;
 
     const initOneSignal = async () => {
       try {
-        console.log('🔔 Initialisation OneSignal...');
+        console.log('🔔 Initialisation OneSignal pour:', user.current_profile);
         
         // Get App ID from backend
         const { data } = await base44.functions.invoke('getOneSignalAppId');
@@ -26,29 +26,43 @@ export default function OneSignalInit({ user }) {
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         
         window.OneSignalDeferred.push(async function(OneSignal) {
-          await OneSignal.init({
-            appId: data.appId,
-            allowLocalhostAsSecureOrigin: true,
-            notifyButton: {
-              enable: false,
-            },
-          });
+          if (!initialized) {
+            await OneSignal.init({
+              appId: data.appId,
+              allowLocalhostAsSecureOrigin: true,
+              notifyButton: {
+                enable: false,
+              },
+            });
 
-          console.log('✅ OneSignal SDK initialisé');
+            console.log('✅ OneSignal SDK initialisé');
 
-          // Set external user ID
-          OneSignal.setExternalUserId(user.id);
-          console.log('✅ User ID défini:', user.id);
+            // Set external user ID
+            OneSignal.setExternalUserId(user.id);
+            console.log('✅ User ID défini:', user.id);
+          }
 
-          // Add tags for targeting
-          OneSignal.sendTags({
+          // Update tags based on profile
+          const baseTags = {
             user_id: user.id,
             email: user.email,
             role: user.current_profile || 'client',
-            commune: user.commune || 'unknown'
-          });
+          };
 
-          console.log('✅ Tags ajoutés');
+          // Add profile-specific tags
+          if (user.current_profile === 'client') {
+            baseTags.commune = user.commune || 'unknown';
+          } else if (user.current_profile === 'entreprise') {
+            baseTags.shop_id = user.profiles?.entreprise?.shop_id || 'unknown';
+            baseTags.company_name = user.profiles?.entreprise?.company_name || 'unknown';
+            baseTags.company_category = user.profiles?.entreprise?.company_category || 'unknown';
+          } else if (user.current_profile === 'livreur') {
+            baseTags.driver_status = user.profiles?.livreur?.status || 'pending';
+            baseTags.is_available = user.profiles?.livreur?.is_available || false;
+          }
+
+          OneSignal.sendTags(baseTags);
+          console.log('✅ Tags mis à jour:', baseTags);
         });
 
         // Load OneSignal script
@@ -61,7 +75,7 @@ export default function OneSignalInit({ user }) {
         }
 
         setInitialized(true);
-        console.log('✅ OneSignal initialisé');
+        console.log('✅ OneSignal initialisé pour:', user.current_profile);
         
       } catch (error) {
         console.error('❌ Erreur OneSignal:', error);
@@ -69,7 +83,7 @@ export default function OneSignalInit({ user }) {
     };
 
     initOneSignal();
-  }, [user, initialized]);
+  }, [user, user?.current_profile]);
 
   return null;
 }
