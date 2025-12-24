@@ -100,16 +100,28 @@ export function useWebSocket({ channel, userId, onUpdate, enabled = true }) {
   return { isConnected, lastUpdate, broadcast };
 }
 
-export function useAutoRefresh({ queryKey, refetchInterval = 5000, enabled = true }) {
+export function useAutoRefresh({ queryKey, refetchInterval = 60000, enabled = true }) {
   const queryClient = useQueryClient();
+  const queryKeyRef = useRef();
+  
+  // Stocker queryKey dans une ref pour éviter la recréation de l'interval
+  useEffect(() => {
+    queryKeyRef.current = queryKey;
+  }, [queryKey]);
   
   useEffect(() => {
     if (!enabled) return;
     
+    console.log('Auto-refresh started:', queryKeyRef.current, 'interval:', refetchInterval);
+    
     const interval = setInterval(() => {
-      queryClient.invalidateQueries(queryKey);
+      console.log('Auto-refresh triggered:', queryKeyRef.current);
+      queryClient.invalidateQueries(queryKeyRef.current);
     }, refetchInterval);
     
-    return () => clearInterval(interval);
-  }, [queryKey, refetchInterval, enabled, queryClient]);
+    return () => {
+      console.log('Auto-refresh stopped:', queryKeyRef.current);
+      clearInterval(interval);
+    };
+  }, [refetchInterval, enabled, queryClient]);
 }
