@@ -25,6 +25,7 @@ export default function Home() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
+      
       // Initialize profile if not set
       if (!u.current_profile) {
         base44.auth.updateMe({ 
@@ -37,6 +38,16 @@ export default function Home() {
         }).then(() => {
           window.location.reload();
         });
+        return;
+      }
+      
+      // Redirect if wrong profile
+      if (u.current_profile !== 'client') {
+        const redirectPages = {
+          entreprise: 'EnterpriseDashboard',
+          livreur: 'DriverDashboard'
+        };
+        window.location.href = createPageUrl(redirectPages[u.current_profile]);
       }
     }).catch(() => {});
   }, []);

@@ -27,7 +27,17 @@ export default function EnterpriseDashboard() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(u => {
+      setUser(u);
+      // Redirect if wrong profile
+      if (u.current_profile !== 'entreprise') {
+        const redirectPages = {
+          client: 'Home',
+          livreur: 'DriverDashboard'
+        };
+        window.location.href = createPageUrl(redirectPages[u.current_profile] || 'Home');
+      }
+    }).catch(() => {});
   }, []);
 
   // Fetch products

@@ -23,6 +23,15 @@ export default function DriverDashboard() {
     base44.auth.me().then(u => {
       setUser(u);
       setIsAvailable(u.profiles?.livreur?.is_available || false);
+      
+      // Redirect if wrong profile
+      if (u.current_profile !== 'livreur') {
+        const redirectPages = {
+          client: 'Home',
+          entreprise: 'EnterpriseDashboard'
+        };
+        window.location.href = createPageUrl(redirectPages[u.current_profile] || 'Home');
+      }
     }).catch(() => {});
   }, []);
 
