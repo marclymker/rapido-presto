@@ -7,6 +7,7 @@ import DriverDashboard from './pages/DriverDashboard';
 import EnterpriseAccount from './pages/EnterpriseAccount';
 import DriverAccount from './pages/DriverAccount';
 import ProfileSetup from './pages/ProfileSetup';
+import ManageProfiles from './pages/ManageProfiles';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +21,7 @@ export const PAGES = {
     "EnterpriseAccount": EnterpriseAccount,
     "DriverAccount": DriverAccount,
     "ProfileSetup": ProfileSetup,
+    "ManageProfiles": ManageProfiles,
 }
 
 export const pagesConfig = {
