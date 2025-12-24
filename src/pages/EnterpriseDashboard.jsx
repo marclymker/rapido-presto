@@ -15,7 +15,7 @@ import { fr } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
-import { useOrderNotifications, useBrowserNotifications } from '@/components/notifications/NotificationManager';
+import { useOrderNotifications, useBrowserNotifications, useNotificationSound } from '@/components/notifications/NotificationManager';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
@@ -28,6 +28,7 @@ export default function EnterpriseDashboard() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const queryClient = useQueryClient();
   const { requestPermission } = useBrowserNotifications();
+  const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound();
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -180,7 +181,13 @@ export default function EnterpriseDashboard() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                onClick={() => {
+                  if (!soundInitialized) {
+                    initializeSound();
+                    toast.success('Notifications sonores activées');
+                  }
+                  setNotificationsEnabled(!notificationsEnabled);
+                }}
                 title={notificationsEnabled ? 'Désactiver le son' : 'Activer le son'}
               >
                 {notificationsEnabled ? (
