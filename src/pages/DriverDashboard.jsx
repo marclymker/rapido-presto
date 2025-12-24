@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MapPin, Clock, CreditCard, Check, X, Navigation, Phone, Package, Volume2, VolumeX } from 'lucide-react';
+import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
+import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -141,6 +143,7 @@ export default function DriverDashboard() {
               <p className="text-sm text-slate-500">Livreur • {livreurData.vehicle_type}</p>
             </div>
             <div className="flex items-center gap-3">
+              <ProfileSwitcher user={user} />
               <Button
                 variant="ghost"
                 size="icon"
