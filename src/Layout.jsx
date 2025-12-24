@@ -6,6 +6,7 @@ import { Home, ShoppingBag, User, Package, Store, Bike } from 'lucide-react';
 import { Toaster } from "@/components/ui/sonner";
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 import OneSignalInit from '@/components/notifications/OneSignalInit';
+import NotificationPermission from '@/components/notifications/NotificationPermission';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -56,6 +57,7 @@ export default function Layout({ children, currentPageName }) {
     <div className="min-h-screen bg-slate-50 pb-20">
       <Toaster position="top-center" />
       <OneSignalInit user={user} />
+      <NotificationPermission />
       
       {/* Profile Switcher (top right for desktop - clients only) */}
       {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (

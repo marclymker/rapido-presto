@@ -11,13 +11,18 @@ export default function OneSignalInit({ user }) {
 
     const initOneSignal = async () => {
       try {
+        console.log('🔔 Initialisation OneSignal...');
+        
         // Get App ID from backend
         const { data } = await base44.functions.invoke('getOneSignalAppId');
         
         if (!data.appId) {
-          console.error('OneSignal App ID not found');
+          console.error('❌ OneSignal App ID not found');
+          toast.error('Erreur: ID OneSignal manquant');
           return;
         }
+
+        console.log('✅ OneSignal App ID récupéré:', data.appId);
 
         // Initialize OneSignal
         await OneSignal.init({
@@ -28,20 +33,37 @@ export default function OneSignalInit({ user }) {
           },
         });
 
+        console.log('✅ OneSignal SDK initialisé');
+
+        // Demander la permission de notification
+        const permission = await OneSignal.Notifications.requestPermission();
+        console.log('🔔 Permission notifications:', permission);
+
+        if (!permission) {
+          toast.error('Veuillez autoriser les notifications pour recevoir les alertes');
+          return;
+        }
+
         // Set external user ID
-        OneSignal.setExternalUserId(user.id);
+        await OneSignal.login(user.id);
+        console.log('✅ User ID défini:', user.id);
 
         // Add tags for targeting
-        OneSignal.sendTags({
+        await OneSignal.User.addTags({
           user_id: user.id,
           email: user.email,
           role: user.current_profile || 'client',
+          commune: user.commune || 'unknown'
         });
 
+        console.log('✅ Tags ajoutés');
+
         setInitialized(true);
-        console.log('OneSignal initialized');
+        toast.success('🔔 Notifications activées');
+        
       } catch (error) {
-        console.error('OneSignal initialization error:', error);
+        console.error('❌ Erreur OneSignal:', error);
+        toast.error('Erreur lors de l\'activation des notifications');
       }
     };
 

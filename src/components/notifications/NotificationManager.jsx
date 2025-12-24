@@ -7,28 +7,40 @@ export function useNotificationSound() {
   useEffect(() => {
     if ('Notification' in window) {
       setPermissionGranted(Notification.permission === 'granted');
+      console.log('🔔 Permission notifications:', Notification.permission);
     }
   }, []);
 
   const playSound = useCallback(async () => {
+    console.log('🔊 Tentative de jouer le son...');
+    
     // Demander la permission si pas encore accordée
     if ('Notification' in window && Notification.permission === 'default') {
+      console.log('📝 Demande de permission...');
       const permission = await Notification.requestPermission();
       setPermissionGranted(permission === 'granted');
+      console.log('✅ Permission accordée:', permission);
     }
 
-    // Créer une notification silencieuse qui joue le son par défaut
+    // Créer une notification avec son
     if ('Notification' in window && Notification.permission === 'granted') {
-      const notification = new Notification('🔔 Nouvelle notification', {
+      console.log('📢 Affichage notification...');
+      const notification = new Notification('🔔 Nouvelle commande!', {
         body: 'Vous avez une nouvelle activité',
         icon: '/favicon.ico',
-        tag: 'order-notification',
+        badge: '/favicon.ico',
+        tag: 'order-notification-' + Date.now(),
         requireInteraction: false,
-        silent: false // Important: utilise le son par défaut du système
+        silent: false,
+        vibrate: [200, 100, 200]
       });
 
-      // Fermer automatiquement après 3 secondes
-      setTimeout(() => notification.close(), 3000);
+      // Fermer après 5 secondes
+      setTimeout(() => notification.close(), 5000);
+      
+      console.log('✅ Notification affichée');
+    } else {
+      console.warn('⚠️ Notifications non autorisées');
     }
   }, []);
 
@@ -37,22 +49,34 @@ export function useNotificationSound() {
 
 export function useBrowserNotifications() {
   const requestPermission = async () => {
+    console.log('🔔 Demande de permission notifications...');
     if ('Notification' in window && Notification.permission === 'default') {
       const permission = await Notification.requestPermission();
+      console.log('✅ Permission:', permission);
       return permission === 'granted';
     }
-    return Notification.permission === 'granted';
+    const granted = Notification.permission === 'granted';
+    console.log('🔔 Permission actuelle:', granted);
+    return granted;
   };
 
   const showNotification = (title, body) => {
+    console.log('📢 Affichage notification:', title, body);
     if ('Notification' in window && Notification.permission === 'granted') {
-      return new Notification(title, {
+      const notification = new Notification(title, {
         body,
         icon: '/favicon.ico',
+        badge: '/favicon.ico',
         requireInteraction: false,
-        silent: false
+        silent: false,
+        vibrate: [200, 100, 200],
+        tag: 'notification-' + Date.now()
       });
+      
+      setTimeout(() => notification.close(), 5000);
+      return notification;
     }
+    console.warn('⚠️ Impossible d\'afficher la notification');
     return null;
   };
 
