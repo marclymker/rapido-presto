@@ -13,6 +13,7 @@ import CategoryTabs from '@/components/ui/CategoryTabs';
 import ShopCard from '@/components/ui/ShopCard';
 import ProductCard from '@/components/ui/ProductCard';
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
+import { useOrderNotifications } from '@/components/notifications/NotificationSystem';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -21,6 +22,9 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const queryClient = useQueryClient();
+  
+  // Enable notifications
+  useOrderNotifications(user);
 
   useEffect(() => {
     base44.auth.me().then(u => {

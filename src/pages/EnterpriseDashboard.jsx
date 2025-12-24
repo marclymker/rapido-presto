@@ -15,6 +15,7 @@ import { fr } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
+import { useOrderNotifications } from '@/components/notifications/NotificationSystem';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
@@ -25,6 +26,9 @@ export default function EnterpriseDashboard() {
   });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const queryClient = useQueryClient();
+  
+  // Enable notifications
+  const { pendingShopOrders } = useOrderNotifications(user);
 
   useEffect(() => {
     base44.auth.me().then(u => {

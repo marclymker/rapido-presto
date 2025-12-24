@@ -1,29 +1,29 @@
-import Home from './pages/Home';
-import Cart from './pages/Cart';
-import Orders from './pages/Orders';
 import Account from './pages/Account';
-import EnterpriseDashboard from './pages/EnterpriseDashboard';
+import AdminValidation from './pages/AdminValidation';
+import Cart from './pages/Cart';
+import DriverAccount from './pages/DriverAccount';
 import DriverDashboard from './pages/DriverDashboard';
 import EnterpriseAccount from './pages/EnterpriseAccount';
-import DriverAccount from './pages/DriverAccount';
-import ProfileSetup from './pages/ProfileSetup';
+import EnterpriseDashboard from './pages/EnterpriseDashboard';
+import Home from './pages/Home';
 import ManageProfiles from './pages/ManageProfiles';
-import AdminValidation from './pages/AdminValidation';
+import Orders from './pages/Orders';
+import ProfileSetup from './pages/ProfileSetup';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
-    "Cart": Cart,
-    "Orders": Orders,
     "Account": Account,
-    "EnterpriseDashboard": EnterpriseDashboard,
+    "AdminValidation": AdminValidation,
+    "Cart": Cart,
+    "DriverAccount": DriverAccount,
     "DriverDashboard": DriverDashboard,
     "EnterpriseAccount": EnterpriseAccount,
-    "DriverAccount": DriverAccount,
-    "ProfileSetup": ProfileSetup,
+    "EnterpriseDashboard": EnterpriseDashboard,
+    "Home": Home,
     "ManageProfiles": ManageProfiles,
-    "AdminValidation": AdminValidation,
+    "Orders": Orders,
+    "ProfileSetup": ProfileSetup,
 }
 
 export const pagesConfig = {
