@@ -11,6 +11,8 @@ import { fr } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
+import { useAutoRefresh } from '@/components/realtime/useWebSocket';
+import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
 
 export default function Orders() {
   const [user, setUser] = useState(null);
@@ -171,6 +173,6 @@ export default function Orders() {
         lastSync={lastSync} 
         connectionType={connectionType}
       />
-      </div>
-      );
-      }
+    </div>
+  );
+}
