@@ -23,7 +23,22 @@ export default function Home() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(u => {
+      setUser(u);
+      // Initialize profile if not set
+      if (!u.current_profile) {
+        base44.auth.updateMe({ 
+          current_profile: 'client',
+          profiles: {
+            client: { is_active: true, created_at: new Date().toISOString(), last_used: new Date().toISOString() },
+            entreprise: { is_active: false },
+            livreur: { is_active: false, status: 'pending' }
+          }
+        }).then(() => {
+          window.location.reload();
+        });
+      }
+    }).catch(() => {});
   }, []);
 
   // Fetch shops (entreprises) - using profiles structure

@@ -20,13 +20,14 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   // Pages that don't need navigation
-  const noNavPages = ['ProfileSetup'];
-  const showNav = !noNavPages.includes(currentPageName) && user?.current_profile;
+  const noNavPages = ['ProfileSetup', 'ManageProfiles', 'AdminValidation'];
+  const showNav = !noNavPages.includes(currentPageName) && user;
 
   const getNavItems = () => {
-    if (!user?.current_profile) return [];
+    const currentProfile = user?.current_profile || user?.profiles?.client?.is_active ? 'client' : null;
+    if (!currentProfile) return [];
 
-    switch (user.current_profile) {
+    switch (currentProfile) {
       case 'client':
         return [
           { icon: Home, label: 'Accueil', page: 'Home' },
@@ -55,7 +56,7 @@ export default function Layout({ children, currentPageName }) {
       <Toaster position="top-center" />
       
       {/* Profile Switcher (top right for desktop) */}
-      {user && showNav && currentPageName !== 'ManageProfiles' && currentPageName !== 'AdminValidation' && (
+      {user && !noNavPages.includes(currentPageName) && (
         <div className="fixed top-4 right-4 z-50">
           <ProfileSwitcher user={user} />
         </div>

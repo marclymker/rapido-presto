@@ -39,8 +39,14 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
   const [switching, setSwitching] = useState(false);
   const navigate = useNavigate();
   
+  // Initialize profiles structure if not exists
+  const profiles = user?.profiles || {
+    client: { is_active: true, created_at: new Date().toISOString(), last_used: new Date().toISOString() },
+    entreprise: { is_active: false },
+    livreur: { is_active: false, status: 'pending' }
+  };
+  
   const currentProfile = user?.current_profile || 'client';
-  const profiles = user?.profiles || {};
   
   const CurrentIcon = profileConfig[currentProfile]?.icon || User;
 
