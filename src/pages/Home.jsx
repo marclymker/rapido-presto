@@ -17,6 +17,7 @@ import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import ProfileCompletionModal from '@/components/modals/ProfileCompletionModal';
+import SEO from '@/components/SEO';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -189,6 +190,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* SEO Meta Tags */}
+      <SEO 
+        title={selectedShop ? selectedShop.company_name : "Commandez et faites-vous livrer rapidement"}
+        description={
+          selectedShop 
+            ? `Commandez chez ${selectedShop.company_name} sur Rapido Presto. Livraison rapide de ${selectedShop.company_category} ${selectedShop.region ? `à ${selectedShop.region}` : 'en Haïti'}.`
+            : "Rapido Presto - Plateforme de livraison rapide en Haïti. Restaurants, fastfood, pharmacies, épiceries et plus encore. Commandez en ligne et recevez vos produits rapidement."
+        }
+        image={selectedShop?.company_logo_url}
+        url={typeof window !== 'undefined' ? window.location.href : undefined}
+      />
+      
       {/* Header */}
       <header className="bg-white sticky top-0 z-40 border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">

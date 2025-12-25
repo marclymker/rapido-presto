@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 import OneSignalInit from '@/components/notifications/OneSignalInit';
 import NotificationPermission from '@/components/notifications/NotificationPermission';
+import { HelmetProvider } from 'react-helmet-async';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -75,10 +76,11 @@ export default function Layout({ children, currentPageName }) {
   const navItems = getNavItems();
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      <Toaster position="top-center" />
-      <OneSignalInit user={user} />
-      <NotificationPermission />
+    <HelmetProvider>
+      <div className="min-h-screen bg-slate-50 pb-20">
+        <Toaster position="top-center" />
+        <OneSignalInit user={user} />
+        <NotificationPermission />
       
       {/* Profile Switcher (top right for desktop - clients only) */}
       {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (
@@ -119,6 +121,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </nav>
       )}
-    </div>
+      </div>
+    </HelmetProvider>
   );
 }
