@@ -8,53 +8,63 @@ export default function OneSignalInit({ user }) {
     const initOneSignal = async () => {
       try {
         // 1. Récupération de l'App ID depuis votre backend
-        const { data } = await base44.functions.invoke('getOneSignalAppId');
-        if (!data?.appId) return;
+        const { data } = await base44.functions.invoke('getOneSignalAppId').catch(() => ({ data: null }));
+        if (!data?.appId) {
+          console.log('OneSignal désactivé ou non configuré');
+          return;
+        }
 
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         
         window.OneSignalDeferred.push(async function(OneSignal) {
-          // Initialisation
-          await OneSignal.init({
-            appId: data.appId,
-            allowLocalhostAsSecureOrigin: true,
-          });
+          try {
+            // Initialisation
+            await OneSignal.init({
+              appId: data.appId,
+              allowLocalhostAsSecureOrigin: true,
+            });
 
-          // 2. Lier l'ID utilisateur pour pouvoir le cibler depuis le backend
-          await OneSignal.login(user.id);
+            // 2. Lier l'ID utilisateur pour pouvoir le cibler depuis le backend
+            await OneSignal.login(user.id).catch(() => console.log('Login OneSignal échoué'));
 
-          // 3. Tags universels pour segmentation (Marchand, Client, Livreur)
-          const tags = {
-            user_id: user.id,
-            role: user.current_profile || 'client',
-            zone: user.region || 'haiti',
-            is_available: String(user.profiles?.livreur?.is_available || false)
-          };
-          await OneSignal.sendTags(tags);
+            // 3. Tags universels pour segmentation (Marchand, Client, Livreur)
+            const tags = {
+              user_id: user.id,
+              role: user.current_profile || 'client',
+              zone: user.region || 'haiti',
+              is_available: String(user.profiles?.livreur?.is_available || false)
+            };
+            await OneSignal.sendTags(tags).catch(() => console.log('Tags OneSignal non envoyés'));
 
-          // 4. GESTION DU CLIC : Rediriger l'utilisateur vers la bonne page
-          OneSignal.Notifications.addEventListener("click", (event) => {
-            const launchUrl = event.notification.launchURL;
-            if (launchUrl) {
-              window.location.href = launchUrl;
-            }
-          });
+            // 4. GESTION DU CLIC : Rediriger l'utilisateur vers la bonne page
+            OneSignal.Notifications.addEventListener("click", (event) => {
+              const launchUrl = event.notification.launchURL;
+              if (launchUrl) {
+                window.location.href = launchUrl;
+              }
+            });
+          } catch (error) {
+            console.log('Erreur OneSignal init:', error);
+          }
         });
 
-        // Chargement du SDK si absent
+        // Chargement du SDK si absent avec timeout
         if (!document.getElementById('onesignal-script')) {
           const script = document.createElement('script');
           script.id = 'onesignal-script';
           script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
           script.defer = true;
+          script.async = true;
+          script.onerror = () => console.log('Erreur chargement OneSignal SDK');
           document.head.appendChild(script);
         }
       } catch (error) {
-        console.error('❌ Erreur OneSignal:', error);
+        console.log('OneSignal non disponible:', error);
       }
     };
 
-    initOneSignal();
+    // Ne pas bloquer l'app si OneSignal échoue
+    initOneSignal().catch(() => console.log('OneSignal init échoué'));
   }, [user]);
 
   return null;
