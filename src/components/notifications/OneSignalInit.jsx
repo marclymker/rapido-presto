@@ -51,12 +51,15 @@ export default function OneSignalInit({ user }) {
 
           // Add profile-specific tags
           if (user.current_profile === 'client') {
+            baseTags.user_type = 'client';
             baseTags.commune = user.commune || 'unknown';
           } else if (user.current_profile === 'entreprise') {
+            baseTags.user_type = 'entreprise';
             baseTags.shop_id = user.profiles?.entreprise?.shop_id || 'unknown';
             baseTags.company_name = user.profiles?.entreprise?.company_name || 'unknown';
             baseTags.company_category = user.profiles?.entreprise?.company_category || 'unknown';
           } else if (user.current_profile === 'livreur') {
+            baseTags.user_type = 'livreur';
             baseTags.driver_status = user.profiles?.livreur?.status || 'pending';
             baseTags.is_available = user.profiles?.livreur?.is_available || false;
           }
