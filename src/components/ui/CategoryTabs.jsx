@@ -1,10 +1,11 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
-import { UtensilsCrossed, Pill, Shirt, ShoppingBasket, Coffee, Croissant, Pizza } from 'lucide-react';
+import { UtensilsCrossed, Pill, Shirt, ShoppingBasket, Coffee, Croissant, Pizza, Flower } from 'lucide-react';
 
 const categories = [
   { id: 'Fastfood', label: 'Fastfood', icon: Pizza },
   { id: 'Restaurants', label: 'Restaurants', icon: UtensilsCrossed },
+  { id: 'Boutique Fleurs', label: 'Boutique Fleurs', icon: Flower },
   { id: 'Pharmacie', label: 'Pharmacie', icon: Pill },
   { id: 'Vêtements', label: 'Vêtements', icon: Shirt },
   { id: 'Epicerie', label: 'Épicerie', icon: ShoppingBasket },
