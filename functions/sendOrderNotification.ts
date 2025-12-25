@@ -3,7 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 const ONESIGNAL_API_KEY = Deno.env.get('ONESIGNAL_API_KEY');
 const ONESIGNAL_APP_ID = Deno.env.get('ONESIGNAL_APP_ID');
 
-async function sendOneSignalNotification(userIds, title, message) {
+async function sendOneSignalNotification(userIds, title, message, priority = 10) {
   if (!ONESIGNAL_API_KEY || !ONESIGNAL_APP_ID) {
     console.log('OneSignal not configured, skipping notification');
     return;
@@ -19,17 +19,68 @@ async function sendOneSignalNotification(userIds, title, message) {
       body: JSON.stringify({
         app_id: ONESIGNAL_APP_ID,
         include_external_user_ids: userIds,
-        headings: { en: title },
-        contents: { en: message },
-        data: { type: 'order_update' }
+        headings: { fr: title, en: title },
+        contents: { fr: message, en: message },
+        data: { type: 'order_update' },
+        priority: priority,
+        android_channel_id: 'orders',
+        ios_sound: 'notification.wav',
+        android_sound: 'notification'
       })
     });
 
+    const result = await response.json();
     if (!response.ok) {
-      console.error('OneSignal error:', await response.text());
+      console.error('OneSignal error:', result);
+    } else {
+      console.log('Notification sent:', result);
     }
   } catch (error) {
     console.error('Failed to send notification:', error);
+  }
+}
+
+// Fonction spécifique pour notifier le marchand
+async function sendMerchantNotification(merchantId, title, message) {
+  if (!ONESIGNAL_API_KEY || !ONESIGNAL_APP_ID) {
+    console.log('OneSignal not configured, skipping notification');
+    return;
+  }
+
+  try {
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${ONESIGNAL_API_KEY}`
+      },
+      body: JSON.stringify({
+        app_id: ONESIGNAL_APP_ID,
+        filters: [
+          { field: 'tag', key: 'user_type', relation: '=', value: 'entreprise' },
+          { operator: 'AND' },
+          { field: 'tag', key: 'user_id', relation: '=', value: merchantId }
+        ],
+        headings: { fr: title, en: title },
+        contents: { fr: message, en: message },
+        data: { type: 'new_order', merchant_id: merchantId },
+        priority: 10,
+        android_channel_id: 'orders',
+        ios_sound: 'notification.wav',
+        android_sound: 'notification',
+        ios_badgeType: 'Increase',
+        ios_badgeCount: 1
+      })
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      console.error('OneSignal merchant notification error:', result);
+    } else {
+      console.log('Merchant notification sent:', result);
+    }
+  } catch (error) {
+    console.error('Failed to send merchant notification:', error);
   }
 }
 
@@ -65,14 +116,17 @@ Deno.serve(async (req) => {
         notifications.push({
           userIds: [order.client_id],
           title: '✅ Commande confirmée',
-          message: `Votre commande #${order.order_number} chez ${order.shop_name} a été envoyée`
+          message: `Votre commande #${order.order_number} chez ${order.shop_name} a été envoyée`,
+          priority: 7
         });
+        
+        // Notification spéciale pour le marchand avec haute priorité
         if (shop?.user_id) {
-          notifications.push({
-            userIds: [shop.user_id],
-            title: '🔔 Nouvelle commande',
-            message: `Commande #${order.order_number} - ${order.total} HTG`
-          });
+          await sendMerchantNotification(
+            shop.user_id,
+            '💰 Nouvelle Commande !',
+            `Commande #${order.order_number} reçue ! Montant : ${order.total} HTG. Cliquez pour préparer.`
+          );
         }
         break;
 
@@ -222,7 +276,7 @@ Deno.serve(async (req) => {
     // Envoyer toutes les notifications
     await Promise.all(
       notifications.map(notif => 
-        sendOneSignalNotification(notif.userIds, notif.title, notif.message)
+        sendOneSignalNotification(notif.userIds, notif.title, notif.message, notif.priority || 7)
       )
     );
 
