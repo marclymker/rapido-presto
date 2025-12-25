@@ -10,6 +10,7 @@ import { formatHaitiDate } from '@/components/utils/dateFormat';
 import { motion } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
+import OrderProgressBar from '@/components/orders/OrderProgressBar';
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
 
@@ -63,11 +64,10 @@ export default function Orders() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.01 }}
       onClick={() => setSelectedOrder(order)}
-      className="bg-white rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow"
+      className="bg-white rounded-xl p-4 cursor-pointer hover:shadow-lg transition-shadow border border-slate-100"
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between mb-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-800">#{order.order_number}</span>
@@ -79,8 +79,11 @@ export default function Orders() {
         </div>
         <span className="font-bold text-orange-500">{order.total} HTG</span>
       </div>
+
+      {/* Progress Bar */}
+      <OrderProgressBar status={order.status} />
       
-      <div className="mt-3 pt-3 border-t">
+      <div className="mt-4 pt-4 border-t">
         <p className="text-sm font-medium text-slate-700">{order.shop_name}</p>
         <p className="text-xs text-slate-500">
           {order.items?.length} article{order.items?.length > 1 ? 's' : ''}
@@ -88,8 +91,13 @@ export default function Orders() {
       </div>
 
       {order.driver_name && (
-        <div className="mt-2 text-xs text-slate-500">
-          Livreur: {order.driver_name}
+        <div className="mt-3 text-xs text-slate-500 flex items-center justify-between">
+          <span>Livreur: {order.driver_name}</span>
+          {order.driver_phone && (
+            <a href={`tel:${order.driver_phone}`} onClick={(e) => e.stopPropagation()} className="text-orange-500 font-medium">
+              Appeler
+            </a>
+          )}
         </div>
       )}
     </motion.div>
@@ -138,8 +146,16 @@ export default function Orders() {
                 <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full mx-auto" />
               </div>
             ) : activeOrders.length === 0 ? (
-              <div className="text-center py-12 text-slate-500">
-                Aucune commande active
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Package className="w-8 h-8 text-slate-400" />
+                </div>
+                <p className="text-slate-500 mb-4">Aucune commande active</p>
+                <Link to={createPageUrl('Home')}>
+                  <Button className="bg-orange-500 hover:bg-orange-600">
+                    Commander maintenant
+                  </Button>
+                </Link>
               </div>
             ) : (
               activeOrders.map(order => (
