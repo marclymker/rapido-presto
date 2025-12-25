@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -26,7 +27,7 @@ export default function EnterpriseDashboard() {
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productForm, setProductForm] = useState({
-    name: '', price: '', promo_price: '', description: '', image_url: '', is_available: true
+    name: '', price: '', promo_price: '', description: '', image_url: '', category: '', taille_emballage: '', is_available: true
   });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -172,7 +173,7 @@ export default function EnterpriseDashboard() {
   });
 
   const resetProductForm = () => {
-    setProductForm({ name: '', price: '', promo_price: '', description: '', image_url: '', is_available: true });
+    setProductForm({ name: '', price: '', promo_price: '', description: '', image_url: '', category: '', taille_emballage: '', is_available: true });
     setEditingProduct(null);
   };
 
@@ -184,6 +185,8 @@ export default function EnterpriseDashboard() {
       promo_price: product.promo_price || '',
       description: product.description || '',
       image_url: product.image_url || '',
+      category: product.category || '',
+      taille_emballage: product.taille_emballage || '',
       is_available: product.is_available !== false
     });
     setProductDialogOpen(true);
@@ -432,6 +435,49 @@ export default function EnterpriseDashboard() {
                         onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                         rows={3}
                       />
+                    </div>
+                    <div>
+                      <Label>Catégorie</Label>
+                      <Select 
+                        value={productForm.category} 
+                        onValueChange={(val) => setProductForm({ ...productForm, category: val })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner une catégorie" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Fastfood">Fastfood</SelectItem>
+                          <SelectItem value="Restaurants">Restaurants</SelectItem>
+                          <SelectItem value="Boutique Fleurs">Boutique Fleurs</SelectItem>
+                          <SelectItem value="Pharmacie">Pharmacie</SelectItem>
+                          <SelectItem value="Vêtements">Vêtements</SelectItem>
+                          <SelectItem value="Epicerie">Epicerie</SelectItem>
+                          <SelectItem value="Café">Café</SelectItem>
+                          <SelectItem value="Boulangerie">Boulangerie</SelectItem>
+                          <SelectItem value="Pour Femme">Pour Femme</SelectItem>
+                          <SelectItem value="Electronics">Electronics</SelectItem>
+                          <SelectItem value="Pour homme">Pour homme</SelectItem>
+                          <SelectItem value="Maison">Maison</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Taille d'emballage</Label>
+                      <Select 
+                        value={productForm.taille_emballage} 
+                        onValueChange={(val) => setProductForm({ ...productForm, taille_emballage: val })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner une taille" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Petit">Petit</SelectItem>
+                          <SelectItem value="Moyen">Moyen</SelectItem>
+                          <SelectItem value="Grand">Grand</SelectItem>
+                          <SelectItem value="Lourd">Lourd</SelectItem>
+                          <SelectItem value="Encombrant">Encombrant</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label>Photo</Label>
