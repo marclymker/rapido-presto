@@ -342,11 +342,20 @@ Format JSON strict requis.`;
       });
 
       // Mise à jour du formulaire avec les données de l'IA
+      const aiCategory = response.category || productForm.category;
+      
+      // Logique automatique pour Restaurant, Fastfood, Café
+      const isRestaurantCategory = ['Restaurants', 'Fastfood', 'Café'].includes(aiCategory);
+      
       setProductForm({
         ...productForm,
         description: response.description || productForm.description,
-        category: response.category || productForm.category,
-        seo_tags: response.tags || productForm.seo_tags
+        category: aiCategory,
+        seo_tags: response.tags || productForm.seo_tags,
+        // Valeurs automatiques pour restaurants
+        stock_quantity: isRestaurantCategory ? '1000' : productForm.stock_quantity,
+        delivery_time: isRestaurantCategory ? '30-45 minutes' : productForm.delivery_time,
+        taille_emballage: isRestaurantCategory ? 'Petit' : productForm.taille_emballage
       });
 
       toast.success('✨ Magie IA appliquée avec succès!');
@@ -565,6 +574,13 @@ Format JSON strict requis.`;
                     </AlertDialogTitle>
                     <AlertDialogDescription asChild>
                       <div className="space-y-4 pt-4 text-base">
+                        <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border-2 border-purple-200">
+                          <span className="text-2xl">✨</span>
+                          <div>
+                            <p className="font-semibold text-purple-900">Lancer avec Magie AI</p>
+                            <p className="text-sm text-purple-700">(génération automatique de la description et catégorie)</p>
+                          </div>
+                        </div>
                         <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
                           <span className="text-2xl">💰</span>
                           <div>
