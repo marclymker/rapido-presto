@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Package, Plus, Bell, Edit, Trash2, Eye, EyeOff, Volume2, VolumeX } from 'lucide-react';
+import { Package, Plus, Bell, Edit, Trash2, Eye, EyeOff, Volume2, VolumeX, X, Tag } from 'lucide-react';
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
@@ -29,8 +29,9 @@ export default function EnterpriseDashboard() {
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productForm, setProductForm] = useState({
-    name: '', price: '', promo_price: '', description: '', image_url: '', category: '', taille_emballage: '', is_available: true
+    name: '', price: '', promo_price: '', description: '', image_url: '', additional_images: [], category: '', taille_emballage: '', stock_quantity: '', seo_tags: [], is_available: true
   });
+  const [tagInput, setTagInput] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
@@ -197,7 +198,8 @@ export default function EnterpriseDashboard() {
   });
 
   const resetProductForm = () => {
-    setProductForm({ name: '', price: '', promo_price: '', description: '', image_url: '', category: '', taille_emballage: '', is_available: true });
+    setProductForm({ name: '', price: '', promo_price: '', description: '', image_url: '', additional_images: [], category: '', taille_emballage: '', stock_quantity: '', seo_tags: [], is_available: true });
+    setTagInput('');
     setEditingProduct(null);
   };
 
@@ -209,8 +211,11 @@ export default function EnterpriseDashboard() {
       promo_price: product.promo_price || '',
       description: product.description || '',
       image_url: product.image_url || '',
+      additional_images: product.additional_images || [],
       category: product.category || '',
       taille_emballage: product.taille_emballage || '',
+      stock_quantity: product.stock_quantity || '',
+      seo_tags: product.seo_tags || [],
       is_available: product.is_available !== false
     });
     setProductDialogOpen(true);
@@ -220,7 +225,8 @@ export default function EnterpriseDashboard() {
     productMutation.mutate({
       ...productForm,
       price: Number(productForm.price),
-      promo_price: productForm.promo_price ? Number(productForm.promo_price) : null
+      promo_price: productForm.promo_price ? Number(productForm.promo_price) : null,
+      stock_quantity: productForm.stock_quantity ? parseInt(productForm.stock_quantity) : 0
     });
   };
 
@@ -235,6 +241,46 @@ export default function EnterpriseDashboard() {
     } catch (error) {
       toast.error('Erreur lors du téléchargement');
     }
+  };
+
+  const handleAdditionalImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setProductForm({ 
+        ...productForm, 
+        additional_images: [...(productForm.additional_images || []), file_url] 
+      });
+      toast.success('Image ajoutée');
+    } catch (error) {
+      toast.error('Erreur lors du téléchargement');
+    }
+  };
+
+  const removeAdditionalImage = (index) => {
+    setProductForm({
+      ...productForm,
+      additional_images: productForm.additional_images.filter((_, i) => i !== index)
+    });
+  };
+
+  const addTag = () => {
+    if (tagInput.trim() && !productForm.seo_tags.includes(tagInput.trim())) {
+      setProductForm({
+        ...productForm,
+        seo_tags: [...(productForm.seo_tags || []), tagInput.trim()]
+      });
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tag) => {
+    setProductForm({
+      ...productForm,
+      seo_tags: productForm.seo_tags.filter(t => t !== tag)
+    });
   };
 
   const pendingOrders = orders.filter(o => o.status === 'pending');
@@ -570,10 +616,65 @@ export default function EnterpriseDashboard() {
                       </Select>
                     </div>
                     <div>
-                      <Label>Photo</Label>
+                      <Label>Quantité en stock</Label>
+                      <Input
+                        type="number"
+                        value={productForm.stock_quantity}
+                        onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <Label>Photo principale</Label>
                       <Input type="file" accept="image/*" onChange={handleImageUpload} />
                       {productForm.image_url && (
                         <img src={productForm.image_url} alt="" className="mt-2 h-24 w-24 object-cover rounded-lg" />
+                      )}
+                    </div>
+                    <div>
+                      <Label>Photos supplémentaires</Label>
+                      <Input type="file" accept="image/*" onChange={handleAdditionalImageUpload} />
+                      {productForm.additional_images && productForm.additional_images.length > 0 && (
+                        <div className="flex gap-2 mt-2 flex-wrap">
+                          {productForm.additional_images.map((img, idx) => (
+                            <div key={idx} className="relative">
+                              <img src={img} alt="" className="h-16 w-16 object-cover rounded-lg" />
+                              <button
+                                type="button"
+                                onClick={() => removeAdditionalImage(idx)}
+                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <Label>Tags SEO (recherche)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                          placeholder="Ex: pizza, burger"
+                        />
+                        <Button type="button" onClick={addTag} variant="outline" size="icon">
+                          <Tag className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {productForm.seo_tags && productForm.seo_tags.length > 0 && (
+                        <div className="flex gap-1 mt-2 flex-wrap">
+                          {productForm.seo_tags.map((tag, idx) => (
+                            <div key={idx} className="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs flex items-center gap-1">
+                              {tag}
+                              <button type="button" onClick={() => removeTag(tag)}>
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                     <div className="flex items-center justify-between">
@@ -613,6 +714,9 @@ export default function EnterpriseDashboard() {
                   <div className="p-3">
                     <h4 className="font-medium text-sm truncate">{product.name}</h4>
                     <p className="text-orange-500 font-semibold">{product.price} HTG</p>
+                    {product.stock_quantity !== undefined && (
+                      <p className="text-xs text-slate-500">Stock: {product.stock_quantity}</p>
+                    )}
                     <div className="flex gap-2 mt-2">
                       <Button 
                         size="icon" 

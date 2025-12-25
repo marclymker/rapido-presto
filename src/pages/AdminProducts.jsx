@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Package, Trash2, Edit, Store } from 'lucide-react';
+import { Plus, Package, Trash2, Edit, Store, X, Tag } from 'lucide-react';
 
 export default function AdminProducts() {
   const [user, setUser] = useState(null);
@@ -26,10 +26,14 @@ export default function AdminProducts() {
     promo_price: '',
     description: '',
     image_url: '',
+    additional_images: [],
     category: '',
     taille_emballage: '',
+    stock_quantity: '',
+    seo_tags: [],
     is_available: true
   });
+  const [tagInput, setTagInput] = useState('');
 
   React.useEffect(() => {
     base44.auth.me().then(u => {
@@ -131,6 +135,48 @@ export default function AdminProducts() {
     setUploading(false);
   };
 
+  const handleAdditionalImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { data } = await base44.functions.invoke('uploadFile', { file });
+      setFormData({ 
+        ...formData, 
+        additional_images: [...(formData.additional_images || []), data.file_url] 
+      });
+      toast.success('Image ajoutée');
+    } catch (error) {
+      toast.error('Erreur lors du téléchargement');
+    }
+    setUploading(false);
+  };
+
+  const removeAdditionalImage = (index) => {
+    setFormData({
+      ...formData,
+      additional_images: formData.additional_images.filter((_, i) => i !== index)
+    });
+  };
+
+  const addTag = () => {
+    if (tagInput.trim() && !formData.seo_tags.includes(tagInput.trim())) {
+      setFormData({
+        ...formData,
+        seo_tags: [...(formData.seo_tags || []), tagInput.trim()]
+      });
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tag) => {
+    setFormData({
+      ...formData,
+      seo_tags: formData.seo_tags.filter(t => t !== tag)
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -142,7 +188,8 @@ export default function AdminProducts() {
     const productData = {
       ...formData,
       price: parseFloat(formData.price),
-      promo_price: formData.promo_price ? parseFloat(formData.promo_price) : null
+      promo_price: formData.promo_price ? parseFloat(formData.promo_price) : null,
+      stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0
     };
 
     if (editingProduct) {
@@ -159,10 +206,14 @@ export default function AdminProducts() {
       promo_price: '',
       description: '',
       image_url: '',
+      additional_images: [],
       category: '',
       taille_emballage: '',
+      stock_quantity: '',
+      seo_tags: [],
       is_available: true
     });
+    setTagInput('');
     setEditingProduct(null);
   };
 
@@ -174,8 +225,11 @@ export default function AdminProducts() {
       promo_price: product.promo_price || '',
       description: product.description || '',
       image_url: product.image_url || '',
+      additional_images: product.additional_images || [],
       category: product.category || '',
       taille_emballage: product.taille_emballage || '',
+      stock_quantity: product.stock_quantity || '',
+      seo_tags: product.seo_tags || [],
       is_available: product.is_available !== false
     });
     setShowForm(true);
@@ -271,20 +325,27 @@ export default function AdminProducts() {
                         </Button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        {product.promo_price && product.promo_price < product.price ? (
-                          <div>
-                            <span className="text-lg font-bold text-orange-500">{product.promo_price} HTG</span>
-                            <span className="text-sm text-slate-400 line-through ml-2">{product.price} HTG</span>
-                          </div>
-                        ) : (
-                          <span className="text-lg font-bold text-slate-800">{product.price} HTG</span>
-                        )}
-                      </div>
-                      <div className={`px-2 py-1 rounded text-xs ${product.is_available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {product.is_available ? 'Disponible' : 'Indisponible'}
-                      </div>
+                    <div className="space-y-2">
+                     <div className="flex items-center justify-between">
+                       <div>
+                         {product.promo_price && product.promo_price < product.price ? (
+                           <div>
+                             <span className="text-lg font-bold text-orange-500">{product.promo_price} HTG</span>
+                             <span className="text-sm text-slate-400 line-through ml-2">{product.price} HTG</span>
+                           </div>
+                         ) : (
+                           <span className="text-lg font-bold text-slate-800">{product.price} HTG</span>
+                         )}
+                       </div>
+                       <div className={`px-2 py-1 rounded text-xs ${product.is_available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                         {product.is_available ? 'Disponible' : 'Indisponible'}
+                       </div>
+                     </div>
+                     {product.stock_quantity !== undefined && (
+                       <div className="text-xs text-slate-500">
+                         Stock: {product.stock_quantity}
+                       </div>
+                     )}
                     </div>
                   </CardContent>
                 </Card>
@@ -339,6 +400,17 @@ export default function AdminProducts() {
               </div>
 
               <div className="col-span-2">
+                <Label>Quantité en stock *</Label>
+                <Input
+                  type="number"
+                  value={formData.stock_quantity}
+                  onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                  placeholder="0"
+                  required
+                />
+              </div>
+
+              <div className="col-span-2">
                 <Label>Catégorie</Label>
                 <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                   <SelectTrigger>
@@ -387,7 +459,7 @@ export default function AdminProducts() {
               </div>
 
               <div className="col-span-2">
-                <Label>Image</Label>
+                <Label>Image principale *</Label>
                 <Input
                   type="file"
                   accept="image/*"
@@ -396,6 +468,59 @@ export default function AdminProducts() {
                 />
                 {formData.image_url && (
                   <img src={formData.image_url} alt="Preview" className="mt-2 h-32 w-32 object-cover rounded-lg" />
+                )}
+              </div>
+
+              <div className="col-span-2">
+                <Label>Images supplémentaires</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAdditionalImageUpload}
+                  disabled={uploading}
+                />
+                {formData.additional_images && formData.additional_images.length > 0 && (
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {formData.additional_images.map((img, idx) => (
+                      <div key={idx} className="relative">
+                        <img src={img} alt="" className="h-20 w-20 object-cover rounded-lg" />
+                        <button
+                          type="button"
+                          onClick={() => removeAdditionalImage(idx)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="col-span-2">
+                <Label>Tags SEO (pour la recherche)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    placeholder="Ajouter un tag (ex: poulet, pizza, burger)"
+                  />
+                  <Button type="button" onClick={addTag} variant="outline">
+                    <Tag className="w-4 h-4" />
+                  </Button>
+                </div>
+                {formData.seo_tags && formData.seo_tags.length > 0 && (
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {formData.seo_tags.map((tag, idx) => (
+                      <div key={idx} className="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-sm flex items-center gap-1">
+                        {tag}
+                        <button type="button" onClick={() => removeTag(tag)}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
 
