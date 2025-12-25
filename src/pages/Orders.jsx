@@ -12,6 +12,7 @@ import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
 import OrderProgressBar from '@/components/orders/OrderProgressBar';
 import ReviewModal from '@/components/modals/ReviewModal';
+import DeliveryMap from '@/components/orders/DeliveryMap';
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
 import { toast } from "sonner";
@@ -110,6 +111,13 @@ export default function Orders() {
 
       {/* Progress Bar */}
       <OrderProgressBar status={order.status} />
+
+      {/* Carte en temps réel pour les commandes en livraison */}
+      {['driver_assigned', 'in_delivery'].includes(order.status) && order.driver_location && (
+        <div className="mt-4">
+          <DeliveryMap order={order} />
+        </div>
+      )}
       
       <div className="mt-4 pt-4 border-t">
         <p className="text-sm font-medium text-slate-700">{order.shop_name}</p>
