@@ -21,11 +21,17 @@ async function sendOneSignalNotification(userIds, title, message, priority = 10)
         include_external_user_ids: userIds,
         headings: { fr: title, en: title },
         contents: { fr: message, en: message },
-        data: { type: 'order_update' },
+        data: { 
+          type: 'order_update',
+          action: 'view_orders',
+          redirect_to: 'Orders'
+        },
         priority: priority,
         android_channel_id: 'orders',
         ios_sound: 'notification.wav',
-        android_sound: 'notification'
+        android_sound: 'notification',
+        ios_badgeType: 'Increase',
+        ios_badgeCount: 1
       })
     });
 
@@ -63,13 +69,21 @@ async function sendMerchantNotification(merchantId, title, message) {
         ],
         headings: { fr: title, en: title },
         contents: { fr: message, en: message },
-        data: { type: 'new_order', merchant_id: merchantId },
+        data: { 
+          type: 'new_order', 
+          merchant_id: merchantId,
+          action: 'open_orders',
+          redirect_to: 'EnterpriseDashboard'
+        },
         priority: 10,
         android_channel_id: 'orders',
         ios_sound: 'notification.wav',
         android_sound: 'notification',
+        android_led_color: 'FFFF8000',
+        android_accent_color: 'FFFF8000',
         ios_badgeType: 'Increase',
-        ios_badgeCount: 1
+        ios_badgeCount: 1,
+        ttl: 86400
       })
     });
 

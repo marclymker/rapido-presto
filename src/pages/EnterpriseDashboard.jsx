@@ -31,6 +31,7 @@ export default function EnterpriseDashboard() {
   });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
   const queryClient = useQueryClient();
   const { requestPermission } = useBrowserNotifications();
   const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound();
@@ -148,6 +149,27 @@ export default function EnterpriseDashboard() {
     }
   });
 
+  const toggleOnlineMutation = useMutation({
+    mutationFn: async (status) => {
+      // Mettre à jour le statut de la boutique
+      await base44.entities.Shop.update(myShop.id, { is_active: status });
+      
+      // Mettre à jour la disponibilité de tous les produits
+      const updatePromises = products.map(product => 
+        base44.entities.Product.update(product.id, { is_available: status })
+      );
+      await Promise.all(updatePromises);
+      
+      return status;
+    },
+    onSuccess: (status) => {
+      queryClient.invalidateQueries(['my-shop']);
+      queryClient.invalidateQueries(['my-products']);
+      setIsOnline(status);
+      toast.success(status ? 'Boutique en ligne' : 'Boutique hors ligne');
+    }
+  });
+
   const updateOrderMutation = useMutation({
     mutationFn: async ({ id, status }) => {
       const updates = { status };
@@ -245,6 +267,18 @@ export default function EnterpriseDashboard() {
               <p className="text-sm text-slate-500">{entrepriseData.company_category}</p>
             </div>
             <div className="flex items-center gap-3">
+              {/* Toggle En ligne / Hors ligne */}
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full">
+                <span className="text-sm font-medium text-slate-700">
+                  {myShop?.is_active !== false ? 'En ligne' : 'Hors ligne'}
+                </span>
+                <Switch
+                  checked={myShop?.is_active !== false}
+                  onCheckedChange={(checked) => toggleOnlineMutation.mutate(checked)}
+                  disabled={toggleOnlineMutation.isPending}
+                />
+              </div>
+              
               <RealtimeIndicator isConnected={isConnected} />
               <ProfileSwitcher user={user} />
               <Button
