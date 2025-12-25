@@ -574,6 +574,18 @@ Format JSON strict requis.`;
                     </AlertDialogTitle>
                     <AlertDialogDescription asChild>
                       <div className="space-y-4 pt-4 text-base">
+                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                          <span className="text-2xl">📝</span>
+                          <div>
+                            <p className="font-semibold text-slate-900">Ajoute le Titre de votre article</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                          <span className="text-2xl">📷</span>
+                          <div>
+                            <p className="font-semibold text-slate-900">Ajoute Photos réelles de bonne qualité</p>
+                          </div>
+                        </div>
                         <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border-2 border-purple-200">
                           <span className="text-2xl">✨</span>
                           <div>
@@ -584,26 +596,8 @@ Format JSON strict requis.`;
                         <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
                           <span className="text-2xl">💰</span>
                           <div>
-                            <p className="font-semibold text-slate-900">Prix fixe obligatoire en Gourdes</p>
+                            <p className="font-semibold text-slate-900">Ajoute les Prix fixe obligatoire en Gourdes</p>
                             <p className="text-sm text-slate-600">(aucune négociation possible avec les acheteurs)</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
-                          <span className="text-2xl">📝</span>
-                          <div>
-                            <p className="font-semibold text-slate-900">Description claire et complète</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
-                          <span className="text-2xl">📷</span>
-                          <div>
-                            <p className="font-semibold text-slate-900">Photos réelles et de bonne qualité</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
-                          <span className="text-2xl">🗂️</span>
-                          <div>
-                            <p className="font-semibold text-slate-900">Choisi la Catégorie de votre article</p>
                           </div>
                         </div>
                       </div>
