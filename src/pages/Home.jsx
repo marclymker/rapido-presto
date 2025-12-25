@@ -229,12 +229,12 @@ export default function Home() {
                 className="mt-3"
               >
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-orange-400" />
                   <Input
-                    placeholder="Rechercher des articles..."
+                    placeholder="🔍 Rechercher un restaurant, un plat..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 bg-slate-50"
+                    className="pl-12 h-12 bg-slate-100 border-2 border-slate-200 focus:border-orange-400 text-base rounded-xl"
                   />
                 </div>
               </motion.div>
