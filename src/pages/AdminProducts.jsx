@@ -340,11 +340,20 @@ export default function AdminProducts() {
 
               <div className="col-span-2">
                 <Label>Catégorie</Label>
-                <Input
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  placeholder={selectedShop?.company_category}
-                />
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une catégorie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Fastfood">Fastfood</SelectItem>
+                    <SelectItem value="Restaurants">Restaurants</SelectItem>
+                    <SelectItem value="Pharmacie">Pharmacie</SelectItem>
+                    <SelectItem value="Vêtements">Vêtements</SelectItem>
+                    <SelectItem value="Epicerie">Épicerie</SelectItem>
+                    <SelectItem value="Café">Café</SelectItem>
+                    <SelectItem value="Boulangerie">Boulangerie</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="col-span-2">
