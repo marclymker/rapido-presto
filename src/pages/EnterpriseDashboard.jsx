@@ -660,6 +660,23 @@ export default function EnterpriseDashboard() {
                       />
                     </div>
                     <div>
+                      <Label>Délai de livraison</Label>
+                      <Select 
+                        value={productForm.delivery_time} 
+                        onValueChange={(val) => setProductForm({ ...productForm, delivery_time: val })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner un délai" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="30-45 minutes">30-45 minutes</SelectItem>
+                          <SelectItem value="24 heures">24 heures</SelectItem>
+                          <SelectItem value="3-5 jours">3-5 jours</SelectItem>
+                          <SelectItem value="15 jours">15 jours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
                       <Label>Photo principale</Label>
                       <Input type="file" accept="image/*" onChange={handleImageUpload} />
                       {productForm.image_url && (
