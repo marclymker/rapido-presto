@@ -180,6 +180,11 @@ export default function Home() {
       });
     }, [allProducts, selectedCategory, selectedShop]);
 
+    // Filtrer les produits aléatoires si recherche active
+    const filteredRandomProducts = randomProductsByShop.filter(p => 
+      p.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -260,7 +265,7 @@ export default function Home() {
                     Découvrir
                   </h2>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {randomProductsByShop.map(product => (
+                    {filteredRandomProducts.map(product => (
                       <ProductCard
                         key={product.id}
                         product={product}
@@ -279,9 +284,9 @@ export default function Home() {
                       />
                     ))}
                   </div>
-                  {randomProductsByShop.length === 0 && (
+                  {filteredRandomProducts.length === 0 && (
                     <div className="text-center py-12 text-slate-500">
-                      Aucun article disponible
+                      {searchQuery ? 'Aucun article trouvé' : 'Aucun article disponible'}
                     </div>
                   )}
                 </div>
