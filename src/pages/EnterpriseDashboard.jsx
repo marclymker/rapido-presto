@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatHaitiDate } from '@/components/utils/dateFormat';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,6 +25,7 @@ import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtim
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
+  const [guidelinesDialogOpen, setGuidelinesDialogOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productForm, setProductForm] = useState({
@@ -419,16 +421,71 @@ export default function EnterpriseDashboard() {
           {/* Products Tab */}
           <TabsContent value="products">
             <div className="flex justify-end mb-4">
+              <Button 
+                className="bg-orange-500 hover:bg-orange-600"
+                onClick={() => setGuidelinesDialogOpen(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter un article
+              </Button>
+              
+              {/* Guidelines Dialog */}
+              <AlertDialog open={guidelinesDialogOpen} onOpenChange={setGuidelinesDialogOpen}>
+                <AlertDialogContent className="max-w-md">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-center text-xl flex items-center justify-center gap-2">
+                      ⚠️ Consignes pour la création d'articles
+                    </AlertDialogTitle>
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-4 pt-4 text-base">
+                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                          <span className="text-2xl">💰</span>
+                          <div>
+                            <p className="font-semibold text-slate-900">Prix fixe obligatoire en Gourdes</p>
+                            <p className="text-sm text-slate-600">(aucune négociation possible avec les acheteurs)</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                          <span className="text-2xl">📝</span>
+                          <div>
+                            <p className="font-semibold text-slate-900">Description claire et complète</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                          <span className="text-2xl">📷</span>
+                          <div>
+                            <p className="font-semibold text-slate-900">Photos réelles et de bonne qualité</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                          <span className="text-2xl">🗂️</span>
+                          <div>
+                            <p className="font-semibold text-slate-900">Choisi la Catégorie de votre article</p>
+                          </div>
+                        </div>
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction 
+                      className="bg-orange-500 hover:bg-orange-600"
+                      onClick={() => {
+                        setGuidelinesDialogOpen(false);
+                        setProductDialogOpen(true);
+                      }}
+                    >
+                      J'ai compris
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              {/* Product Dialog */}
               <Dialog open={productDialogOpen} onOpenChange={(open) => {
                 setProductDialogOpen(open);
                 if (!open) resetProductForm();
               }}>
-                <DialogTrigger asChild>
-                  <Button className="bg-orange-500 hover:bg-orange-600">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Ajouter un article
-                  </Button>
-                </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>
