@@ -116,45 +116,26 @@ export default function ProfileSetup() {
         };
       } else if (formData.user_type === 'livreur') {
         profiles.livreur = {
-          is_active: false,
-          status: 'pending',
+          is_active: true,
+          status: 'approved',
           created_at: now,
+          last_used: now,
           vehicle_type: formData.vehicle_type,
           id_document_url: formData.id_document_url,
-          is_available: false
+          is_available: true
         };
-        
-        // Create validation request
-        await base44.entities.ProfileSwitch.create({
-          user_id: user.id,
-          user_name: user.full_name,
-          from_profile: null,
-          to_profile: 'livreur',
-          status: 'pending',
-          data: {
-            vehicle_type: formData.vehicle_type,
-            id_document_url: formData.id_document_url,
-            phone: formData.phone,
-            region: formData.region
-          }
-        });
       }
 
       await base44.auth.updateMe({
-        current_profile: formData.user_type === 'livreur' ? 'client' : formData.user_type,
+        current_profile: formData.user_type,
         region: formData.region,
         phone: formData.phone,
         address: formData.address,
         profiles: profiles
       });
 
-      if (formData.user_type === 'livreur') {
-        toast.success('Demande soumise! En attente de validation.');
-        redirectToUserDashboard('client'); // Redirect to client while waiting
-      } else {
-        toast.success('Profil créé avec succès!');
-        redirectToUserDashboard(formData.user_type);
-      }
+      toast.success('Profil créé avec succès!');
+      redirectToUserDashboard(formData.user_type);
     } catch (error) {
       toast.error('Erreur lors de la création du profil');
     } finally {
