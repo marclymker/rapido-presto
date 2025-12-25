@@ -115,17 +115,21 @@ export default function DriverDashboard() {
 
   const acceptOrderMutation = useMutation({
     mutationFn: async (order) => {
-      await base44.entities.Order.update(order.id, {
+      const updatedOrder = await base44.entities.Order.update(order.id, {
         status: 'driver_assigned',
         driver_id: user.id,
         driver_name: user.full_name,
         driver_phone: user.phone
       });
-      // Envoyer notifications
-      await base44.functions.invoke('sendOrderNotification', {
-        orderId: order.id,
-        status: 'driver_assigned'
-      }).catch(err => console.error('Notification error:', err));
+      
+      // Notification push au client
+      await base44.functions.invoke('sendPushNotification', {
+        userId: updatedOrder.client_id,
+        title: '🏍️ Livreur assigné',
+        message: `${user.full_name} a accepté votre commande et est en route vers la boutique`,
+        data: { orderId: order.id, status: 'driver_assigned' }
+      }).catch(err => console.error('Push notification error:', err));
+      
       return order;
     },
     onSuccess: () => {
@@ -137,12 +141,18 @@ export default function DriverDashboard() {
 
   const updateOrderMutation = useMutation({
     mutationFn: async ({ id, status }) => {
-      await base44.entities.Order.update(id, { status });
-      // Envoyer notifications
-      await base44.functions.invoke('sendOrderNotification', {
-        orderId: id,
-        status
-      }).catch(err => console.error('Notification error:', err));
+      const updatedOrder = await base44.entities.Order.update(id, { status });
+      
+      // Notification push pour "en livraison"
+      if (status === 'in_delivery') {
+        await base44.functions.invoke('sendPushNotification', {
+          userId: updatedOrder.client_id,
+          title: '🚴 Livraison en route',
+          message: `${updatedOrder.driver_name} est en chemin vers vous`,
+          data: { orderId: id, status }
+        }).catch(err => console.error('Push notification error:', err));
+      }
+      
       return { id, status };
     },
     onSuccess: () => {
@@ -154,12 +164,16 @@ export default function DriverDashboard() {
 
   const confirmDeliveryMutation = useMutation({
     mutationFn: async (id) => {
-      await base44.entities.Order.update(id, { status: 'delivered' });
-      // Envoyer notifications
-      await base44.functions.invoke('sendOrderNotification', {
-        orderId: id,
-        status: 'delivered'
-      }).catch(err => console.error('Notification error:', err));
+      const updatedOrder = await base44.entities.Order.update(id, { status: 'delivered' });
+      
+      // Notification push de livraison réussie
+      await base44.functions.invoke('sendPushNotification', {
+        userId: updatedOrder.client_id,
+        title: '✅ Commande livrée',
+        message: 'Votre commande a été livrée avec succès. Bon appétit!',
+        data: { orderId: id, status: 'delivered' }
+      }).catch(err => console.error('Push notification error:', err));
+      
       return id;
     },
     onSuccess: () => {
