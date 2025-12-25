@@ -22,6 +22,9 @@ import { useOrderNotifications, useBrowserNotifications, useNotificationSound } 
 import { useWebSocket, useAutoRefresh } from '@/components/realtime/useWebSocket';
 import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
+import SalesStats from '@/components/enterprise/SalesStats';
+import PromotionsManager from '@/components/enterprise/PromotionsManager';
+import OpeningHoursManager from '@/components/enterprise/OpeningHoursManager';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
@@ -29,7 +32,7 @@ export default function EnterpriseDashboard() {
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productForm, setProductForm] = useState({
-    name: '', price: '', promo_price: '', description: '', image_url: '', additional_images: [], category: '', taille_emballage: '', stock_quantity: '', seo_tags: [], is_available: true
+    name: '', price: '', promo_price: '', description: '', image_url: '', additional_images: [], category: '', taille_emballage: '', delivery_time: '', stock_quantity: '', seo_tags: [], is_available: true
   });
   const [tagInput, setTagInput] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -102,6 +105,14 @@ export default function EnterpriseDashboard() {
     enabled: !!myShop?.id,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
+  });
+
+  const updateShopMutation = useMutation({
+    mutationFn: (data) => base44.entities.Shop.update(myShop.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['my-shop']);
+      toast.success('Boutique mise à jour');
+    }
   });
 
   // WebSocket temps réel
@@ -213,7 +224,7 @@ export default function EnterpriseDashboard() {
   });
 
   const resetProductForm = () => {
-    setProductForm({ name: '', price: '', promo_price: '', description: '', image_url: '', additional_images: [], category: '', taille_emballage: '', stock_quantity: '', seo_tags: [], is_available: true });
+    setProductForm({ name: '', price: '', promo_price: '', description: '', image_url: '', additional_images: [], category: '', taille_emballage: '', delivery_time: '', stock_quantity: '', seo_tags: [], is_available: true });
     setTagInput('');
     setEditingProduct(null);
   };
@@ -229,6 +240,7 @@ export default function EnterpriseDashboard() {
       additional_images: product.additional_images || [],
       category: product.category || '',
       taille_emballage: product.taille_emballage || '',
+      delivery_time: product.delivery_time || '',
       stock_quantity: product.stock_quantity || '',
       seo_tags: product.seo_tags || [],
       is_available: product.is_available !== false
@@ -377,10 +389,16 @@ export default function EnterpriseDashboard() {
         <Tabs defaultValue="orders" className="w-full">
           <TabsList className="w-full bg-white mb-6">
             <TabsTrigger value="orders" className="flex-1">
-              Commandes ({activeOrders.length + pendingOrders.length})
+              Commandes
             </TabsTrigger>
             <TabsTrigger value="products" className="flex-1">
-              Mes Articles ({products.length})
+              Articles
+            </TabsTrigger>
+            <TabsTrigger value="stats" className="flex-1">
+              Statistiques
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex-1">
+              Paramètres
             </TabsTrigger>
           </TabsList>
 
@@ -761,6 +779,24 @@ export default function EnterpriseDashboard() {
                 Aucun article. Cliquez sur "Ajouter" pour commencer.
               </div>
             )}
+          </TabsContent>
+
+          {/* Stats Tab */}
+          <TabsContent value="stats">
+            <SalesStats orders={orders} products={products} />
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6">
+            <OpeningHoursManager 
+              shop={myShop} 
+              onUpdateShop={(data) => updateShopMutation.mutate(data)}
+            />
+            <PromotionsManager 
+              shop={myShop} 
+              products={products}
+              onUpdateShop={(data) => updateShopMutation.mutate(data)}
+            />
           </TabsContent>
         </Tabs>
       </main>
