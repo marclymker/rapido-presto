@@ -347,6 +347,7 @@ export default function AdminProducts() {
                   <SelectContent>
                     <SelectItem value="Fastfood">Fastfood</SelectItem>
                     <SelectItem value="Restaurants">Restaurants</SelectItem>
+                    <SelectItem value="Boutique Fleurs">Boutique Fleurs</SelectItem>
                     <SelectItem value="Pharmacie">Pharmacie</SelectItem>
                     <SelectItem value="Vêtements">Vêtements</SelectItem>
                     <SelectItem value="Epicerie">Épicerie</SelectItem>

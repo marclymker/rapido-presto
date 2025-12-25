@@ -19,7 +19,7 @@ const regions = [
 ];
 
 const categories = [
-  "Fastfood", "Restaurants", "Pharmacie", "Vêtements", 
+  "Fastfood", "Restaurants", "Boutique Fleurs", "Pharmacie", "Vêtements", 
   "Epicerie", "Café", "Boulangerie"
 ];
 
