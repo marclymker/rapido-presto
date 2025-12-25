@@ -424,11 +424,12 @@ export default function AdminProducts() {
                     <SelectItem value="Vêtements">Vêtements</SelectItem>
                     <SelectItem value="Epicerie">Épicerie</SelectItem>
                     <SelectItem value="Café">Café</SelectItem>
-                    <SelectItem value="Boulangerie">Boulangerie</SelectItem>
                     <SelectItem value="Pour Femme">Pour Femme</SelectItem>
                     <SelectItem value="Electronics">Electronics</SelectItem>
                     <SelectItem value="Pour homme">Pour homme</SelectItem>
                     <SelectItem value="Maison">Maison</SelectItem>
+                    <SelectItem value="Bébé">Bébé</SelectItem>
+                    <SelectItem value="Outils">Outils</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
