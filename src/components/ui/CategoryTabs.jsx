@@ -3,23 +3,24 @@ import { cn } from "@/lib/utils";
 import { UtensilsCrossed, Pill, Shirt, ShoppingBasket, Coffee, Croissant, Pizza, Flower, User, Smartphone, UserCircle, Home } from 'lucide-react';
 
 const categories = [
+  { id: 'Tout', label: 'Tout', icon: Home },
   { id: 'Fastfood', label: 'Fastfood', icon: Pizza },
   { id: 'Restaurants', label: 'Restaurants', icon: UtensilsCrossed },
-  { id: 'Boutique Fleurs', label: 'Boutique Fleurs', icon: Flower },
+  { id: 'Boutique Fleurs', label: 'Fleurs', icon: Flower },
   { id: 'Pharmacie', label: 'Pharmacie', icon: Pill },
   { id: 'Vêtements', label: 'Vêtements', icon: Shirt },
   { id: 'Epicerie', label: 'Épicerie', icon: ShoppingBasket },
   { id: 'Café', label: 'Café', icon: Coffee },
   { id: 'Boulangerie', label: 'Boulangerie', icon: Croissant },
-  { id: 'Pour Femme', label: 'Pour Femme', icon: User },
+  { id: 'Pour Femme', label: 'Femme', icon: User },
   { id: 'Electronics', label: 'Electronics', icon: Smartphone },
-  { id: 'Pour homme', label: 'Pour homme', icon: UserCircle },
+  { id: 'Pour homme', label: 'Homme', icon: UserCircle },
   { id: 'Maison', label: 'Maison', icon: Home },
 ];
 
 export default function CategoryTabs({ selected, onSelect }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
       {categories.map((cat) => {
         const Icon = cat.icon;
         const isActive = selected === cat.id;
@@ -28,14 +29,14 @@ export default function CategoryTabs({ selected, onSelect }) {
             key={cat.id}
             onClick={() => onSelect(cat.id)}
             className={cn(
-              "flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl transition-all duration-300 min-w-[80px] shrink-0",
+              "flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-all duration-200",
               isActive 
-                ? "bg-orange-500 text-white shadow-lg shadow-orange-200" 
-                : "bg-white text-slate-600 hover:bg-orange-50 border border-slate-100"
+                ? "bg-orange-500 text-white shadow-lg ring-2 ring-orange-300 scale-105" 
+                : "bg-white text-slate-600 hover:bg-orange-50 hover:text-orange-500 border border-slate-200"
             )}
           >
-            <Icon className="w-5 h-5" />
-            <span className="text-xs font-medium whitespace-nowrap">{cat.label}</span>
+            <Icon className={cn("w-5 h-5", isActive && "animate-pulse")} />
+            <span className="text-[10px] font-medium text-center leading-tight">{cat.label}</span>
           </button>
         );
       })}

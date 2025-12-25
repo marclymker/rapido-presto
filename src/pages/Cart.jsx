@@ -3,11 +3,12 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Banknote } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Banknote, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
 import { getHaitiTime } from '@/components/utils/dateFormat';
@@ -38,6 +39,7 @@ export default function Cart() {
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [orderNumber, setOrderNumber] = useState('');
   const [confirmCode, setConfirmCode] = useState('');
+  const [specialInstructions, setSpecialInstructions] = useState('');
   const [redirectingToMoncash, setRedirectingToMoncash] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -326,9 +328,15 @@ export default function Cart() {
                   <span>Sous-total</span>
                   <span>{subtotal} HTG</span>
                 </div>
-                <div className="flex justify-between text-slate-600">
-                  <span>Frais de livraison</span>
-                  <span>{deliveryFee} HTG</span>
+                <div className="flex justify-between items-center text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-orange-500" />
+                    <span>Frais de livraison</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-medium">{deliveryFee} HTG</div>
+                    <div className="text-xs text-slate-400">Livraison: 20-30 min</div>
+                  </div>
                 </div>
                 <div className="flex justify-between font-bold text-lg pt-2 border-t">
                   <span>Total</span>
@@ -394,6 +402,19 @@ export default function Cart() {
                 <h3 className="font-semibold mb-3">Adresse de livraison</h3>
                 <p className="text-slate-600">{user.address || 'Non définie'}</p>
                 <p className="text-slate-500 text-sm">{user.region}</p>
+              </div>
+
+              {/* Special Instructions */}
+              <div className="bg-white rounded-xl p-4">
+                <h3 className="font-semibold mb-3">Instructions spéciales (optionnel)</h3>
+                <Textarea
+                  placeholder="Ex: Sonnez à la porte, pas d'interphone..."
+                  value={specialInstructions}
+                  onChange={(e) => setSpecialInstructions(e.target.value.slice(0, 200))}
+                  className="min-h-[80px]"
+                  maxLength={200}
+                />
+                <p className="text-xs text-slate-400 mt-1">{specialInstructions.length}/200 caractères</p>
               </div>
 
               {/* Summary */}

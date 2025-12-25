@@ -25,8 +25,11 @@ export default function ProductCard({ product, onAdd, onClick }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-2xl text-slate-300">📦</span>
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50">
+            <div className="text-center">
+              <div className="text-4xl mb-1">🍽️</div>
+              <p className="text-[10px] text-orange-600 font-medium px-2">Photo à venir</p>
+            </div>
           </div>
         )}
         {hasPromo && (
@@ -54,7 +57,7 @@ export default function ProductCard({ product, onAdd, onClick }) {
           {product.is_available !== false && (
             <Button 
               size="icon" 
-              className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600"
+              className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 animate-pulse hover:animate-none hover:scale-110 transition-transform"
               onClick={(e) => {
                 e.stopPropagation();
                 onAdd(product);
