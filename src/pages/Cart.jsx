@@ -65,6 +65,9 @@ export default function Cart() {
     refetchIntervalInBackground: true
   });
 
+  // Note: Les prix dans le panier incluent déjà la marge de 10%
+  // car ils sont ajoutés avec getClientPrice() lors de l'ajout au panier
+
   const updateQuantityMutation = useMutation({
     mutationFn: ({ id, quantity }) => {
       if (quantity <= 0) {
@@ -85,7 +88,7 @@ export default function Cart() {
       const orderNum = 'RP' + Date.now().toString().slice(-6);
       const code = generateConfirmationCode();
       const shop = cartItems[0];
-      const deliveryFee = calculateDeliveryFee(user.commune, shop.shop_commune);
+      const deliveryFee = calculateDeliveryFee(user.region, shop.shop_region);
       const subtotal = cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
       const totalAmount = subtotal + deliveryFee;
       
@@ -110,10 +113,10 @@ export default function Cart() {
             client_name: user.full_name,
             client_phone: user.phone,
             client_address: user.address || '',
-            client_commune: user.commune,
+            client_region: user.region,
             shop_id: shop.shop_id,
             shop_name: shop.shop_name,
-            shop_commune: shop.shop_commune,
+            shop_region: shop.shop_region,
             items: cartItems.map(item => ({
               product_id: item.product_id,
               name: item.product_name,
@@ -149,10 +152,10 @@ export default function Cart() {
         client_name: user.full_name,
         client_phone: user.phone,
         client_address: user.address || '',
-        client_commune: user.commune,
+        client_region: user.region,
         shop_id: shop.shop_id,
         shop_name: shop.shop_name,
-        shop_commune: shop.shop_commune,
+        shop_region: shop.shop_region,
         items: cartItems.map(item => ({
           product_id: item.product_id,
           name: item.product_name,
@@ -211,7 +214,7 @@ export default function Cart() {
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
   const deliveryFee = cartItems.length > 0 
-    ? calculateDeliveryFee(user.commune, cartItems[0].shop_commune) 
+    ? calculateDeliveryFee(user.region, cartItems[0].shop_region) 
     : 0;
   const total = subtotal + deliveryFee;
 
@@ -390,7 +393,7 @@ export default function Cart() {
               <div className="bg-white rounded-xl p-4">
                 <h3 className="font-semibold mb-3">Adresse de livraison</h3>
                 <p className="text-slate-600">{user.address || 'Non définie'}</p>
-                <p className="text-slate-500 text-sm">{user.commune}</p>
+                <p className="text-slate-500 text-sm">{user.region}</p>
               </div>
 
               {/* Summary */}

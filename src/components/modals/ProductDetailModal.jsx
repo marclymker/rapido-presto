@@ -2,15 +2,18 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus } from 'lucide-react';
+import { applyClientMargin } from '@/components/utils/priceCalculation';
 
 export default function ProductDetailModal({ product, open, onClose, onAddToCart }) {
   const [quantity, setQuantity] = useState(1);
   
   if (!product) return null;
   
-  const price = product.promo_price && product.promo_price < product.price 
+  const basePrice = product.promo_price && product.promo_price < product.price 
     ? product.promo_price 
     : product.price;
+  const price = applyClientMargin(basePrice);
+  const originalPrice = applyClientMargin(product.price);
 
   const handleAdd = () => {
     onAddToCart(product, quantity);
@@ -47,7 +50,7 @@ export default function ProductDetailModal({ product, open, onClose, onAddToCart
           <div className="flex items-center gap-3 mt-4">
             <span className="text-2xl font-bold text-orange-500">{price} HTG</span>
             {product.promo_price && product.promo_price < product.price && (
-              <span className="text-lg text-slate-400 line-through">{product.price} HTG</span>
+              <span className="text-lg text-slate-400 line-through">{originalPrice} HTG</span>
             )}
           </div>
           

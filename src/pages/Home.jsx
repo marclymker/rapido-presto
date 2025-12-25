@@ -15,6 +15,7 @@ import ProductCard from '@/components/ui/ProductCard';
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
+import { getClientPrice } from '@/components/utils/priceCalculation';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -98,6 +99,8 @@ export default function Home() {
     mutationFn: async ({ product, quantity = 1 }) => {
       // Check if item exists in cart
       const existing = cartItems.find(item => item.product_id === product.id);
+      const clientPrice = getClientPrice(product);
+      
       if (existing) {
         return base44.entities.CartItem.update(existing.id, {
           quantity: existing.quantity + quantity
@@ -109,12 +112,10 @@ export default function Home() {
           product_name: product.name,
           product_image: product.image_url,
           quantity: quantity,
-          unit_price: product.promo_price && product.promo_price < product.price 
-            ? product.promo_price 
-            : product.price,
+          unit_price: clientPrice,
           shop_id: selectedShop.id,
           shop_name: selectedShop.company_name,
-          shop_commune: selectedShop.commune
+          shop_region: selectedShop.region
         });
       }
     },

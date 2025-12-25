@@ -2,9 +2,14 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
+import { applyClientMargin } from '@/components/utils/priceCalculation';
 
 export default function ProductCard({ product, onAdd, onClick }) {
   const hasPromo = product.promo_price && product.promo_price < product.price;
+  const displayPrice = hasPromo 
+    ? applyClientMargin(product.promo_price) 
+    : applyClientMargin(product.price);
+  const originalDisplayPrice = applyClientMargin(product.price);
   
   return (
     <motion.div
@@ -40,10 +45,10 @@ export default function ProductCard({ product, onAdd, onClick }) {
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-2">
             <span className={`font-bold ${hasPromo ? 'text-red-500' : 'text-slate-800'}`}>
-              {hasPromo ? product.promo_price : product.price} HTG
+              {displayPrice} HTG
             </span>
             {hasPromo && (
-              <span className="text-xs text-slate-400 line-through">{product.price} HTG</span>
+              <span className="text-xs text-slate-400 line-through">{originalDisplayPrice} HTG</span>
             )}
           </div>
           {product.is_available !== false && (
