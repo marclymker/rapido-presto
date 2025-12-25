@@ -16,6 +16,7 @@ import ProductDetailModal from '@/components/modals/ProductDetailModal';
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 import { getClientPrice } from '@/components/utils/priceCalculation';
+import ProfileCompletionModal from '@/components/modals/ProfileCompletionModal';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -23,6 +24,7 @@ export default function Home() {
   const [selectedShop, setSelectedShop] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const queryClient = useQueryClient();
   
   // Auto-refresh des données
@@ -42,18 +44,9 @@ export default function Home() {
     base44.auth.me().then(u => {
       setUser(u);
       
-      // Initialize profile if not set
+      // Show profile completion modal if not set
       if (!u.current_profile) {
-        base44.auth.updateMe({ 
-          current_profile: 'client',
-          profiles: {
-            client: { is_active: true, created_at: new Date().toISOString(), last_used: new Date().toISOString() },
-            entreprise: { is_active: false },
-            livreur: { is_active: false, status: 'pending' }
-          }
-        }).then(() => {
-          window.location.reload();
-        });
+        setShowProfileModal(true);
         return;
       }
       
@@ -67,6 +60,16 @@ export default function Home() {
       }
     }).catch(() => {});
   }, []);
+
+  const handleProfileComplete = (profileType) => {
+    setShowProfileModal(false);
+    const redirectPages = {
+      client: 'Home',
+      entreprise: 'EnterpriseDashboard',
+      livreur: 'Home'
+    };
+    window.location.href = createPageUrl(redirectPages[profileType]);
+  };
 
   // Fetch shops (boutiques) - public entity
   const { data: shops = [] } = useQuery({
@@ -274,6 +277,13 @@ export default function Home() {
         open={!!selectedProduct}
         onClose={() => setSelectedProduct(null)}
         onAddToCart={handleAddToCart}
+      />
+
+      {/* Profile Completion Modal */}
+      <ProfileCompletionModal
+        user={user}
+        open={showProfileModal}
+        onComplete={handleProfileComplete}
       />
     </div>
   );

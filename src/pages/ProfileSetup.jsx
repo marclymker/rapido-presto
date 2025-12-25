@@ -11,13 +11,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
 
-const COMMUNES = [
-  "Pétion Ville", "Delmas", "Tabarre", "Kenscoff", "Croix des Bouquets",
-  "Carrefour", "Port-au-Prince", "Pernier", "Madeline", "Vaudreuil", "Morne Rouge"
+const REGIONS = [
+  "Petion-ville", "Route de Freres", "Delmas", "Pelerin", "Thomassain", "Kenscoff",
+  "Lalue", "Nazon", "Pernier", "Sarthe", "Tabarre", "Clercine", "Marrin",
+  "Bon Repos", "Turgeau", "Canapevert", "Lavil", "Madeline", "Vaudreuil",
+  "Morne Rouge", "Cap Haitien", "St Marc", "Gonaives", "Les Cayes"
 ];
 
 const COMPANY_CATEGORIES = [
-  "Fastfood", "Restaurants", "Pharmacie", "Vêtements", "Epicerie", "Café", "Boulangerie"
+  "Fastfood", "Restaurants", "Boutique Fleurs", "Pharmacie", "Vêtements",
+  "Epicerie", "Café", "Boulangerie", "Pour Femme", "Electronics", "Pour homme", "Maison"
 ];
 
 const VEHICLE_TYPES = ["Moto", "Voiture", "Bicyclette"];
@@ -31,7 +34,7 @@ export default function ProfileSetup() {
 
   const [formData, setFormData] = useState({
     user_type: 'client',
-    commune: '',
+    region: '',
     phone: '',
     address: '',
     // Enterprise fields
@@ -132,14 +135,14 @@ export default function ProfileSetup() {
             vehicle_type: formData.vehicle_type,
             id_document_url: formData.id_document_url,
             phone: formData.phone,
-            commune: formData.commune
+            region: formData.region
           }
         });
       }
 
       await base44.auth.updateMe({
         current_profile: formData.user_type === 'livreur' ? 'client' : formData.user_type,
-        commune: formData.commune,
+        region: formData.region,
         phone: formData.phone,
         address: formData.address,
         profiles: profiles
@@ -162,7 +165,7 @@ export default function ProfileSetup() {
   const canProceed = () => {
     if (step === 1) return !!formData.user_type;
     if (step === 2) {
-      if (!formData.commune || !formData.phone) return false;
+      if (!formData.region || !formData.phone) return false;
       if (formData.user_type === 'entreprise' && (!formData.company_name || !formData.company_category)) return false;
       if (formData.user_type === 'livreur' && (!formData.vehicle_type || !formData.id_document_url)) return false;
       return true;
@@ -299,16 +302,16 @@ export default function ProfileSetup() {
               <div className="space-y-4">
                 {/* Common fields */}
                 <div>
-                  <Label>Commune</Label>
+                  <Label>Région</Label>
                   <Select 
-                    value={formData.commune} 
-                    onValueChange={(val) => setFormData({ ...formData, commune: val })}
+                    value={formData.region} 
+                    onValueChange={(val) => setFormData({ ...formData, region: val })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner votre commune" />
+                      <SelectValue placeholder="Sélectionner votre région" />
                     </SelectTrigger>
                     <SelectContent>
-                      {COMMUNES.map(c => (
+                      {REGIONS.map(c => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
                     </SelectContent>
