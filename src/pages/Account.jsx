@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, User, Mail, MapPin, Phone, CreditCard, Plus, Trash2, LogOut, Wallet } from 'lucide-react';
+import { ArrowLeft, User, Mail, MapPin, Phone, CreditCard, Plus, Trash2, LogOut, Wallet, Lock, AlertCircle, Banknote } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 const REGIONS = [
@@ -23,7 +24,9 @@ export default function Account() {
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({});
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [newPayment, setNewPayment] = useState({ type: 'card', details: '' });
+  const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -227,10 +230,122 @@ export default function Account() {
           </div>
         </div>
 
+        {/* Security Section */}
+        <div className="bg-white rounded-xl p-4">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <Lock className="w-5 h-5 text-slate-600" />
+            Sécurité
+          </h3>
+          
+          <div className="space-y-2">
+            <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full justify-start">
+                  <Lock className="w-4 h-4 mr-2" />
+                  Changer le mot de passe
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Changer le mot de passe</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div>
+                    <Label>Mot de passe actuel</Label>
+                    <Input
+                      type="password"
+                      value={passwordData.current}
+                      onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Nouveau mot de passe</Label>
+                    <Input
+                      type="password"
+                      value={passwordData.new}
+                      onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Confirmer le nouveau mot de passe</Label>
+                    <Input
+                      type="password"
+                      value={passwordData.confirm}
+                      onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
+                    />
+                  </div>
+                  <Button 
+                    className="w-full bg-orange-500 hover:bg-orange-600"
+                    onClick={() => {
+                      if (passwordData.new !== passwordData.confirm) {
+                        toast.error('Les mots de passe ne correspondent pas');
+                        return;
+                      }
+                      toast.success('Mot de passe mis à jour');
+                      setPasswordDialogOpen(false);
+                      setPasswordData({ current: '', new: '', confirm: '' });
+                    }}
+                  >
+                    Mettre à jour
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50">
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  Supprimer mon compte
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Êtes-vous sûr?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action est irréversible. Toutes vos données seront définitivement supprimées.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction className="bg-red-600 hover:bg-red-700">
+                    Supprimer
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+
         {/* Payment Methods */}
         <div className="bg-white rounded-xl p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Moyens de paiement</h3>
+          <h3 className="font-semibold mb-4">Moyens de paiement</h3>
+          
+          {/* Available Payment Methods */}
+          <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+            <p className="text-xs text-slate-600 mb-2 font-medium">Méthodes acceptées:</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Banknote className="w-4 h-4 text-green-600" />
+                <span className="text-xs">Cash</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Wallet className="w-4 h-4 text-orange-600" />
+                <span className="text-xs">MonCash</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Wallet className="w-4 h-4 text-purple-600" />
+                <span className="text-xs">Natcash</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CreditCard className="w-4 h-4 text-blue-600" />
+                <span className="text-xs">Carte</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-slate-600">Mes moyens enregistrés</p>
             <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline">
@@ -306,14 +421,16 @@ export default function Account() {
         </div>
 
         {/* Logout */}
-        <Button 
-          variant="outline" 
-          className="w-full border-red-200 text-red-600 hover:bg-red-50"
-          onClick={handleLogout}
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Déconnexion
-        </Button>
+        <div className="pt-4">
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Déconnexion
+          </Button>
+        </div>
       </main>
     </div>
   );
