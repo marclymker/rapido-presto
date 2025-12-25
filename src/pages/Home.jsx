@@ -211,16 +211,7 @@ export default function Home() {
                 </Button>
               </div>
             </div>
-            <Link to={createPageUrl('Cart')}>
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingCart className="w-5 h-5" />
-                {cartCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-orange-500">
-                    {cartCount}
-                  </Badge>
-                )}
-              </Button>
-            </Link>
+
           </div>
           
           {/* Search Bar */}

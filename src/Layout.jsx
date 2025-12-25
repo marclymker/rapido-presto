@@ -42,7 +42,8 @@ export default function Layout({ children, currentPageName }) {
       case 'client':
         return [
           { icon: Home, label: 'Accueil', page: 'Home' },
-          { icon: ShoppingBag, label: 'Commandes', page: 'Orders' },
+          { icon: ShoppingBag, label: 'Panier', page: 'Cart' },
+          { icon: Package, label: 'Commandes', page: 'Orders' },
           { icon: User, label: 'Compte', page: 'Account' },
         ];
       case 'entreprise':
