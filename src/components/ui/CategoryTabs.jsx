@@ -11,7 +11,6 @@ const categories = [
   { id: 'Vêtements', label: 'Vêtements', icon: Shirt },
   { id: 'Epicerie', label: 'Épicerie', icon: ShoppingBasket },
   { id: 'Café', label: 'Café', icon: Coffee },
-  { id: 'Boulangerie', label: 'Boulangerie', icon: Croissant },
   { id: 'Pour Femme', label: 'Femme', icon: User },
   { id: 'Electronics', label: 'Electronics', icon: Smartphone },
   { id: 'Pour homme', label: 'Homme', icon: UserCircle },
