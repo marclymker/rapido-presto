@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 import OneSignalInit from '@/components/notifications/OneSignalInit';
 import NotificationPermission from '@/components/notifications/NotificationPermission';
-import { HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider, Helmet } from 'react-helmet-async';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -77,6 +77,9 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <HelmetProvider>
+      <Helmet>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossorigin="anonymous"></script>
+      </Helmet>
       <div className="min-h-screen bg-slate-50 pb-20">
         <Toaster position="top-center" />
         <OneSignalInit user={user} />
