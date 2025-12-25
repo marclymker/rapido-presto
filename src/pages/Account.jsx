@@ -237,84 +237,59 @@ export default function Account() {
             Sécurité
           </h3>
           
-          <div className="space-y-2">
-            <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
-                  <Lock className="w-4 h-4 mr-2" />
-                  Changer le mot de passe
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Changer le mot de passe</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div>
-                    <Label>Mot de passe actuel</Label>
-                    <Input
-                      type="password"
-                      value={passwordData.current}
-                      onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Nouveau mot de passe</Label>
-                    <Input
-                      type="password"
-                      value={passwordData.new}
-                      onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Confirmer le nouveau mot de passe</Label>
-                    <Input
-                      type="password"
-                      value={passwordData.confirm}
-                      onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
-                    />
-                  </div>
-                  <Button 
-                    className="w-full bg-orange-500 hover:bg-orange-600"
-                    onClick={() => {
-                      if (passwordData.new !== passwordData.confirm) {
-                        toast.error('Les mots de passe ne correspondent pas');
-                        return;
-                      }
-                      toast.success('Mot de passe mis à jour');
-                      setPasswordDialogOpen(false);
-                      setPasswordData({ current: '', new: '', confirm: '' });
-                    }}
-                  >
-                    Mettre à jour
-                  </Button>
+          <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full justify-start">
+                <Lock className="w-4 h-4 mr-2" />
+                Changer le mot de passe
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Changer le mot de passe</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div>
+                  <Label>Mot de passe actuel</Label>
+                  <Input
+                    type="password"
+                    value={passwordData.current}
+                    onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
+                  />
                 </div>
-              </DialogContent>
-            </Dialog>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50">
-                  <AlertCircle className="w-4 h-4 mr-2" />
-                  Supprimer mon compte
+                <div>
+                  <Label>Nouveau mot de passe</Label>
+                  <Input
+                    type="password"
+                    value={passwordData.new}
+                    onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Confirmer le nouveau mot de passe</Label>
+                  <Input
+                    type="password"
+                    value={passwordData.confirm}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
+                  />
+                </div>
+                <Button 
+                  className="w-full bg-orange-500 hover:bg-orange-600"
+                  onClick={() => {
+                    if (passwordData.new !== passwordData.confirm) {
+                      toast.error('Les mots de passe ne correspondent pas');
+                      return;
+                    }
+                    toast.success('Mot de passe mis à jour');
+                    setPasswordDialogOpen(false);
+                    setPasswordData({ current: '', new: '', confirm: '' });
+                  }}
+                >
+                  Mettre à jour
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Êtes-vous sûr?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Cette action est irréversible. Toutes vos données seront définitivement supprimées.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction className="bg-red-600 hover:bg-red-700">
-                    Supprimer
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Payment Methods */}
@@ -430,6 +405,32 @@ export default function Account() {
             <LogOut className="w-4 h-4 mr-2" />
             Déconnexion
           </Button>
+        </div>
+
+        {/* Delete Account */}
+        <div className="pt-2 pb-6">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50">
+                <AlertCircle className="w-4 h-4 mr-2" />
+                Supprimer mon compte
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Êtes-vous sûr?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Cette action est irréversible. Toutes vos données seront définitivement supprimées.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction className="bg-red-600 hover:bg-red-700">
+                  Supprimer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </main>
     </div>
