@@ -594,6 +594,8 @@ export default function EnterpriseDashboard() {
                           <SelectItem value="Electronics">Electronics</SelectItem>
                           <SelectItem value="Pour homme">Pour homme</SelectItem>
                           <SelectItem value="Maison">Maison</SelectItem>
+                          <SelectItem value="Bébé">Bébé</SelectItem>
+                          <SelectItem value="Outils">Outils</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
