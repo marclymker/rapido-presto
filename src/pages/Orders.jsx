@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Package, Clock } from 'lucide-react';
+import { ArrowLeft, Package, Clock, Star } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatHaitiDate } from '@/components/utils/dateFormat';
@@ -11,12 +11,16 @@ import { motion } from 'framer-motion';
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge';
 import OrderDetailModal from '@/components/modals/OrderDetailModal';
 import OrderProgressBar from '@/components/orders/OrderProgressBar';
+import ReviewModal from '@/components/modals/ReviewModal';
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
+import { toast } from "sonner";
 
 export default function Orders() {
   const [user, setUser] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [reviewOrder, setReviewOrder] = useState(null);
+  const queryClient = useQueryClient();
   
   // Auto-refresh toutes les 60 secondes
   useAutoRefresh({ 
@@ -52,6 +56,30 @@ export default function Orders() {
     refetchInterval: 60000,
     refetchIntervalInBackground: true
   });
+
+  // Fetch reviews to check if order was already reviewed
+  const { data: reviews = [] } = useQuery({
+    queryKey: ['reviews', user?.id],
+    queryFn: () => base44.entities.Review.filter({ client_id: user?.id }),
+    enabled: !!user?.id
+  });
+
+  const hasReview = (orderId) => {
+    return reviews.some(r => r.order_id === orderId);
+  };
+
+  const handleSubmitReview = async (orderId, reviewData) => {
+    try {
+      await base44.functions.invoke('submitReview', {
+        orderId,
+        ...reviewData
+      });
+      queryClient.invalidateQueries(['reviews']);
+      queryClient.invalidateQueries(['orders']);
+    } catch (error) {
+      throw error;
+    }
+  };
 
   const activeOrders = orders.filter(o => 
     !['delivered', 'cancelled'].includes(o.status)
@@ -99,6 +127,22 @@ export default function Orders() {
             </a>
           )}
         </div>
+      )}
+
+      {/* Review Button for Delivered Orders */}
+      {order.status === 'delivered' && !hasReview(order.id) && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setReviewOrder(order);
+          }}
+          className="mt-3 w-full border-orange-200 text-orange-600 hover:bg-orange-50"
+        >
+          <Star className="w-4 h-4 mr-2" />
+          Laisser un avis
+        </Button>
       )}
     </motion.div>
   );
@@ -183,6 +227,13 @@ export default function Orders() {
         open={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
         userType="client"
+      />
+
+      <ReviewModal
+        order={reviewOrder}
+        open={!!reviewOrder}
+        onClose={() => setReviewOrder(null)}
+        onSubmit={(reviewData) => handleSubmitReview(reviewOrder?.id, reviewData)}
       />
 
       <BackgroundSyncIndicator 
