@@ -10,9 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-const COMMUNES = [
-  "Pétion Ville", "Delmas", "Tabarre", "Kenscoff", "Croix des Bouquets",
-  "Carrefour", "Port-au-Prince", "Pernier", "Madeline", "Vaudreuil", "Morne Rouge"
+const REGIONS = [
+  "Petion-ville", "Route de Freres", "Delmas", "Pelerin", "Thomassain", "Kenscoff",
+  "Lalue", "Nazon", "Pernier", "Sarthe", "Tabarre", "Clercine", "Marrin",
+  "Bon Repos", "Turgeau", "Canapevert", "Lavil", "Madeline", "Vaudreuil",
+  "Morne Rouge", "Cap Haitien"
 ];
 
 export default function Account() {
@@ -29,7 +31,7 @@ export default function Account() {
       setFormData({
         phone: u.phone || '',
         address: u.address || '',
-        commune: u.commune || ''
+        region: u.region || ''
       });
       setLoading(false);
       
@@ -203,23 +205,23 @@ export default function Account() {
             </div>
 
             <div>
-              <Label className="text-slate-500 text-sm">Commune</Label>
+              <Label className="text-slate-500 text-sm">Région</Label>
               {editMode ? (
                 <Select 
-                  value={formData.commune} 
-                  onValueChange={(val) => setFormData({ ...formData, commune: val })}
+                  value={formData.region} 
+                  onValueChange={(val) => setFormData({ ...formData, region: val })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner" />
                   </SelectTrigger>
                   <SelectContent>
-                    {COMMUNES.map(c => (
+                    {REGIONS.map(c => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               ) : (
-                <p className="text-slate-700 mt-1">{user.commune || 'Non définie'}</p>
+                <p className="text-slate-700 mt-1">{user.region || 'Non définie'}</p>
               )}
             </div>
           </div>

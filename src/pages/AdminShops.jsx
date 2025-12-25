@@ -11,9 +11,11 @@ import { toast } from "sonner";
 import { Plus, Store, Trash2, Edit } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 
-const communes = [
-  "Port-au-Prince", "Pétion-Ville", "Delmas", "Carrefour", "Tabarre",
-  "Croix-des-Bouquets", "Gressier", "Kenscoff", "Cité Soleil"
+const regions = [
+  "Petion-ville", "Route de Freres", "Delmas", "Pelerin", "Thomassain", "Kenscoff",
+  "Lalue", "Nazon", "Pernier", "Sarthe", "Tabarre", "Clercine", "Marrin",
+  "Bon Repos", "Turgeau", "Canapevert", "Lavil", "Madeline", "Vaudreuil",
+  "Morne Rouge", "Cap Haitien"
 ];
 
 const categories = [
@@ -31,7 +33,7 @@ export default function AdminShops() {
   const [formData, setFormData] = useState({
     company_name: '',
     company_category: '',
-    commune: '',
+    region: '',
     company_logo_url: '',
     email: '',
     phone: '',
@@ -131,7 +133,7 @@ export default function AdminShops() {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (!formData.company_name || !formData.company_category || !formData.commune) {
+    if (!formData.company_name || !formData.company_category || !formData.region) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -147,7 +149,7 @@ export default function AdminShops() {
     setFormData({
       company_name: '',
       company_category: '',
-      commune: '',
+      region: '',
       company_logo_url: '',
       email: '',
       phone: '',
@@ -165,7 +167,7 @@ export default function AdminShops() {
     setFormData({
       company_name: shop.company_name || '',
       company_category: shop.company_category || '',
-      commune: shop.commune || '',
+      region: shop.region || '',
       company_logo_url: shop.company_logo_url || '',
       email: shop.email || '',
       phone: shop.phone || '',
@@ -220,7 +222,7 @@ export default function AdminShops() {
                 </div>
               </CardHeader>
               <CardContent className="text-sm space-y-1">
-                <p><strong>Commune:</strong> {shop.commune}</p>
+                <p><strong>Région:</strong> {shop.region}</p>
                 <p><strong>Email:</strong> {shop.email || 'Non renseigné'}</p>
                 <p><strong>Téléphone:</strong> {shop.phone || 'Non renseigné'}</p>
                 <p><strong>Horaires:</strong> {shop.opening_hours || 'Non renseigné'}</p>
@@ -285,14 +287,14 @@ export default function AdminShops() {
               </div>
 
               <div>
-                <Label>Commune *</Label>
-                <Select value={formData.commune} onValueChange={(val) => setFormData({ ...formData, commune: val })}>
+                <Label>Région *</Label>
+                <Select value={formData.region} onValueChange={(val) => setFormData({ ...formData, region: val })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner" />
                   </SelectTrigger>
                   <SelectContent>
-                    {communes.map(com => (
-                      <SelectItem key={com} value={com}>{com}</SelectItem>
+                    {regions.map(reg => (
+                      <SelectItem key={reg} value={reg}>{reg}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
