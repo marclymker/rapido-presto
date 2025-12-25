@@ -38,6 +38,7 @@ export default function EnterpriseDashboard() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
   const queryClient = useQueryClient();
   const { requestPermission } = useBrowserNotifications();
   const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound();
@@ -310,6 +311,53 @@ export default function EnterpriseDashboard() {
     });
   };
 
+  const handleAIGeneration = async () => {
+    if (!productForm.name || !productForm.image_url) {
+      toast.error('Veuillez ajouter un titre et une photo avant d\'utiliser l\'IA');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const prompt = `Analyse cette image de produit nommée "${productForm.name}".
+      
+Retourne UNIQUEMENT un objet JSON valide avec:
+1. "description": Une description attrayante et commerciale (max 250 caractères)
+2. "category": Choisis UNE catégorie parmi: Fastfood, Restaurants, Boutique Fleurs, Pharmacie, Vêtements, Epicerie, Café, Pour Femme, Electronics, Pour homme, Maison, Bébé, Outils
+3. "tags": Liste de 5 mots-clés pertinents en français
+
+Format JSON strict requis.`;
+
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: prompt,
+        file_urls: [productForm.image_url],
+        response_json_schema: {
+          type: "object",
+          properties: {
+            description: { type: "string" },
+            category: { type: "string" },
+            tags: { type: "array", items: { type: "string" } }
+          }
+        }
+      });
+
+      // Mise à jour du formulaire avec les données de l'IA
+      setProductForm({
+        ...productForm,
+        description: response.description || productForm.description,
+        category: response.category || productForm.category,
+        seo_tags: response.tags || productForm.seo_tags
+      });
+
+      toast.success('✨ Magie IA appliquée avec succès!');
+    } catch (error) {
+      console.error('AI generation error:', error);
+      toast.error('Erreur lors de la génération IA');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const pendingOrders = orders.filter(o => o.status === 'pending');
   const activeOrders = orders.filter(o => ['preparing', 'ready', 'searching_driver'].includes(o.status));
 
@@ -579,6 +627,35 @@ export default function EnterpriseDashboard() {
                         onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                       />
                     </div>
+
+                    {/* AI Magic Button */}
+                    {productForm.name && productForm.image_url && (
+                      <div className="bg-gradient-to-r from-purple-50 to-orange-50 p-4 rounded-xl border-2 border-dashed border-purple-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-purple-900 mb-1">✨ Magie IA</p>
+                            <p className="text-xs text-purple-700">
+                              Générer automatiquement description, catégorie et tags
+                            </p>
+                          </div>
+                          <Button 
+                            type="button"
+                            onClick={handleAIGeneration}
+                            disabled={aiLoading}
+                            className="bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600"
+                          >
+                            {aiLoading ? (
+                              <>
+                                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                                Génération...
+                              </>
+                            ) : (
+                              <>✨ Lancer</>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Prix (HTG)</Label>
