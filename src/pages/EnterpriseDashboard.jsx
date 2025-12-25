@@ -613,19 +613,28 @@ Format JSON strict requis.`;
                 setProductDialogOpen(open);
                 if (!open) resetProductForm();
               }}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
                       {editingProduct ? 'Modifier l\'article' : 'Nouvel article'}
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-4 pt-4">
+                  <div className="space-y-4 pt-4 pb-4">
                     <div>
                       <Label>Nom</Label>
                       <Input
                         value={productForm.name}
                         onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                        placeholder="Ex: Pizza Margherita"
                       />
+                    </div>
+                    
+                    <div>
+                      <Label>Photo principale</Label>
+                      <Input type="file" accept="image/*" onChange={handleImageUpload} />
+                      {productForm.image_url && (
+                        <img src={productForm.image_url} alt="" className="mt-2 h-24 w-24 object-cover rounded-lg" />
+                      )}
                     </div>
 
                     {/* AI Magic Button */}
@@ -752,13 +761,6 @@ Format JSON strict requis.`;
                           <SelectItem value="15 jours">15 jours</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div>
-                      <Label>Photo principale</Label>
-                      <Input type="file" accept="image/*" onChange={handleImageUpload} />
-                      {productForm.image_url && (
-                        <img src={productForm.image_url} alt="" className="mt-2 h-24 w-24 object-cover rounded-lg" />
-                      )}
                     </div>
                     <div>
                       <Label>Photos supplémentaires</Label>
