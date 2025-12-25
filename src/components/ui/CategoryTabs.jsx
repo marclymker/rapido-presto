@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
-import { UtensilsCrossed, Pill, Shirt, ShoppingBasket, Coffee, Croissant, Pizza, Flower, User, Smartphone, UserCircle } from 'lucide-react';
+import { UtensilsCrossed, Pill, Shirt, ShoppingBasket, Coffee, Croissant, Pizza, Flower, User, Smartphone, UserCircle, Home } from 'lucide-react';
 
 const categories = [
   { id: 'Fastfood', label: 'Fastfood', icon: Pizza },
@@ -14,6 +14,7 @@ const categories = [
   { id: 'Pour Femme', label: 'Pour Femme', icon: User },
   { id: 'Electronics', label: 'Electronics', icon: Smartphone },
   { id: 'Pour homme', label: 'Pour homme', icon: UserCircle },
+  { id: 'Maison', label: 'Maison', icon: Home },
 ];
 
 export default function CategoryTabs({ selected, onSelect }) {

@@ -356,6 +356,7 @@ export default function AdminProducts() {
                     <SelectItem value="Pour Femme">Pour Femme</SelectItem>
                     <SelectItem value="Electronics">Electronics</SelectItem>
                     <SelectItem value="Pour homme">Pour homme</SelectItem>
+                    <SelectItem value="Maison">Maison</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
