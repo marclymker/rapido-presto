@@ -179,13 +179,28 @@ export default function EnterpriseDashboard() {
       if (status === 'ready') {
         updates.status = 'searching_driver';
       }
-      await base44.entities.Order.update(id, updates);
+      const updatedOrder = await base44.entities.Order.update(id, updates);
       
-      // Envoyer notifications
-      await base44.functions.invoke('sendOrderNotification', {
-        orderId: id,
-        status: updates.status
-      }).catch(err => console.error('Notification error:', err));
+      // Envoyer notifications push selon le statut
+      const notificationMap = {
+        'preparing': {
+          title: '✅ Commande acceptée',
+          message: `Votre commande #${updatedOrder.order_number} a été acceptée par ${updatedOrder.shop_name}`
+        },
+        'searching_driver': {
+          title: '🍽️ Commande prête',
+          message: `Votre commande #${updatedOrder.order_number} est prête, recherche d'un livreur...`
+        }
+      };
+
+      if (notificationMap[updates.status]) {
+        await base44.functions.invoke('sendPushNotification', {
+          userId: updatedOrder.client_id,
+          title: notificationMap[updates.status].title,
+          message: notificationMap[updates.status].message,
+          data: { orderId: id, status: updates.status }
+        }).catch(err => console.error('Push notification error:', err));
+      }
       
       return { id, status: updates.status };
     },
