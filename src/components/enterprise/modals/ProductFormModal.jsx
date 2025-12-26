@@ -77,14 +77,56 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       if (isAdditional) {
         setFormData({ ...formData, additional_images: [...formData.additional_images, file_url] });
+        toast.success('Image ajoutée');
       } else {
         setFormData({ ...formData, image_url: file_url });
+        toast.success('Image téléchargée');
+        
+        // Auto-générer avec AI si le nom est rempli
+        if (formData.name && !isAdditional) {
+          setTimeout(() => autoGenerateWithAI(file_url), 500);
+        }
       }
-      toast.success('Image téléchargée');
     } catch (error) {
       toast.error('Erreur lors du téléchargement');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const autoGenerateWithAI = async (imageUrl) => {
+    if (!formData.name) return;
+
+    setAiLoading(true);
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analysez ce produit: "${formData.name}". Générez:
+1. Une description marketing attractive (2-3 phrases)
+2. La catégorie (choix: Fastfood, Restaurants, Boutique Fleurs, Pharmacie, Mariage, Epicerie, Café, Pour Femme, Electronics, Pour homme, Maison, Bébé, Outils)
+3. 5 tags SEO pertinents en français`,
+        file_urls: [imageUrl],
+        response_json_schema: {
+          type: "object",
+          properties: {
+            description: { type: "string" },
+            category: { type: "string" },
+            seo_tags: { type: "array", items: { type: "string" } }
+          }
+        }
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        description: result.description || prev.description,
+        category: result.category || prev.category,
+        seo_tags: result.seo_tags || prev.seo_tags
+      }));
+      
+      toast.success('✨ Informations générées automatiquement');
+    } catch (error) {
+      toast.error('Erreur AI: ' + error.message);
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -152,22 +194,13 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
       <Dialog open={showForm} onOpenChange={onClose}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>{product ? 'Modifier l\'article' : 'Nouvel article'}</span>
-            <Button
-              type="button"
-              onClick={handleGenerateWithAI}
-              disabled={aiLoading || !formData.name || !formData.image_url}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-            >
-              {aiLoading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4 mr-2" />
-              )}
-              Générer avec AI
-            </Button>
-          </DialogTitle>
+          <DialogTitle>{product ? 'Modifier l\'article' : 'Nouvel article'}</DialogTitle>
+          {aiLoading && (
+            <div className="flex items-center gap-2 text-purple-600 text-sm mt-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Génération automatique en cours...</span>
+            </div>
+          )}
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
