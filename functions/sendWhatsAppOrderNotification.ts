@@ -59,17 +59,7 @@ Deno.serve(async (req) => {
         name: "order_request",
         language: {
           code: "fr"
-        },
-        components: [
-          {
-            type: "body",
-            parameters: [
-              { type: "text", text: merchantName },
-              { type: "text", text: orderDetails },
-              { type: "text", text: `Commande #${orderData.order_number}` }
-            ]
-          }
-        ]
+        }
       }
     };
 
