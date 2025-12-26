@@ -271,7 +271,7 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="pb-32">
-        {!selectedShop ? (
+        {selectedCategory === 'Tout' && !selectedShop ? (
           <div>
             {/* Boutons de Services (Grid) */}
             <div className="grid grid-cols-2 gap-4 p-4">
@@ -321,100 +321,155 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Section Boutiques/Produits */}
-            {selectedCategory === 'Tout' ? (
-              <div className="px-4">
-                  {/* AI Recommendations */}
-                  <ProductRecommendations
-                    user={user}
-                    onProductClick={(p) => {
-                      const shop = shops.find(s => s.id === p.shop_id);
-                      if (shop) setSelectedShop(shop);
-                      setSelectedProduct(p);
-                    }}
-                    onAddToCart={(p) => {
+            {/* AI Recommendations */}
+            <div className="px-4">
+              <ProductRecommendations
+                user={user}
+                onProductClick={(p) => {
+                  const shop = shops.find(s => s.id === p.shop_id);
+                  if (shop) setSelectedShop(shop);
+                  setSelectedProduct(p);
+                }}
+                onAddToCart={(p) => {
+                  const shop = shops.find(s => s.id === p.shop_id);
+                  if (shop) {
+                    setSelectedShop(shop);
+                    handleAddToCart(p);
+                  }
+                }}
+                selectedShop={selectedShop}
+                limit={6}
+              />
+
+              <h3 className="text-lg font-semibold text-slate-800 mb-4 mt-6">
+                Découvrir
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                {filteredRandomProducts.map(product => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAdd={(p) => {
                       const shop = shops.find(s => s.id === p.shop_id);
                       if (shop) {
                         setSelectedShop(shop);
                         handleAddToCart(p);
                       }
                     }}
-                    selectedShop={selectedShop}
-                    limit={6}
+                    onClick={(p) => {
+                      const shop = shops.find(s => s.id === p.shop_id);
+                      if (shop) setSelectedShop(shop);
+                      setSelectedProduct(p);
+                    }}
                   />
-
-                  <h3 className="text-lg font-semibold text-slate-800 mb-4 mt-6">
-                    Découvrir
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {filteredRandomProducts.map(product => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        onAdd={(p) => {
-                          const shop = shops.find(s => s.id === p.shop_id);
-                          if (shop) {
-                            setSelectedShop(shop);
-                            handleAddToCart(p);
-                          }
-                        }}
-                        onClick={(p) => {
-                          const shop = shops.find(s => s.id === p.shop_id);
-                          if (shop) setSelectedShop(shop);
-                          setSelectedProduct(p);
-                        }}
-                      />
-                    ))}
+                ))}
+              </div>
+              {filteredRandomProducts.length === 0 && (
+                <div className="text-center py-12 text-slate-500">
+                  {searchQuery ? 'Aucun article trouvé' : 'Aucun article disponible'}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : selectedCategory !== 'Tout' && !selectedShop ? (
+          /* TWO-PANE LAYOUT pour catégorie sélectionnée */
+          <div className="flex h-[calc(100vh-140px)] overflow-hidden">
+            {/* SIDEBAR - Liste des boutiques */}
+            <aside className="w-1/5 min-w-[160px] border-r bg-slate-50 overflow-y-auto">
+              <div className="p-3">
+                <h3 className="text-xs font-bold text-slate-500 uppercase mb-3 px-2">
+                  Boutiques
+                </h3>
+                {shops.map(shop => (
+                  <button
+                    key={shop.id}
+                    onClick={() => setSelectedShop(shop)}
+                    className="w-full flex flex-col items-center mb-4 p-3 rounded-2xl hover:bg-white transition-colors cursor-pointer group"
+                  >
+                    <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mb-2 overflow-hidden group-hover:scale-110 transition-transform">
+                      {shop.company_logo_url ? (
+                        <img src={shop.company_logo_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl font-bold text-orange-400">
+                          {shop.company_name?.charAt(0)}
+                        </span>
+                      )}
                     </div>
-                    {filteredRandomProducts.length === 0 && (
-                    <div className="text-center py-12 text-slate-500">
-                      {searchQuery ? 'Aucun article trouvé' : 'Aucun article disponible'}
-                    </div>
-                    )}
-                    </div>
-                    ) : (
-                    <div className="px-4">
-                    <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                    {selectedCategory}
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                    {shops.map(shop => (
-                      <ShopCard 
-                        key={shop.id} 
-                        shop={shop} 
-                        onClick={() => setSelectedShop(shop)}
-                      />
-                    ))}
-                    </div>
-                    {shops.length === 0 && (
-                    <div className="text-center py-12 text-slate-500">
-                      Aucune boutique dans cette catégorie
-                    </div>
-                    )}
-                    </div>
-                    )}
-                    </div>
-                    ) : (
-                    <div>
-                    {/* Shop Header */}
-                    <div className="bg-white mx-4 rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-sm">
-                    <div className="w-16 h-16 rounded-xl bg-orange-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {selectedShop.company_logo_url ? (
-                    <img src={selectedShop.company_logo_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                    <span className="text-2xl font-bold text-orange-400">
-                      {selectedShop.company_name?.charAt(0)}
+                    <span className="text-[10px] text-center font-bold text-slate-700 leading-tight">
+                      {shop.company_name}
                     </span>
-                    )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                    <h2 className="font-bold text-xl text-slate-800">{selectedShop.company_name}</h2>
-                    <p className="text-sm text-slate-500">{selectedShop.company_category}</p>
-                    </div>
-                    </div>
+                  </button>
+                ))}
+                {shops.length === 0 && (
+                  <div className="text-center py-8 text-slate-400 text-xs">
+                    Aucune boutique
+                  </div>
+                )}
+              </div>
+            </aside>
 
-                    {/* Products Grid */}
-                    <div className="grid grid-cols-2 gap-4 px-4">
+            {/* MAIN CONTENT - Message de sélection */}
+            <main className="flex-1 overflow-y-auto p-6">
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="text-6xl mb-4">🏪</div>
+                  <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                    {selectedCategory}
+                  </h2>
+                  <p className="text-slate-500">
+                    Sélectionnez une boutique pour voir les produits
+                  </p>
+                </div>
+              </div>
+            </main>
+          </div>
+        ) : (
+          /* TWO-PANE LAYOUT avec boutique sélectionnée */
+          <div className="flex h-[calc(100vh-140px)] overflow-hidden">
+            {/* SIDEBAR - Liste des boutiques */}
+            <aside className="w-1/5 min-w-[160px] border-r bg-slate-50 overflow-y-auto">
+              <div className="p-3">
+                <h3 className="text-xs font-bold text-slate-500 uppercase mb-3 px-2">
+                  Boutiques
+                </h3>
+                {shops.map(shop => (
+                  <button
+                    key={shop.id}
+                    onClick={() => setSelectedShop(shop)}
+                    className={`w-full flex flex-col items-center mb-4 p-3 rounded-2xl transition-colors cursor-pointer group ${
+                      selectedShop?.id === shop.id ? 'bg-white shadow-md' : 'hover:bg-white'
+                    }`}
+                  >
+                    <div className={`w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mb-2 overflow-hidden transition-transform ${
+                      selectedShop?.id === shop.id ? 'scale-110 border-2 border-orange-500' : 'group-hover:scale-110'
+                    }`}>
+                      {shop.company_logo_url ? (
+                        <img src={shop.company_logo_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl font-bold text-orange-400">
+                          {shop.company_name?.charAt(0)}
+                        </span>
+                      )}
+                    </div>
+                    <span className={`text-[10px] text-center font-bold leading-tight ${
+                      selectedShop?.id === shop.id ? 'text-orange-600' : 'text-slate-700'
+                    }`}>
+                      {shop.company_name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </aside>
+
+            {/* MAIN CONTENT - Produits de la boutique */}
+            <main className="flex-1 overflow-y-auto p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-black text-slate-800 capitalize">
+                  {selectedShop.company_name}
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map(product => (
                   <ProductCard
                     key={product.id}
@@ -423,14 +478,15 @@ export default function Home() {
                     onClick={() => setSelectedProduct(product)}
                   />
                 ))}
-                </div>
-                {filteredProducts.length === 0 && (
+              </div>
+              {filteredProducts.length === 0 && (
                 <div className="text-center py-12 text-slate-500">
                   Aucun article trouvé
                 </div>
-                )}
-                </div>
-                )}
+              )}
+            </main>
+          </div>
+        )}
                 </main>
 
                 {/* Bottom Navigation */}
