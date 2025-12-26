@@ -59,10 +59,7 @@ export default function Layout({ children, currentPageName }) {
           { icon: User, label: 'Compte', page: 'Account' },
         ];
       case 'entreprise':
-        return [
-          { icon: Store, label: 'Dashboard', page: 'EnterpriseDashboard' },
-          { icon: User, label: 'Compte', page: 'EnterpriseAccount' },
-        ];
+        return [];
       case 'livreur':
         return [
           { icon: Bike, label: 'Dashboard', page: 'DriverDashboard' },

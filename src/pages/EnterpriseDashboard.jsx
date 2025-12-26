@@ -457,6 +457,9 @@ Format JSON strict requis.`;
             <TabsTrigger value="settings" className="flex-1">
               Paramètres
             </TabsTrigger>
+            <TabsTrigger value="account" className="flex-1">
+              Compte
+            </TabsTrigger>
           </TabsList>
 
           {/* Orders Tab */}
