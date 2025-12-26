@@ -38,7 +38,17 @@ export default function ProductDetailModal({ product, open, onClose, onAddToCart
   const handleAdd = () => {
     onAddToCart(product, quantity);
     setQuantity(1);
+    setCurrentImgIndex(0);
     onClose();
+  };
+
+  const handleWhatsAppClick = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      base44.auth.redirectToLogin(window.location.pathname);
+    } else {
+      window.open('https://wa.me/c/50948690366', '_blank');
+    }
   };
 
   return (
