@@ -37,7 +37,7 @@ export default function OrdersSection({ orders = [] }) {
               <div 
                 key={order.id} 
                 onClick={() => setSelectedOrder(order)}
-                className="bg-white p-5 rounded-2xl border flex justify-between items-center shadow-sm hover:shadow-md transition-all cursor-pointer"
+                className="bg-white p-4 rounded-xl border flex justify-between items-center shadow-[0_4px_12px_rgba(251,146,60,0.3)] hover:shadow-[0_6px_16px_rgba(251,146,60,0.4)] transition-all cursor-pointer"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -52,8 +52,7 @@ export default function OrdersSection({ orders = [] }) {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-black text-blue-600">{order.total} HTG</p>
-                  <p className="text-xs text-gray-400 mt-1">{new Date(order.created_date).toLocaleDateString('fr-FR')}</p>
+                  <p className="text-xs text-gray-400">{new Date(order.created_date).toLocaleDateString('fr-FR')}</p>
                 </div>
               </div>
             );
