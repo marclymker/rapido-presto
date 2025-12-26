@@ -68,9 +68,9 @@ export default function ProductDetailModal({ product, open, onClose, onAddToCart
             )}
           </div>
           
-          {product.category === "Mariage" && (
+          {product.category && product.category.toLowerCase() === "mariage" && (
             <a
-              href="https://wa.me/c/50948690366"
+              href="https://wa.me/50948690366"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-3 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-semibold transition-colors"
