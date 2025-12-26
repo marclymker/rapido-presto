@@ -1224,6 +1224,6 @@ Format JSON strict requis.`;
         lastSync={lastSync} 
         connectionType={connectionType}
       />
-    </div>
+      </div>
   );
 }
