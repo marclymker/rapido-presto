@@ -42,6 +42,15 @@ export default function ProductCard({ product, onAdd, onClick }) {
             <span className="text-white text-sm font-medium">Indisponible</span>
           </div>
         )}
+        
+        {/* Payment badges overlay */}
+        <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-1.5 py-1 rounded-md shadow-sm flex items-center gap-1">
+          <img 
+            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/f43ac907a_Gemini_Generated_Image_pl3khrpl3khrpl3k.png" 
+            alt="Paiement accepté" 
+            className="h-3 w-auto object-contain"
+          />
+        </div>
       </div>
       <div className="p-3">
         <h4 className="font-medium text-slate-800 text-sm truncate">{product.name}</h4>
