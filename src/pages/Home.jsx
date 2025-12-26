@@ -258,6 +258,9 @@ export default function Home() {
       {/* Bannière Recrutement */}
       <RecruitmentBanner />
       
+      {/* Floating Merchant Banner */}
+      <FloatingMerchantBanner user={user} />
+      
       {/* SEO Meta Tags */}
       <SEO 
         title={selectedShop ? selectedShop.company_name : "Commandez et faites-vous livrer rapidement"}
