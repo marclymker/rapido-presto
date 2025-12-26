@@ -438,7 +438,7 @@ Format JSON strict requis.`;
   );
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-hidden"> {/* Container principal */}
       {/* SIDEBAR - 20% fixed */}
       <aside className="w-1/5 bg-white border-r flex flex-col py-6 shadow-lg z-20">
         <div className="px-6 mb-10">
@@ -495,11 +495,11 @@ Format JSON strict requis.`;
             <ProfileSwitcher user={user} />
           </div>
         </div>
-      </aside>
+      </aside> {/* Fin SIDEBAR */}
 
       {/* MAIN CONTENT - 80% scrollable */}
-      <main className="flex-1 overflow-y-auto relative">
-        <div className="h-full">
+      <main className="flex-1 overflow-y-auto relative"> {/* Début MAIN */}
+        <div className="h-full"> {/* Wrapper principal du contenu */}
           {/* Orders Tab */}
           {activeTab === 'orders' && (
             <div className="space-y-6">
@@ -593,13 +593,13 @@ Format JSON strict requis.`;
                   </div>
                 )}
               </div>
-            </div>
-            </div>
+            </div> {/* Fin space-y-6 */}
+            </div> {/* Fin Orders Tab */}
           )}
 
           {/* Products Tab */}
           {activeTab === 'products' && (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full"> {/* Conteneur Products */}
             {/* Sticky Search Bar - Pill Style */}
             <header className="sticky top-0 bg-white/80 backdrop-blur-md z-10 px-8 py-6 border-b flex justify-between items-center">
               <div className="relative w-1/3">
@@ -617,8 +617,8 @@ Format JSON strict requis.`;
                 className="bg-green-500 text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg hover:scale-105 transition-transform"
               >
                 + Ajouter un article
-              </button>
-            </header>
+                </button>
+                </header> {/* Fin sticky header */}
 
             <div className="p-8 flex-1 overflow-y-auto">
               
@@ -946,16 +946,16 @@ Format JSON strict requis.`;
                   {searchQuery ? 'Aucun article trouvé' : 'Aucun article. Cliquez sur "Ajouter" pour commencer.'}
                 </p>
               </div>
-            )}
-            </div>
-          </div>
-          )}
+              )}
+              </div> {/* Fin p-8 content area */}
+              </div> {/* Fin flex-col h-full */}
+              )} {/* Fin Products Tab */}
 
           {/* Stats Tab */}
           {activeTab === 'stats' && (
             <div>
               <SalesStats orders={orders} products={products} />
-            </div>
+            </div> {/* Fin Stats Tab */}
           )}
 
           {/* Settings Tab */}
@@ -1043,8 +1043,8 @@ Format JSON strict requis.`;
               products={products}
               onUpdateShop={(data) => updateShopMutation.mutate(data)}
             />
-            </div>
-          )}
+            </div> {/* Fin space-y-6 */}
+          )} {/* Fin Settings Tab */}
 
           {/* Account Tab */}
           {activeTab === 'account' && (
@@ -1190,10 +1190,10 @@ Format JSON strict requis.`;
               >
                 Déconnexion
               </button>
-            </div>
-          )}
-        </div>
-      </main>
+            </div> {/* Fin account content */}
+          )} {/* Fin Account Tab */}
+        </div> {/* Fin h-full wrapper */}
+      </main> {/* Fin MAIN */}
 
       {/* Modals */}
       <OrderDetailModal
@@ -1209,6 +1209,6 @@ Format JSON strict requis.`;
         lastSync={lastSync} 
         connectionType={connectionType}
       />
-      </div>
+      </div> {/* Fin flex h-screen */}
   );
 }
