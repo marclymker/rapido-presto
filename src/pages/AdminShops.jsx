@@ -138,10 +138,15 @@ export default function AdminShops() {
       return;
     }
 
+    const shopData = { ...formData };
+    if (!shopData.user_id) {
+      shopData.user_id = user.id;
+    }
+    
     if (editingShop) {
-      updateShopMutation.mutate({ id: editingShop.id, data: formData });
+      updateShopMutation.mutate({ id: editingShop.id, data: shopData });
     } else {
-      createShopMutation.mutate({ ...formData, user_id: formData.user_id || user.id });
+      createShopMutation.mutate(shopData);
     }
   };
 
