@@ -65,18 +65,35 @@ export default function ProductCard({ product, onAdd, onClick }) {
               <span className="text-xs text-slate-400 line-through">{originalDisplayPrice} HTG</span>
             )}
           </div>
-          {product.is_available !== false && (
-            <Button 
-              size="icon" 
-              className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 animate-pulse hover:animate-none hover:scale-110 transition-transform"
-              onClick={(e) => {
-                e.stopPropagation();
-                onAdd(product);
-              }}
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          )}
+          <div className="flex items-center gap-1.5">
+            {product.category === 'Mariage' && product.shop_phone && (
+              <a
+                href={`https://wa.me/${product.shop_phone.replace(/[\s\-\+]/g, '')}?text=Bonjour, je suis intéressé par l'article de mariage : ${encodeURIComponent(product.name)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Button 
+                  size="icon" 
+                  className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </Button>
+              </a>
+            )}
+            {product.is_available !== false && (
+              <Button 
+                size="icon" 
+                className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 animate-pulse hover:animate-none hover:scale-110 transition-transform"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdd(product);
+                }}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>
