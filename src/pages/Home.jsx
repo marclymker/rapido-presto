@@ -189,25 +189,17 @@ export default function Home() {
 
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const categories = [
-    { id: 'Tout', name: 'Tout', icon: '🏪' },
-    { id: 'Fastfood', name: 'Fastfood', icon: '🍔' },
-    { id: 'Restaurants', name: 'Restaurants', icon: '🍽️' },
-    { id: 'Boutique Fleurs', name: 'Fleurs', icon: '💐' },
-    { id: 'Pharmacie', name: 'Pharmacie', icon: '💊' },
-    { id: 'Mariage', name: 'Mariage', icon: '💍' },
-    { id: 'Epicerie', name: 'Épicerie', icon: '🛒' },
-    { id: 'Café', name: 'Café', icon: '☕' },
-    { id: 'Pour Femme', name: 'Pour Femme', icon: '👗' },
-    { id: 'Electronics', name: 'Electronics', icon: '📱' },
-    { id: 'Pour homme', name: 'Pour homme', icon: '👔' },
-    { id: 'Maison', name: 'Maison', icon: '🏠' },
-    { id: 'Bébé', name: 'Bébé', icon: '👶' },
-    { id: 'Outils', name: 'Outils', icon: '🔧' }
+  const serviceCategories = [
+    { id: 'Restaurants', name: 'Restaurants', icon: '🍽️', bgColor: 'bg-red-50', textColor: 'text-red-800' },
+    { id: 'Fastfood', name: 'Fastfood', icon: '🍔', bgColor: 'bg-orange-50', textColor: 'text-orange-800' },
+    { id: 'Epicerie', name: 'Épicerie', icon: '🛒', bgColor: 'bg-cyan-50', textColor: 'text-cyan-800' },
+    { id: 'Pharmacie', name: 'Pharmacie', icon: '💊', bgColor: 'bg-green-50', textColor: 'text-green-800' },
+    { id: 'Mariage', name: 'Mariage', icon: '💍', bgColor: 'bg-pink-50', textColor: 'text-pink-800' },
+    { id: 'Café', name: 'Café', icon: '☕', bgColor: 'bg-amber-50', textColor: 'text-amber-800' }
   ];
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="min-h-screen bg-white pb-20">
       {/* SEO Meta Tags */}
       <SEO 
         title={selectedShop ? selectedShop.company_name : "Commandez et faites-vous livrer rapidement"}
@@ -220,129 +212,105 @@ export default function Home() {
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 
-      {/* Sidebar - Catégories */}
-      <aside className="w-24 md:w-32 border-r flex flex-col items-center py-6 bg-white overflow-y-auto">
-        {/* Logo */}
-        <div className="mb-6 px-2">
-          <h1 className="text-sm font-bold text-orange-500 text-center">Rapido Presto</h1>
-        </div>
+      {/* Header - Sticky */}
+      <div className="sticky top-0 bg-white z-50 shadow-sm">
+        <div className="p-4">
+          {/* Titre et Login */}
+          <div className="flex items-center justify-between mb-3">
+            {selectedShop ? (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setSelectedShop(null)}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            ) : (
+              <h1 className="text-xl font-bold text-orange-500">Rapido Presto</h1>
+            )}
 
-        {/* Catégories */}
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => {
-              setSelectedCategory(cat.id);
-              setSelectedShop(null);
-            }}
-            className={`flex flex-col items-center mb-6 w-full px-2 transition-all ${
-              selectedCategory === cat.id ? 'opacity-100' : 'opacity-40 hover:opacity-70'
-            }`}
-          >
-            <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center text-2xl mb-1 shadow-sm ${
-              selectedCategory === cat.id ? 'bg-orange-50 border-2 border-orange-500 scale-110' : 'bg-slate-50'
-            }`}>
-              {cat.icon}
+            <div className="flex items-center gap-2">
+              {user ? (
+                <Link to={createPageUrl('Cart')}>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <ShoppingCart className="w-5 h-5" />
+                    {cartCount > 0 && (
+                      <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-orange-500 text-white text-xs">
+                        {cartCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  size="sm"
+                  onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  Se connecter
+                </Button>
+              )}
             </div>
-            <span className={`text-[9px] md:text-[10px] text-center font-bold uppercase leading-tight ${
-              selectedCategory === cat.id ? 'text-orange-600' : 'text-slate-500'
-            }`}>
-              {cat.name}
-            </span>
-          </button>
-        ))}
-      </aside>
+          </div>
+
+          {/* Barre de recherche */}
+          <div className="flex items-center bg-slate-100 rounded-full px-4 py-3">
+            <Search className="text-slate-400 mr-2 w-5 h-5" />
+            <input 
+              type="text" 
+              placeholder='Rechercher "pizza"...' 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent outline-none w-full text-slate-700"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white border-b py-3 px-4 flex items-center justify-between z-10 flex-shrink-0">
-          {selectedShop && (
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => setSelectedShop(null)}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          )}
+      <main className="pb-32">
+        {!selectedShop ? (
+          <div>
+            {/* Boutons de Services (Grid) */}
+            <div className="grid grid-cols-2 gap-4 p-4">
+              {serviceCategories.map((service) => (
+                <button
+                  key={service.id}
+                  onClick={() => {
+                    setSelectedCategory(service.id);
+                    setSelectedShop(null);
+                  }}
+                  className={`${service.bgColor} rounded-3xl p-6 flex flex-col items-center transition-transform hover:scale-105 active:scale-95`}
+                >
+                  <div className="text-5xl mb-2">{service.icon}</div>
+                  <span className={`${service.textColor} font-bold text-lg text-center`}>
+                    {service.name}
+                  </span>
+                </button>
+              ))}
+            </div>
 
-          <div className="flex-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 px-2 text-xs"
-              onClick={() => setShowSearchBar(!showSearchBar)}
-            >
-              <Search className="w-4 h-4 mr-1" />
-              Rechercher
-            </Button>
-          </div>
-
-          {/* Login/Cart buttons */}
-          <div className="flex items-center gap-2">
-            {user ? (
-              <Link to={createPageUrl('Cart')}>
-                <Button variant="ghost" size="icon" className="relative">
-                  <ShoppingCart className="w-5 h-5" />
-                  {cartCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-orange-500 text-white text-xs">
-                      {cartCount}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
-            ) : (
-              <Button 
-                size="sm"
-                onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
-                className="bg-orange-500 hover:bg-orange-600"
-              >
-                Se connecter
-              </Button>
-            )}
-          </div>
-        </header>
-
-        {/* Search Bar */}
-        <AnimatePresence>
-          {showSearchBar && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-white border-b px-4 py-3"
-            >
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-orange-400" />
-                <Input
-                  placeholder="🔍 Rechercher un restaurant, un plat..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-12 bg-slate-100 border-2 border-slate-200 focus:border-orange-400 text-base rounded-xl"
+            {/* Bannière Promo */}
+            <div className="px-4 mb-6">
+              <div className="relative rounded-3xl overflow-hidden h-48 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=800" 
+                  className="w-full h-full object-cover" 
+                  alt="Promo"
                 />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent p-6 flex flex-col justify-center">
+                  <span className="bg-white text-orange-600 font-bold px-3 py-1 rounded-full w-fit text-sm mb-2">
+                    🎉 Offre limitée
+                  </span>
+                  <h2 className="text-white text-4xl font-black">50% OFF</h2>
+                  <p className="text-white font-bold text-lg">Restaurants partenaires</p>
+                </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
 
-        {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-32">
-        <AnimatePresence mode="wait">
-          {!selectedShop ? (
-            <motion.div
-              key="shops"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-black capitalize">{selectedCategory}</h2>
-              </div>
-
-              {/* Tout - Random Products */}
-              {selectedCategory === 'Tout' ? (
-                <div>
+            {/* Section Boutiques/Produits */}
+            {selectedCategory === 'Tout' ? (
+              <div className="px-4">
                   {/* AI Recommendations */}
                   <ProductRecommendations
                     user={user}
@@ -365,7 +333,7 @@ export default function Home() {
                   <h3 className="text-lg font-semibold text-slate-800 mb-4 mt-6">
                     Découvrir
                   </h3>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 gap-4">
                     {filteredRandomProducts.map(product => (
                       <ProductCard
                         key={product.id}
@@ -392,11 +360,11 @@ export default function Home() {
                     )}
                     </div>
                     ) : (
-                    <div>
+                    <div className="px-4">
                     <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                    Boutiques {selectedCategory}
+                    {selectedCategory}
                     </h3>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 gap-4">
                     {shops.map(shop => (
                       <ShopCard 
                         key={shop.id} 
@@ -412,16 +380,11 @@ export default function Home() {
                     )}
                     </div>
                     )}
-                    </motion.div>
+                    </div>
                     ) : (
-                    <motion.div
-                    key="products"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    >
+                    <div>
                     {/* Shop Header */}
-                    <div className="bg-white rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-sm">
+                    <div className="bg-white mx-4 rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-sm">
                     <div className="w-16 h-16 rounded-xl bg-orange-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                     {selectedShop.company_logo_url ? (
                     <img src={selectedShop.company_logo_url} alt="" className="w-full h-full object-cover" />
@@ -438,7 +401,7 @@ export default function Home() {
                     </div>
 
                     {/* Products Grid */}
-                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 gap-4 px-4">
                 {filteredProducts.map(product => (
                   <ProductCard
                     key={product.id}
@@ -453,15 +416,33 @@ export default function Home() {
                   Aucun article trouvé
                 </div>
                 )}
-                </motion.div>
-                )}
-                </AnimatePresence>
-                </main>
                 </div>
+                )}
+                </main>
 
-                {/* Panier Flottant (Sticky Footer) */}
+                {/* Bottom Navigation */}
+                <nav className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-3 px-2 z-50 shadow-lg">
+                <Link to={createPageUrl('Home')} className="flex flex-col items-center text-orange-500 min-w-[60px]">
+                <div className="text-2xl mb-0.5">🏠</div>
+                <span className="text-[10px] font-bold">Inicio</span>
+                </Link>
+                <button className="flex flex-col items-center text-slate-400 min-w-[60px]">
+                <div className="text-2xl mb-0.5">🏷️</div>
+                <span className="text-[10px] font-bold">Ofertas</span>
+                </button>
+                <Link to={createPageUrl('Orders')} className="flex flex-col items-center text-slate-400 min-w-[60px]">
+                <div className="text-2xl mb-0.5">📦</div>
+                <span className="text-[10px] font-bold">Pedidos</span>
+                </Link>
+                <Link to={createPageUrl('Account')} className="flex flex-col items-center text-slate-400 min-w-[60px]">
+                <div className="text-2xl mb-0.5">👤</div>
+                <span className="text-[10px] font-bold">Cuenta</span>
+                </Link>
+                </nav>
+
+                {/* Panier Flottant */}
                 {user && cartCount > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex justify-between items-center z-50 shadow-lg">
+                  <div className="fixed bottom-20 left-4 right-4 bg-white rounded-2xl p-4 flex justify-between items-center z-40 shadow-2xl border-2 border-orange-200">
                 <div className="flex items-center gap-4">
                 <div className="relative border-2 border-slate-200 p-2 rounded-lg bg-white">
                 <ShoppingCart className="w-6 h-6 text-orange-500" />
