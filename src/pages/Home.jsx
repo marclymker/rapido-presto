@@ -23,6 +23,7 @@ import ProductRecommendations from '@/components/recommendations/ProductRecommen
 import SEO from '@/components/SEO';
 import SmallStories from '@/components/home/SmallStories';
 import CreditBanner from '@/components/home/CreditBanner';
+import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 
 export default function Home() {
   const [user, setUser] = useState(null);
