@@ -593,7 +593,6 @@ Format JSON strict requis.`;
                   </div>
                 )}
               </div>
-            </div> {/* Fin space-y-6 */}
             </div> {/* Fin Orders Tab */}
           )}
 
