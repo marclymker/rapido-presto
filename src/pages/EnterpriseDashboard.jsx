@@ -380,6 +380,9 @@ Format JSON strict requis.`;
     message: 'Vous avez une nouvelle commande à traiter'
   });
 
+  const [activeTab, setActiveTab] = useState('orders');
+  const [searchQuery, setSearchQuery] = useState('');
+
   if (!user || user.current_profile !== 'entreprise') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -389,9 +392,6 @@ Format JSON strict requis.`;
   }
 
   const entrepriseData = user.profiles?.entreprise || {};
-
-  const [activeTab, setActiveTab] = useState('orders');
-  const [searchQuery, setSearchQuery] = useState('');
 
   const menuItems = [
     { id: 'orders', label: 'Commandes', icon: '📦', badge: pendingOrders.length },
@@ -955,8 +955,6 @@ Format JSON strict requis.`;
               </DialogContent>
             </Dialog>
           </div>
-        )}
-
         )}
 
         {activeTab === 'stats' && (
