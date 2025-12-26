@@ -154,11 +154,7 @@ export default function Home() {
       return;
     }
     
-    // Check if cart has items from different shop
-    if (cartItems.length > 0 && cartItems[0].shop_id !== selectedShop.id) {
-      toast.error('Votre panier contient des articles d\'une autre boutique');
-      return;
-    }
+    // Multi-boutique autorisé
     addToCartMutation.mutate({ product, quantity });
   };
 
