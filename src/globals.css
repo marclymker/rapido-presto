@@ -56,6 +56,15 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Safe area for iOS notch */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-pb {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
 }
 
 /* Animation pour les mises à jour en temps réel */

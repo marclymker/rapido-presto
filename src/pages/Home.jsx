@@ -204,7 +204,7 @@ export default function Home() {
       
       {/* Header */}
       <header className="bg-white sticky top-0 z-40 border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="w-full mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {selectedShop && (
@@ -217,15 +217,15 @@ export default function Home() {
                 </Button>
               )}
               <div>
-                <h1 className="text-xl font-bold text-orange-500">Rapido Presto</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-orange-500">Rapido Presto</h1>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-6 px-2 text-xs -mt-1"
+                  className="h-5 sm:h-6 px-1 sm:px-2 text-[10px] sm:text-xs -mt-1"
                   onClick={() => setShowSearchBar(!showSearchBar)}
                 >
                   <Search className="w-3 h-3 mr-1" />
-                  Rechercher
+                  <span className="hidden xs:inline">Rechercher</span>
                 </Button>
               </div>
             </div>
@@ -256,7 +256,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <AnimatePresence mode="wait">
           {!selectedShop ? (
             <motion.div

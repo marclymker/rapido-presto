@@ -68,16 +68,16 @@ export default function SalesStats({ orders, products }) {
   return (
     <div className="space-y-4">
       {/* Cartes statistiques principales */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat, idx) => {
           const Icon = stat.icon;
           return (
             <Card key={idx}>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-xs text-slate-500 mb-1">{stat.title}</p>
-                    <p className="text-lg font-bold text-slate-800">{stat.value}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] sm:text-xs text-slate-500 mb-1 truncate">{stat.title}</p>
+                    <p className="text-base sm:text-lg font-bold text-slate-800 truncate">{stat.value}</p>
                     {stat.subtitle && (
                       <p className="text-xs text-slate-400 mt-1">{stat.subtitle}</p>
                     )}
@@ -97,12 +97,12 @@ export default function SalesStats({ orders, products }) {
         <CardHeader>
           <CardTitle className="text-base">Performance par période</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-slate-500 mb-1">Aujourd'hui</p>
-              <p className="text-xl font-bold text-slate-800">{todayOrders.length}</p>
-              <p className="text-xs text-slate-400">commandes</p>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="text-center p-2 sm:p-3 bg-slate-50 rounded-lg">
+              <p className="text-[10px] sm:text-xs text-slate-500 mb-1">Aujourd'hui</p>
+              <p className="text-lg sm:text-xl font-bold text-slate-800">{todayOrders.length}</p>
+              <p className="text-[10px] sm:text-xs text-slate-400">commandes</p>
             </div>
             <div className="text-center p-3 bg-slate-50 rounded-lg">
               <p className="text-xs text-slate-500 mb-1">Cette semaine</p>
