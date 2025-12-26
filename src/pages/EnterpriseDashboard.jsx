@@ -74,77 +74,108 @@ export default function EnterpriseDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* SIDEBAR */}
-      <aside className="w-1/5 min-w-[200px] bg-white border-r flex flex-col py-6 shadow-lg">
-        <div className="px-6 mb-10">
-          <h1 className="text-xl font-black text-blue-600 tracking-tighter">RAPIDO PRESTO</h1>
-          <p className="text-[10px] text-gray-400 font-bold uppercase">Dashboard Partenaire</p>
+      {/* SIDEBAR - ICÔNES UNIQUEMENT */}
+      <aside className="w-[75px] bg-white border-r flex flex-col py-6 shadow-lg relative">
+        <div className="px-4 mb-8">
+          <div className="text-2xl text-center">🚀</div>
         </div>
         
-        <nav className="flex-1 space-y-2 px-4">
+        <nav className="flex-1 space-y-2 px-2">
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all font-bold text-sm relative ${
+              className={`w-full flex flex-col items-center justify-center py-4 rounded-xl transition-all relative group ${
                 activeTab === item.id 
-                ? 'bg-blue-600 text-white shadow-blue-200 shadow-lg' 
+                ? 'bg-blue-600 text-white shadow-lg' 
                 : 'text-gray-500 hover:bg-gray-100'
               }`}
+              title={item.label}
             >
-              <span className="text-xl">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="text-2xl mb-1">{item.icon}</span>
+              <span className="text-[9px] font-bold">{item.label.split(' ')[0]}</span>
               {item.badge > 0 && (
-                <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
                   {item.badge}
                 </span>
+              )}
+              {activeTab === item.id && (
+                <div className="absolute -right-[3px] top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-l-full" />
               )}
             </button>
           ))}
         </nav>
 
-        <div className="px-4 pt-4 border-t space-y-2">
-          <div className="flex items-center gap-3 px-4">
-            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden">
+        <div className="px-2 pt-4 border-t space-y-3">
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden mb-2">
               {entrepriseData.company_logo_url ? (
                 <img src={entrepriseData.company_logo_url} alt="" className="w-full h-full object-cover" />
               ) : (
-                <Package className="w-5 h-5 text-orange-500" />
+                <Package className="w-6 h-6 text-orange-500" />
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-xs text-gray-800 truncate">{entrepriseData.company_name}</p>
-              <p className="text-[10px] text-gray-500 truncate">{entrepriseData.company_category}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between px-4 py-2">
-            <div className="flex items-center gap-2">
-              <Switch checked={myShop?.is_active !== false} disabled />
-              <span className="text-xs font-medium text-gray-700">
-                {myShop?.is_active !== false ? 'En ligne' : 'Hors ligne'}
-              </span>
+            <div className="text-center">
+              <Switch 
+                checked={myShop?.is_active !== false} 
+                disabled 
+                className="scale-75"
+              />
             </div>
           </div>
 
-          <div className="px-4">
+          <div className="px-2">
             <ProfileSwitcher user={user} />
           </div>
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-black text-gray-800 mb-8">{menuItems.find(m => m.id === activeTab)?.label}</h2>
+      {/* MAIN CONTENT - PANE 2 */}
+      <main className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="p-6 animate-fade-in">
+          {/* Header de section */}
+          <div className="mb-6">
+            <h2 className="text-3xl font-black text-gray-900">{menuItems.find(m => m.id === activeTab)?.label}</h2>
+            <p className="text-sm text-gray-500 mt-1">Gérez vos {menuItems.find(m => m.id === activeTab)?.label.toLowerCase()}</p>
+          </div>
           
-          <div className="bg-white rounded-3xl p-12 shadow-sm border border-gray-100">
-            <div className="text-center">
-              <div className="text-8xl mb-6">{menuItems.find(m => m.id === activeTab)?.icon}</div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-3">Section en construction</h3>
-              <p className="text-gray-500 text-lg">
-                Cette fonctionnalité sera disponible bientôt.
-              </p>
+          {/* Content Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Card 1 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">{menuItems.find(m => m.id === activeTab)?.icon}</span>
+                </div>
+                <span className="text-xs text-gray-400 font-medium">Aujourd'hui</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Aucune donnée</h3>
+              <p className="text-sm text-gray-500">Cette section sera bientôt disponible</p>
+            </div>
+
+            {/* Card 2 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">📊</span>
+                </div>
+                <span className="text-xs text-gray-400 font-medium">Stats</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">0</h3>
+              <p className="text-sm text-gray-500">Activités en cours</p>
+            </div>
+
+            {/* Card 3 - Full width */}
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 shadow-sm md:col-span-2 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Besoin d'aide ?</h3>
+                  <p className="text-sm opacity-90">Consultez notre guide de démarrage</p>
+                </div>
+                <button className="bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors">
+                  En savoir plus
+                </button>
+              </div>
             </div>
           </div>
         </div>
