@@ -430,7 +430,13 @@ export default function Home() {
                 <h3 className="text-xs font-bold text-slate-500 uppercase mb-3 px-2">
                   Boutiques
                 </h3>
-                {shops.map(shop => (
+                {loadingPlaces && (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+                    <p className="text-xs text-slate-500 mt-2">Recherche...</p>
+                  </div>
+                )}
+                {allShops.map(shop => (
                   <button
                     key={shop.id}
                     onClick={() => setSelectedShop(shop)}
@@ -482,7 +488,13 @@ export default function Home() {
                 <h3 className="text-xs font-bold text-slate-500 uppercase mb-3 px-2">
                   Boutiques
                 </h3>
-                {shops.map(shop => (
+                {loadingPlaces && (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+                    <p className="text-xs text-slate-500 mt-2">Recherche...</p>
+                  </div>
+                )}
+                {allShops.map(shop => (
                   <button
                     key={shop.id}
                     onClick={() => setSelectedShop(shop)}
