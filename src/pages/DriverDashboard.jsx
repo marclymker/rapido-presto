@@ -83,9 +83,12 @@ export default function DriverDashboard() {
       const orders = await base44.entities.Order.filter({ 
         status: 'searching_driver'
       }, '-created_date');
-      // Filter by commune match
+      // Filter by commune match + Anti-auto-acceptation (ne pas voir ses propres commandes)
       const driverCommune = user?.profiles?.livreur?.commune;
-      return orders.filter(o => o.shop_commune === driverCommune || o.client_commune === driverCommune);
+      return orders.filter(o => 
+        (o.shop_commune === driverCommune || o.client_commune === driverCommune) &&
+        o.client_id !== user.id // Restriction: impossible de livrer sa propre commande
+      );
     },
     enabled: !!user?.profiles?.livreur?.commune && isAvailable,
     refetchInterval: 60000,
@@ -115,6 +118,11 @@ export default function DriverDashboard() {
 
   const acceptOrderMutation = useMutation({
     mutationFn: async (order) => {
+      // RESTRICTION ANTI-AUTO-ACCEPTATION: Empêcher de livrer sa propre commande
+      if (order.client_id === user.id) {
+        throw new Error('Vous ne pouvez pas livrer votre propre commande');
+      }
+      
       const updatedOrder = await base44.entities.Order.update(order.id, {
         status: 'driver_assigned',
         driver_id: user.id,
@@ -136,6 +144,9 @@ export default function DriverDashboard() {
       queryClient.invalidateQueries(['available-orders']);
       queryClient.invalidateQueries(['driver-orders']);
       toast.success('Commande acceptée');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erreur lors de l\'acceptation');
     }
   });
 
