@@ -947,7 +947,7 @@ Format JSON strict requis.`;
               </div>
             )}
             </div>
-            </div>
+          </div>
           )}
 
           {/* Stats Tab */}
