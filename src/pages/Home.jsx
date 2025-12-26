@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
 
 import ShopCard from '@/components/ui/ShopCard';
+import GooglePlaceCard from '@/components/ui/GooglePlaceCard';
 import ProductCard from '@/components/ui/ProductCard';
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
@@ -436,7 +437,7 @@ export default function Home() {
                     <p className="text-xs text-slate-500 mt-2">Recherche...</p>
                   </div>
                 )}
-                {allShops.map(shop => (
+                {shops.map(shop => (
                   <button
                     key={shop.id}
                     onClick={() => setSelectedShop(shop)}
@@ -456,6 +457,24 @@ export default function Home() {
                     </span>
                   </button>
                 ))}
+                {googlePlaces.map(place => (
+                  <button
+                    key={place.id}
+                    onClick={() => setSelectedShop(place)}
+                    className="w-full flex flex-col items-center mb-4 p-3 rounded-2xl hover:bg-white transition-colors cursor-pointer group"
+                  >
+                    <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mb-2 overflow-hidden group-hover:scale-110 transition-transform border-2 border-blue-200">
+                      {place.company_logo_url ? (
+                        <img src={place.company_logo_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl">🏪</span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-center font-bold text-blue-600 leading-tight">
+                      {place.company_name}
+                    </span>
+                  </button>
+                ))}
                 {allShops.length === 0 && !loadingPlaces && (
                   <div className="text-center py-8 text-slate-400 text-xs">
                     Aucune boutique
@@ -464,19 +483,39 @@ export default function Home() {
               </div>
             </aside>
 
-            {/* MAIN CONTENT - Message de sélection */}
-            <main className="flex-1 overflow-y-auto p-6">
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <div className="text-6xl mb-4">🏪</div>
-                  <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                    {selectedCategory}
-                  </h2>
-                  <p className="text-slate-500">
-                    Sélectionnez une boutique pour voir les produits
-                  </p>
+            {/* MAIN CONTENT - Liste des Google Places */}
+            <main className="flex-1 overflow-y-auto p-4 bg-slate-50">
+              {googlePlaces.length > 0 ? (
+                <div>
+                  <h3 className="text-lg font-black text-slate-800 mb-4">
+                    📍 Boutiques à proximité
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    {googlePlaces.map(place => (
+                      <GooglePlaceCard
+                        key={place.id}
+                        place={place}
+                        userLocation={userLocation}
+                        onClick={() => setSelectedShop(place)}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🏪</div>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                      {selectedCategory}
+                    </h2>
+                    <p className="text-slate-500">
+                      {shops.length > 0 
+                        ? 'Sélectionnez une boutique pour voir les produits'
+                        : 'Aucune boutique disponible dans cette catégorie'}
+                    </p>
+                  </div>
+                </div>
+              )}
             </main>
           </div>
         ) : (
@@ -494,7 +533,7 @@ export default function Home() {
                     <p className="text-xs text-slate-500 mt-2">Recherche...</p>
                   </div>
                 )}
-                {allShops.map(shop => (
+                {shops.map(shop => (
                   <button
                     key={shop.id}
                     onClick={() => setSelectedShop(shop)}
@@ -517,6 +556,30 @@ export default function Home() {
                       selectedShop?.id === shop.id ? 'text-orange-600' : 'text-slate-700'
                     }`}>
                       {shop.company_name}
+                    </span>
+                  </button>
+                ))}
+                {googlePlaces.map(place => (
+                  <button
+                    key={place.id}
+                    onClick={() => setSelectedShop(place)}
+                    className={`w-full flex flex-col items-center mb-4 p-3 rounded-2xl transition-colors cursor-pointer group ${
+                      selectedShop?.id === place.id ? 'bg-white shadow-md' : 'hover:bg-white'
+                    }`}
+                  >
+                    <div className={`w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mb-2 overflow-hidden transition-transform ${
+                      selectedShop?.id === place.id ? 'scale-110 border-2 border-blue-500' : 'group-hover:scale-110 border-2 border-blue-200'
+                    }`}>
+                      {place.company_logo_url ? (
+                        <img src={place.company_logo_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl">🏪</span>
+                      )}
+                    </div>
+                    <span className={`text-[10px] text-center font-bold leading-tight ${
+                      selectedShop?.id === place.id ? 'text-blue-600' : 'text-blue-600'
+                    }`}>
+                      {place.company_name}
                     </span>
                   </button>
                 ))}
