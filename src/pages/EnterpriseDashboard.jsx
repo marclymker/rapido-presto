@@ -1051,48 +1051,60 @@ Format JSON strict requis.`;
               products={products}
               onUpdateShop={(data) => updateShopMutation.mutate(data)}
             />
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Account Tab */}
-          <TabsContent value="account" className="space-y-4 sm:space-y-6">
-            <div className="bg-white rounded-xl p-3 sm:p-4">
-              <div className="flex items-center gap-3 sm:gap-4 mb-4">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+        {activeTab === 'account' && (
+          <div className="p-8 max-w-4xl mx-auto space-y-8">
+            <h2 className="text-3xl font-black text-gray-800">Mon Compte</h2>
+
+            {/* WIDGET : MODIFIER PHOTO & PROFIL */}
+            <section className="bg-white rounded-3xl p-8 shadow-sm flex items-center gap-8 border border-gray-100">
+              <div className="relative group">
+                <div className="w-32 h-32 rounded-full bg-gray-200 overflow-hidden border-4 border-white shadow-md">
                   {entrepriseData.company_logo_url ? (
-                    <img src={entrepriseData.company_logo_url} alt="" className="w-full h-full object-cover" />
+                    <img src={entrepriseData.company_logo_url} className="w-full h-full object-cover" alt="" />
                   ) : (
-                    <Package className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500" />
+                    <Package className="w-16 h-16 text-gray-400 m-auto mt-8" />
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="font-semibold text-base sm:text-lg text-slate-800 truncate">{entrepriseData.company_name}</h2>
-                  <p className="text-xs sm:text-sm text-slate-500 truncate">{entrepriseData.company_category}</p>
-                </div>
               </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-gray-400 uppercase mb-2">Nom de l'entreprise</h4>
+                <p className="text-2xl font-bold">{entrepriseData.company_name}</p>
+                <p className="text-gray-400 text-sm mt-2">{entrepriseData.company_category}</p>
+              </div>
+            </section>
 
-              <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
-                <div className="flex items-center gap-2 sm:gap-3 text-slate-600 text-xs sm:text-base">
-                  <span className="text-slate-500 flex-shrink-0">Email:</span>
-                  <span className="truncate">{user.email}</span>
-                </div>
-                {user.phone && (
-                  <div className="flex items-center gap-2 sm:gap-3 text-slate-600 text-xs sm:text-base">
-                    <span className="text-slate-500 flex-shrink-0">Téléphone:</span>
-                    <span className="truncate">{user.phone}</span>
-                  </div>
-                )}
+            {/* WIDGET : INFOS COMPTE */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <h4 className="font-bold mb-4 flex items-center gap-2">📧 Email</h4>
+                <p className="text-gray-700">{user.email}</p>
               </div>
+              {user.phone && (
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                  <h4 className="font-bold mb-4 flex items-center gap-2">📱 Téléphone</h4>
+                  <p className="text-gray-700">{user.phone}</p>
+                </div>
+              )}
             </div>
 
-            <Button 
-              variant="outline" 
-              className="w-full border-red-200 text-red-600 hover:bg-red-50"
-              onClick={() => base44.auth.logout()}
-            >
-              Déconnexion
-            </Button>
-          </TabsContent>
-        </Tabs>
+            {/* WIDGET : SÉCURITÉ */}
+            <section className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+              <h4 className="font-bold mb-6">🔒 Sécurité du compte</h4>
+              <div className="flex flex-col gap-4">
+                <Button 
+                  variant="outline" 
+                  className="w-full border-red-200 text-red-600 hover:bg-red-50 py-6 text-base font-bold"
+                  onClick={() => base44.auth.logout()}
+                >
+                  Déconnexion
+                </Button>
+              </div>
+            </section>
+          </div>
+        )}
       </main>
 
       <OrderDetailModal
