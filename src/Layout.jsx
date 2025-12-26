@@ -107,7 +107,7 @@ export default function Layout({ children, currentPageName }) {
       {/* Bottom Navigation */}
       {showNav && navItems.length > 0 && (
         <nav className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50 safe-bottom">
-          <div className="max-w-lg mx-auto flex justify-around py-2 px-2">
+          <div className="max-w-lg mx-auto flex justify-around py-1 px-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPageName === item.page;
@@ -115,16 +115,16 @@ export default function Layout({ children, currentPageName }) {
                 <Link
                   key={item.page}
                   to={createPageUrl(item.page)}
-                  className={`flex flex-col items-center py-2 px-3 min-w-[44px] min-h-[44px] rounded-xl transition-colors relative ${
+                  className={`flex flex-col items-center py-1 px-2 min-w-[40px] min-h-[40px] rounded-xl transition-colors relative ${
                     isActive 
                       ? 'text-orange-500' 
                       : 'text-slate-400 hover:text-slate-600'
                   }`}
                 >
-                  <Icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5]' : ''}`} />
-                  <span className="text-[10px] sm:text-xs mt-1 font-medium whitespace-nowrap">{item.label}</span>
+                  <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : ''}`} />
+                  <span className="text-[9px] mt-0.5 font-medium whitespace-nowrap">{item.label}</span>
                   {item.badge > 0 && (
-                    <Badge className="absolute top-1 right-2 h-5 w-5 p-0 flex items-center justify-center bg-orange-500 text-white text-xs">
+                    <Badge className="absolute top-0 right-1 h-4 w-4 p-0 flex items-center justify-center bg-orange-500 text-white text-[10px]">
                       {item.badge}
                     </Badge>
                   )}
