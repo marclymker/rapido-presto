@@ -66,16 +66,17 @@ export default function ProductCard({ product, onAdd, onClick }) {
             )}
           </div>
           <div className="flex items-center gap-1.5">
-            {product.category === 'Mariage' && product.shop_phone && (
+            {product.category?.toLowerCase().trim() === 'mariage' && (
               <a
-                href={`https://wa.me/${product.shop_phone.replace(/[\s\-\+]/g, '')}?text=Bonjour, je suis intéressé par l'article de mariage : ${encodeURIComponent(product.name)}`}
+                href="https://wa.me/c/50948690366"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
+                title="Voir le catalogue Mariage"
               >
                 <Button 
                   size="icon" 
-                  className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600"
+                  className="h-8 w-8 rounded-full bg-[#25D366] hover:bg-green-600"
                 >
                   <MessageCircle className="w-4 h-4" />
                 </Button>
