@@ -205,12 +205,36 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>Nom de l'article *</Label>
+            <Label>1️⃣ Nom de l'article *</Label>
             <Input
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ex: Pizza Margherita"
+            />
+          </div>
+
+          <div>
+            <Label>2️⃣ Photo de l'article *</Label>
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={(e) => handleImageUpload(e, false)} 
+              className="w-full border rounded-lg p-2"
+            />
+            {formData.image_url && (
+              <img src={formData.image_url} alt="" className="mt-2 h-32 w-32 object-cover rounded-lg border-2 border-blue-500" />
+            )}
+            <p className="text-xs text-purple-600 mt-1">✨ L'AI générera automatiquement la description et catégorie</p>
+          </div>
+
+          <div>
+            <Label>Description</Label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              placeholder="Sera générée automatiquement..."
             />
           </div>
 
@@ -232,23 +256,6 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
                 onChange={(e) => setFormData({ ...formData, promo_price: parseFloat(e.target.value) || null })}
               />
             </div>
-          </div>
-
-          <div>
-            <Label>Description</Label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <Label>Image principale *</Label>
-            <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, false)} className="w-full" />
-            {formData.image_url && (
-              <img src={formData.image_url} alt="" className="mt-2 h-32 w-32 object-cover rounded-lg border-2 border-blue-500" />
-            )}
           </div>
 
           <div>
