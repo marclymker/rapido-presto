@@ -17,6 +17,7 @@ import { useOrderNotifications, useBrowserNotifications, useNotificationSound } 
 import { useWebSocket, useAutoRefresh } from '@/components/realtime/useWebSocket';
 import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
+import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
 
 export default function DriverDashboard() {
   const [user, setUser] = useState(null);
@@ -215,8 +216,10 @@ export default function DriverDashboard() {
 
   const livreurData = user.profiles?.livreur || {};
 
+  const [navTab, setNavTab] = useState('available');
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 pb-24">
       {/* Header */}
       <header className="bg-white sticky top-0 z-40 border-b">
         <div className="max-w-2xl mx-auto px-4 py-4">
@@ -445,6 +448,13 @@ export default function DriverDashboard() {
         syncStatus={syncStatus} 
         lastSync={lastSync} 
         connectionType={connectionType}
+      />
+
+      {/* Business Smart Navigation */}
+      <BusinessSmartNav 
+        activeTab={navTab}
+        setActiveTab={setNavTab}
+        userRole="livreur"
       />
     </div>
   );

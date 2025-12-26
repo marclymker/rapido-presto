@@ -10,6 +10,7 @@ import ProductsSection from '@/components/enterprise/ProductsSection';
 import StatsSection from '@/components/enterprise/StatsSection';
 import SettingsSection from '@/components/enterprise/SettingsSection';
 import AccountSection from '@/components/enterprise/AccountSection';
+import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
@@ -136,7 +137,7 @@ export default function EnterpriseDashboard() {
       </aside>
 
       {/* MAIN CONTENT - PANE 2 */}
-      <main className="flex-1 overflow-y-auto bg-gray-50">
+      <main className="flex-1 overflow-y-auto bg-gray-50 pb-24">
         <div className="animate-fade-in h-full">
           {activeTab === 'orders' && <OrdersSection orders={orders} onAddProduct={() => setActiveTab('products')} />}
           {activeTab === 'products' && <ProductsSection shopId={myShop?.id} />}
@@ -145,6 +146,14 @@ export default function EnterpriseDashboard() {
           {activeTab === 'account' && <AccountSection user={user} shop={myShop} />}
         </div>
       </main>
+
+      {/* Business Smart Navigation */}
+      <BusinessSmartNav 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        userRole="entreprise"
+        pendingCount={pendingOrders.length}
+      />
     </div>
   );
 }
