@@ -531,8 +531,11 @@ Format JSON strict requis.`;
           </div>
         </header>
 
+        {/* Content Area */}
+        <div className="p-6">
           {/* Orders Tab */}
-          <TabsContent value="orders" className="space-y-4">
+          {activeTab === 'orders' && (
+            <div className="space-y-6">
             {/* Pending Orders */}
             {pendingOrders.length > 0 && (
               <div>
@@ -624,18 +627,32 @@ Format JSON strict requis.`;
                 )}
               </div>
             </div>
-          </TabsContent>
+          )}
 
           {/* Products Tab */}
-          <TabsContent value="products">
-            <div className="flex justify-end mb-3 sm:mb-4">
-              <Button 
-                className="bg-orange-500 hover:bg-orange-600 text-xs sm:text-sm h-8 sm:h-10"
-                onClick={() => setGuidelinesDialogOpen(true)}
-              >
-                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                Ajouter
-              </Button>
+          {activeTab === 'products' && (
+            <div>
+            {/* Sticky Search Bar */}
+            <div className="sticky top-0 bg-slate-50 z-30 pb-6 -mt-6 pt-6">
+              <div className="flex gap-3 items-center">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <Input
+                    placeholder="Rechercher un article..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-12 h-12 rounded-full bg-white shadow-sm border-slate-200"
+                  />
+                </div>
+                <Button 
+                  className="bg-orange-500 hover:bg-orange-600 h-12 px-6 rounded-full shadow-md"
+                  onClick={() => setGuidelinesDialogOpen(true)}
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Ajouter
+                </Button>
+              </div>
+            </div>
               
               {/* Guidelines Dialog */}
               <AlertDialog open={guidelinesDialogOpen} onOpenChange={setGuidelinesDialogOpen}>
@@ -909,63 +926,80 @@ Format JSON strict requis.`;
               </Dialog>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {products.map(product => (
-                <div key={product.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
-                  <div className="h-24 sm:h-28 bg-slate-100 relative">
+            {/* Products Grid - Premium Design */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map(product => (
+                <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all group">
+                  <div className="relative h-56 bg-slate-100">
                     {product.image_url ? (
-                      <img src={product.image_url} alt="" className="w-full h-full object-cover" />
+                      <img src={product.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
+                      <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
                     )}
                     {!product.is_available && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <EyeOff className="w-6 h-6 text-white" />
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <EyeOff className="w-8 h-8 text-white" />
+                      </div>
+                    )}
+                    {product.promo_price && (
+                      <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        -{Math.round((1 - product.promo_price / product.price) * 100)}%
                       </div>
                     )}
                   </div>
-                  <div className="p-2 sm:p-3">
-                    <h4 className="font-medium text-xs sm:text-sm truncate">{product.name}</h4>
-                    <p className="text-orange-500 font-semibold text-xs sm:text-base">{product.price} HTG</p>
+                  <div className="p-4">
+                    <h4 className="font-bold text-base mb-2 line-clamp-2 min-h-[3rem]">{product.name}</h4>
+                    <div className="flex items-center gap-2 mb-3">
+                      <p className="text-orange-500 font-bold text-xl">{product.price} HTG</p>
+                      {product.promo_price && (
+                        <p className="text-slate-400 line-through text-sm">{product.promo_price} HTG</p>
+                      )}
+                    </div>
                     {product.stock_quantity !== undefined && (
-                      <p className="text-[10px] sm:text-xs text-slate-500">Stock: {product.stock_quantity}</p>
+                      <p className="text-xs text-slate-500 mb-3">📦 Stock: {product.stock_quantity}</p>
                     )}
-                    <div className="flex gap-1.5 sm:gap-2 mt-2">
+                    <div className="flex gap-2">
                       <Button 
-                        size="icon" 
+                        size="sm"
                         variant="outline" 
-                        className="h-7 w-7 sm:h-8 sm:w-8"
+                        className="flex-1"
                         onClick={() => handleEditProduct(product)}
                       >
-                        <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <Edit className="w-4 h-4 mr-1" />
+                        Modifier
                       </Button>
                       <Button 
-                        size="icon" 
+                        size="sm"
                         variant="outline" 
-                        className="h-7 w-7 sm:h-8 sm:w-8 text-red-500"
+                        className="text-red-500 hover:bg-red-50"
                         onClick={() => deleteProductMutation.mutate(product.id)}
                       >
-                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            {products.length === 0 && (
-              <div className="text-center py-12 text-slate-500">
-                Aucun article. Cliquez sur "Ajouter" pour commencer.
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-16 bg-white rounded-2xl">
+                <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-500 text-lg">
+                  {searchQuery ? 'Aucun article trouvé' : 'Aucun article. Cliquez sur "Ajouter" pour commencer.'}
+                </p>
               </div>
             )}
-          </TabsContent>
+            </div>
+          )}
 
           {/* Stats Tab */}
-          <TabsContent value="stats">
+          {activeTab === 'stats' && (
             <SalesStats orders={orders} products={products} />
-          </TabsContent>
+          )}
 
           {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-6">
+          {activeTab === 'settings' && (
+            <div className="space-y-6">
             {/* Marketing Section */}
             <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-orange-200">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -1048,37 +1082,119 @@ Format JSON strict requis.`;
               products={products}
               onUpdateShop={(data) => updateShopMutation.mutate(data)}
             />
-          </TabsContent>
+            </div>
+          )}
 
           {/* Account Tab */}
-          <TabsContent value="account" className="space-y-4 sm:space-y-6">
-            <div className="bg-white rounded-xl p-3 sm:p-4">
-              <div className="flex items-center gap-3 sm:gap-4 mb-4">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {entrepriseData.company_logo_url ? (
-                    <img src={entrepriseData.company_logo_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <Package className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="font-semibold text-base sm:text-lg text-slate-800 truncate">{entrepriseData.company_name}</h2>
-                  <p className="text-xs sm:text-sm text-slate-500 truncate">{entrepriseData.company_category}</p>
-                </div>
-              </div>
-
-              <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
-                <div className="flex items-center gap-2 sm:gap-3 text-slate-600 text-xs sm:text-base">
-                  <span className="text-slate-500 flex-shrink-0">Email:</span>
-                  <span className="truncate">{user.email}</span>
-                </div>
-                {user.phone && (
-                  <div className="flex items-center gap-2 sm:gap-3 text-slate-600 text-xs sm:text-base">
-                    <span className="text-slate-500 flex-shrink-0">Téléphone:</span>
-                    <span className="truncate">{user.phone}</span>
+          {activeTab === 'account' && (
+            <div className="space-y-6 max-w-2xl">
+            {/* Photo de profil */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h3 className="font-semibold text-lg mb-4">Photo de profil</h3>
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden">
+                    {entrepriseData.company_logo_url ? (
+                      <img src={entrepriseData.company_logo_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Package className="w-12 h-12 text-orange-500" />
+                    )}
                   </div>
-                )}
+                  <label className="absolute bottom-0 right-0 bg-orange-500 text-white p-2 rounded-full cursor-pointer hover:bg-orange-600 shadow-lg">
+                    <Camera className="w-4 h-4" />
+                    <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                  </label>
+                </div>
+                <div>
+                  <h2 className="font-bold text-xl mb-1">{entrepriseData.company_name}</h2>
+                  <p className="text-slate-500">{entrepriseData.company_category}</p>
+                </div>
               </div>
+            </div>
+
+            {/* Informations de base */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
+              <h3 className="font-semibold text-lg mb-4">Informations de base</h3>
+              <div>
+                <Label>Email</Label>
+                <Input value={user.email} disabled className="bg-slate-50" />
+              </div>
+              {user.phone && (
+                <div>
+                  <Label>Téléphone</Label>
+                  <Input value={user.phone} disabled className="bg-slate-50" />
+                </div>
+              )}
+            </div>
+
+            {/* Adresse */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
+              <h3 className="font-semibold text-lg mb-4">Adresse de livraison</h3>
+              <div>
+                <Label>Adresse complète</Label>
+                <Textarea
+                  value={accountForm.address || user.address || ''}
+                  onChange={(e) => setAccountForm({ ...accountForm, address: e.target.value })}
+                  placeholder="Ex: 123 Rue ABC, Delmas 33"
+                  rows={3}
+                />
+              </div>
+              <Button onClick={handleAccountUpdate} className="bg-orange-500 hover:bg-orange-600">
+                Enregistrer l'adresse
+              </Button>
+            </div>
+
+            {/* Méthode de paiement */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
+              <h3 className="font-semibold text-lg mb-4">Méthode de paiement</h3>
+              <div>
+                <Label>Méthode préférée</Label>
+                <Select 
+                  value={accountForm.payment_method || user.payment_method || ''} 
+                  onValueChange={(val) => setAccountForm({ ...accountForm, payment_method: val })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une méthode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CASH">Cash à la livraison</SelectItem>
+                    <SelectItem value="moncash">MonCash</SelectItem>
+                    <SelectItem value="card">Carte bancaire</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleAccountUpdate} className="bg-orange-500 hover:bg-orange-600">
+                Enregistrer la méthode
+              </Button>
+            </div>
+
+            {/* Mot de passe */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
+              <h3 className="font-semibold text-lg mb-4">Changer de mot de passe</h3>
+              <div>
+                <Label>Mot de passe actuel</Label>
+                <Input
+                  type="password"
+                  value={accountForm.current_password}
+                  onChange={(e) => setAccountForm({ ...accountForm, current_password: e.target.value })}
+                  placeholder="••••••••"
+                />
+              </div>
+              <div>
+                <Label>Nouveau mot de passe</Label>
+                <Input
+                  type="password"
+                  value={accountForm.new_password}
+                  onChange={(e) => setAccountForm({ ...accountForm, new_password: e.target.value })}
+                  placeholder="••••••••"
+                />
+              </div>
+              <Button 
+                onClick={() => toast.info('Fonctionnalité de changement de mot de passe à implémenter')}
+                className="bg-orange-500 hover:bg-orange-600"
+              >
+                Changer le mot de passe
+              </Button>
             </div>
 
             <Button 
@@ -1088,8 +1204,9 @@ Format JSON strict requis.`;
             >
               Déconnexion
             </Button>
-          </TabsContent>
-        </Tabs>
+            </div>
+          )}
+        </div>
       </main>
 
       <OrderDetailModal
