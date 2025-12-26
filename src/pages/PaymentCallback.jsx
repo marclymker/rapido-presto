@@ -36,21 +36,41 @@ export default function PaymentCallback() {
       const paymentData = response.data;
 
       if (paymentData.success && paymentData.status === 'success') {
-        // Paiement réussi - mettre à jour la commande
-        const orders = await base44.entities.Order.filter({ 
-          moncash_transaction_id: transactionId 
-        });
-
-        if (orders.length > 0) {
-          const order = orders[0];
-          await base44.entities.Order.update(order.id, {
-            payment_status: 'paid'
+        // Vérifier si c'est un abonnement Premium (order_id commence par SUB_)
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('orderId');
+        
+        if (orderId && orderId.startsWith('SUB_')) {
+          // C'est un abonnement Premium - appeler le webhook
+          await base44.functions.invoke('premiumWebhook', {
+            transaction_id: transactionId,
+            order_id: orderId,
+            status: 'successful'
           });
 
           setOrderDetails({
-            orderNumber: order.order_number,
-            amount: paymentData.amount
+            orderNumber: orderId,
+            amount: paymentData.amount,
+            isPremium: true
           });
+        } else {
+          // Paiement de commande normale
+          const orders = await base44.entities.Order.filter({ 
+            moncash_transaction_id: transactionId 
+          });
+
+          if (orders.length > 0) {
+            const order = orders[0];
+            await base44.entities.Order.update(order.id, {
+              payment_status: 'paid'
+            });
+
+            setOrderDetails({
+              orderNumber: order.order_number,
+              amount: paymentData.amount,
+              isPremium: false
+            });
+          }
         }
 
         setStatus('success');
@@ -89,16 +109,20 @@ export default function PaymentCallback() {
           </div>
 
           <h1 className="text-2xl font-bold text-slate-800 mb-2">
-            Paiement Réussi!
+            {orderDetails?.isPremium ? '👑 Premium Activé!' : 'Paiement Réussi!'}
           </h1>
           
           <p className="text-slate-600 mb-6">
-            Votre paiement MonCash a été effectué avec succès
+            {orderDetails?.isPremium 
+              ? 'Votre abonnement Premium est maintenant actif. Vos produits seront diffusés sur Facebook & Instagram!'
+              : 'Votre paiement MonCash a été effectué avec succès'}
           </p>
 
           {orderDetails && (
             <div className="bg-slate-50 rounded-xl p-4 mb-6">
-              <div className="text-sm text-slate-500 mb-1">Numéro de commande</div>
+              <div className="text-sm text-slate-500 mb-1">
+                {orderDetails.isPremium ? 'Abonnement' : 'Numéro de commande'}
+              </div>
               <div className="text-lg font-bold text-slate-800">{orderDetails.orderNumber}</div>
               <div className="text-sm text-slate-500 mt-3">Montant payé</div>
               <div className="text-2xl font-bold text-orange-500">{orderDetails.amount} HTG</div>
@@ -107,10 +131,10 @@ export default function PaymentCallback() {
 
           <div className="flex flex-col gap-3">
             <Button 
-              onClick={() => navigate(createPageUrl('Orders'))}
+              onClick={() => navigate(createPageUrl(orderDetails?.isPremium ? 'EnterpriseDashboard' : 'Orders'))}
               className="w-full bg-orange-500 hover:bg-orange-600"
             >
-              Voir mes commandes
+              {orderDetails?.isPremium ? 'Retour au Dashboard' : 'Voir mes commandes'}
             </Button>
             <Button 
               onClick={() => navigate(createPageUrl('Home'))}
