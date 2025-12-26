@@ -10,6 +10,7 @@ import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 import OneSignalInit from '@/components/notifications/OneSignalInit';
 import NotificationPermission from '@/components/notifications/NotificationPermission';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
+import ReactPixel from 'react-facebook-pixel';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -23,6 +24,17 @@ export default function Layout({ children, currentPageName }) {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  // Initialize Meta Pixel
+  useEffect(() => {
+    ReactPixel.init('1346505637253912');
+    ReactPixel.pageView();
+  }, []);
+
+  // Track page views on route changes
+  useEffect(() => {
+    ReactPixel.pageView();
+  }, [currentPageName]);
 
   // Pages that don't need navigation
   const noNavPages = ['ProfileSetup', 'ManageProfiles', 'AdminValidation'];
