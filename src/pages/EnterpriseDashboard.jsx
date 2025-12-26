@@ -938,7 +938,6 @@ Format JSON strict requis.`;
                 </div>
               ))}
             </div>
-            </div>
             {filteredProducts.length === 0 && (
               <div className="text-center py-16 bg-white rounded-3xl">
                 <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
