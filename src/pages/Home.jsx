@@ -277,7 +277,7 @@ export default function Home() {
                   <h2 className="text-lg font-semibold text-slate-800 mb-4">
                     Découvrir
                   </h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                     {filteredRandomProducts.map(product => (
                       <ProductCard
                         key={product.id}
@@ -308,7 +308,7 @@ export default function Home() {
                   <h2 className="text-lg font-semibold text-slate-800 mb-4">
                     Boutiques {selectedCategory}
                   </h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                     {shops.map(shop => (
                       <ShopCard 
                         key={shop.id} 
@@ -333,8 +333,8 @@ export default function Home() {
               exit={{ opacity: 0, x: -20 }}
             >
               {/* Shop Header */}
-              <div className="bg-white rounded-2xl p-4 mb-4 flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl bg-orange-100 flex items-center justify-center overflow-hidden">
+              <div className="bg-white rounded-2xl p-3 sm:p-4 mb-4 flex items-center gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-orange-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                   {selectedShop.company_logo_url ? (
                     <img src={selectedShop.company_logo_url} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -343,9 +343,9 @@ export default function Home() {
                     </span>
                   )}
                 </div>
-                <div>
-                  <h2 className="font-bold text-xl text-slate-800">{selectedShop.company_name}</h2>
-                  <p className="text-sm text-slate-500">{selectedShop.company_category}</p>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-bold text-base sm:text-xl text-slate-800 truncate">{selectedShop.company_name}</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 truncate">{selectedShop.company_category}</p>
                 </div>
               </div>
 
@@ -363,7 +363,7 @@ export default function Home() {
               )}
 
               {/* Products Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {filteredProducts.map(product => (
                   <ProductCard
                     key={product.id}

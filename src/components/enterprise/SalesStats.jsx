@@ -104,15 +104,15 @@ export default function SalesStats({ orders, products }) {
               <p className="text-lg sm:text-xl font-bold text-slate-800">{todayOrders.length}</p>
               <p className="text-[10px] sm:text-xs text-slate-400">commandes</p>
             </div>
-            <div className="text-center p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-slate-500 mb-1">Cette semaine</p>
-              <p className="text-xl font-bold text-slate-800">{thisWeekOrders.length}</p>
-              <p className="text-xs text-slate-400">commandes</p>
+            <div className="text-center p-2 sm:p-3 bg-slate-50 rounded-lg">
+              <p className="text-[10px] sm:text-xs text-slate-500 mb-1">Cette semaine</p>
+              <p className="text-lg sm:text-xl font-bold text-slate-800">{thisWeekOrders.length}</p>
+              <p className="text-[10px] sm:text-xs text-slate-400">commandes</p>
             </div>
-            <div className="text-center p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-slate-500 mb-1">Ce mois</p>
-              <p className="text-xl font-bold text-slate-800">{thisMonthOrders.length}</p>
-              <p className="text-xs text-slate-400">commandes</p>
+            <div className="text-center p-2 sm:p-3 bg-slate-50 rounded-lg">
+              <p className="text-[10px] sm:text-xs text-slate-500 mb-1">Ce mois</p>
+              <p className="text-lg sm:text-xl font-bold text-slate-800">{thisMonthOrders.length}</p>
+              <p className="text-[10px] sm:text-xs text-slate-400">commandes</p>
             </div>
           </div>
         </CardContent>
