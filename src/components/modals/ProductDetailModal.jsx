@@ -53,17 +53,43 @@ export default function ProductDetailModal({ product, open, onClose, onAddToCart
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-        <div className="h-48 bg-gradient-to-br from-orange-50 to-orange-100">
-          {product.image_url ? (
-            <img 
-              src={product.image_url} 
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="text-5xl">📦</span>
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden max-h-[95vh] overflow-y-auto">
+        <div className="p-2">
+          {/* Image principale */}
+          <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
+            {allImages.length > 0 ? (
+              <img 
+                src={allImages[currentImgIndex]} 
+                alt={product.name}
+                className="w-full h-full object-cover transition-all duration-300"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-5xl">📦</span>
+              </div>
+            )}
+            
+            {product.promo_price && product.promo_price < product.price && (
+              <div className="absolute top-3 left-3 bg-red-500 text-white text-xs px-3 py-1 rounded-full font-semibold">
+                Promo
+              </div>
+            )}
+          </div>
+
+          {/* Miniatures */}
+          {allImages.length > 1 && (
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">
+              {allImages.map((img, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentImgIndex(index)}
+                  className={`relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+                    currentImgIndex === index ? 'border-orange-500 scale-95' : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <img src={img} className="w-full h-full object-cover" alt="" />
+                </button>
+              ))}
             </div>
           )}
         </div>
