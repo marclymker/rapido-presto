@@ -138,10 +138,20 @@ export default function AdminShops() {
       return;
     }
 
-    const shopData = { ...formData };
-    if (!shopData.user_id) {
-      shopData.user_id = user.id;
-    }
+    const shopData = {
+      company_name: formData.company_name,
+      company_category: formData.company_category,
+      region: formData.region,
+      user_id: formData.user_id || user.id
+    };
+
+    // Add optional fields only if they have values
+    if (formData.company_logo_url) shopData.company_logo_url = formData.company_logo_url;
+    if (formData.email) shopData.email = formData.email;
+    if (formData.phone) shopData.phone = formData.phone;
+    if (formData.account_number) shopData.account_number = formData.account_number;
+    if (formData.bank_name) shopData.bank_name = formData.bank_name;
+    if (formData.account_holder_name) shopData.account_holder_name = formData.account_holder_name;
     
     if (editingShop) {
       updateShopMutation.mutate({ id: editingShop.id, data: shopData });
