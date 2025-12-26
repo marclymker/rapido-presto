@@ -274,7 +274,7 @@ export default function Home() {
         {selectedCategory === 'Tout' && !selectedShop ? (
           <div>
             {/* Boutons de Services (Grid) */}
-            <div className="grid grid-cols-2 gap-4 p-4">
+            <div className="grid grid-cols-2 gap-3 p-4">
               {serviceCategories.map((service) => (
                 <button
                   key={service.id}
@@ -282,10 +282,10 @@ export default function Home() {
                     setSelectedCategory(service.id);
                     setSelectedShop(null);
                   }}
-                  className={`${service.bgColor} rounded-3xl p-6 flex flex-col items-center transition-transform hover:scale-105 active:scale-95`}
+                  className={`${service.bgColor} rounded-3xl p-4 flex flex-col items-center transition-transform hover:scale-105 active:scale-95`}
                 >
-                  <div className="text-5xl mb-2">{service.icon}</div>
-                  <span className={`${service.textColor} font-bold text-lg text-center`}>
+                  <div className="text-4xl mb-1">{service.icon}</div>
+                  <span className={`${service.textColor} font-bold text-base text-center`}>
                     {service.name}
                   </span>
                 </button>

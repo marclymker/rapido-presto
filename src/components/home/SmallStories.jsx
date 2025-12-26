@@ -13,22 +13,22 @@ export default function SmallStories({ onCategorySelect }) {
   ];
 
   return (
-    <div className="flex overflow-x-auto gap-4 p-4 no-scrollbar">
+    <div className="flex overflow-x-auto gap-3 p-4 no-scrollbar">
       {stories.map((item) => (
         <button 
           key={item.id}
           onClick={() => onCategorySelect(item.id)}
-          className="flex flex-col items-center min-w-[75px] cursor-pointer group"
+          className="flex flex-col items-center min-w-[65px] cursor-pointer group"
         >
-          <div className={`${item.color} w-16 h-16 rounded-2xl flex items-center justify-center relative shadow-sm mb-1 transition-transform group-hover:scale-105 group-active:scale-95`}>
+          <div className={`${item.color} w-14 h-14 rounded-2xl flex items-center justify-center relative shadow-sm mb-1 transition-transform group-hover:scale-105 group-active:scale-95`}>
             {item.badge && (
               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md">
                 {item.badge}
               </span>
             )}
-            <span className="text-3xl">{item.icon}</span>
+            <span className="text-2xl">{item.icon}</span>
           </div>
-          <span className="text-[11px] font-medium text-slate-700 text-center leading-tight">
+          <span className="text-[10px] font-medium text-slate-700 text-center leading-tight">
             {item.title}
           </span>
         </button>
