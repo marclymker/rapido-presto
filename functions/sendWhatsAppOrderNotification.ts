@@ -77,6 +77,9 @@ Deno.serve(async (req) => {
     });
 
     const result = await response.json();
+    
+    console.log('WhatsApp API response status:', response.status);
+    console.log('WhatsApp API response:', JSON.stringify(result, null, 2));
 
     if (!response.ok) {
       console.error('WhatsApp API error:', result);
