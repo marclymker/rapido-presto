@@ -87,16 +87,31 @@ export default function Cart() {
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
-      const orderNum = 'RP' + Date.now().toString().slice(-6);
-      const code = generateConfirmationCode();
-      const shop = cartItems[0];
-      const deliveryFee = calculateDeliveryFee(user.region, shop.shop_region);
+      // Grouper les articles par boutique
+      const itemsByShop = cartItems.reduce((acc, item) => {
+        if (!acc[item.shop_id]) {
+          acc[item.shop_id] = [];
+        }
+        acc[item.shop_id].push(item);
+        return acc;
+      }, {});
+
+      const shopIds = Object.keys(itemsByShop);
       const subtotal = cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
-      const totalAmount = subtotal + deliveryFee;
+      
+      // Calculer frais de livraison total (par boutique)
+      let totalDeliveryFee = 0;
+      for (const shopId of shopIds) {
+        const shopRegion = itemsByShop[shopId][0].shop_region;
+        totalDeliveryFee += calculateDeliveryFee(user.region, shopRegion);
+      }
+      
+      const totalAmount = subtotal + totalDeliveryFee;
       
       // Si MonCash, initier le paiement
       if (paymentMethod === 'moncash') {
         try {
+          const orderNum = 'RP' + Date.now().toString().slice(-6);
           const response = await base44.functions.invoke('moncashCreatePayment', {
             orderId: orderNum,
             amount: totalAmount
@@ -108,86 +123,111 @@ export default function Cart() {
             throw new Error(paymentData?.error || 'Erreur lors de l\'initialisation du paiement MonCash');
           }
           
-          // Créer la commande avec statut en attente de paiement
-          await base44.entities.Order.create({
-            order_number: orderNum,
-            client_id: user.id,
-            client_name: user.full_name,
-            client_phone: user.phone,
-            client_address: user.address || '',
-            client_region: user.region,
-            shop_id: shop.shop_id,
-            shop_name: shop.shop_name,
-            shop_region: shop.shop_region,
-            items: cartItems.map(item => ({
-              product_id: item.product_id,
-              name: item.product_name,
-              quantity: item.quantity,
-              unit_price: item.unit_price,
-              total: item.unit_price * item.quantity
-            })),
-            subtotal: subtotal,
-            delivery_fee: deliveryFee,
-            total: totalAmount,
-            payment_method: paymentMethod,
-            status: 'pending',
-            payment_status: 'pending',
-            confirmation_code: code,
-            moncash_transaction_id: paymentData.transactionId
-          });
+          // Créer une commande par boutique
+          const createdOrders = [];
+          for (const shopId of shopIds) {
+            const shopItems = itemsByShop[shopId];
+            const shopSubtotal = shopItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+            const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
+            const code = generateConfirmationCode();
+            
+            const order = await base44.entities.Order.create({
+              order_number: `${orderNum}-${shopId.slice(-4)}`,
+              client_id: user.id,
+              client_name: user.full_name,
+              client_phone: user.phone,
+              client_address: user.address || '',
+              client_region: user.region,
+              shop_id: shopId,
+              shop_name: shopItems[0].shop_name,
+              shop_region: shopItems[0].shop_region,
+              items: shopItems.map(item => ({
+                product_id: item.product_id,
+                name: item.product_name,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                total: item.unit_price * item.quantity
+              })),
+              subtotal: shopSubtotal,
+              delivery_fee: shopDeliveryFee,
+              total: shopSubtotal + shopDeliveryFee,
+              payment_method: paymentMethod,
+              status: 'pending',
+              payment_status: 'pending',
+              confirmation_code: code,
+              moncash_transaction_id: paymentData.transactionId
+            });
+            
+            createdOrders.push({ orderId: order.id, code });
+          }
           
           // Vider le panier
           await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
           
           // Retourner les données pour redirection
-          return { orderNum, code, moncashUrl: paymentData.paymentUrl, redirecting: true };
+          return { orderNum, codes: createdOrders.map(o => o.code), moncashUrl: paymentData.paymentUrl, redirecting: true };
         } catch (error) {
           console.error('MonCash payment error:', error);
           throw new Error(error.message || 'Erreur MonCash');
         }
       }
       
-      // Paiement autre que MonCash
-      const order = await base44.entities.Order.create({
-        order_number: orderNum,
-        client_id: user.id,
-        client_name: user.full_name,
-        client_phone: user.phone,
-        client_address: user.address || '',
-        client_region: user.region,
-        shop_id: shop.shop_id,
-        shop_name: shop.shop_name,
-        shop_region: shop.shop_region,
-        items: cartItems.map(item => ({
-          product_id: item.product_id,
-          name: item.product_name,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total: item.unit_price * item.quantity
-        })),
-        subtotal: subtotal,
-        delivery_fee: deliveryFee,
-        total: totalAmount,
-        payment_method: paymentMethod,
-        status: 'pending',
-        confirmation_code: code
-      });
+      // Paiement autre que MonCash - créer une commande par boutique
+      const createdOrders = [];
+      for (const shopId of shopIds) {
+        const shopItems = itemsByShop[shopId];
+        const shopSubtotal = shopItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+        const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
+        const orderNum = 'RP' + Date.now().toString().slice(-6) + '-' + shopId.slice(-4);
+        const code = generateConfirmationCode();
+        
+        const order = await base44.entities.Order.create({
+          order_number: orderNum,
+          client_id: user.id,
+          client_name: user.full_name,
+          client_phone: user.phone,
+          client_address: user.address || '',
+          client_region: user.region,
+          shop_id: shopId,
+          shop_name: shopItems[0].shop_name,
+          shop_region: shopItems[0].shop_region,
+          items: shopItems.map(item => ({
+            product_id: item.product_id,
+            name: item.product_name,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total: item.unit_price * item.quantity
+          })),
+          subtotal: shopSubtotal,
+          delivery_fee: shopDeliveryFee,
+          total: shopSubtotal + shopDeliveryFee,
+          payment_method: paymentMethod,
+          status: 'pending',
+          confirmation_code: code
+        });
+
+        createdOrders.push({ orderId: order.id, orderNum, code });
+
+        // Envoyer notifications pour chaque boutique
+        await base44.functions.invoke('sendOrderNotification', {
+          orderId: order.id,
+          status: 'pending'
+        }).catch(err => console.error('Notification error:', err));
+
+        // Envoyer notification WhatsApp au marchand
+        await base44.functions.invoke('sendWhatsAppOrderNotification', {
+          orderId: order.id
+        }).catch(err => console.error('WhatsApp notification error:', err));
+      }
 
       // Clear cart
       await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
       
-      // Envoyer notifications
-      await base44.functions.invoke('sendOrderNotification', {
-        orderId: order.id,
-        status: 'pending'
-      }).catch(err => console.error('Notification error:', err));
-
-      // Envoyer notification WhatsApp au marchand
-      await base44.functions.invoke('sendWhatsAppOrderNotification', {
-        orderId: order.id
-      }).catch(err => console.error('WhatsApp notification error:', err));
-      
-      return { orderNum, code };
+      return { 
+        orderNum: createdOrders[0].orderNum, 
+        code: createdOrders[0].code,
+        allOrders: createdOrders 
+      };
     },
     onSuccess: (data) => {
       if (data.redirecting && data.moncashUrl) {
@@ -219,11 +259,26 @@ export default function Cart() {
     );
   }
 
+  // Grouper par boutique pour calcul des frais
+  const itemsByShop = cartItems.reduce((acc, item) => {
+    if (!acc[item.shop_id]) {
+      acc[item.shop_id] = [];
+    }
+    acc[item.shop_id].push(item);
+    return acc;
+  }, {});
+
   const subtotal = cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
-  const deliveryFee = cartItems.length > 0 
-    ? calculateDeliveryFee(user.region, cartItems[0].shop_region) 
-    : 0;
+  
+  // Calculer frais de livraison pour chaque boutique
+  let deliveryFee = 0;
+  Object.keys(itemsByShop).forEach(shopId => {
+    const shopRegion = itemsByShop[shopId][0].shop_region;
+    deliveryFee += calculateDeliveryFee(user.region, shopRegion);
+  });
+  
   const total = subtotal + deliveryFee;
+  const shopCount = Object.keys(itemsByShop).length;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -271,6 +326,17 @@ export default function Cart() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
+              {/* Multi-boutique info */}
+              {shopCount > 1 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800">
+                  <p className="font-medium">📦 Commande multi-boutique</p>
+                  <p className="text-xs mt-1">
+                    Votre panier contient des articles de {shopCount} boutiques différentes. 
+                    Les délais de livraison peuvent varier.
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-3">
                 {cartItems.map(item => (
                   <div key={item.id} className="bg-white rounded-xl p-4 flex gap-4">
@@ -336,7 +402,7 @@ export default function Cart() {
                 <div className="flex justify-between items-center text-slate-600">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-orange-500" />
-                    <span>Frais de livraison</span>
+                    <span>Frais de livraison {shopCount > 1 ? `(${shopCount} boutiques)` : ''}</span>
                   </div>
                   <div className="text-right">
                     <div className="font-medium">{deliveryFee} HTG</div>
@@ -425,19 +491,31 @@ export default function Cart() {
               {/* Summary */}
               <div className="bg-white rounded-xl p-4 space-y-2">
                 <h3 className="font-semibold mb-3">Récapitulatif</h3>
-                {cartItems.map(item => (
-                  <div key={item.id} className="flex justify-between text-sm text-slate-600">
-                    <span>{item.quantity}x {item.product_name}</span>
-                    <span>{item.unit_price * item.quantity} HTG</span>
-                  </div>
-                ))}
+                
+                {/* Group by shop */}
+                {Object.keys(itemsByShop).map(shopId => {
+                  const shopItems = itemsByShop[shopId];
+                  const shopSubtotal = shopItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+                  return (
+                    <div key={shopId} className="mb-3 pb-3 border-b">
+                      <p className="text-xs font-semibold text-slate-500 mb-2">{shopItems[0].shop_name}</p>
+                      {shopItems.map(item => (
+                        <div key={item.id} className="flex justify-between text-sm text-slate-600">
+                          <span>{item.quantity}x {item.product_name}</span>
+                          <span>{item.unit_price * item.quantity} HTG</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+                
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between text-slate-600">
                     <span>Sous-total</span>
                     <span>{subtotal} HTG</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
-                    <span>Livraison</span>
+                    <span>Livraison {shopCount > 1 ? `(${shopCount} boutiques)` : ''}</span>
                     <span>{deliveryFee} HTG</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg pt-2">
