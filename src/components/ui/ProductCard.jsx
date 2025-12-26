@@ -3,6 +3,7 @@ import { Plus, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { applyClientMargin } from '@/components/utils/priceCalculation';
+import { base44 } from '@/api/base44Client';
 
 export default function ProductCard({ product, onAdd, onClick }) {
   const hasPromo = product.promo_price && product.promo_price < product.price;
