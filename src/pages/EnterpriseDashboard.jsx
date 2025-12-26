@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Package, Plus, Bell, Edit, Trash2, Eye, EyeOff, Volume2, VolumeX, X, Tag, ShoppingBag, Settings, BarChart3, User, Search, Upload, Camera } from 'lucide-react';
+import { Package, Plus, Bell, Edit, Trash2, Eye, EyeOff, Volume2, VolumeX, X, Tag } from 'lucide-react';
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,6 @@ import OpeningHoursManager from '@/components/enterprise/OpeningHoursManager';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('orders');
   const [guidelinesDialogOpen, setGuidelinesDialogOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -41,10 +40,6 @@ export default function EnterpriseDashboard() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [accountForm, setAccountForm] = useState({
-    address: '', payment_method: '', current_password: '', new_password: ''
-  });
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { requestPermission } = useBrowserNotifications();
@@ -395,114 +390,87 @@ Format JSON strict requis.`;
 
   const entrepriseData = user.profiles?.entreprise || {};
 
-  // Sidebar navigation items
-  const navItems = [
-    { id: 'orders', label: 'Commandes', icon: ShoppingBag, count: pendingOrders.length },
-    { id: 'products', label: 'Articles', icon: Package },
-    { id: 'stats', label: 'Stats', icon: BarChart3 },
-    { id: 'settings', label: 'Réglages', icon: Settings },
-    { id: 'account', label: 'Compte', icon: User }
-  ];
-
-  const handleLogoUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      const updatedProfiles = { ...user.profiles };
-      updatedProfiles.entreprise = { ...updatedProfiles.entreprise, company_logo_url: file_url };
-      await base44.auth.updateMe({ profiles: updatedProfiles });
-      queryClient.invalidateQueries(['my-shop']);
-      toast.success('Photo mise à jour');
-    } catch (error) {
-      toast.error('Erreur lors du téléchargement');
-    }
-  };
-
-  const handleAccountUpdate = async () => {
-    try {
-      await base44.auth.updateMe({
-        address: accountForm.address,
-        payment_method: accountForm.payment_method
-      });
-      toast.success('Informations mises à jour');
-    } catch (error) {
-      toast.error('Erreur lors de la mise à jour');
-    }
-  };
-
-  const filteredProducts = products.filter(p =>
-    p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden"> {/* Container principal */}
-      {/* SIDEBAR - 20% fixed */}
-      <aside className="w-1/5 bg-white border-r flex flex-col py-6 shadow-lg z-20">
-        <div className="px-6 mb-10">
-          <h1 className="text-xl font-black text-blue-600 tracking-tighter">RAPIDO PRESTO</h1>
-          <p className="text-[10px] text-gray-400 font-bold uppercase">Dashboard Partenaire</p>
-        </div>
-        
-        <nav className="flex-1 space-y-2 px-4 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all font-bold text-sm ${
-                  activeTab === item.id 
-                    ? 'bg-blue-600 text-white shadow-blue-200 shadow-lg' 
-                    : 'text-gray-500 hover:bg-gray-100'
-                }`}
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <header className="bg-white sticky top-0 z-40 border-b">
+        <div className="w-full mx-auto px-3 sm:px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base sm:text-xl font-bold text-orange-500 truncate">{entrepriseData.company_name}</h1>
+              <p className="text-xs sm:text-sm text-slate-500 truncate">{entrepriseData.company_category}</p>
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+              {/* Toggle En ligne / Hors ligne */}
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 rounded-full">
+                <span className="text-[10px] sm:text-sm font-medium text-slate-700 whitespace-nowrap">
+                  {myShop?.is_active !== false ? 'En ligne' : 'Hors ligne'}
+                </span>
+                <Switch
+                  checked={myShop?.is_active !== false}
+                  onCheckedChange={(checked) => toggleOnlineMutation.mutate(checked)}
+                  disabled={toggleOnlineMutation.isPending}
+                />
+              </div>
+              
+              <div className="hidden sm:flex">
+                <RealtimeIndicator isConnected={isConnected} />
+              </div>
+              <div className="hidden sm:block">
+                <ProfileSwitcher user={user} />
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:h-10 sm:w-10"
+                onClick={() => {
+                  if (!soundInitialized) {
+                    initializeSound();
+                    toast.success('Notifications sonores activées');
+                  }
+                  setNotificationsEnabled(!notificationsEnabled);
+                }}
+                title={notificationsEnabled ? 'Désactiver le son' : 'Activer le son'}
               >
-                <Icon className="w-5 h-5" />
-                {item.label}
-                {item.count > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                    {item.count}
-                  </span>
+                {notificationsEnabled ? (
+                  <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
+                ) : (
+                  <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
                 )}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="px-4 mt-auto space-y-3 border-t pt-4">
-          <div className="flex items-center justify-between px-2">
-            <span className="text-xs font-bold text-gray-500">
-              {myShop?.is_active !== false ? '🟢 En ligne' : '🔴 Hors ligne'}
-            </span>
-            <Switch
-              checked={myShop?.is_active !== false}
-              onCheckedChange={(checked) => toggleOnlineMutation.mutate(checked)}
-            />
-          </div>
-          <div className="flex items-center gap-2 px-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                if (!soundInitialized) initializeSound();
-                setNotificationsEnabled(!notificationsEnabled);
-              }}
-            >
-              {notificationsEnabled ? <Volume2 className="w-5 h-5 text-blue-600" /> : <VolumeX className="w-5 h-5 text-gray-400" />}
-            </Button>
-            <ProfileSwitcher user={user} />
+              </Button>
+              {pendingOrders.length > 0 && (
+                <div className="flex items-center gap-1 sm:gap-2 bg-red-100 text-red-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full">
+                  <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="text-[10px] sm:text-sm font-medium">{pendingOrders.length}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </aside> {/* Fin SIDEBAR */}
+      </header>
 
-      {/* MAIN CONTENT - 80% scrollable */}
-      <main className="flex-1 overflow-y-auto relative"> {/* Début MAIN */}
-        <div className="h-full"> {/* Wrapper principal du contenu */}
+      <main className="w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <Tabs defaultValue="orders" className="w-full">
+          <TabsList className="w-full bg-white mb-4 sm:mb-6 grid grid-cols-5 gap-1 p-1">
+            <TabsTrigger value="orders" className="text-[10px] sm:text-sm px-1 sm:px-3">
+              Commandes
+            </TabsTrigger>
+            <TabsTrigger value="products" className="text-[10px] sm:text-sm px-1 sm:px-3">
+              Articles
+            </TabsTrigger>
+            <TabsTrigger value="stats" className="text-[10px] sm:text-sm px-1 sm:px-3">
+              Stats
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="text-[10px] sm:text-sm px-1 sm:px-3">
+              Réglages
+            </TabsTrigger>
+            <TabsTrigger value="account" className="text-[10px] sm:text-sm px-1 sm:px-3">
+              Compte
+            </TabsTrigger>
+          </TabsList>
+
           {/* Orders Tab */}
-          {activeTab === 'orders' && (
-            <div className="space-y-6">
+          <TabsContent value="orders" className="space-y-4">
             {/* Pending Orders */}
             {pendingOrders.length > 0 && (
               <div>
@@ -593,33 +561,19 @@ Format JSON strict requis.`;
                   </div>
                 )}
               </div>
-            </div> {/* Fin Orders Tab */}
-          )}
+            </div>
+          </TabsContent>
 
           {/* Products Tab */}
-          {activeTab === 'products' && (
-            <div className="flex flex-col h-full"> {/* Conteneur Products */}
-            {/* Sticky Search Bar - Pill Style */}
-            <header className="sticky top-0 bg-white/80 backdrop-blur-md z-10 px-8 py-6 border-b flex justify-between items-center">
-              <div className="relative w-1/3">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Rechercher un article..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-100 rounded-full border-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all outline-none"
-                />
-              </div>
-              <button 
+          <TabsContent value="products">
+            <div className="flex justify-end mb-3 sm:mb-4">
+              <Button 
+                className="bg-orange-500 hover:bg-orange-600 text-xs sm:text-sm h-8 sm:h-10"
                 onClick={() => setGuidelinesDialogOpen(true)}
-                className="bg-green-500 text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg hover:scale-105 transition-transform"
               >
-                + Ajouter un article
-                </button>
-                </header> {/* Fin sticky header */}
-
-            <div className="p-8 flex-1 overflow-y-auto">
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                Ajouter
+              </Button>
               
               {/* Guidelines Dialog */}
               <AlertDialog open={guidelinesDialogOpen} onOpenChange={setGuidelinesDialogOpen}>
@@ -891,75 +845,65 @@ Format JSON strict requis.`;
                   </div>
                 </DialogContent>
               </Dialog>
+            </div>
 
-            {/* Products Grid - Premium Widget Design */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map(product => (
-                <div key={product.id} className="bg-white rounded-3xl p-4 shadow-sm hover:shadow-xl transition-shadow flex flex-col group border border-gray-100">
-                  <div className="relative h-48 rounded-2xl bg-gray-50 overflow-hidden mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {products.map(product => (
+                <div key={product.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
+                  <div className="h-24 sm:h-28 bg-slate-100 relative">
                     {product.image_url ? (
-                      <img src={product.image_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <img src={product.image_url} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-5xl">📦</div>
+                      <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
                     )}
                     {!product.is_available && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                        <EyeOff className="w-8 h-8 text-white" />
-                      </div>
-                    )}
-                    <div className="absolute top-2 right-2 bg-white/90 px-3 py-1 rounded-full text-[10px] font-black text-blue-600">
-                      {product.is_available ? 'EN STOCK' : 'INDISPONIBLE'}
-                    </div>
-                    {product.promo_price && (
-                      <div className="absolute top-2 left-2 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">
-                        -{Math.round((1 - product.promo_price / product.price) * 100)}%
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <EyeOff className="w-6 h-6 text-white" />
                       </div>
                     )}
                   </div>
-                  <h3 className="font-bold text-lg text-gray-800 mb-2 line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
-                  <p className="text-blue-600 font-black text-xl mb-4">{product.price} HTG</p>
-                  {product.stock_quantity !== undefined && (
-                    <p className="text-xs text-gray-500 mb-3">📦 Stock: {product.stock_quantity}</p>
-                  )}
-                  <div className="flex gap-2 mt-auto">
-                    <button 
-                      onClick={() => handleEditProduct(product)}
-                      className="flex-1 bg-gray-100 py-2 rounded-xl text-xs font-bold hover:bg-gray-200 transition-colors"
-                    >
-                      Modifier
-                    </button>
-                    <button 
-                      onClick={() => deleteProductMutation.mutate(product.id)}
-                      className="w-10 bg-red-50 text-red-500 py-2 rounded-xl hover:bg-red-100 transition-colors"
-                    >
-                      🗑️
-                    </button>
+                  <div className="p-2 sm:p-3">
+                    <h4 className="font-medium text-xs sm:text-sm truncate">{product.name}</h4>
+                    <p className="text-orange-500 font-semibold text-xs sm:text-base">{product.price} HTG</p>
+                    {product.stock_quantity !== undefined && (
+                      <p className="text-[10px] sm:text-xs text-slate-500">Stock: {product.stock_quantity}</p>
+                    )}
+                    <div className="flex gap-1.5 sm:gap-2 mt-2">
+                      <Button 
+                        size="icon" 
+                        variant="outline" 
+                        className="h-7 w-7 sm:h-8 sm:w-8"
+                        onClick={() => handleEditProduct(product)}
+                      >
+                        <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="outline" 
+                        className="h-7 w-7 sm:h-8 sm:w-8 text-red-500"
+                        onClick={() => deleteProductMutation.mutate(product.id)}
+                      >
+                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-16 bg-white rounded-3xl">
-                <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">
-                  {searchQuery ? 'Aucun article trouvé' : 'Aucun article. Cliquez sur "Ajouter" pour commencer.'}
-                </p>
+            {products.length === 0 && (
+              <div className="text-center py-12 text-slate-500">
+                Aucun article. Cliquez sur "Ajouter" pour commencer.
               </div>
-              )}
-              </div> {/* Fin p-8 content area */}
-              </div> {/* Fin flex-col h-full */}
-              )} {/* Fin Products Tab */}
+            )}
+          </TabsContent>
 
           {/* Stats Tab */}
-          {activeTab === 'stats' && (
-            <div>
-              <SalesStats orders={orders} products={products} />
-            </div> {/* Fin Stats Tab */}
-          )}
+          <TabsContent value="stats">
+            <SalesStats orders={orders} products={products} />
+          </TabsContent>
 
           {/* Settings Tab */}
-          {activeTab === 'settings' && (
-            <div className="space-y-6">
+          <TabsContent value="settings" className="space-y-6">
             {/* Marketing Section */}
             <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-orange-200">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -1042,159 +986,50 @@ Format JSON strict requis.`;
               products={products}
               onUpdateShop={(data) => updateShopMutation.mutate(data)}
             />
-            </div> {/* Fin space-y-6 */}
-          )} {/* Fin Settings Tab */}
+          </TabsContent>
 
           {/* Account Tab */}
-          {activeTab === 'account' && (
-            <div className="p-8 max-w-4xl mx-auto space-y-8">
-              <h2 className="text-3xl font-black text-gray-800">Mon Compte</h2>
-
-              {/* WIDGET : Photo & Profil */}
-              <section className="bg-white rounded-3xl p-8 shadow-sm flex items-center gap-8 border border-gray-100">
-                <div className="relative group">
-                  <div className="w-32 h-32 rounded-full bg-gray-200 overflow-hidden border-4 border-white shadow-md">
-                    {entrepriseData.company_logo_url ? (
-                      <img src={entrepriseData.company_logo_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-blue-100">
-                        <Package className="w-16 h-16 text-blue-600" />
-                      </div>
-                    )}
-                  </div>
-                  <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform cursor-pointer">
-                    <Camera className="w-5 h-5" />
-                    <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-                  </label>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-bold text-gray-400 uppercase mb-2">Nom de l'entreprise</h4>
-                  <input 
-                    type="text" 
-                    className="text-2xl font-bold bg-transparent border-b border-gray-100 w-full focus:border-blue-500 outline-none transition-colors" 
-                    defaultValue={entrepriseData.company_name}
-                    disabled
-                  />
-                  <p className="text-gray-400 text-sm mt-2">ID Partenaire: #{myShop?.id?.slice(0, 8)}</p>
-                </div>
-              </section>
-
-              {/* WIDGET : Informations */}
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                <h4 className="font-bold mb-4 flex items-center gap-2">📧 Informations de contact</h4>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase">Email</label>
-                    <input 
-                      type="email"
-                      value={user.email}
-                      disabled
-                      className="w-full bg-gray-50 rounded-xl p-3 text-sm outline-none"
-                    />
-                  </div>
-                  {user.phone && (
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase">Téléphone</label>
-                      <input 
-                        type="tel"
-                        value={user.phone}
-                        disabled
-                        className="w-full bg-gray-50 rounded-xl p-3 text-sm outline-none"
-                      />
-                    </div>
+          <TabsContent value="account" className="space-y-4 sm:space-y-6">
+            <div className="bg-white rounded-xl p-3 sm:p-4">
+              <div className="flex items-center gap-3 sm:gap-4 mb-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {entrepriseData.company_logo_url ? (
+                    <img src={entrepriseData.company_logo_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Package className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500" />
                   )}
                 </div>
-              </div>
-
-              {/* WIDGET : Adresse & Paiement */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                  <h4 className="font-bold mb-4 flex items-center gap-2">📍 Adresse Professionnelle</h4>
-                  <textarea 
-                    value={accountForm.address || user.address || ''}
-                    onChange={(e) => setAccountForm({ ...accountForm, address: e.target.value })}
-                    className="w-full bg-gray-50 rounded-2xl p-4 text-sm outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="Rue Panaméricaine, Pétion-Ville, Haïti"
-                    rows={4}
-                  />
-                  <button 
-                    onClick={handleAccountUpdate}
-                    className="mt-3 w-full bg-blue-600 text-white py-2 rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                  >
-                    Enregistrer
-                  </button>
-                </div>
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                  <h4 className="font-bold mb-4 flex items-center gap-2">💳 Méthode de Paiement</h4>
-                  <select 
-                    value={accountForm.payment_method || user.payment_method || ''}
-                    onChange={(e) => setAccountForm({ ...accountForm, payment_method: e.target.value })}
-                    className="w-full bg-gray-50 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="">Sélectionner</option>
-                    <option value="CASH">Cash à la livraison</option>
-                    <option value="moncash">MonCash (509 4XXX XXXX)</option>
-                    <option value="card">Carte bancaire</option>
-                  </select>
-                  <button 
-                    onClick={handleAccountUpdate}
-                    className="mt-3 w-full bg-blue-600 text-white py-2 rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                  >
-                    Enregistrer
-                  </button>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-semibold text-base sm:text-lg text-slate-800 truncate">{entrepriseData.company_name}</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 truncate">{entrepriseData.company_category}</p>
                 </div>
               </div>
 
-              {/* WIDGET : Sécurité */}
-              <section className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                <h4 className="font-bold mb-6">🔒 Sécurité du compte</h4>
-                <div className="space-y-3 mb-4">
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase">Mot de passe actuel</label>
-                    <input 
-                      type="password"
-                      value={accountForm.current_password}
-                      onChange={(e) => setAccountForm({ ...accountForm, current_password: e.target.value })}
-                      placeholder="••••••••"
-                      className="w-full bg-gray-50 rounded-xl p-3 text-sm outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase">Nouveau mot de passe</label>
-                    <input 
-                      type="password"
-                      value={accountForm.new_password}
-                      onChange={(e) => setAccountForm({ ...accountForm, new_password: e.target.value })}
-                      placeholder="••••••••"
-                      className="w-full bg-gray-50 rounded-xl p-3 text-sm outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
+              <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
+                <div className="flex items-center gap-2 sm:gap-3 text-slate-600 text-xs sm:text-base">
+                  <span className="text-slate-500 flex-shrink-0">Email:</span>
+                  <span className="truncate">{user.email}</span>
                 </div>
-                <div className="flex flex-col gap-4">
-                  <button 
-                    onClick={() => toast.info('Fonctionnalité de changement de mot de passe à implémenter')}
-                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                  >
-                    Changer le mot de passe
-                  </button>
-                  <button className="w-fit text-red-500 font-bold hover:underline text-sm">
-                    Déconnexion de tous les appareils
-                  </button>
-                </div>
-              </section>
+                {user.phone && (
+                  <div className="flex items-center gap-2 sm:gap-3 text-slate-600 text-xs sm:text-base">
+                    <span className="text-slate-500 flex-shrink-0">Téléphone:</span>
+                    <span className="truncate">{user.phone}</span>
+                  </div>
+                )}
+              </div>
+            </div>
 
-              <button 
-                onClick={() => base44.auth.logout()}
-                className="w-full border-2 border-red-200 text-red-600 py-3 rounded-xl font-bold hover:bg-red-50 transition-colors"
-              >
-                Déconnexion
-              </button>
-            </div> {/* Fin account content */}
-          )} {/* Fin Account Tab */}
-        </div> {/* Fin h-full wrapper */}
-      </main> {/* Fin MAIN */}
+            <Button 
+              variant="outline" 
+              className="w-full border-red-200 text-red-600 hover:bg-red-50"
+              onClick={() => base44.auth.logout()}
+            >
+              Déconnexion
+            </Button>
+          </TabsContent>
+        </Tabs>
+      </main>
 
-      {/* Modals */}
       <OrderDetailModal
         order={selectedOrder}
         open={!!selectedOrder}
@@ -1208,6 +1043,6 @@ Format JSON strict requis.`;
         lastSync={lastSync} 
         connectionType={connectionType}
       />
-      </div> {/* Fin flex h-screen */}
+    </div>
   );
 }
