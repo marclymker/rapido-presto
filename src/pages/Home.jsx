@@ -238,12 +238,18 @@ export default function Home() {
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const serviceCategories = [
-    { id: 'Restaurants', name: 'Restaurants', icon: '🍽️', bgColor: 'bg-red-50', textColor: 'text-red-800', googleType: 'restaurant' },
     { id: 'Fastfood', name: 'Fastfood', icon: '🍔', bgColor: 'bg-orange-50', textColor: 'text-orange-800', googleType: 'restaurant' },
-    { id: 'Epicerie', name: 'Épicerie', icon: '🛒', bgColor: 'bg-cyan-50', textColor: 'text-cyan-800', googleType: 'supermarket' },
+    { id: 'Pour Femme', name: 'Mode Femme', icon: '👗', bgColor: 'bg-purple-50', textColor: 'text-purple-800', googleType: 'clothing_store' },
+    { id: 'Boutique Fleurs', name: 'Fleurs', icon: '💐', bgColor: 'bg-pink-50', textColor: 'text-pink-800', googleType: 'florist' },
+    { id: 'Mariage', name: 'Mariage', icon: '💍', bgColor: 'bg-rose-50', textColor: 'text-rose-800', googleType: 'event_planner' },
+    { id: 'Pour homme', name: 'Mode Homme', icon: '👔', bgColor: 'bg-blue-50', textColor: 'text-blue-800', googleType: 'clothing_store' },
+    { id: 'Bébé', name: 'Bébé', icon: '👶', bgColor: 'bg-yellow-50', textColor: 'text-yellow-800', googleType: 'store' },
     { id: 'Pharmacie', name: 'Pharmacie', icon: '💊', bgColor: 'bg-green-50', textColor: 'text-green-800', googleType: 'pharmacy' },
-    { id: 'Mariage', name: 'Mariage', icon: '💍', bgColor: 'bg-pink-50', textColor: 'text-pink-800', googleType: 'event_planner' },
-    { id: 'Café', name: 'Café', icon: '☕', bgColor: 'bg-amber-50', textColor: 'text-amber-800', googleType: 'cafe' }
+    { id: 'Restaurants', name: 'Restaurants', icon: '🍽️', bgColor: 'bg-red-50', textColor: 'text-red-800', googleType: 'restaurant' },
+    { id: 'Epicerie', name: 'Épicerie', icon: '🛒', bgColor: 'bg-cyan-50', textColor: 'text-cyan-800', googleType: 'supermarket' },
+    { id: 'Café', name: 'Café', icon: '☕', bgColor: 'bg-amber-50', textColor: 'text-amber-800', googleType: 'cafe' },
+    { id: 'Electronics', name: 'Électronique', icon: '📱', bgColor: 'bg-indigo-50', textColor: 'text-indigo-800', googleType: 'electronics_store' },
+    { id: 'Maison', name: 'Maison', icon: '🏠', bgColor: 'bg-teal-50', textColor: 'text-teal-800', googleType: 'home_goods_store' }
   ];
 
   return (
