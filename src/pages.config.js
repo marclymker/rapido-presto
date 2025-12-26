@@ -11,8 +11,8 @@ import Home from './pages/Home';
 import ManageProfiles from './pages/ManageProfiles';
 import Orders from './pages/Orders';
 import PaymentCallback from './pages/PaymentCallback';
-import ProfileSetup from './pages/ProfileSetup';
 import Pricing from './pages/Pricing';
+import ProfileSetup from './pages/ProfileSetup';
 import __Layout from './Layout.jsx';
 
 
@@ -30,8 +30,8 @@ export const PAGES = {
     "ManageProfiles": ManageProfiles,
     "Orders": Orders,
     "PaymentCallback": PaymentCallback,
-    "ProfileSetup": ProfileSetup,
     "Pricing": Pricing,
+    "ProfileSetup": ProfileSetup,
 }
 
 export const pagesConfig = {

@@ -36,10 +36,14 @@ export default function Pricing() {
         description: `Abonnement Premium - ${shop.company_name}`
       });
 
-      if (response.data?.payment_url) {
+      console.log('Payment response:', response.data);
+
+      if (response.data?.success && response.data?.payment_url) {
         window.location.href = response.data.payment_url;
       } else {
-        toast.error('Erreur lors de la création du paiement');
+        const errorMsg = response.data?.error || response.data?.details?.message || 'Erreur lors de la création du paiement';
+        toast.error(errorMsg);
+        console.error('Payment creation failed:', response.data);
       }
     } catch (error) {
       toast.error('Erreur de connexion à MonCash');

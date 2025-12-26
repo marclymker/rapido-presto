@@ -30,7 +30,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { orderId, amount } = await req.json();
+    const body = await req.json();
+    const { orderId, amount, description } = body;
+    
+    console.log('MonCash payment request:', { orderId, amount, description });
     
     if (!orderId || !amount) {
       return Response.json({ error: 'Missing orderId or amount' }, { status: 400 });
@@ -38,9 +41,15 @@ Deno.serve(async (req) => {
 
     // Obtenir le token d'accès
     const accessToken = await getMoncashAccessToken();
+    console.log('Access token obtained:', accessToken ? 'Yes' : 'No');
     
     // Créer le paiement MonCash
-    console.log('Creating payment with:', { amount, orderId });
+    const paymentPayload = {
+      amount: amount,
+      orderId: orderId
+    };
+    
+    console.log('Payment payload:', paymentPayload);
     
     const paymentResponse = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/v1/CreatePayment', {
       method: 'POST',
@@ -48,18 +57,14 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        amount: amount,
-        orderId: orderId,
-        return_url: 'https://rapido-presto.base44.app/PaymentCallback'
-      })
+      body: JSON.stringify(paymentPayload)
     });
 
     const paymentData = await paymentResponse.json();
     console.log('MonCash response:', paymentData);
     
     if (!paymentResponse.ok) {
-      console.error('MonCash API error:', paymentData);
+      console.error('MonCash error:', paymentData);
       return Response.json({ 
         success: false, 
         error: paymentData.message || 'Erreur lors de la création du paiement',
@@ -67,20 +72,20 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Retourner l'URL de paiement et le transaction ID
+    // Retourner l'URL de paiement
+    const paymentUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=${paymentData.payment_token.token}`;
+    
     return Response.json({
       success: true,
-      payment_url: `https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=${paymentData.payment_token.token}`,
+      payment_url: paymentUrl,
       transactionId: paymentData.payment_token.token
     });
 
   } catch (error) {
     console.error('MonCash payment creation error:', error);
-    console.error('Error details:', error.stack);
     return Response.json({ 
       success: false, 
-      error: error.message || 'Erreur inconnue',
-      details: error.stack
+      error: error.message 
     }, { status: 500 });
   }
 });
