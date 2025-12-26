@@ -78,20 +78,14 @@ export default function ProductCard({ product, onAdd, onClick }) {
           </div>
           <div className="flex items-center gap-1.5">
             {product.category?.toLowerCase().trim() === 'mariage' && (
-              <a
-                href="https://wa.me/c/50948690366"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
+              <Button 
+                size="icon" 
+                className="h-8 w-8 rounded-full bg-[#25D366] hover:bg-green-600"
+                onClick={handleWhatsAppClick}
                 title="Voir le catalogue Mariage"
               >
-                <Button 
-                  size="icon" 
-                  className="h-8 w-8 rounded-full bg-[#25D366] hover:bg-green-600"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                </Button>
-              </a>
+                <MessageCircle className="w-4 h-4" />
+              </Button>
             )}
             {product.is_available !== false && (
               <Button 
