@@ -16,12 +16,28 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
     account_holder_name: shop?.account_holder_name || ''
   });
 
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const dayLabels = {
+    monday: 'Lundi',
+    tuesday: 'Mardi',
+    wednesday: 'Mercredi',
+    thursday: 'Jeudi',
+    friday: 'Vendredi',
+    saturday: 'Samedi',
+    sunday: 'Dimanche'
+  };
+  const [hours, setHours] = useState(shop?.opening_hours || {});
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      await base44.entities.Shop.update(shop.id, formData);
+      if (type === 'hours') {
+        await base44.entities.Shop.update(shop.id, { opening_hours: hours });
+      } else {
+        await base44.entities.Shop.update(shop.id, formData);
+      }
       toast.success('Informations mises à jour');
       onSuccess?.();
       onClose();
@@ -37,12 +53,60 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {type === 'location' ? 'Modifier l\'adresse' : 'Informations bancaires'}
+            {type === 'location' ? 'Modifier l\'adresse' : type === 'hours' ? 'Horaires d\'ouverture' : 'Informations bancaires'}
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          {type === 'location' ? (
+          {type === 'hours' ? (
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+              {days.map(day => (
+                <div key={day} className="border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="font-semibold">{dayLabels[day]}</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">Fermé</span>
+                      <input
+                        type="checkbox"
+                        checked={!hours[day]?.closed}
+                        onChange={(e) => setHours({
+                          ...hours,
+                          [day]: { ...hours[day], closed: !e.target.checked }
+                        })}
+                        className="w-4 h-4"
+                      />
+                    </div>
+                  </div>
+                  {!hours[day]?.closed && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Ouverture</Label>
+                        <Input
+                          type="time"
+                          value={hours[day]?.open || '09:00'}
+                          onChange={(e) => setHours({
+                            ...hours,
+                            [day]: { ...hours[day], open: e.target.value }
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Fermeture</Label>
+                        <Input
+                          type="time"
+                          value={hours[day]?.close || '18:00'}
+                          onChange={(e) => setHours({
+                            ...hours,
+                            [day]: { ...hours[day], close: e.target.value }
+                          })}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : type === 'location' ? (
             <div>
               <Label>Région/Commune *</Label>
               <Input
