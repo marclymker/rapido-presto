@@ -278,11 +278,18 @@ export default function Home() {
         <div className="p-4">
           {/* Titre et Login */}
           <div className="flex items-center justify-between mb-3">
-            {selectedShop ? (
+            {selectedShop || selectedCategory !== 'Tout' ? (
               <Button 
                 variant="ghost" 
                 size="icon"
-                onClick={() => setSelectedShop(null)}
+                onClick={() => {
+                  if (selectedShop) {
+                    setSelectedShop(null);
+                  } else {
+                    setSelectedCategory('Tout');
+                    setGooglePlaces([]);
+                  }
+                }}
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
