@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Package, Plus, Bell, Edit, Trash2, Eye, EyeOff, Volume2, VolumeX, X, Tag } from 'lucide-react';
+import { Package, Plus, Bell, Edit, Trash2, Eye, EyeOff, Volume2, VolumeX, X, Tag, ShoppingBag, Settings, BarChart3, User, Search, Upload, Camera } from 'lucide-react';
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import OpeningHoursManager from '@/components/enterprise/OpeningHoursManager';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('orders');
   const [guidelinesDialogOpen, setGuidelinesDialogOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -40,6 +41,10 @@ export default function EnterpriseDashboard() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [accountForm, setAccountForm] = useState({
+    address: '', payment_method: '', current_password: '', new_password: ''
+  });
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { requestPermission } = useBrowserNotifications();
@@ -390,84 +395,141 @@ Format JSON strict requis.`;
 
   const entrepriseData = user.profiles?.entreprise || {};
 
+  // Sidebar navigation items
+  const navItems = [
+    { id: 'orders', label: 'Commandes', icon: ShoppingBag, count: pendingOrders.length },
+    { id: 'products', label: 'Articles', icon: Package },
+    { id: 'stats', label: 'Stats', icon: BarChart3 },
+    { id: 'settings', label: 'Réglages', icon: Settings },
+    { id: 'account', label: 'Compte', icon: User }
+  ];
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const updatedProfiles = { ...user.profiles };
+      updatedProfiles.entreprise = { ...updatedProfiles.entreprise, company_logo_url: file_url };
+      await base44.auth.updateMe({ profiles: updatedProfiles });
+      queryClient.invalidateQueries(['my-shop']);
+      toast.success('Photo mise à jour');
+    } catch (error) {
+      toast.error('Erreur lors du téléchargement');
+    }
+  };
+
+  const handleAccountUpdate = async () => {
+    try {
+      await base44.auth.updateMe({
+        address: accountForm.address,
+        payment_method: accountForm.payment_method
+      });
+      toast.success('Informations mises à jour');
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  const filteredProducts = products.filter(p =>
+    p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white sticky top-0 z-40 border-b">
-        <div className="w-full mx-auto px-3 sm:px-4 py-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-base sm:text-xl font-bold text-orange-500 truncate">{entrepriseData.company_name}</h1>
-              <p className="text-xs sm:text-sm text-slate-500 truncate">{entrepriseData.company_category}</p>
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
-              {/* Toggle En ligne / Hors ligne */}
-              <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 rounded-full">
-                <span className="text-[10px] sm:text-sm font-medium text-slate-700 whitespace-nowrap">
-                  {myShop?.is_active !== false ? 'En ligne' : 'Hors ligne'}
-                </span>
-                <Switch
-                  checked={myShop?.is_active !== false}
-                  onCheckedChange={(checked) => toggleOnlineMutation.mutate(checked)}
-                  disabled={toggleOnlineMutation.isPending}
-                />
-              </div>
-              
-              <div className="hidden sm:flex">
-                <RealtimeIndicator isConnected={isConnected} />
-              </div>
-              <div className="hidden sm:block">
-                <ProfileSwitcher user={user} />
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 sm:h-10 sm:w-10"
-                onClick={() => {
-                  if (!soundInitialized) {
-                    initializeSound();
-                    toast.success('Notifications sonores activées');
-                  }
-                  setNotificationsEnabled(!notificationsEnabled);
-                }}
-                title={notificationsEnabled ? 'Désactiver le son' : 'Activer le son'}
+    <div className="min-h-screen bg-slate-50 flex">
+      {/* SIDEBAR - Navigation verticale */}
+      <aside className="hidden md:flex md:flex-col w-64 bg-white border-r fixed left-0 top-0 h-screen z-50">
+        {/* Logo & Header */}
+        <div className="p-6 border-b">
+          <h1 className="text-xl font-bold text-orange-500 mb-1">{entrepriseData.company_name}</h1>
+          <p className="text-sm text-slate-500">{entrepriseData.company_category}</p>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  activeTab === item.id
+                    ? 'bg-orange-50 text-orange-600 font-semibold'
+                    : 'text-slate-600 hover:bg-slate-50'
+                }`}
               >
-                {notificationsEnabled ? (
-                  <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
-                ) : (
-                  <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
+                <Icon className="w-5 h-5" />
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.count > 0 && (
+                  <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    {item.count}
+                  </span>
                 )}
-              </Button>
-              {pendingOrders.length > 0 && (
-                <div className="flex items-center gap-1 sm:gap-2 bg-red-100 text-red-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full">
-                  <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="text-[10px] sm:text-sm font-medium">{pendingOrders.length}</span>
-                </div>
-              )}
-            </div>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Footer Controls */}
+        <div className="p-4 border-t space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-600">
+              {myShop?.is_active !== false ? '🟢 En ligne' : '🔴 Hors ligne'}
+            </span>
+            <Switch
+              checked={myShop?.is_active !== false}
+              onCheckedChange={(checked) => toggleOnlineMutation.mutate(checked)}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (!soundInitialized) initializeSound();
+                setNotificationsEnabled(!notificationsEnabled);
+              }}
+            >
+              {notificationsEnabled ? <Volume2 className="w-5 h-5 text-orange-500" /> : <VolumeX className="w-5 h-5 text-slate-400" />}
+            </Button>
+            <ProfileSwitcher user={user} />
           </div>
         </div>
-      </header>
+      </aside>
 
-      <main className="w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="w-full bg-white mb-4 sm:mb-6 grid grid-cols-5 gap-1 p-1">
-            <TabsTrigger value="orders" className="text-[10px] sm:text-sm px-1 sm:px-3">
-              Commandes
-            </TabsTrigger>
-            <TabsTrigger value="products" className="text-[10px] sm:text-sm px-1 sm:px-3">
-              Articles
-            </TabsTrigger>
-            <TabsTrigger value="stats" className="text-[10px] sm:text-sm px-1 sm:px-3">
-              Stats
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="text-[10px] sm:text-sm px-1 sm:px-3">
-              Réglages
-            </TabsTrigger>
-            <TabsTrigger value="account" className="text-[10px] sm:text-sm px-1 sm:px-3">
-              Compte
-            </TabsTrigger>
-          </TabsList>
+      {/* MAIN CONTENT */}
+      <main className="flex-1 md:ml-64">
+        {/* Mobile Header */}
+        <header className="md:hidden bg-white sticky top-0 z-40 border-b p-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg font-bold text-orange-500">{entrepriseData.company_name}</h1>
+            <div className="flex items-center gap-2">
+              {pendingOrders.length > 0 && (
+                <div className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
+                  {pendingOrders.length}
+                </div>
+              )}
+              <ProfileSwitcher user={user} />
+            </div>
+          </div>
+          {/* Mobile Tabs */}
+          <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`px-4 py-2 rounded-lg whitespace-nowrap text-sm ${
+                  activeTab === item.id ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </header>
 
           {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-4">
