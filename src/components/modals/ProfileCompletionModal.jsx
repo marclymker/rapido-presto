@@ -18,8 +18,8 @@ const REGIONS = [
 ];
 
 const COMPANY_CATEGORIES = [
-  "Fastfood", "Restaurants", "Boutique Fleurs", "Pharmacie", "Vêtements",
-  "Epicerie", "Café", "Boulangerie", "Pour Femme", "Electronics", "Pour homme", "Maison"
+  "Fastfood", "Restaurants", "Boutique Fleurs", "Pharmacie",
+  "Epicerie", "Café", "Pour Femme", "Electronics", "Pour homme", "Maison", "Bébé", "Outils"
 ];
 
 const VEHICLE_TYPES = ["Moto", "Voiture", "Bicyclette"];
