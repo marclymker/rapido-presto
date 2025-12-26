@@ -709,19 +709,19 @@ export default function Home() {
                 <nav className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-3 px-2 z-50 shadow-lg">
                 <Link to={createPageUrl('Home')} className="flex flex-col items-center text-orange-500 min-w-[60px]">
                 <div className="text-2xl mb-0.5">🏠</div>
-                <span className="text-[10px] font-bold">Inicio</span>
+                <span className="text-[10px] font-bold">Accueil</span>
                 </Link>
                 <button className="flex flex-col items-center text-slate-400 min-w-[60px]">
                 <div className="text-2xl mb-0.5">🏷️</div>
-                <span className="text-[10px] font-bold">Ofertas</span>
+                <span className="text-[10px] font-bold">Offres</span>
                 </button>
                 <Link to={createPageUrl('Orders')} className="flex flex-col items-center text-slate-400 min-w-[60px]">
                 <div className="text-2xl mb-0.5">📦</div>
-                <span className="text-[10px] font-bold">Pedidos</span>
+                <span className="text-[10px] font-bold">Commandes</span>
                 </Link>
                 <Link to={createPageUrl('Account')} className="flex flex-col items-center text-slate-400 min-w-[60px]">
                 <div className="text-2xl mb-0.5">👤</div>
-                <span className="text-[10px] font-bold">Cuenta</span>
+                <span className="text-[10px] font-bold">Compte</span>
                 </Link>
                 </nav>
 
