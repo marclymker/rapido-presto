@@ -1,7 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const PHONE_NUMBER_ID = '340449905828161';
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -41,15 +39,17 @@ Deno.serve(async (req) => {
     const orderDetails = orderData.items.map(item => `${item.quantity}x ${item.name}`).join(', ');
     const totalAmount = `${orderData.total} HTG`;
 
-    // Get Meta WhatsApp token
+    // Get Meta WhatsApp credentials
     const accessToken = Deno.env.get('META_WHATSAPP_ACCESS_TOKEN');
-    if (!accessToken) {
-      console.error('META_WHATSAPP_ACCESS_TOKEN not configured');
+    const phoneNumberId = Deno.env.get('META_WHATSAPP_PHONE_NUMBER_ID');
+    
+    if (!accessToken || !phoneNumberId) {
+      console.error('WhatsApp credentials not configured');
       return Response.json({ error: 'WhatsApp not configured' }, { status: 500 });
     }
 
     // Send WhatsApp message via Meta API
-    const whatsappUrl = `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`;
+    const whatsappUrl = `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`;
     
     const messageData = {
       messaging_product: "whatsapp",
