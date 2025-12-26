@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 
 import ShopCard from '@/components/ui/ShopCard';
 import GooglePlaceCard from '@/components/ui/GooglePlaceCard';
@@ -248,6 +249,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white pb-20">
+      <Helmet>
+        <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
+      </Helmet>
+      
       {/* Bannière Recrutement */}
       <RecruitmentBanner />
       
