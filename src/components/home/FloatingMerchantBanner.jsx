@@ -47,10 +47,10 @@ export default function FloatingMerchantBanner({ user }) {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: 50 }}
+        initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 50 }}
-        className="fixed bottom-24 left-4 right-4 z-50"
+        exit={{ opacity: 0, y: -50 }}
+        className="fixed top-20 left-4 right-4 z-50"
       >
         <div className="max-w-lg mx-auto">
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-2xl p-4">
