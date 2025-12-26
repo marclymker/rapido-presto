@@ -14,6 +14,7 @@ import ShopCard from '@/components/ui/ShopCard';
 import GooglePlaceCard from '@/components/ui/GooglePlaceCard';
 import ProductCard from '@/components/ui/ProductCard';
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
+import StoreMapView from '@/components/maps/StoreMapView';
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 import { getClientPrice } from '@/components/utils/priceCalculation';
@@ -66,9 +67,9 @@ export default function Home() {
       setUser(null);
     });
 
-    // Demander la géolocalisation au chargement
+    // Suivi en temps réel de la géolocalisation
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      const watchId = navigator.geolocation.watchPosition(
         (position) => {
           setUserLocation({
             lat: position.coords.latitude,
@@ -77,8 +78,11 @@ export default function Home() {
         },
         (error) => {
           console.log('Géolocalisation refusée:', error);
-        }
+        },
+        { enableHighAccuracy: true }
       );
+
+      return () => navigator.geolocation.clearWatch(watchId);
     }
   }, []);
 
@@ -483,26 +487,39 @@ export default function Home() {
               </div>
             </aside>
 
-            {/* MAIN CONTENT - Liste des Google Places */}
-            <main className="flex-1 overflow-y-auto p-4 bg-slate-50">
+            {/* MAIN CONTENT - Carte + Liste des Google Places */}
+            <main className="flex-1 overflow-hidden flex flex-col">
               {googlePlaces.length > 0 ? (
-                <div>
-                  <h3 className="text-lg font-black text-slate-800 mb-4">
-                    📍 Boutiques à proximité
-                  </h3>
-                  <div className="flex flex-col gap-3">
-                    {googlePlaces.map(place => (
-                      <GooglePlaceCard
-                        key={place.id}
-                        place={place}
-                        userLocation={userLocation}
-                        onClick={() => setSelectedShop(place)}
-                      />
-                    ))}
+                <>
+                  {/* Carte Interactive (35% de l'écran) */}
+                  <div className="h-[35vh] w-full shadow-lg relative">
+                    <StoreMapView
+                      stores={[...shops, ...googlePlaces]}
+                      userLocation={userLocation}
+                      onStoreSelect={setSelectedShop}
+                    />
                   </div>
-                </div>
+
+                  {/* Liste défilante (65% de l'écran) */}
+                  <div className="flex-1 overflow-y-auto rounded-t-3xl -mt-4 bg-white z-10 p-4 shadow-xl">
+                    <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-4" />
+                    <h3 className="text-lg font-black text-slate-800 mb-4">
+                      📍 Boutiques à proximité
+                    </h3>
+                    <div className="flex flex-col gap-3">
+                      {googlePlaces.map(place => (
+                        <GooglePlaceCard
+                          key={place.id}
+                          place={place}
+                          userLocation={userLocation}
+                          onClick={() => setSelectedShop(place)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </>
               ) : (
-                <div className="flex items-center justify-center h-full">
+                <div className="flex items-center justify-center h-full p-4 bg-slate-50">
                   <div className="text-center">
                     <div className="text-6xl mb-4">🏪</div>
                     <h2 className="text-2xl font-bold text-slate-800 mb-2">

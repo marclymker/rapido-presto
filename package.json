@@ -79,7 +79,8 @@
     "zod": "^3.24.2",
     "react-onesignal": "^3.0.1",
     "react-helmet-async": "^2.0.4",
-    "react-facebook-pixel": "^1.0.4"
+    "react-facebook-pixel": "^1.0.4",
+    "@react-google-maps/api": "^2.19.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
