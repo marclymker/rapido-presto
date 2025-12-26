@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -958,13 +957,18 @@ Format JSON strict requis.`;
           </div>
         )}
 
-          {/* Stats Tab */}
-          <TabsContent value="stats">
-            <SalesStats orders={orders} products={products} />
-          </TabsContent>
+        )}
 
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-6">
+        {activeTab === 'stats' && (
+          <div className="p-8">
+            <h2 className="text-3xl font-black text-gray-800 mb-6">Statistiques</h2>
+            <SalesStats orders={orders} products={products} />
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className="p-8 max-w-4xl space-y-6">
+            <h2 className="text-3xl font-black text-gray-800 mb-6">Réglages</h2>
             {/* Marketing Section */}
             <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-orange-200">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
