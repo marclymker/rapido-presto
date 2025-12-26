@@ -30,6 +30,9 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [googlePlaces, setGooglePlaces] = useState([]);
+  const [loadingPlaces, setLoadingPlaces] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
   const queryClient = useQueryClient();
   
   // Auto-refresh des données
@@ -61,6 +64,21 @@ export default function Home() {
       // User not logged in - can still browse catalogue
       setUser(null);
     });
+
+    // Demander la géolocalisation au chargement
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.log('Géolocalisation refusée:', error);
+        }
+      );
+    }
   }, []);
 
   const handleProfileComplete = (profileType) => {
@@ -102,10 +120,38 @@ export default function Home() {
   const { data: products = [] } = useQuery({
     queryKey: ['products', selectedShop?.id],
     queryFn: () => base44.entities.Product.filter({ shop_id: selectedShop?.id }),
-    enabled: !!selectedShop,
+    enabled: !!selectedShop && !selectedShop.is_google_place,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
   });
+
+  // Fonction pour rechercher les lieux Google Places
+  const fetchGooglePlaces = async (categoryType) => {
+    if (!userLocation) {
+      toast.error('Veuillez activer la géolocalisation pour voir les commerces à proximité');
+      return;
+    }
+
+    setLoadingPlaces(true);
+    try {
+      const response = await base44.functions.invoke('getNearbyPlaces', {
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        type: categoryType,
+        radius: 3000
+      });
+
+      setGooglePlaces(response.data.places || []);
+    } catch (error) {
+      console.error('Erreur Google Places:', error);
+      setGooglePlaces([]);
+    } finally {
+      setLoadingPlaces(false);
+    }
+  };
+
+  // Combiner boutiques locales et Google Places
+  const allShops = [...shops, ...googlePlaces];
 
   // Fetch cart items
   const { data: cartItems = [] } = useQuery({
@@ -192,12 +238,12 @@ export default function Home() {
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const serviceCategories = [
-    { id: 'Restaurants', name: 'Restaurants', icon: '🍽️', bgColor: 'bg-red-50', textColor: 'text-red-800' },
-    { id: 'Fastfood', name: 'Fastfood', icon: '🍔', bgColor: 'bg-orange-50', textColor: 'text-orange-800' },
-    { id: 'Epicerie', name: 'Épicerie', icon: '🛒', bgColor: 'bg-cyan-50', textColor: 'text-cyan-800' },
-    { id: 'Pharmacie', name: 'Pharmacie', icon: '💊', bgColor: 'bg-green-50', textColor: 'text-green-800' },
-    { id: 'Mariage', name: 'Mariage', icon: '💍', bgColor: 'bg-pink-50', textColor: 'text-pink-800' },
-    { id: 'Café', name: 'Café', icon: '☕', bgColor: 'bg-amber-50', textColor: 'text-amber-800' }
+    { id: 'Restaurants', name: 'Restaurants', icon: '🍽️', bgColor: 'bg-red-50', textColor: 'text-red-800', googleType: 'restaurant' },
+    { id: 'Fastfood', name: 'Fastfood', icon: '🍔', bgColor: 'bg-orange-50', textColor: 'text-orange-800', googleType: 'restaurant' },
+    { id: 'Epicerie', name: 'Épicerie', icon: '🛒', bgColor: 'bg-cyan-50', textColor: 'text-cyan-800', googleType: 'supermarket' },
+    { id: 'Pharmacie', name: 'Pharmacie', icon: '💊', bgColor: 'bg-green-50', textColor: 'text-green-800', googleType: 'pharmacy' },
+    { id: 'Mariage', name: 'Mariage', icon: '💍', bgColor: 'bg-pink-50', textColor: 'text-pink-800', googleType: 'event_planner' },
+    { id: 'Café', name: 'Café', icon: '☕', bgColor: 'bg-amber-50', textColor: 'text-amber-800', googleType: 'cafe' }
   ];
 
   return (
