@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { applyClientMargin } from '@/components/utils/priceCalculation';
