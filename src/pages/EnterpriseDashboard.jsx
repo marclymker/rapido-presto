@@ -994,7 +994,9 @@ Format JSON strict requis.`;
 
           {/* Stats Tab */}
           {activeTab === 'stats' && (
-            <SalesStats orders={orders} products={products} />
+            <div>
+              <SalesStats orders={orders} products={products} />
+            </div>
           )}
 
           {/* Settings Tab */}
