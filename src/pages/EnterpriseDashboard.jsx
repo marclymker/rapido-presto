@@ -390,84 +390,129 @@ Format JSON strict requis.`;
 
   const entrepriseData = user.profiles?.entreprise || {};
 
+  const [activeTab, setActiveTab] = useState('orders');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const menuItems = [
+    { id: 'orders', label: 'Commandes', icon: '📦', badge: pendingOrders.length },
+    { id: 'products', label: 'Mes Articles', icon: '🛍️' },
+    { id: 'stats', label: 'Statistiques', icon: '📈' },
+    { id: 'settings', label: 'Réglages', icon: '⚙️' },
+    { id: 'account', label: 'Mon Compte', icon: '👤' },
+  ];
+
+  const filteredProducts = products.filter(p => 
+    p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white sticky top-0 z-40 border-b">
-        <div className="w-full mx-auto px-3 sm:px-4 py-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-base sm:text-xl font-bold text-orange-500 truncate">{entrepriseData.company_name}</h1>
-              <p className="text-xs sm:text-sm text-slate-500 truncate">{entrepriseData.company_category}</p>
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
-              {/* Toggle En ligne / Hors ligne */}
-              <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 rounded-full">
-                <span className="text-[10px] sm:text-sm font-medium text-slate-700 whitespace-nowrap">
-                  {myShop?.is_active !== false ? 'En ligne' : 'Hors ligne'}
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* SIDEBAR - Two-Pane Layout */}
+      <aside className="w-1/5 min-w-[200px] bg-white border-r flex flex-col py-6 shadow-lg z-20">
+        <div className="px-6 mb-10">
+          <h1 className="text-xl font-black text-blue-600 tracking-tighter">RAPIDO PRESTO</h1>
+          <p className="text-[10px] text-gray-400 font-bold uppercase">Dashboard Partenaire</p>
+        </div>
+        
+        <nav className="flex-1 space-y-2 px-4">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all font-bold text-sm relative ${
+                activeTab === item.id 
+                ? 'bg-blue-600 text-white shadow-blue-200 shadow-lg' 
+                : 'text-gray-500 hover:bg-gray-100'
+              }`}
+            >
+              <span className="text-xl">{item.icon}</span>
+              <span>{item.label}</span>
+              {item.badge > 0 && (
+                <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {item.badge}
                 </span>
-                <Switch
-                  checked={myShop?.is_active !== false}
-                  onCheckedChange={(checked) => toggleOnlineMutation.mutate(checked)}
-                  disabled={toggleOnlineMutation.isPending}
-                />
-              </div>
-              
-              <div className="hidden sm:flex">
-                <RealtimeIndicator isConnected={isConnected} />
-              </div>
-              <div className="hidden sm:block">
-                <ProfileSwitcher user={user} />
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 sm:h-10 sm:w-10"
-                onClick={() => {
-                  if (!soundInitialized) {
-                    initializeSound();
-                    toast.success('Notifications sonores activées');
-                  }
-                  setNotificationsEnabled(!notificationsEnabled);
-                }}
-                title={notificationsEnabled ? 'Désactiver le son' : 'Activer le son'}
-              >
-                {notificationsEnabled ? (
-                  <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
-                ) : (
-                  <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-                )}
-              </Button>
-              {pendingOrders.length > 0 && (
-                <div className="flex items-center gap-1 sm:gap-2 bg-red-100 text-red-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full">
-                  <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="text-[10px] sm:text-sm font-medium">{pendingOrders.length}</span>
-                </div>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        {/* Footer Sidebar */}
+        <div className="px-4 pt-4 border-t space-y-2">
+          <div className="flex items-center gap-3 px-4">
+            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden">
+              {entrepriseData.company_logo_url ? (
+                <img src={entrepriseData.company_logo_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Package className="w-5 h-5 text-orange-500" />
               )}
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-xs text-gray-800 truncate">{entrepriseData.company_name}</p>
+              <p className="text-[10px] text-gray-500 truncate">{entrepriseData.company_category}</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between px-4 py-2">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={myShop?.is_active !== false}
+                onCheckedChange={(checked) => toggleOnlineMutation.mutate(checked)}
+                disabled={toggleOnlineMutation.isPending}
+              />
+              <span className="text-xs font-medium text-gray-700">
+                {myShop?.is_active !== false ? 'En ligne' : 'Hors ligne'}
+              </span>
+            </div>
+          </div>
+
+          <div className="px-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (!soundInitialized) {
+                  initializeSound();
+                  toast.success('Notifications sonores activées');
+                }
+                setNotificationsEnabled(!notificationsEnabled);
+              }}
+              className="w-full justify-start gap-2"
+            >
+              {notificationsEnabled ? (
+                <Volume2 className="w-4 h-4 text-orange-500" />
+              ) : (
+                <VolumeX className="w-4 h-4 text-slate-400" />
+              )}
+              <span className="text-xs">{notificationsEnabled ? 'Son activé' : 'Son désactivé'}</span>
+            </Button>
+          </div>
+
+          <div className="px-4">
+            <RealtimeIndicator isConnected={isConnected} />
+          </div>
+
+          <div className="px-4">
+            <ProfileSwitcher user={user} />
           </div>
         </div>
-      </header>
+      </aside>
 
-      <main className="w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="w-full bg-white mb-4 sm:mb-6 grid grid-cols-5 gap-1 p-1">
-            <TabsTrigger value="orders" className="text-[10px] sm:text-sm px-1 sm:px-3">
-              Commandes
+      {/* MAIN CONTENT */}
+      <main className="flex-1 overflow-y-auto relative">
+        {activeTab === 'orders' && (
+          <div className="p-8">
+            <h2 className="text-3xl font-black text-gray-800 mb-6">Commandes</h2>
+            <Tabs defaultValue="pending" className="w-full">
+          <TabsList className="w-full bg-white mb-6 grid grid-cols-2 gap-1 p-1">
+            <TabsTrigger value="pending">
+              Nouvelles ({pendingOrders.length})
             </TabsTrigger>
-            <TabsTrigger value="products" className="text-[10px] sm:text-sm px-1 sm:px-3">
-              Articles
-            </TabsTrigger>
-            <TabsTrigger value="stats" className="text-[10px] sm:text-sm px-1 sm:px-3">
-              Stats
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="text-[10px] sm:text-sm px-1 sm:px-3">
-              Réglages
-            </TabsTrigger>
-            <TabsTrigger value="account" className="text-[10px] sm:text-sm px-1 sm:px-3">
-              Compte
+            <TabsTrigger value="active">
+              En cours ({activeOrders.length})
             </TabsTrigger>
           </TabsList>
+          <TabsContent value="pending"  className="space-y-4">
 
           {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-4">
