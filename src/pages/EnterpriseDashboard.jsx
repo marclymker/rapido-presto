@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -748,82 +749,6 @@ Format JSON strict requis.`;
                     {editingProduct ? 'Modifier l\'article' : 'Nouvel article'}
                   </DialogTitle>
                 </DialogHeader>
-
-          {/* Products Tab */}
-          <TabsContent value="products">
-            <div className="flex justify-end mb-3 sm:mb-4">
-              <Button 
-                className="bg-orange-500 hover:bg-orange-600 text-xs sm:text-sm h-8 sm:h-10"
-                onClick={() => setGuidelinesDialogOpen(true)}
-              >
-                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                Ajouter
-              </Button>
-              
-              {/* Guidelines Dialog */}
-              <AlertDialog open={guidelinesDialogOpen} onOpenChange={setGuidelinesDialogOpen}>
-                <AlertDialogContent className="max-w-md">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="text-center text-xl flex items-center justify-center gap-2">
-                      ⚠️ Consignes pour la création d'articles
-                    </AlertDialogTitle>
-                    <AlertDialogDescription asChild>
-                      <div className="space-y-4 pt-4 text-base">
-                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
-                          <span className="text-2xl">📝</span>
-                          <div>
-                            <p className="font-semibold text-slate-900">Ajoute le Titre de votre article</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
-                          <span className="text-2xl">📷</span>
-                          <div>
-                            <p className="font-semibold text-slate-900">Ajoute Photos réelles de bonne qualité</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border-2 border-purple-200">
-                          <span className="text-2xl">✨</span>
-                          <div>
-                            <p className="font-semibold text-purple-900">Lancer avec Magie AI</p>
-                            <p className="text-sm text-purple-700">(génération automatique de la description et catégorie)</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
-                          <span className="text-2xl">💰</span>
-                          <div>
-                            <p className="font-semibold text-slate-900">Ajoute les Prix fixe obligatoire en Gourdes</p>
-                            <p className="text-sm text-slate-600">(aucune négociation possible avec les acheteurs)</p>
-                          </div>
-                        </div>
-                      </div>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction 
-                      className="bg-orange-500 hover:bg-orange-600"
-                      onClick={() => {
-                        setGuidelinesDialogOpen(false);
-                        setProductDialogOpen(true);
-                      }}
-                    >
-                      J'ai compris
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
-              {/* Product Dialog */}
-              <Dialog open={productDialogOpen} onOpenChange={(open) => {
-                setProductDialogOpen(open);
-                if (!open) resetProductForm();
-              }}>
-                <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {editingProduct ? 'Modifier l\'article' : 'Nouvel article'}
-                    </DialogTitle>
-                  </DialogHeader>
                   <div className="space-y-4 pt-4 pb-4">
                     <div>
                       <Label>Nom</Label>
@@ -1028,59 +953,10 @@ Format JSON strict requis.`;
                       {productMutation.isPending ? 'Enregistrement...' : 'Enregistrer'}
                     </Button>
                   </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {products.map(product => (
-                <div key={product.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
-                  <div className="h-24 sm:h-28 bg-slate-100 relative">
-                    {product.image_url ? (
-                      <img src={product.image_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
-                    )}
-                    {!product.is_available && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <EyeOff className="w-6 h-6 text-white" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-2 sm:p-3">
-                    <h4 className="font-medium text-xs sm:text-sm truncate">{product.name}</h4>
-                    <p className="text-orange-500 font-semibold text-xs sm:text-base">{product.price} HTG</p>
-                    {product.stock_quantity !== undefined && (
-                      <p className="text-[10px] sm:text-xs text-slate-500">Stock: {product.stock_quantity}</p>
-                    )}
-                    <div className="flex gap-1.5 sm:gap-2 mt-2">
-                      <Button 
-                        size="icon" 
-                        variant="outline" 
-                        className="h-7 w-7 sm:h-8 sm:w-8"
-                        onClick={() => handleEditProduct(product)}
-                      >
-                        <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </Button>
-                      <Button 
-                        size="icon" 
-                        variant="outline" 
-                        className="h-7 w-7 sm:h-8 sm:w-8 text-red-500"
-                        onClick={() => deleteProductMutation.mutate(product.id)}
-                      >
-                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {products.length === 0 && (
-              <div className="text-center py-12 text-slate-500">
-                Aucun article. Cliquez sur "Ajouter" pour commencer.
-              </div>
-            )}
-          </TabsContent>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
 
           {/* Stats Tab */}
           <TabsContent value="stats">
