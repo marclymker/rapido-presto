@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
-import { Phone } from 'lucide-react';
+import { Phone, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { calculateDistance, estimateDeliveryTime } from '@/components/utils/distanceCalculation';
+import { useRealtimeDriverLocation } from '@/components/firebase/useRealtimeDriverLocation';
 
 const mapStyleSilver = [
   { "elementType": "geometry", "stylers": [{ "color": "#f5f5f5" }] },
@@ -17,7 +18,8 @@ const mapContainerStyle = {
 };
 
 export default function DeliveryTracking({ order }) {
-  const [driverLocation, setDriverLocation] = useState(order.driver_location);
+  const { driverLocation: realtimeLocation, isConnected } = useRealtimeDriverLocation(order.id);
+  const driverLocation = realtimeLocation || order.driver_location;
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -48,13 +50,6 @@ export default function DeliveryTracking({ order }) {
     : null;
 
   const estimatedTime = remainingDistance ? estimateDeliveryTime(remainingDistance) : null;
-
-  useEffect(() => {
-    // Mettre à jour la position quand l'order change
-    if (order.driver_location) {
-      setDriverLocation(order.driver_location);
-    }
-  }, [order.driver_location]);
 
   if (!isLoaded) {
     return (
@@ -144,7 +139,24 @@ export default function DeliveryTracking({ order }) {
 
       {/* Infos livreur en bas */}
       <div className="flex-1 bg-white rounded-t-3xl -mt-6 z-10 p-6 shadow-2xl overflow-y-auto">
-        <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-6" />
+        <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-4" />
+        
+        {/* Indicateur de connexion Firebase */}
+        <div className={`flex items-center gap-2 mb-4 px-3 py-2 rounded-lg ${
+          isConnected ? 'bg-green-50' : 'bg-slate-50'
+        }`}>
+          {isConnected ? (
+            <>
+              <Wifi className="w-4 h-4 text-green-600" />
+              <span className="text-xs text-green-700 font-medium">Suivi en temps réel actif</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="w-4 h-4 text-slate-400" />
+              <span className="text-xs text-slate-500">Dernière position connue</span>
+            </>
+          )}
+        </div>
         
         {/* Carte du livreur */}
         <div className="flex items-center gap-4 mb-6 p-4 bg-slate-50 rounded-2xl">
