@@ -1,11 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
+import ReactPixel from 'react-facebook-pixel';
 
 export default function ProductDetailModal({ product, open, onClose, onAddToCart }) {
   const [quantity, setQuantity] = useState(1);
+  
+  // Track product view when modal opens
+  useEffect(() => {
+    if (product && open) {
+      ReactPixel.track('ViewContent', {
+        content_ids: [product.id],
+        content_type: 'product',
+        value: product.price,
+        currency: 'HTG',
+        content_name: product.name
+      });
+    }
+  }, [product, open]);
   
   if (!product) return null;
   

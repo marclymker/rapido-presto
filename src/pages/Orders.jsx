@@ -16,6 +16,7 @@ import DeliveryMap from '@/components/orders/DeliveryMap';
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
 import { toast } from "sonner";
+import ReactPixel from 'react-facebook-pixel';
 
 export default function Orders() {
   const [user, setUser] = useState(null);
@@ -57,6 +58,28 @@ export default function Orders() {
     refetchInterval: 60000,
     refetchIntervalInBackground: true
   });
+
+  // Track purchases for delivered orders
+  useEffect(() => {
+    if (orders.length > 0) {
+      const deliveredOrders = orders.filter(o => o.status === 'delivered');
+      deliveredOrders.forEach(order => {
+        // Check if we haven't tracked this order yet (using localStorage)
+        const trackingKey = `pixel_tracked_${order.id}`;
+        if (!localStorage.getItem(trackingKey)) {
+          ReactPixel.track('Purchase', {
+            value: order.total,
+            currency: 'HTG',
+            content_ids: order.items?.map(item => item.product_id) || [],
+            content_type: 'product',
+            num_items: order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0
+          });
+          // Mark as tracked
+          localStorage.setItem(trackingKey, 'true');
+        }
+      });
+    }
+  }, [orders]);
 
   // Fetch reviews to check if order was already reviewed
   const { data: reviews = [] } = useQuery({
