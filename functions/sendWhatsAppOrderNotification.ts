@@ -34,6 +34,10 @@ Deno.serve(async (req) => {
     // Format phone number (remove spaces, dashes, plus sign)
     const merchantPhone = shop.phone.replace(/[\s\-\+]/g, '');
     
+    console.log('Original phone:', shop.phone);
+    console.log('Formatted phone:', merchantPhone);
+    console.log('Template name: order_request');
+    
     // Prepare order details
     const merchantName = shop.company_name;
     const orderDetails = orderData.items.map(item => `${item.quantity}x ${item.name}`).join(', ');
