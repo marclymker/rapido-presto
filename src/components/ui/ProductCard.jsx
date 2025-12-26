@@ -44,11 +44,11 @@ export default function ProductCard({ product, onAdd, onClick }) {
         )}
         
         {/* Payment badges overlay */}
-        <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-1.5 py-1 rounded-md shadow-sm flex items-center gap-1">
+        <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1.5 rounded-md shadow-sm flex items-center gap-1">
           <img 
             src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/c7840ac69_image.png" 
             alt="MonCash accepté" 
-            className="h-4 w-auto object-contain"
+            className="h-6 w-auto object-contain"
           />
         </div>
       </div>
