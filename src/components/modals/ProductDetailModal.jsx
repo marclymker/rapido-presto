@@ -8,6 +8,7 @@ import { base44 } from '@/api/base44Client';
 
 export default function ProductDetailModal({ product, open, onClose, onAddToCart, user }) {
   const [quantity, setQuantity] = useState(1);
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
   
   // Track product view when modal opens
   useEffect(() => {
