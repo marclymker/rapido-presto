@@ -14,10 +14,12 @@ export default function ProductCard({ product, onAdd, onClick }) {
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 cursor-pointer hover:shadow-md transition-all"
-      onClick={onClick}
+      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all"
     >
-      <div className="h-28 bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
+      <div 
+        className="h-28 bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden cursor-pointer"
+        onClick={() => product.is_available !== false && onAdd(product)}
+      >
         {product.image_url ? (
           <img 
             src={product.image_url} 
