@@ -11,6 +11,16 @@ export default function ProductCard({ product, onAdd, onClick }) {
     ? applyClientMargin(product.promo_price) 
     : applyClientMargin(product.price);
   const originalDisplayPrice = applyClientMargin(product.price);
+
+  const handleWhatsAppClick = async (e) => {
+    e.stopPropagation();
+    const isAuth = await base44.auth.isAuthenticated();
+    if (!isAuth) {
+      base44.auth.redirectToLogin(window.location.pathname);
+    } else {
+      window.open('https://wa.me/c/50948690366', '_blank');
+    }
+  };
   
   return (
     <motion.div
