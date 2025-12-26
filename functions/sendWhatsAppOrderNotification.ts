@@ -56,11 +56,12 @@ Deno.serve(async (req) => {
       type: "template",
       template: {
         name: "order_request",
-        language: {
-          code: "fr"
-        }
+        language: { code: "fr" }
       }
     };
+    
+    console.log('Sending to URL:', whatsappUrl);
+    console.log('Message payload:', JSON.stringify(messageData, null, 2));
 
     const response = await fetch(whatsappUrl, {
       method: 'POST',
