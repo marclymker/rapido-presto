@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Minus, Plus, MessageCircle } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import ReactPixel from 'react-facebook-pixel';
+import { base44 } from '@/api/base44Client';
 
-export default function ProductDetailModal({ product, open, onClose, onAddToCart }) {
+export default function ProductDetailModal({ product, open, onClose, onAddToCart, user }) {
   const [quantity, setQuantity] = useState(1);
   
   // Track product view when modal opens
@@ -69,15 +70,20 @@ export default function ProductDetailModal({ product, open, onClose, onAddToCart
           </div>
           
           {product.category && product.category.toLowerCase() === "mariage" && (
-            <a
-              href="https://wa.me/50948690366"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={(e) => {
+                if (!user) {
+                  e.preventDefault();
+                  base44.auth.redirectToLogin(window.location.pathname);
+                } else {
+                  window.open("https://wa.me/50948690366", "_blank");
+                }
+              }}
               className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-3 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-semibold transition-colors"
             >
               <MessageCircle className="w-5 h-5" />
               Conseils & Réservation Mariage
-            </a>
+            </button>
           )}
           
           <div className="flex items-center justify-between mt-6 pt-4 border-t">

@@ -46,21 +46,18 @@ export default function Home() {
     base44.auth.me().then(u => {
       setUser(u);
       
-      // Show profile completion modal if not set
-      if (!u.current_profile) {
-        setShowProfileModal(true);
-        return;
-      }
-      
-      // Redirect if wrong profile
-      if (u.current_profile !== 'client') {
+      // Redirect if wrong profile (but keep catalogue open for clients)
+      if (u.current_profile && u.current_profile !== 'client') {
         const redirectPages = {
           entreprise: 'EnterpriseDashboard',
           livreur: 'DriverDashboard'
         };
         window.location.href = createPageUrl(redirectPages[u.current_profile]);
       }
-    }).catch(() => {});
+    }).catch(() => {
+      // User not logged in - can still browse catalogue
+      setUser(null);
+    });
   }, []);
 
   const handleProfileComplete = (profileType) => {
@@ -146,16 +143,23 @@ export default function Home() {
 
   const handleAddToCart = (product, quantity = 1) => {
     if (!user) {
-      toast.error('Veuillez vous connecter');
+      base44.auth.redirectToLogin(window.location.pathname);
       return;
     }
+    
+    // Show profile completion modal if not set
+    if (!user.current_profile) {
+      setShowProfileModal(true);
+      return;
+    }
+    
     // Check if cart has items from different shop
     if (cartItems.length > 0 && cartItems[0].shop_id !== selectedShop.id) {
       toast.error('Votre panier contient des articles d\'une autre boutique');
       return;
     }
     addToCartMutation.mutate({ product, quantity });
-    };
+  };
 
     const filteredProducts = products.filter(p => 
       p.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -389,6 +393,7 @@ export default function Home() {
         open={!!selectedProduct}
         onClose={() => setSelectedProduct(null)}
         onAddToCart={handleAddToCart}
+        user={user}
       />
 
       {/* Profile Completion Modal */}
