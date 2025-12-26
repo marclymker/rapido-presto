@@ -34,15 +34,10 @@ Deno.serve(async (req) => {
     // Format phone number (remove spaces, dashes, plus sign)
     const merchantPhone = shop.phone.replace(/[\s\-\+]/g, '');
     
+    console.log('Shop:', shop.company_name);
     console.log('Original phone:', shop.phone);
     console.log('Formatted phone:', merchantPhone);
-    console.log('Template name: order_request');
     
-    // Prepare order details
-    const merchantName = shop.company_name;
-    const orderDetails = orderData.items.map(item => `${item.quantity}x ${item.name}`).join(', ');
-    const totalAmount = `${orderData.total} HTG`;
-
     // Get Meta WhatsApp credentials
     const accessToken = Deno.env.get('META_WHATSAPP_ACCESS_TOKEN');
     const phoneNumberId = Deno.env.get('META_WHATSAPP_PHONE_NUMBER_ID');
