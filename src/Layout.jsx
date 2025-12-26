@@ -11,6 +11,7 @@ import OneSignalInit from '@/components/notifications/OneSignalInit';
 import NotificationPermission from '@/components/notifications/NotificationPermission';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
 import ReactPixel from 'react-facebook-pixel';
+import SmartBottomNav from '@/components/navigation/SmartBottomNav';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -48,6 +49,17 @@ export default function Layout({ children, currentPageName }) {
   });
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Fetch active orders count
+  const { data: orders = [] } = useQuery({
+    queryKey: ['orders', user?.id],
+    queryFn: () => base44.entities.Order.filter({ client_id: user?.id }),
+    enabled: !!user?.id && user?.current_profile === 'client'
+  });
+
+  const activeOrdersCount = orders.filter(o => 
+    !['delivered', 'cancelled'].includes(o.status)
+  ).length;
 
   const getNavItems = () => {
     const currentProfile = user?.current_profile || user?.profiles?.client?.is_active ? 'client' : null;
@@ -91,7 +103,7 @@ export default function Layout({ children, currentPageName }) {
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
       </Helmet>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 pb-20">
         <Toaster position="top-center" />
         <OneSignalInit user={user} />
         <NotificationPermission />
@@ -105,7 +117,13 @@ export default function Layout({ children, currentPageName }) {
       
       {children}
 
-
+      {/* Smart Bottom Navigation */}
+      {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (
+        <SmartBottomNav 
+          cartCount={cartCount} 
+          activeOrdersCount={activeOrdersCount}
+        />
+      )}
       </div>
     </HelmetProvider>
   );
