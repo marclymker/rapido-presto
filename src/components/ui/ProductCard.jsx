@@ -29,7 +29,7 @@ export default function ProductCard({ product, onAdd, onClick }) {
     >
       <div 
         className="h-28 bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden cursor-pointer"
-        onClick={() => product.is_available !== false && onAdd(product)}
+        onClick={() => product.is_available !== false && onClick && onClick(product)}
       >
         {product.image_url ? (
           <img 
