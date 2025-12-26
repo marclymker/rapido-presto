@@ -5,9 +5,18 @@ Deno.serve(async (req) => {
   const baseUrl = "https://rapidopresto.shop";
 
   try {
-    // Récupérer tous les produits actifs de toutes les boutiques
+    // Récupérer toutes les boutiques avec boost activé
+    const shops = await base44.asServiceRole.entities.Shop.filter({ 
+      boost_enabled: true 
+    });
+    const shopIds = shops.map(s => s.id);
+
+    // Récupérer seulement les produits des boutiques avec boost activé
+    // ET qui ont une image (obligatoire pour Facebook)
     const products = await base44.asServiceRole.entities.Product.filter({ 
-      is_available: true 
+      is_available: true,
+      shop_id: { $in: shopIds },
+      image_url: { $ne: null, $ne: '' }
     });
 
     // Construction du header XML (format RSS 2.0 / Google Shopping)

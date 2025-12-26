@@ -897,6 +897,42 @@ Format JSON strict requis.`;
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
+            {/* Marketing Section */}
+            <div className="bg-white rounded-xl p-6 border-2 border-orange-200">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-2xl">🚀</span>
+                <h3 className="text-lg font-semibold">Boost Automatique Rapido Presto</h3>
+              </div>
+
+              <p className="text-slate-600 mb-4">
+                Diffusez vos produits sur Facebook, Instagram et Google. 
+                Notre IA s'occupe de trouver des clients pour vous à Port-au-Prince.
+              </p>
+
+              <div className="bg-orange-50 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="font-semibold text-slate-800 block">
+                    {myShop?.boost_enabled ? "✅ Votre boutique est mise en avant" : "Promotion inactive"}
+                  </span>
+                  <small className="text-slate-600">
+                    {myShop?.boost_enabled 
+                      ? "Vos produits apparaissent dans nos campagnes." 
+                      : "Activez pour booster vos ventes."}
+                  </small>
+                </div>
+
+                <Switch
+                  checked={myShop?.boost_enabled || false}
+                  onCheckedChange={(checked) => updateShopMutation.mutate({ boost_enabled: checked })}
+                  disabled={updateShopMutation.isPending}
+                />
+              </div>
+
+              <p className="text-xs text-slate-400 mt-3">
+                * Les produits sans photos ou sans prix ne seront pas diffusés par Meta.
+              </p>
+            </div>
+
             <OpeningHoursManager 
               shop={myShop} 
               onUpdateShop={(data) => updateShopMutation.mutate(data)}
