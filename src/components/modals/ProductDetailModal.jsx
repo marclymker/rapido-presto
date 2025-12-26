@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, MessageCircle } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import ReactPixel from 'react-facebook-pixel';
 
@@ -67,6 +67,18 @@ export default function ProductDetailModal({ product, open, onClose, onAddToCart
               <span className="text-lg text-slate-400 line-through">{originalPrice} HTG</span>
             )}
           </div>
+          
+          {product.category === "Mariage" && (
+            <a
+              href="https://wa.me/c/50948690366"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-3 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-semibold transition-colors"
+            >
+              <MessageCircle className="w-5 h-5" />
+              Conseils & Réservation Mariage
+            </a>
+          )}
           
           <div className="flex items-center justify-between mt-6 pt-4 border-t">
             <div className="flex items-center gap-3 bg-slate-100 rounded-full p-1">
