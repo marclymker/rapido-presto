@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { base44 } from '@/api/base44Client';
 import { toast } from "sonner";
 import { Loader2, Sparkles, X } from 'lucide-react';
+import ProductGuidelinesModal from './ProductGuidelinesModal';
 
 export default function ProductFormModal({ product, shopId, open, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [showGuidelines, setShowGuidelines] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: product?.name || '',
     price: product?.price || '',
@@ -28,6 +31,21 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
     is_available: product?.is_available !== false
   });
   const [newTag, setNewTag] = useState('');
+
+  useEffect(() => {
+    if (open && !product) {
+      // Show guidelines only for new products
+      setShowGuidelines(true);
+      setShowForm(false);
+    } else if (open && product) {
+      // Skip guidelines for editing
+      setShowGuidelines(false);
+      setShowForm(true);
+    } else {
+      setShowGuidelines(false);
+      setShowForm(false);
+    }
+  }, [open, product]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -121,8 +139,18 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+    <>
+      <ProductGuidelinesModal
+        open={showGuidelines}
+        onConfirm={() => {
+          setShowGuidelines(false);
+          setShowForm(true);
+        }}
+        onCancel={onClose}
+      />
+      
+      <Dialog open={showForm} onOpenChange={onClose}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>{product ? 'Modifier l\'article' : 'Nouvel article'}</span>
@@ -316,5 +344,6 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

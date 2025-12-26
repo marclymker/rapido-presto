@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Package, Trash2, Edit, Store, X, Tag } from 'lucide-react';
+import ProductGuidelinesModal from '@/components/enterprise/modals/ProductGuidelinesModal';
 
 export default function AdminProducts() {
   const [user, setUser] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [showGuidelines, setShowGuidelines] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [uploading, setUploading] = useState(false);
   const queryClient = useQueryClient();
@@ -290,7 +292,13 @@ export default function AdminProducts() {
                   </div>
                 </div>
               </div>
-              <Button onClick={() => { resetForm(); setShowForm(true); }} className="bg-orange-500 hover:bg-orange-600">
+              <Button 
+                onClick={() => { 
+                  resetForm(); 
+                  setShowGuidelines(true);
+                }} 
+                className="bg-orange-500 hover:bg-orange-600"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Ajouter un article
               </Button>
@@ -360,6 +368,15 @@ export default function AdminProducts() {
           </div>
         )}
       </div>
+
+      <ProductGuidelinesModal
+        open={showGuidelines}
+        onConfirm={() => {
+          setShowGuidelines(false);
+          setShowForm(true);
+        }}
+        onCancel={() => setShowGuidelines(false)}
+      />
 
       <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) resetForm(); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
