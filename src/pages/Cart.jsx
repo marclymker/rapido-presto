@@ -181,6 +181,11 @@ export default function Cart() {
         orderId: order.id,
         status: 'pending'
       }).catch(err => console.error('Notification error:', err));
+
+      // Envoyer notification WhatsApp au marchand
+      await base44.functions.invoke('sendWhatsAppOrderNotification', {
+        orderId: order.id
+      }).catch(err => console.error('WhatsApp notification error:', err));
       
       return { orderNum, code };
     },
