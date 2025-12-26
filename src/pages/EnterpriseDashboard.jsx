@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -40,6 +41,7 @@ export default function EnterpriseDashboard() {
   const [isOnline, setIsOnline] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { requestPermission } = useBrowserNotifications();
   const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound();
 
@@ -899,9 +901,23 @@ Format JSON strict requis.`;
           <TabsContent value="settings" className="space-y-6">
             {/* Marketing Section */}
             <div className="bg-white rounded-xl p-6 border-2 border-orange-200">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-2xl">🚀</span>
-                <h3 className="text-lg font-semibold">Boost Automatique Rapido Presto</h3>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🚀</span>
+                  <div>
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      Boost Automatique Rapido Presto
+                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">
+                        👑 Premium
+                      </span>
+                    </h3>
+                    {myShop?.is_premium && myShop?.premium_until && new Date(myShop.premium_until) > new Date() && (
+                      <p className="text-xs text-green-600 mt-1">
+                        Actif jusqu'au {new Date(myShop.premium_until).toLocaleDateString('fr-FR')}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <p className="text-slate-600 mb-4">
@@ -912,21 +928,44 @@ Format JSON strict requis.`;
               <div className="bg-orange-50 rounded-xl p-4 flex items-center justify-between">
                 <div>
                   <span className="font-semibold text-slate-800 block">
-                    {myShop?.boost_enabled ? "✅ Votre boutique est mise en avant" : "Promotion inactive"}
+                    {myShop?.boost_enabled && myShop?.is_premium 
+                      ? "✅ Votre boutique est mise en avant" 
+                      : myShop?.is_premium 
+                        ? "Promotion désactivée"
+                        : "Nécessite Premium"}
                   </span>
                   <small className="text-slate-600">
-                    {myShop?.boost_enabled 
+                    {myShop?.boost_enabled && myShop?.is_premium
                       ? "Vos produits apparaissent dans nos campagnes." 
-                      : "Activez pour booster vos ventes."}
+                      : myShop?.is_premium
+                        ? "Activez le boost pour diffuser vos produits."
+                        : "Abonnement Premium requis - 1000 HTG/mois"}
                   </small>
                 </div>
 
                 <Switch
-                  checked={myShop?.boost_enabled || false}
-                  onCheckedChange={(checked) => updateShopMutation.mutate({ boost_enabled: checked })}
+                  checked={myShop?.boost_enabled && myShop?.is_premium || false}
+                  onCheckedChange={(checked) => {
+                    const isPremium = myShop?.is_premium && myShop?.premium_until && new Date(myShop.premium_until) > new Date();
+                    if (checked && !isPremium) {
+                      navigate(createPageUrl('Pricing'));
+                      toast.info('Cette fonctionnalité nécessite un abonnement Premium');
+                      return;
+                    }
+                    updateShopMutation.mutate({ boost_enabled: checked });
+                  }}
                   disabled={updateShopMutation.isPending}
                 />
               </div>
+
+              {!myShop?.is_premium && (
+                <Button
+                  className="w-full mt-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                  onClick={() => navigate(createPageUrl('Pricing'))}
+                >
+                  👑 Passer au Premium - 1000 HTG/mois
+                </Button>
+              )}
 
               <p className="text-xs text-slate-400 mt-3">
                 * Les produits sans photos ou sans prix ne seront pas diffusés par Meta.
