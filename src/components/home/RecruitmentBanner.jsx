@@ -2,15 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { createPageUrl } from '@/utils';
 
 export default function RecruitmentBanner() {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // La bannière disparaît automatiquement après 60 secondes (1 minute)
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-    }, 60000); 
+    // Vérifier si la bannière a déjà été affichée
+    const lastShown = localStorage.getItem('recruitmentBannerLastShown');
+    const now = Date.now();
+    
+    if (!lastShown || (now - parseInt(lastShown)) > 12 * 60 * 60 * 1000) {
+      // Afficher si jamais montré OU si 12 heures se sont écoulées
+      setIsVisible(true);
+      
+      // Masquer après 1 minute et sauvegarder le timestamp
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        localStorage.setItem('recruitmentBannerLastShown', now.toString());
+      }, 60000);
 
-    return () => clearTimeout(timer);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   if (!isVisible) return null;
