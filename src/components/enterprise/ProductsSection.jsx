@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Plus, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import ProductFormModal from './modals/ProductFormModal';
 
 export default function ProductsSection({ shopId }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: products = [] } = useQuery({
     queryKey: ['shop-products', shopId],
@@ -33,7 +37,13 @@ export default function ProductsSection({ shopId }) {
               className="w-full bg-gray-100 rounded-full pl-12 pr-6 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
             />
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-bold shadow-lg">
+          <Button 
+            onClick={() => {
+              setSelectedProduct(null);
+              setShowModal(true);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-bold shadow-lg"
+          >
             <Plus className="w-5 h-5 mr-2" />
             Nouveau
           </Button>
@@ -56,7 +66,11 @@ export default function ProductsSection({ shopId }) {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredProducts.map(product => (
               <div 
-                key={product.id} 
+                key={product.id}
+                onClick={() => {
+                  setSelectedProduct(product);
+                  setShowModal(true);
+                }}
                 className="bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group"
               >
                 <div className="relative h-40 bg-gray-100 overflow-hidden">
@@ -84,6 +98,17 @@ export default function ProductsSection({ shopId }) {
           </div>
         )}
       </div>
+
+      <ProductFormModal
+        product={selectedProduct}
+        shopId={shopId}
+        open={showModal}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedProduct(null);
+        }}
+        onSuccess={() => queryClient.invalidateQueries(['shop-products'])}
+      />
     </div>
   );
 }

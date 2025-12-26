@@ -1,14 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { User, MapPin, CreditCard, Lock, LogOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export default function AccountSection({ user, shop }) {
   const entrepriseData = user?.profiles?.entreprise || {};
+  const [editModal, setEditModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
 
   const handleLogout = () => {
     base44.auth.logout(createPageUrl('Home'));
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      let logo_url = entrepriseData.company_logo_url;
+      
+      if (logoFile) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: logoFile });
+        logo_url = file_url;
+      }
+
+      await base44.auth.updateMe({
+        profiles: {
+          ...user.profiles,
+          entreprise: {
+            ...entrepriseData,
+            company_logo_url: logo_url
+          }
+        }
+      });
+
+      if (shop) {
+        await base44.entities.Shop.update(shop.id, { company_logo_url: logo_url });
+      }
+
+      toast.success('Profil mis à jour');
+      setEditModal(false);
+      window.location.reload();
+    } catch (error) {
+      toast.error('Erreur');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,7 +72,12 @@ export default function AccountSection({ user, shop }) {
             <p className="font-bold text-lg text-gray-900">{entrepriseData.company_name}</p>
             <p className="text-sm text-gray-500">{entrepriseData.company_category}</p>
           </div>
-          <Button variant="outline" size="sm" className="rounded-xl">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setEditModal(true)}
+            className="rounded-xl"
+          >
             Modifier
           </Button>
         </div>
@@ -96,6 +144,36 @@ export default function AccountSection({ user, shop }) {
           <span className="font-medium">Se déconnecter</span>
         </Button>
       </div>
+
+      <Dialog open={editModal} onOpenChange={setEditModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier le profil</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdateProfile} className="space-y-4">
+            <div>
+              <Label>Logo de l'entreprise</Label>
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={(e) => setLogoFile(e.target.files?.[0])}
+                className="w-full"
+              />
+              {entrepriseData.company_logo_url && !logoFile && (
+                <img src={entrepriseData.company_logo_url} alt="" className="mt-2 h-20 w-20 object-cover rounded-lg" />
+              )}
+            </div>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={() => setEditModal(false)} className="flex-1">
+                Annuler
+              </Button>
+              <Button type="submit" disabled={loading} className="flex-1 bg-blue-600">
+                Enregistrer
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

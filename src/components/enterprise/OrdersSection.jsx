@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from "@/components/ui/badge";
+import OrderActionModal from './modals/OrderActionModal';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function OrdersSection({ orders = [] }) {
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const queryClient = useQueryClient();
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-700' },
@@ -32,6 +36,7 @@ export default function OrdersSection({ orders = [] }) {
             return (
               <div 
                 key={order.id} 
+                onClick={() => setSelectedOrder(order)}
                 className="bg-white p-5 rounded-2xl border flex justify-between items-center shadow-sm hover:shadow-md transition-all cursor-pointer"
               >
                 <div className="flex-1">
@@ -55,6 +60,13 @@ export default function OrdersSection({ orders = [] }) {
           })}
         </div>
       )}
+
+      <OrderActionModal
+        order={selectedOrder}
+        open={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        onSuccess={() => queryClient.invalidateQueries(['shop-orders'])}
+      />
     </div>
   );
 }

@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Switch } from "@/components/ui/switch";
 import { Bell, Clock, MapPin, CreditCard } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import SettingsFormModal from './modals/SettingsFormModal';
+import { useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { toast } from "sonner";
 
 export default function SettingsSection({ shop }) {
+  const [modalType, setModalType] = useState(null);
+  const queryClient = useQueryClient();
+
+  const handleToggleActive = async (checked) => {
+    try {
+      await base44.entities.Shop.update(shop.id, { is_active: checked });
+      queryClient.invalidateQueries(['my-shop']);
+      toast.success(checked ? 'Boutique en ligne' : 'Boutique hors ligne');
+    } catch (error) {
+      toast.error('Erreur');
+    }
+  };
   return (
     <div className="p-8 max-w-3xl mx-auto">
       <h2 className="text-2xl font-black mb-6 text-gray-900">Réglages</h2>
@@ -21,7 +37,10 @@ export default function SettingsSection({ shop }) {
                 <p className="text-sm text-gray-500">Accepter les nouvelles commandes</p>
               </div>
             </div>
-            <Switch checked={shop?.is_active !== false} />
+            <Switch 
+              checked={shop?.is_active !== false} 
+              onCheckedChange={handleToggleActive}
+            />
           </div>
         </div>
 
@@ -52,7 +71,11 @@ export default function SettingsSection({ shop }) {
               <p className="text-sm text-gray-500">{shop?.region || 'Non définie'}</p>
             </div>
           </div>
-          <Button variant="outline" className="w-full rounded-xl">
+          <Button 
+            variant="outline" 
+            onClick={() => setModalType('location')}
+            className="w-full rounded-xl"
+          >
             Modifier l'adresse
           </Button>
         </div>
@@ -70,7 +93,11 @@ export default function SettingsSection({ shop }) {
               </p>
             </div>
           </div>
-          <Button variant="outline" className="w-full rounded-xl">
+          <Button 
+            variant="outline" 
+            onClick={() => setModalType('payment')}
+            className="w-full rounded-xl"
+          >
             Configurer le paiement
           </Button>
         </div>
@@ -96,6 +123,14 @@ export default function SettingsSection({ shop }) {
           </div>
         </div>
       </div>
+
+      <SettingsFormModal
+        shop={shop}
+        type={modalType}
+        open={!!modalType}
+        onClose={() => setModalType(null)}
+        onSuccess={() => queryClient.invalidateQueries(['my-shop'])}
+      />
     </div>
   );
 }
