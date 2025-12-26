@@ -1,0 +1,38 @@
+import React from 'react';
+
+export default function SmallStories({ onCategorySelect }) {
+  const stories = [
+    { id: 'Pharmacie', title: 'Pharmacie', icon: '💊', color: 'bg-blue-50' },
+    { id: 'Mariage', title: 'Mariage', icon: '💍', color: 'bg-pink-50', badge: 'NOUVEAU' },
+    { id: 'Pour Femme', title: 'Mode', icon: '👗', color: 'bg-orange-50' },
+    { id: 'Boutique Fleurs', title: 'Fleurs', icon: '💐', color: 'bg-red-50', badge: '45 min' },
+    { id: 'Pour homme', title: 'Homme', icon: '👔', color: 'bg-purple-50' },
+    { id: 'Bébé', title: 'Bébé', icon: '👶', color: 'bg-cyan-50' },
+    { id: 'Maison', title: 'Maison', icon: '🏠', color: 'bg-green-50' },
+    { id: 'Outils', title: 'Outils', icon: '🔧', color: 'bg-yellow-50' },
+  ];
+
+  return (
+    <div className="flex overflow-x-auto gap-4 p-4 no-scrollbar">
+      {stories.map((item) => (
+        <button 
+          key={item.id}
+          onClick={() => onCategorySelect(item.id)}
+          className="flex flex-col items-center min-w-[75px] cursor-pointer group"
+        >
+          <div className={`${item.color} w-16 h-16 rounded-2xl flex items-center justify-center relative shadow-sm mb-1 transition-transform group-hover:scale-105 group-active:scale-95`}>
+            {item.badge && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md">
+                {item.badge}
+              </span>
+            )}
+            <span className="text-3xl">{item.icon}</span>
+          </div>
+          <span className="text-[11px] font-medium text-slate-700 text-center leading-tight">
+            {item.title}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}

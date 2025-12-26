@@ -19,6 +19,8 @@ import { getClientPrice } from '@/components/utils/priceCalculation';
 import ProfileCompletionModal from '@/components/modals/ProfileCompletionModal';
 import ProductRecommendations from '@/components/recommendations/ProductRecommendations';
 import SEO from '@/components/SEO';
+import SmallStories from '@/components/home/SmallStories';
+import CreditBanner from '@/components/home/CreditBanner';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -289,6 +291,17 @@ export default function Home() {
                 </button>
               ))}
             </div>
+
+            {/* Horizontal Stories */}
+            <SmallStories 
+              onCategorySelect={(category) => {
+                setSelectedCategory(category);
+                setSelectedShop(null);
+              }}
+            />
+
+            {/* Credit Banner */}
+            <CreditBanner />
 
             {/* Bannière Promo */}
             <div className="px-4 mb-6">

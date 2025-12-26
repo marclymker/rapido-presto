@@ -137,6 +137,15 @@
   transition: all 0.3s ease-out;
 }
 
+/* Cache la barre de défilement mais permet le scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Indicateur de chargement en temps réel */
 .realtime-loading {
   position: relative;
