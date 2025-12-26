@@ -5,6 +5,11 @@ import { Package } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 import { createPageUrl } from '@/utils';
+import OrdersSection from '@/components/enterprise/OrdersSection';
+import ProductsSection from '@/components/enterprise/ProductsSection';
+import StatsSection from '@/components/enterprise/StatsSection';
+import SettingsSection from '@/components/enterprise/SettingsSection';
+import AccountSection from '@/components/enterprise/AccountSection';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
@@ -132,52 +137,12 @@ export default function EnterpriseDashboard() {
 
       {/* MAIN CONTENT - PANE 2 */}
       <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="p-6 animate-fade-in">
-          {/* Header de section */}
-          <div className="mb-6">
-            <h2 className="text-3xl font-black text-gray-900">{menuItems.find(m => m.id === activeTab)?.label}</h2>
-            <p className="text-sm text-gray-500 mt-1">Gérez vos {menuItems.find(m => m.id === activeTab)?.label.toLowerCase()}</p>
-          </div>
-          
-          {/* Content Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Card 1 */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <span className="text-2xl">{menuItems.find(m => m.id === activeTab)?.icon}</span>
-                </div>
-                <span className="text-xs text-gray-400 font-medium">Aujourd'hui</span>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Aucune donnée</h3>
-              <p className="text-sm text-gray-500">Cette section sera bientôt disponible</p>
-            </div>
-
-            {/* Card 2 */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                  <span className="text-2xl">📊</span>
-                </div>
-                <span className="text-xs text-gray-400 font-medium">Stats</span>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">0</h3>
-              <p className="text-sm text-gray-500">Activités en cours</p>
-            </div>
-
-            {/* Card 3 - Full width */}
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 shadow-sm md:col-span-2 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold mb-2">Besoin d'aide ?</h3>
-                  <p className="text-sm opacity-90">Consultez notre guide de démarrage</p>
-                </div>
-                <button className="bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors">
-                  En savoir plus
-                </button>
-              </div>
-            </div>
-          </div>
+        <div className="animate-fade-in h-full">
+          {activeTab === 'orders' && <OrdersSection orders={orders} />}
+          {activeTab === 'products' && <ProductsSection shopId={myShop?.id} />}
+          {activeTab === 'stats' && <StatsSection orders={orders} />}
+          {activeTab === 'settings' && <SettingsSection shop={myShop} />}
+          {activeTab === 'account' && <AccountSection user={user} shop={myShop} />}
         </div>
       </main>
     </div>
