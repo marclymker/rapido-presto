@@ -24,6 +24,7 @@ import SEO from '@/components/SEO';
 import SmallStories from '@/components/home/SmallStories';
 import CreditBanner from '@/components/home/CreditBanner';
 import RecruitmentBanner from '@/components/home/RecruitmentBanner';
+import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -36,6 +37,7 @@ export default function Home() {
   const [googlePlaces, setGooglePlaces] = useState([]);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
   const queryClient = useQueryClient();
   
   // Auto-refresh des données
@@ -364,11 +366,12 @@ export default function Home() {
                       <p className="text-xs text-gray-600">Ajoutez vos produits maintenant</p>
                     </div>
                   </div>
-                  <Link to={createPageUrl('EnterpriseDashboard')}>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6">
-                      + Vendre
-                    </Button>
-                  </Link>
+                  <Button 
+                    onClick={() => setShowAddProductModal(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6"
+                  >
+                    Vendre mes produits
+                  </Button>
                 </div>
               </div>
             )}
@@ -419,15 +422,14 @@ export default function Home() {
                   Découvrir
                 </h3>
                 {user?.profiles?.entreprise?.is_active && (
-                  <Link to={createPageUrl('EnterpriseDashboard')}>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-full text-xs"
-                    >
-                      + Vendre ici
-                    </Button>
-                  </Link>
+                  <Button 
+                    onClick={() => setShowAddProductModal(true)}
+                    variant="outline" 
+                    size="sm"
+                    className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-full text-xs"
+                  >
+                    Vendre mes produits
+                  </Button>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -539,15 +541,14 @@ export default function Home() {
                         📍 Boutiques à proximité
                       </h3>
                       {user?.profiles?.entreprise?.is_active && (
-                        <Link to={createPageUrl('EnterpriseDashboard')}>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-full text-xs"
-                          >
-                            + Vendre dans {selectedCategory}
-                          </Button>
-                        </Link>
+                        <Button 
+                          onClick={() => setShowAddProductModal(true)}
+                          variant="outline" 
+                          size="sm"
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-full text-xs"
+                        >
+                          Vendre mes produits
+                        </Button>
                       )}
                     </div>
                     <div className="flex flex-col gap-3">
@@ -660,15 +661,14 @@ export default function Home() {
                     </span>
                   )}
                   {user?.profiles?.entreprise?.is_active && (
-                    <Link to={createPageUrl('EnterpriseDashboard')}>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-full text-xs"
-                      >
-                        + Vendre dans {selectedCategory}
-                      </Button>
-                    </Link>
+                    <Button 
+                      onClick={() => setShowAddProductModal(true)}
+                      variant="outline" 
+                      size="sm"
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-full text-xs"
+                    >
+                      Vendre mes produits
+                    </Button>
                   )}
                 </div>
               </div>
@@ -766,6 +766,20 @@ export default function Home() {
         open={showProfileModal}
         onComplete={handleProfileComplete}
       />
+
+      {/* Product Form Modal */}
+      {user?.profiles?.entreprise && (
+        <ProductFormModal
+          open={showAddProductModal}
+          onClose={() => setShowAddProductModal(false)}
+          onSubmit={() => {
+            queryClient.invalidateQueries(['products']);
+            queryClient.invalidateQueries(['all-products']);
+            setShowAddProductModal(false);
+          }}
+          shop={{ id: user.profiles.entreprise.shop_id }}
+        />
+      )}
       </div>
       );
       }
