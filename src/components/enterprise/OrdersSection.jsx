@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import OrderActionModal from './modals/OrderActionModal';
 import { useQueryClient } from '@tanstack/react-query';
 
-export default function OrdersSection({ orders = [] }) {
+export default function OrdersSection({ orders = [], onAddProduct }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const queryClient = useQueryClient();
   const getStatusBadge = (status) => {
@@ -29,10 +29,7 @@ export default function OrdersSection({ orders = [] }) {
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Augmentez vos revenus</h3>
           <p className="text-gray-600 mb-6">Ajoutez des articles pour recevoir vos premières commandes</p>
           <button 
-            onClick={() => {
-              const addButton = document.querySelector('[data-add-product-btn]');
-              if (addButton) addButton.click();
-            }}
+            onClick={onAddProduct}
             className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105 shadow-lg"
           >
             Ajouter des Articles +
