@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
             parameters: [
               { type: "text", text: merchantName },
               { type: "text", text: orderDetails },
-              { type: "text", text: totalAmount }
+              { type: "text", text: `Commande #${orderData.order_number}` }
             ]
           }
         ]
