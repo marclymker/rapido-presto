@@ -21,7 +21,7 @@ export default function OrdersSection({ orders = [] }) {
 
   return (
     <div className="p-8">
-      <h2 className="text-2xl font-black mb-6 text-gray-900">Commandes en cours</h2>
+      <h2 className="text-lg font-bold mb-6 text-gray-900">Commandes en cours</h2>
       
       {orders.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border">

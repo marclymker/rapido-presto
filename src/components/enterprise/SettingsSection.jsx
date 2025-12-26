@@ -55,7 +55,11 @@ export default function SettingsSection({ shop }) {
               <p className="text-sm text-gray-500">Définir vos heures de service</p>
             </div>
           </div>
-          <Button variant="outline" className="w-full rounded-xl">
+          <Button 
+            variant="outline" 
+            onClick={() => setModalType('hours')}
+            className="w-full rounded-xl"
+          >
             Gérer les horaires
           </Button>
         </div>
