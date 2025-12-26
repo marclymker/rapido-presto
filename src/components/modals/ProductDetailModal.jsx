@@ -110,20 +110,13 @@ export default function ProductDetailModal({ product, open, onClose, onAddToCart
             )}
           </div>
           
-          {product.category && product.category.toLowerCase() === "mariage" && (
+          {product.category?.toLowerCase().trim() === "mariage" && (
             <button
-              onClick={(e) => {
-                if (!user) {
-                  e.preventDefault();
-                  base44.auth.redirectToLogin(window.location.pathname);
-                } else {
-                  window.open("https://wa.me/50948690366", "_blank");
-                }
-              }}
-              className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-3 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-semibold transition-colors"
+              onClick={handleWhatsAppClick}
+              className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-3 bg-[#25D366] hover:bg-[#1ebd58] text-white rounded-xl font-semibold transition-colors shadow-lg"
             >
               <MessageCircle className="w-5 h-5" />
-              Conseils & Réservation Mariage
+              Discuter sur WhatsApp
             </button>
           )}
           
