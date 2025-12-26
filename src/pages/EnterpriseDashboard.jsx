@@ -1210,6 +1210,7 @@ Format JSON strict requis.`;
         </div>
       </main>
 
+      {/* Modals */}
       <OrderDetailModal
         order={selectedOrder}
         open={!!selectedOrder}
