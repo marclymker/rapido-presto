@@ -81,52 +81,11 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
       } else {
         setFormData({ ...formData, image_url: file_url });
         toast.success('Image téléchargée');
-        
-        // Auto-générer avec AI si le nom est rempli
-        if (formData.name && !isAdditional) {
-          setTimeout(() => autoGenerateWithAI(file_url), 500);
-        }
       }
     } catch (error) {
       toast.error('Erreur lors du téléchargement');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const autoGenerateWithAI = async (imageUrl) => {
-    if (!formData.name) return;
-
-    setAiLoading(true);
-    try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analysez ce produit: "${formData.name}". Générez:
-1. Une description marketing attractive (2-3 phrases)
-2. La catégorie (choix: Fastfood, Restaurants, Boutique Fleurs, Pharmacie, Mariage, Epicerie, Café, Pour Femme, Electronics, Pour homme, Maison, Bébé, Outils)
-3. 5 tags SEO pertinents en français`,
-        file_urls: [imageUrl],
-        response_json_schema: {
-          type: "object",
-          properties: {
-            description: { type: "string" },
-            category: { type: "string" },
-            seo_tags: { type: "array", items: { type: "string" } }
-          }
-        }
-      });
-
-      setFormData(prev => ({
-        ...prev,
-        description: result.description || prev.description,
-        category: result.category || prev.category,
-        seo_tags: result.seo_tags || prev.seo_tags
-      }));
-      
-      toast.success('✨ Informations générées automatiquement');
-    } catch (error) {
-      toast.error('Erreur AI: ' + error.message);
-    } finally {
-      setAiLoading(false);
     }
   };
 
@@ -205,7 +164,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>1️⃣ Nom de l'article *</Label>
+            <Label>Nom de l'article *</Label>
             <Input
               required
               value={formData.name}
@@ -215,7 +174,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
           </div>
 
           <div>
-            <Label>2️⃣ Photo de l'article *</Label>
+            <Label>Photo de l'article *</Label>
             <input 
               type="file" 
               accept="image/*" 
@@ -223,9 +182,23 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
               className="w-full border rounded-lg p-2"
             />
             {formData.image_url && (
-              <img src={formData.image_url} alt="" className="mt-2 h-32 w-32 object-cover rounded-lg border-2 border-blue-500" />
+              <div className="flex items-center gap-4 mt-2">
+                <img src={formData.image_url} alt="" className="h-32 w-32 object-cover rounded-lg border-2 border-blue-500" />
+                <Button
+                  type="button"
+                  onClick={handleGenerateWithAI}
+                  disabled={aiLoading || !formData.name}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                >
+                  {aiLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 mr-2" />
+                  )}
+                  Magie AI
+                </Button>
+              </div>
             )}
-            <p className="text-xs text-purple-600 mt-1">✨ L'AI générera automatiquement la description et catégorie</p>
           </div>
 
           <div>
