@@ -514,100 +514,240 @@ Format JSON strict requis.`;
           </TabsList>
           <TabsContent value="pending"  className="space-y-4">
 
-          {/* Orders Tab */}
-          <TabsContent value="orders" className="space-y-4">
-            {/* Pending Orders */}
-            {pendingOrders.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-red-500" />
-                  Nouvelles commandes
-                </h3>
-                <div className="space-y-3">
-                  <AnimatePresence>
-                    {pendingOrders.map(order => (
-                      <motion.div
-                       key={order.id}
-                       initial={{ opacity: 0, y: -10 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       exit={{ opacity: 0 }}
-                       onClick={() => setSelectedOrder(order)}
-                       className="bg-white rounded-xl p-3 sm:p-4 border-2 border-orange-200 cursor-pointer hover:shadow-md"
-                      >
-                       <div className="flex justify-between items-start gap-2">
-                         <div className="min-w-0 flex-1">
-                           <p className="font-semibold text-sm sm:text-base truncate">#{order.order_number}</p>
-                           <p className="text-xs sm:text-sm text-slate-500">
-                             {formatHaitiDate(order.created_date, "HH:mm")}
-                           </p>
-                         </div>
-                         <span className="font-bold text-orange-500 text-sm sm:text-base whitespace-nowrap">{order.total} HTG</span>
+            {pendingOrders.length > 0 ? (
+              <div className="space-y-3">
+                <AnimatePresence>
+                  {pendingOrders.map(order => (
+                    <motion.div
+                     key={order.id}
+                     initial={{ opacity: 0, y: -10 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     exit={{ opacity: 0 }}
+                     onClick={() => setSelectedOrder(order)}
+                     className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group"
+                    >
+                     <div className="flex justify-between items-start gap-2 mb-3">
+                       <div className="flex-1">
+                         <p className="font-bold text-base">#{order.order_number}</p>
+                         <p className="text-sm text-gray-500">
+                           {formatHaitiDate(order.created_date, "HH:mm")}
+                         </p>
                        </div>
-                       <div className="mt-2 text-xs sm:text-sm text-slate-600 line-clamp-2">
-                         {order.items?.map(i => `${i.quantity}x ${i.name}`).join(', ')}
-                       </div>
-                       <div className="mt-3 flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="border-red-200 text-red-600"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateOrderMutation.mutate({ id: order.id, status: 'cancelled' });
-                            }}
-                          >
-                            Refuser
-                          </Button>
-                          <Button 
-                            size="sm"
-                            className="bg-orange-500 hover:bg-orange-600"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateOrderMutation.mutate({ id: order.id, status: 'preparing' });
-                            }}
-                          >
-                            Accepter
-                          </Button>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+                       <span className="font-black text-blue-600 text-xl">{order.total} HTG</span>
+                     </div>
+                     <div className="mb-3 text-sm text-gray-700 bg-gray-50 rounded-2xl p-3">
+                       {order.items?.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+                     </div>
+                     <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="flex-1 border-gray-200 hover:bg-red-50 text-red-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateOrderMutation.mutate({ id: order.id, status: 'cancelled' });
+                          }}
+                        >
+                          Refuser
+                        </Button>
+                        <Button 
+                          size="sm"
+                          className="flex-1 bg-green-500 hover:bg-green-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateOrderMutation.mutate({ id: order.id, status: 'preparing' });
+                          }}
+                        >
+                          Accepter
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-3xl">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Bell className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-600">Aucune nouvelle commande</p>
+              </div>
+            )}
+          </TabsContent>
+          <TabsContent value="active" className="space-y-3">
+            {activeOrders.length > 0 ? (
+              activeOrders.map(order => (
+                <div
+                  key={order.id}
+                  onClick={() => setSelectedOrder(order)}
+                  className="bg-white rounded-3xl p-4 cursor-pointer hover:shadow-xl transition-all border border-gray-100"
+                >
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-base">#{order.order_number}</span>
+                        <OrderStatusBadge status={order.status} />
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {formatHaitiDate(order.created_date, "d MMM HH:mm")}
+                      </p>
+                    </div>
+                    <span className="font-black text-blue-600 text-xl">{order.total} HTG</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-12 bg-white rounded-3xl">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Package className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-600">Aucune commande en cours</p>
+              </div>
+            )}
+          </TabsContent>
+          </Tabs>
+          </div>
+        )}
+
+        {activeTab === 'products' && (
+          <div className="flex flex-col h-full">
+            {/* STICKY HEADER AVEC RECHERCHE */}
+            <header className="sticky top-0 bg-white/80 backdrop-blur-md z-10 px-8 py-6 border-b flex justify-between items-center">
+              <div className="relative w-1/3">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                <input 
+                  type="text" 
+                  placeholder="Rechercher un article..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-gray-100 rounded-full border-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all"
+                />
+              </div>
+              <button 
+                className="bg-green-500 text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg hover:scale-105 transition-transform"
+                onClick={() => setGuidelinesDialogOpen(true)}
+              >
+                + Ajouter un article
+              </button>
+            </header>
+
+            {/* GRILLE DE WIDGETS D'ARTICLES */}
+            <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map(product => (
+                <div key={product.id} className="bg-white rounded-3xl p-4 shadow-sm hover:shadow-xl transition-shadow flex flex-col group border border-gray-100">
+                  <div className="relative h-48 rounded-2xl bg-gray-50 overflow-hidden mb-4">
+                    {product.image_url ? (
+                      <img src={product.image_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-5xl">📦</div>
+                    )}
+                    <div className="absolute top-2 right-2 bg-white/90 px-3 py-1 rounded-full text-[10px] font-black">
+                      {product.is_available !== false ? (
+                        <span className="text-green-600">EN STOCK</span>
+                      ) : (
+                        <span className="text-red-600">INDISPONIBLE</span>
+                      )}
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-lg text-gray-800 mb-1">{product.name}</h3>
+                  <p className="text-blue-600 font-black text-xl mb-4">{product.price} HTG</p>
+                  {product.stock_quantity !== undefined && (
+                    <p className="text-xs text-gray-500 mb-3">Stock: {product.stock_quantity}</p>
+                  )}
+                  <div className="flex gap-2 mt-auto">
+                    <button 
+                      className="flex-1 bg-gray-100 py-2 rounded-xl text-xs font-bold hover:bg-gray-200 transition-colors"
+                      onClick={() => handleEditProduct(product)}
+                    >
+                      Modifier
+                    </button>
+                    <button 
+                      className="w-10 bg-red-50 text-red-500 py-2 rounded-xl hover:bg-red-100 transition-colors"
+                      onClick={() => deleteProductMutation.mutate(product.id)}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {filteredProducts.length === 0 && (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Package className="w-12 h-12 text-gray-400" />
+                  </div>
+                  <p className="text-gray-600 text-lg">
+                    {searchQuery ? 'Aucun article trouvé' : 'Aucun article. Cliquez sur "Ajouter" pour commencer.'}
+                  </p>
                 </div>
               </div>
             )}
-
-            {/* Active Orders */}
-            <div>
-              <h3 className="font-semibold text-lg mb-3">Commandes en cours</h3>
-              <div className="space-y-3">
-                {activeOrders.map(order => (
-                  <div
-                    key={order.id}
-                    onClick={() => setSelectedOrder(order)}
-                    className="bg-white rounded-xl p-3 sm:p-4 cursor-pointer hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm sm:text-base">#{order.order_number}</span>
-                          <OrderStatusBadge status={order.status} />
+            
+            {/* Guidelines Dialog */}
+            <AlertDialog open={guidelinesDialogOpen} onOpenChange={setGuidelinesDialogOpen}>
+              <AlertDialogContent className="max-w-md">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-center text-xl flex items-center justify-center gap-2">
+                    ⚠️ Consignes pour la création d'articles
+                  </AlertDialogTitle>
+                  <AlertDialogDescription asChild>
+                    <div className="space-y-4 pt-4 text-base">
+                      <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                        <span className="text-2xl">📝</span>
+                        <div>
+                          <p className="font-semibold text-slate-900">Ajoute le Titre de votre article</p>
                         </div>
-                        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                          {formatHaitiDate(order.created_date, "d MMM HH:mm")}
-                        </p>
                       </div>
-                      <span className="font-bold text-orange-500 text-sm sm:text-base whitespace-nowrap">{order.total} HTG</span>
+                      <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                        <span className="text-2xl">📷</span>
+                        <div>
+                          <p className="font-semibold text-slate-900">Ajoute Photos réelles de bonne qualité</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border-2 border-purple-200">
+                        <span className="text-2xl">✨</span>
+                        <div>
+                          <p className="font-semibold text-purple-900">Lancer avec Magie AI</p>
+                          <p className="text-sm text-purple-700">(génération automatique de la description et catégorie)</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                        <span className="text-2xl">💰</span>
+                        <div>
+                          <p className="font-semibold text-slate-900">Ajoute les Prix fixe obligatoire en Gourdes</p>
+                          <p className="text-sm text-slate-600">(aucune négociation possible avec les acheteurs)</p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {activeOrders.length === 0 && pendingOrders.length === 0 && (
-                  <div className="text-center py-8 text-slate-500">
-                    Aucune commande en cours
-                  </div>
-                )}
-              </div>
-            </div>
-          </TabsContent>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction 
+                    className="bg-orange-500 hover:bg-orange-600"
+                    onClick={() => {
+                      setGuidelinesDialogOpen(false);
+                      setProductDialogOpen(true);
+                    }}
+                  >
+                    J'ai compris
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Product Dialog */}
+            <Dialog open={productDialogOpen} onOpenChange={(open) => {
+              setProductDialogOpen(open);
+              if (!open) resetProductForm();
+            }}>
+              <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingProduct ? 'Modifier l\'article' : 'Nouvel article'}
+                  </DialogTitle>
+                </DialogHeader>
 
           {/* Products Tab */}
           <TabsContent value="products">
