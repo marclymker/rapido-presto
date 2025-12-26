@@ -726,7 +726,7 @@ Format JSON strict requis.`;
                           <SelectItem value="Restaurants">Restaurants</SelectItem>
                           <SelectItem value="Boutique Fleurs">Boutique Fleurs</SelectItem>
                           <SelectItem value="Pharmacie">Pharmacie</SelectItem>
-                          <SelectItem value="Vêtements">Vêtements</SelectItem>
+                          <SelectItem value="Mariage">Mariage</SelectItem>
                           <SelectItem value="Epicerie">Epicerie</SelectItem>
                           <SelectItem value="Café">Café</SelectItem>
                           <SelectItem value="Pour Femme">Pour Femme</SelectItem>
