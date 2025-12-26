@@ -438,33 +438,31 @@ Format JSON strict requis.`;
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      {/* SIDEBAR - Navigation verticale */}
-      <aside className="hidden md:flex md:flex-col w-64 bg-white border-r fixed left-0 top-0 h-screen z-50">
-        {/* Logo & Header */}
-        <div className="p-6 border-b">
-          <h1 className="text-xl font-bold text-orange-500 mb-1">{entrepriseData.company_name}</h1>
-          <p className="text-sm text-slate-500">{entrepriseData.company_category}</p>
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* SIDEBAR - 20% fixed */}
+      <aside className="w-1/5 bg-white border-r flex flex-col py-6 shadow-lg z-20">
+        <div className="px-6 mb-10">
+          <h1 className="text-xl font-black text-blue-600 tracking-tighter">RAPIDO PRESTO</h1>
+          <p className="text-[10px] text-gray-400 font-bold uppercase">Dashboard Partenaire</p>
         </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        
+        <nav className="flex-1 space-y-2 px-4 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  activeTab === item.id
-                    ? 'bg-orange-50 text-orange-600 font-semibold'
-                    : 'text-slate-600 hover:bg-slate-50'
+                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all font-bold text-sm ${
+                  activeTab === item.id 
+                    ? 'bg-blue-600 text-white shadow-blue-200 shadow-lg' 
+                    : 'text-gray-500 hover:bg-gray-100'
                 }`}
               >
                 <Icon className="w-5 h-5" />
-                <span className="flex-1 text-left">{item.label}</span>
+                {item.label}
                 {item.count > 0 && (
-                  <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
                     {item.count}
                   </span>
                 )}
@@ -473,10 +471,9 @@ Format JSON strict requis.`;
           })}
         </nav>
 
-        {/* Footer Controls */}
-        <div className="p-4 border-t space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-600">
+        <div className="px-4 mt-auto space-y-3 border-t pt-4">
+          <div className="flex items-center justify-between px-2">
+            <span className="text-xs font-bold text-gray-500">
               {myShop?.is_active !== false ? '🟢 En ligne' : '🔴 Hors ligne'}
             </span>
             <Switch
@@ -484,7 +481,7 @@ Format JSON strict requis.`;
               onCheckedChange={(checked) => toggleOnlineMutation.mutate(checked)}
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-2">
             <Button
               variant="ghost"
               size="icon"
@@ -493,46 +490,16 @@ Format JSON strict requis.`;
                 setNotificationsEnabled(!notificationsEnabled);
               }}
             >
-              {notificationsEnabled ? <Volume2 className="w-5 h-5 text-orange-500" /> : <VolumeX className="w-5 h-5 text-slate-400" />}
+              {notificationsEnabled ? <Volume2 className="w-5 h-5 text-blue-600" /> : <VolumeX className="w-5 h-5 text-gray-400" />}
             </Button>
             <ProfileSwitcher user={user} />
           </div>
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 md:ml-64">
-        {/* Mobile Header */}
-        <header className="md:hidden bg-white sticky top-0 z-40 border-b p-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-lg font-bold text-orange-500">{entrepriseData.company_name}</h1>
-            <div className="flex items-center gap-2">
-              {pendingOrders.length > 0 && (
-                <div className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
-                  {pendingOrders.length}
-                </div>
-              )}
-              <ProfileSwitcher user={user} />
-            </div>
-          </div>
-          {/* Mobile Tabs */}
-          <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`px-4 py-2 rounded-lg whitespace-nowrap text-sm ${
-                  activeTab === item.id ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-600'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </header>
-
-        {/* Content Area */}
-        <div className="p-6">
+      {/* MAIN CONTENT - 80% scrollable */}
+      <main className="flex-1 overflow-y-auto relative">
+        <div className="h-full">
           {/* Orders Tab */}
           {activeTab === 'orders' && (
             <div className="space-y-6">
@@ -631,28 +598,28 @@ Format JSON strict requis.`;
 
           {/* Products Tab */}
           {activeTab === 'products' && (
-            <div>
-            {/* Sticky Search Bar */}
-            <div className="sticky top-0 bg-slate-50 z-30 pb-6 -mt-6 pt-6">
-              <div className="flex gap-3 items-center">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <Input
-                    placeholder="Rechercher un article..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 h-12 rounded-full bg-white shadow-sm border-slate-200"
-                  />
-                </div>
-                <Button 
-                  className="bg-orange-500 hover:bg-orange-600 h-12 px-6 rounded-full shadow-md"
-                  onClick={() => setGuidelinesDialogOpen(true)}
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Ajouter
-                </Button>
+            <div className="flex flex-col h-full">
+            {/* Sticky Search Bar - Pill Style */}
+            <header className="sticky top-0 bg-white/80 backdrop-blur-md z-10 px-8 py-6 border-b flex justify-between items-center">
+              <div className="relative w-1/3">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="Rechercher un article..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-gray-100 rounded-full border-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all outline-none"
+                />
               </div>
-            </div>
+              <button 
+                onClick={() => setGuidelinesDialogOpen(true)}
+                className="bg-green-500 text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg hover:scale-105 transition-transform"
+              >
+                + Ajouter un article
+              </button>
+            </header>
+
+            <div className="p-8 flex-1 overflow-y-auto">
               
               {/* Guidelines Dialog */}
               <AlertDialog open={guidelinesDialogOpen} onOpenChange={setGuidelinesDialogOpen}>
@@ -925,69 +892,62 @@ Format JSON strict requis.`;
                 </DialogContent>
               </Dialog>
 
-            {/* Products Grid - Premium Design */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {/* Products Grid - Premium Widget Design */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProducts.map(product => (
-                <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all group">
-                  <div className="relative h-56 bg-slate-100">
+                <div key={product.id} className="bg-white rounded-3xl p-4 shadow-sm hover:shadow-xl transition-shadow flex flex-col group border border-gray-100">
+                  <div className="relative h-48 rounded-2xl bg-gray-50 overflow-hidden mb-4">
                     {product.image_url ? (
-                      <img src={product.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <img src={product.image_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
+                      <div className="w-full h-full flex items-center justify-center text-5xl">📦</div>
                     )}
                     {!product.is_available && (
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                         <EyeOff className="w-8 h-8 text-white" />
                       </div>
                     )}
+                    <div className="absolute top-2 right-2 bg-white/90 px-3 py-1 rounded-full text-[10px] font-black text-blue-600">
+                      {product.is_available ? 'EN STOCK' : 'INDISPONIBLE'}
+                    </div>
                     {product.promo_price && (
-                      <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      <div className="absolute top-2 left-2 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">
                         -{Math.round((1 - product.promo_price / product.price) * 100)}%
                       </div>
                     )}
                   </div>
-                  <div className="p-4">
-                    <h4 className="font-bold text-base mb-2 line-clamp-2 min-h-[3rem]">{product.name}</h4>
-                    <div className="flex items-center gap-2 mb-3">
-                      <p className="text-orange-500 font-bold text-xl">{product.price} HTG</p>
-                      {product.promo_price && (
-                        <p className="text-slate-400 line-through text-sm">{product.promo_price} HTG</p>
-                      )}
-                    </div>
-                    {product.stock_quantity !== undefined && (
-                      <p className="text-xs text-slate-500 mb-3">📦 Stock: {product.stock_quantity}</p>
-                    )}
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm"
-                        variant="outline" 
-                        className="flex-1"
-                        onClick={() => handleEditProduct(product)}
-                      >
-                        <Edit className="w-4 h-4 mr-1" />
-                        Modifier
-                      </Button>
-                      <Button 
-                        size="sm"
-                        variant="outline" 
-                        className="text-red-500 hover:bg-red-50"
-                        onClick={() => deleteProductMutation.mutate(product.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                  <h3 className="font-bold text-lg text-gray-800 mb-2 line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
+                  <p className="text-blue-600 font-black text-xl mb-4">{product.price} HTG</p>
+                  {product.stock_quantity !== undefined && (
+                    <p className="text-xs text-gray-500 mb-3">📦 Stock: {product.stock_quantity}</p>
+                  )}
+                  <div className="flex gap-2 mt-auto">
+                    <button 
+                      onClick={() => handleEditProduct(product)}
+                      className="flex-1 bg-gray-100 py-2 rounded-xl text-xs font-bold hover:bg-gray-200 transition-colors"
+                    >
+                      Modifier
+                    </button>
+                    <button 
+                      onClick={() => deleteProductMutation.mutate(product.id)}
+                      className="w-10 bg-red-50 text-red-500 py-2 rounded-xl hover:bg-red-100 transition-colors"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
+            </div>
             {filteredProducts.length === 0 && (
-              <div className="text-center py-16 bg-white rounded-2xl">
-                <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500 text-lg">
+              <div className="text-center py-16 bg-white rounded-3xl">
+                <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">
                   {searchQuery ? 'Aucun article trouvé' : 'Aucun article. Cliquez sur "Ajouter" pour commencer.'}
                 </p>
               </div>
             )}
+            </div>
             </div>
           )}
 
@@ -1088,123 +1048,148 @@ Format JSON strict requis.`;
 
           {/* Account Tab */}
           {activeTab === 'account' && (
-            <div className="space-y-6 max-w-2xl">
-            {/* Photo de profil */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="font-semibold text-lg mb-4">Photo de profil</h3>
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden">
+            <div className="p-8 max-w-4xl mx-auto space-y-8">
+              <h2 className="text-3xl font-black text-gray-800">Mon Compte</h2>
+
+              {/* WIDGET : Photo & Profil */}
+              <section className="bg-white rounded-3xl p-8 shadow-sm flex items-center gap-8 border border-gray-100">
+                <div className="relative group">
+                  <div className="w-32 h-32 rounded-full bg-gray-200 overflow-hidden border-4 border-white shadow-md">
                     {entrepriseData.company_logo_url ? (
                       <img src={entrepriseData.company_logo_url} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <Package className="w-12 h-12 text-orange-500" />
+                      <div className="w-full h-full flex items-center justify-center bg-blue-100">
+                        <Package className="w-16 h-16 text-blue-600" />
+                      </div>
                     )}
                   </div>
-                  <label className="absolute bottom-0 right-0 bg-orange-500 text-white p-2 rounded-full cursor-pointer hover:bg-orange-600 shadow-lg">
-                    <Camera className="w-4 h-4" />
+                  <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform cursor-pointer">
+                    <Camera className="w-5 h-5" />
                     <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                   </label>
                 </div>
-                <div>
-                  <h2 className="font-bold text-xl mb-1">{entrepriseData.company_name}</h2>
-                  <p className="text-slate-500">{entrepriseData.company_category}</p>
+                <div className="flex-1">
+                  <h4 className="text-sm font-bold text-gray-400 uppercase mb-2">Nom de l'entreprise</h4>
+                  <input 
+                    type="text" 
+                    className="text-2xl font-bold bg-transparent border-b border-gray-100 w-full focus:border-blue-500 outline-none transition-colors" 
+                    defaultValue={entrepriseData.company_name}
+                    disabled
+                  />
+                  <p className="text-gray-400 text-sm mt-2">ID Partenaire: #{myShop?.id?.slice(0, 8)}</p>
+                </div>
+              </section>
+
+              {/* WIDGET : Informations */}
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <h4 className="font-bold mb-4 flex items-center gap-2">📧 Informations de contact</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase">Email</label>
+                    <input 
+                      type="email"
+                      value={user.email}
+                      disabled
+                      className="w-full bg-gray-50 rounded-xl p-3 text-sm outline-none"
+                    />
+                  </div>
+                  {user.phone && (
+                    <div>
+                      <label className="text-xs font-bold text-gray-400 uppercase">Téléphone</label>
+                      <input 
+                        type="tel"
+                        value={user.phone}
+                        disabled
+                        className="w-full bg-gray-50 rounded-xl p-3 text-sm outline-none"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
 
-            {/* Informations de base */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-              <h3 className="font-semibold text-lg mb-4">Informations de base</h3>
-              <div>
-                <Label>Email</Label>
-                <Input value={user.email} disabled className="bg-slate-50" />
-              </div>
-              {user.phone && (
-                <div>
-                  <Label>Téléphone</Label>
-                  <Input value={user.phone} disabled className="bg-slate-50" />
+              {/* WIDGET : Adresse & Paiement */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                  <h4 className="font-bold mb-4 flex items-center gap-2">📍 Adresse Professionnelle</h4>
+                  <textarea 
+                    value={accountForm.address || user.address || ''}
+                    onChange={(e) => setAccountForm({ ...accountForm, address: e.target.value })}
+                    className="w-full bg-gray-50 rounded-2xl p-4 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="Rue Panaméricaine, Pétion-Ville, Haïti"
+                    rows={4}
+                  />
+                  <button 
+                    onClick={handleAccountUpdate}
+                    className="mt-3 w-full bg-blue-600 text-white py-2 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                  >
+                    Enregistrer
+                  </button>
                 </div>
-              )}
-            </div>
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                  <h4 className="font-bold mb-4 flex items-center gap-2">💳 Méthode de Paiement</h4>
+                  <select 
+                    value={accountForm.payment_method || user.payment_method || ''}
+                    onChange={(e) => setAccountForm({ ...accountForm, payment_method: e.target.value })}
+                    className="w-full bg-gray-50 rounded-2xl p-4 text-sm font-bold outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="">Sélectionner</option>
+                    <option value="CASH">Cash à la livraison</option>
+                    <option value="moncash">MonCash (509 4XXX XXXX)</option>
+                    <option value="card">Carte bancaire</option>
+                  </select>
+                  <button 
+                    onClick={handleAccountUpdate}
+                    className="mt-3 w-full bg-blue-600 text-white py-2 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                  >
+                    Enregistrer
+                  </button>
+                </div>
+              </div>
 
-            {/* Adresse */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-              <h3 className="font-semibold text-lg mb-4">Adresse de livraison</h3>
-              <div>
-                <Label>Adresse complète</Label>
-                <Textarea
-                  value={accountForm.address || user.address || ''}
-                  onChange={(e) => setAccountForm({ ...accountForm, address: e.target.value })}
-                  placeholder="Ex: 123 Rue ABC, Delmas 33"
-                  rows={3}
-                />
-              </div>
-              <Button onClick={handleAccountUpdate} className="bg-orange-500 hover:bg-orange-600">
-                Enregistrer l'adresse
-              </Button>
-            </div>
+              {/* WIDGET : Sécurité */}
+              <section className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <h4 className="font-bold mb-6">🔒 Sécurité du compte</h4>
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase">Mot de passe actuel</label>
+                    <input 
+                      type="password"
+                      value={accountForm.current_password}
+                      onChange={(e) => setAccountForm({ ...accountForm, current_password: e.target.value })}
+                      placeholder="••••••••"
+                      className="w-full bg-gray-50 rounded-xl p-3 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase">Nouveau mot de passe</label>
+                    <input 
+                      type="password"
+                      value={accountForm.new_password}
+                      onChange={(e) => setAccountForm({ ...accountForm, new_password: e.target.value })}
+                      placeholder="••••••••"
+                      className="w-full bg-gray-50 rounded-xl p-3 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-4">
+                  <button 
+                    onClick={() => toast.info('Fonctionnalité de changement de mot de passe à implémenter')}
+                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                  >
+                    Changer le mot de passe
+                  </button>
+                  <button className="w-fit text-red-500 font-bold hover:underline text-sm">
+                    Déconnexion de tous les appareils
+                  </button>
+                </div>
+              </section>
 
-            {/* Méthode de paiement */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-              <h3 className="font-semibold text-lg mb-4">Méthode de paiement</h3>
-              <div>
-                <Label>Méthode préférée</Label>
-                <Select 
-                  value={accountForm.payment_method || user.payment_method || ''} 
-                  onValueChange={(val) => setAccountForm({ ...accountForm, payment_method: val })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une méthode" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CASH">Cash à la livraison</SelectItem>
-                    <SelectItem value="moncash">MonCash</SelectItem>
-                    <SelectItem value="card">Carte bancaire</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleAccountUpdate} className="bg-orange-500 hover:bg-orange-600">
-                Enregistrer la méthode
-              </Button>
-            </div>
-
-            {/* Mot de passe */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-              <h3 className="font-semibold text-lg mb-4">Changer de mot de passe</h3>
-              <div>
-                <Label>Mot de passe actuel</Label>
-                <Input
-                  type="password"
-                  value={accountForm.current_password}
-                  onChange={(e) => setAccountForm({ ...accountForm, current_password: e.target.value })}
-                  placeholder="••••••••"
-                />
-              </div>
-              <div>
-                <Label>Nouveau mot de passe</Label>
-                <Input
-                  type="password"
-                  value={accountForm.new_password}
-                  onChange={(e) => setAccountForm({ ...accountForm, new_password: e.target.value })}
-                  placeholder="••••••••"
-                />
-              </div>
-              <Button 
-                onClick={() => toast.info('Fonctionnalité de changement de mot de passe à implémenter')}
-                className="bg-orange-500 hover:bg-orange-600"
+              <button 
+                onClick={() => base44.auth.logout()}
+                className="w-full border-2 border-red-200 text-red-600 py-3 rounded-xl font-bold hover:bg-red-50 transition-colors"
               >
-                Changer le mot de passe
-              </Button>
-            </div>
-
-            <Button 
-              variant="outline" 
-              className="w-full border-red-200 text-red-600 hover:bg-red-50"
-              onClick={() => base44.auth.logout()}
-            >
-              Déconnexion
-            </Button>
+                Déconnexion
+              </button>
             </div>
           )}
         </div>
