@@ -394,16 +394,16 @@ Format JSON strict requis.`;
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white sticky top-0 z-40 border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-orange-500">{entrepriseData.company_name}</h1>
-              <p className="text-sm text-slate-500">{entrepriseData.company_category}</p>
+        <div className="w-full mx-auto px-3 sm:px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base sm:text-xl font-bold text-orange-500 truncate">{entrepriseData.company_name}</h1>
+              <p className="text-xs sm:text-sm text-slate-500 truncate">{entrepriseData.company_category}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
               {/* Toggle En ligne / Hors ligne */}
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full">
-                <span className="text-sm font-medium text-slate-700">
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-100 rounded-full">
+                <span className="text-[10px] sm:text-sm font-medium text-slate-700 whitespace-nowrap">
                   {myShop?.is_active !== false ? 'En ligne' : 'Hors ligne'}
                 </span>
                 <Switch
@@ -413,11 +413,16 @@ Format JSON strict requis.`;
                 />
               </div>
               
-              <RealtimeIndicator isConnected={isConnected} />
-              <ProfileSwitcher user={user} />
+              <div className="hidden sm:flex">
+                <RealtimeIndicator isConnected={isConnected} />
+              </div>
+              <div className="hidden sm:block">
+                <ProfileSwitcher user={user} />
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
+                className="h-8 w-8 sm:h-10 sm:w-10"
                 onClick={() => {
                   if (!soundInitialized) {
                     initializeSound();
@@ -428,15 +433,15 @@ Format JSON strict requis.`;
                 title={notificationsEnabled ? 'Désactiver le son' : 'Activer le son'}
               >
                 {notificationsEnabled ? (
-                  <Volume2 className="w-5 h-5 text-orange-500" />
+                  <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
                 ) : (
-                  <VolumeX className="w-5 h-5 text-slate-400" />
+                  <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
                 )}
               </Button>
               {pendingOrders.length > 0 && (
-                <div className="flex items-center gap-2 bg-red-100 text-red-700 px-3 py-1.5 rounded-full">
-                  <Bell className="w-4 h-4" />
-                  <span className="text-sm font-medium">{pendingOrders.length} nouvelle(s)</span>
+                <div className="flex items-center gap-1 sm:gap-2 bg-red-100 text-red-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full">
+                  <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="text-[10px] sm:text-sm font-medium">{pendingOrders.length}</span>
                 </div>
               )}
             </div>
@@ -444,22 +449,22 @@ Format JSON strict requis.`;
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main className="w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="w-full bg-white mb-6">
-            <TabsTrigger value="orders" className="flex-1">
+          <TabsList className="w-full bg-white mb-4 sm:mb-6 grid grid-cols-5 gap-1 p-1">
+            <TabsTrigger value="orders" className="text-[10px] sm:text-sm px-1 sm:px-3">
               Commandes
             </TabsTrigger>
-            <TabsTrigger value="products" className="flex-1">
+            <TabsTrigger value="products" className="text-[10px] sm:text-sm px-1 sm:px-3">
               Articles
             </TabsTrigger>
-            <TabsTrigger value="stats" className="flex-1">
-              Statistiques
+            <TabsTrigger value="stats" className="text-[10px] sm:text-sm px-1 sm:px-3">
+              Stats
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex-1">
-              Paramètres
+            <TabsTrigger value="settings" className="text-[10px] sm:text-sm px-1 sm:px-3">
+              Réglages
             </TabsTrigger>
-            <TabsTrigger value="account" className="flex-1">
+            <TabsTrigger value="account" className="text-[10px] sm:text-sm px-1 sm:px-3">
               Compte
             </TabsTrigger>
           </TabsList>
@@ -477,26 +482,26 @@ Format JSON strict requis.`;
                   <AnimatePresence>
                     {pendingOrders.map(order => (
                       <motion.div
-                        key={order.id}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => setSelectedOrder(order)}
-                        className="bg-white rounded-xl p-4 border-2 border-orange-200 cursor-pointer hover:shadow-md"
+                       key={order.id}
+                       initial={{ opacity: 0, y: -10 }}
+                       animate={{ opacity: 1, y: 0 }}
+                       exit={{ opacity: 0 }}
+                       onClick={() => setSelectedOrder(order)}
+                       className="bg-white rounded-xl p-3 sm:p-4 border-2 border-orange-200 cursor-pointer hover:shadow-md"
                       >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-semibold">#{order.order_number}</p>
-                            <p className="text-sm text-slate-500">
-                              {formatHaitiDate(order.created_date, "HH:mm")}
-                            </p>
-                          </div>
-                          <span className="font-bold text-orange-500">{order.total} HTG</span>
-                        </div>
-                        <div className="mt-2 text-sm text-slate-600">
-                          {order.items?.map(i => `${i.quantity}x ${i.name}`).join(', ')}
-                        </div>
-                        <div className="mt-3 flex gap-2">
+                       <div className="flex justify-between items-start gap-2">
+                         <div className="min-w-0 flex-1">
+                           <p className="font-semibold text-sm sm:text-base truncate">#{order.order_number}</p>
+                           <p className="text-xs sm:text-sm text-slate-500">
+                             {formatHaitiDate(order.created_date, "HH:mm")}
+                           </p>
+                         </div>
+                         <span className="font-bold text-orange-500 text-sm sm:text-base whitespace-nowrap">{order.total} HTG</span>
+                       </div>
+                       <div className="mt-2 text-xs sm:text-sm text-slate-600 line-clamp-2">
+                         {order.items?.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+                       </div>
+                       <div className="mt-3 flex gap-2">
                           <Button 
                             size="sm" 
                             variant="outline"
@@ -534,19 +539,19 @@ Format JSON strict requis.`;
                   <div
                     key={order.id}
                     onClick={() => setSelectedOrder(order)}
-                    className="bg-white rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow"
+                    className="bg-white rounded-xl p-3 sm:p-4 cursor-pointer hover:shadow-md transition-shadow"
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">#{order.order_number}</span>
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-sm sm:text-base">#{order.order_number}</span>
                           <OrderStatusBadge status={order.status} />
                         </div>
-                        <p className="text-sm text-slate-500 mt-1">
+                        <p className="text-xs sm:text-sm text-slate-500 mt-1">
                           {formatHaitiDate(order.created_date, "d MMM HH:mm")}
                         </p>
                       </div>
-                      <span className="font-bold text-orange-500">{order.total} HTG</span>
+                      <span className="font-bold text-orange-500 text-sm sm:text-base whitespace-nowrap">{order.total} HTG</span>
                     </div>
                   </div>
                 ))}
@@ -561,13 +566,13 @@ Format JSON strict requis.`;
 
           {/* Products Tab */}
           <TabsContent value="products">
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-end mb-3 sm:mb-4">
               <Button 
-                className="bg-orange-500 hover:bg-orange-600"
+                className="bg-orange-500 hover:bg-orange-600 text-xs sm:text-sm h-8 sm:h-10"
                 onClick={() => setGuidelinesDialogOpen(true)}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Ajouter un article
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                Ajouter
               </Button>
               
               {/* Guidelines Dialog */}
@@ -842,10 +847,10 @@ Format JSON strict requis.`;
               </Dialog>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {products.map(product => (
                 <div key={product.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
-                  <div className="h-28 bg-slate-100 relative">
+                  <div className="h-24 sm:h-28 bg-slate-100 relative">
                     {product.image_url ? (
                       <img src={product.image_url} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -857,28 +862,28 @@ Format JSON strict requis.`;
                       </div>
                     )}
                   </div>
-                  <div className="p-3">
-                    <h4 className="font-medium text-sm truncate">{product.name}</h4>
-                    <p className="text-orange-500 font-semibold">{product.price} HTG</p>
+                  <div className="p-2 sm:p-3">
+                    <h4 className="font-medium text-xs sm:text-sm truncate">{product.name}</h4>
+                    <p className="text-orange-500 font-semibold text-xs sm:text-base">{product.price} HTG</p>
                     {product.stock_quantity !== undefined && (
-                      <p className="text-xs text-slate-500">Stock: {product.stock_quantity}</p>
+                      <p className="text-[10px] sm:text-xs text-slate-500">Stock: {product.stock_quantity}</p>
                     )}
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-1.5 sm:gap-2 mt-2">
                       <Button 
                         size="icon" 
                         variant="outline" 
-                        className="h-8 w-8"
+                        className="h-7 w-7 sm:h-8 sm:w-8"
                         onClick={() => handleEditProduct(product)}
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
                       <Button 
                         size="icon" 
                         variant="outline" 
-                        className="h-8 w-8 text-red-500"
+                        className="h-7 w-7 sm:h-8 sm:w-8 text-red-500"
                         onClick={() => deleteProductMutation.mutate(product.id)}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
                     </div>
                   </div>
@@ -900,14 +905,14 @@ Format JSON strict requis.`;
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
             {/* Marketing Section */}
-            <div className="bg-white rounded-xl p-6 border-2 border-orange-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">🚀</span>
-                  <div>
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                      Boost Automatique Rapido Presto
-                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">
+            <div className="bg-white rounded-xl p-4 sm:p-6 border-2 border-orange-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <span className="text-xl sm:text-2xl flex-shrink-0">🚀</span>
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-lg font-semibold flex items-center gap-2 flex-wrap">
+                      <span className="truncate">Boost Automatique</span>
+                      <span className="text-[10px] sm:text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium whitespace-nowrap">
                         👑 Premium
                       </span>
                     </h3>
@@ -920,21 +925,21 @@ Format JSON strict requis.`;
                 </div>
               </div>
 
-              <p className="text-slate-600 mb-4">
+              <p className="text-xs sm:text-sm text-slate-600 mb-4">
                 Diffusez vos produits sur Facebook, Instagram et Google. 
                 Notre IA s'occupe de trouver des clients pour vous à Port-au-Prince.
               </p>
 
-              <div className="bg-orange-50 rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <span className="font-semibold text-slate-800 block">
+              <div className="bg-orange-50 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <span className="font-semibold text-slate-800 block text-xs sm:text-base">
                     {myShop?.boost_enabled && myShop?.is_premium 
                       ? "✅ Votre boutique est mise en avant" 
                       : myShop?.is_premium 
                         ? "Promotion désactivée"
                         : "Nécessite Premium"}
                   </span>
-                  <small className="text-slate-600">
+                  <small className="text-[10px] sm:text-xs text-slate-600 block mt-1">
                     {myShop?.boost_enabled && myShop?.is_premium
                       ? "Vos produits apparaissent dans nos campagnes." 
                       : myShop?.is_premium
@@ -984,31 +989,31 @@ Format JSON strict requis.`;
           </TabsContent>
 
           {/* Account Tab */}
-          <TabsContent value="account" className="space-y-6">
-            <div className="bg-white rounded-xl p-4">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden">
+          <TabsContent value="account" className="space-y-4 sm:space-y-6">
+            <div className="bg-white rounded-xl p-3 sm:p-4">
+              <div className="flex items-center gap-3 sm:gap-4 mb-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                   {entrepriseData.company_logo_url ? (
                     <img src={entrepriseData.company_logo_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <Package className="w-8 h-8 text-orange-500" />
+                    <Package className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500" />
                   )}
                 </div>
-                <div>
-                  <h2 className="font-semibold text-lg text-slate-800">{entrepriseData.company_name}</h2>
-                  <p className="text-sm text-slate-500">{entrepriseData.company_category}</p>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-semibold text-base sm:text-lg text-slate-800 truncate">{entrepriseData.company_name}</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 truncate">{entrepriseData.company_category}</p>
                 </div>
               </div>
 
-              <div className="space-y-3 pt-4 border-t">
-                <div className="flex items-center gap-3 text-slate-600">
-                  <span className="text-slate-500">Email:</span>
-                  <span>{user.email}</span>
+              <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
+                <div className="flex items-center gap-2 sm:gap-3 text-slate-600 text-xs sm:text-base">
+                  <span className="text-slate-500 flex-shrink-0">Email:</span>
+                  <span className="truncate">{user.email}</span>
                 </div>
                 {user.phone && (
-                  <div className="flex items-center gap-3 text-slate-600">
-                    <span className="text-slate-500">Téléphone:</span>
-                    <span>{user.phone}</span>
+                  <div className="flex items-center gap-2 sm:gap-3 text-slate-600 text-xs sm:text-base">
+                    <span className="text-slate-500 flex-shrink-0">Téléphone:</span>
+                    <span className="truncate">{user.phone}</span>
                   </div>
                 )}
               </div>
