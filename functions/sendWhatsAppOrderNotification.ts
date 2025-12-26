@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       to: merchantPhone,
       type: "template",
       template: {
-        name: "order_request_french",
+        name: "order_request",
         language: {
           code: "fr"
         },
