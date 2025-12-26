@@ -24,19 +24,28 @@ Deno.serve(async (req) => {
         { user_id: user.id }
       );
 
-      // Get all available products
+      // Get all active shops
+      const activeShops = await base44.asServiceRole.entities.Shop.filter(
+        { is_active: true }
+      );
+      const activeShopIds = activeShops.map(s => s.id);
+
+      // Get all available products from active shops
       const allProducts = await base44.asServiceRole.entities.Product.filter(
         { is_available: true }
       );
 
-      if (allProducts.length === 0) {
+      // Filter products to only include those from active shops
+      const validProducts = allProducts.filter(p => activeShopIds.includes(p.shop_id));
+
+      if (validProducts.length === 0) {
         return Response.json({ recommendations: [] });
       }
 
       // Extract purchased product IDs and categories
       const purchasedProducts = orders.flatMap(o => o.items || []).map(i => i.product_id);
       const purchasedCategories = orders.flatMap(o => 
-        (o.items || []).map(i => allProducts.find(p => p.id === i.product_id)?.category)
+        (o.items || []).map(i => validProducts.find(p => p.id === i.product_id)?.category)
       ).filter(Boolean);
 
       const cartProductIds = cartItems.map(c => c.product_id);
@@ -50,7 +59,7 @@ Historique d'achat de l'utilisateur :
 - Produits dans le panier: ${cartProductIds.length}
 
 Produits disponibles (extrait):
-${allProducts.slice(0, 20).map(p => `- ${p.name} (${p.category}) - ${p.price} HTG`).join('\n')}
+${validProducts.slice(0, 20).map(p => `- ${p.name} (${p.category}) - ${p.price} HTG`).join('\n')}
 
 Recommande ${limit} produits pertinents basés sur l'historique. Retourne une liste d'IDs de produits en JSON.
 Privilégie:
@@ -75,14 +84,14 @@ Format: {"product_ids": ["id1", "id2", ...]}`;
         });
 
         const recommendedIds = aiResponse.product_ids || [];
-        const recommendations = allProducts
+        const recommendations = validProducts
           .filter(p => recommendedIds.includes(p.id))
           .slice(0, limit);
 
         // Fallback to random if AI returns empty or invalid
         if (recommendations.length === 0) {
           return Response.json({
-            recommendations: allProducts
+            recommendations: validProducts
               .filter(p => !purchasedProducts.includes(p.id) && !cartProductIds.includes(p.id))
               .sort(() => Math.random() - 0.5)
               .slice(0, limit)
@@ -93,7 +102,7 @@ Format: {"product_ids": ["id1", "id2", ...]}`;
       } catch (aiError) {
         console.error('AI recommendation error:', aiError);
         // Fallback: similar categories
-        const similarProducts = allProducts
+        const similarProducts = validProducts
           .filter(p => 
             purchasedCategories.includes(p.category) && 
             !purchasedProducts.includes(p.id) &&
@@ -106,11 +115,20 @@ Format: {"product_ids": ["id1", "id2", ...]}`;
       }
     } else {
       // User not authenticated - trending/popular products
+      // Get all active shops
+      const activeShops = await base44.asServiceRole.entities.Shop.filter(
+        { is_active: true }
+      );
+      const activeShopIds = activeShops.map(s => s.id);
+
       const allProducts = await base44.asServiceRole.entities.Product.filter(
         { is_available: true }
       );
 
-      if (allProducts.length === 0) {
+      // Filter products to only include those from active shops
+      const validProducts = allProducts.filter(p => activeShopIds.includes(p.shop_id));
+
+      if (validProducts.length === 0) {
         return Response.json({ recommendations: [] });
       }
 
@@ -126,7 +144,7 @@ Format: {"product_ids": ["id1", "id2", ...]}`;
       });
 
       // Sort products by popularity
-      const popularProducts = allProducts
+      const popularProducts = validProducts
         .map(p => ({
           ...p,
           popularity: productPopularity[p.id] || 0
@@ -136,7 +154,7 @@ Format: {"product_ids": ["id1", "id2", ...]}`;
 
       // If not enough popular products, add random ones
       if (popularProducts.length < limit) {
-        const randomProducts = allProducts
+        const randomProducts = validProducts
           .filter(p => !popularProducts.find(pp => pp.id === p.id))
           .sort(() => Math.random() - 0.5)
           .slice(0, limit - popularProducts.length);
