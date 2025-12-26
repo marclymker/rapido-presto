@@ -375,7 +375,7 @@ export default function Home() {
           /* TWO-PANE LAYOUT pour catégorie sélectionnée */
           <div className="flex h-[calc(100vh-140px)] overflow-hidden">
             {/* SIDEBAR - Liste des boutiques */}
-            <aside className="w-1/5 min-w-[160px] border-r bg-slate-50 overflow-y-auto">
+            <aside className="w-[15%] min-w-[120px] border-r bg-slate-50 overflow-y-auto">
               <div className="p-3">
                 <h3 className="text-xs font-bold text-slate-500 uppercase mb-3 px-2">
                   Boutiques
@@ -427,7 +427,7 @@ export default function Home() {
           /* TWO-PANE LAYOUT avec boutique sélectionnée */
           <div className="flex h-[calc(100vh-140px)] overflow-hidden">
             {/* SIDEBAR - Liste des boutiques */}
-            <aside className="w-1/5 min-w-[160px] border-r bg-slate-50 overflow-y-auto">
+            <aside className="w-[15%] min-w-[120px] border-r bg-slate-50 overflow-y-auto">
               <div className="p-3">
                 <h3 className="text-xs font-bold text-slate-500 uppercase mb-3 px-2">
                   Boutiques
