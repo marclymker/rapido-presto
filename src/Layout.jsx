@@ -88,7 +88,8 @@ export default function Layout({ children, currentPageName }) {
     <HelmetProvider>
       <Helmet>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossorigin="anonymous"></script>
+        <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
       </Helmet>
       <div className="min-h-screen bg-slate-50 pb-20 safe-pb">
         <Toaster position="top-center" />

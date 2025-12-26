@@ -7,9 +7,6 @@ const SEO = ({ title, description, image, url }) => {
 
   return (
     <Helmet>
-      {/* Google AdSense */}
-      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
-      
       {/* Vérification Google Search Console */}
       <meta name="google-site-verification" content="mte9s9KgpFxd96KZsGD9Amos2lp-2dmG9k7OIIBWY3Y" />
       
