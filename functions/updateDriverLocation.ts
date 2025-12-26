@@ -2,15 +2,15 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { initializeApp } from 'npm:firebase/app';
 import { getDatabase, ref, set } from 'npm:firebase/database';
 
-// Configuration Firebase (utilise les mêmes variables d'environnement)
+// Configuration Firebase
 const firebaseConfig = {
-  apiKey: Deno.env.get('VITE_FIREBASE_API_KEY'),
-  authDomain: Deno.env.get('VITE_FIREBASE_AUTH_DOMAIN'),
-  databaseURL: Deno.env.get('VITE_FIREBASE_DATABASE_URL'),
-  projectId: Deno.env.get('VITE_FIREBASE_PROJECT_ID'),
-  storageBucket: Deno.env.get('VITE_FIREBASE_STORAGE_BUCKET'),
-  messagingSenderId: Deno.env.get('VITE_FIREBASE_MESSAGING_SENDER_ID'),
-  appId: Deno.env.get('VITE_FIREBASE_APP_ID')
+  apiKey: "AIzaSyBL6Qf3AJ2ok677k7fWXST6ERWMoBYfXR4",
+  authDomain: "rapido-presto-1c781.firebaseapp.com",
+  databaseURL: "https://rapido-presto-1c781-default-rtdb.firebaseio.com",
+  projectId: "rapido-presto-1c781",
+  storageBucket: "rapido-presto-1c781.firebasestorage.app",
+  messagingSenderId: "652897600858",
+  appId: "1:652897600858:web:8ed91cfbce1cd77debdf63"
 };
 
 const app = initializeApp(firebaseConfig);
