@@ -143,8 +143,8 @@ export default function Account() {
                   <Store className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-bold text-gray-800">💰 Gagner plus d'argent</p>
-                  <p className="text-sm text-gray-600">Publiez vos produits et développez votre business</p>
+                  <p className="font-bold text-gray-800">💰 Gagner plus d'argent en publiant vos produits</p>
+                  <p className="text-sm text-gray-600">Complétez votre profil marchand maintenant</p>
                 </div>
                 <Button size="sm" className="bg-orange-500 hover:bg-orange-600">
                   Devenir marchand
