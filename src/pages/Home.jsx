@@ -26,6 +26,7 @@ import SmallStories from '@/components/home/SmallStories';
 import CreditBanner from '@/components/home/CreditBanner';
 import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
+import FloatingMerchantBanner from '@/components/home/FloatingMerchantBanner';
 
 export default function Home() {
   const [user, setUser] = useState(null);
