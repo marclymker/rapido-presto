@@ -924,10 +924,9 @@ Format JSON strict requis.`;
                   </div>
                 </DialogContent>
               </Dialog>
-            </div>
 
-            {/* Products Grid - Premium Design */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {/* Products Grid - Premium Design */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredProducts.map(product => (
                 <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all group">
                   <div className="relative h-56 bg-slate-100">
@@ -991,6 +990,8 @@ Format JSON strict requis.`;
             )}
             </div>
           )}
+
+          {/* Stats Tab */}
 
           {/* Stats Tab */}
           {activeTab === 'stats' && (
