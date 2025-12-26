@@ -992,8 +992,6 @@ Format JSON strict requis.`;
           )}
 
           {/* Stats Tab */}
-
-          {/* Stats Tab */}
           {activeTab === 'stats' && (
             <div>
               <SalesStats orders={orders} products={products} />
