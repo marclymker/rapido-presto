@@ -27,7 +27,7 @@ export default function ProductCard({ product, onAdd, onClick }) {
       {/* Bouton d'ajout flottant - Le petit + vert */}
       {product.is_available !== false && (
         <button 
-          className="absolute top-2 right-2 z-10 bg-[#25D366] text-white w-9 h-9 rounded-full shadow-lg flex items-center justify-center font-bold text-xl hover:scale-110 transition-transform hover:bg-green-600"
+          className="absolute top-2 right-2 z-10 bg-[#25D366] text-white w-7 h-7 rounded-full shadow-lg flex items-center justify-center font-bold text-lg hover:scale-110 transition-transform hover:bg-green-600"
           onClick={(e) => { 
             e.stopPropagation(); 
             onAdd(product);
