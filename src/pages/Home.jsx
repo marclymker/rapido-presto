@@ -570,17 +570,25 @@ export default function Home() {
                     <h2 className="text-2xl font-bold text-slate-800 mb-2">
                       {selectedCategory}
                     </h2>
-                    <p className="text-slate-500">
+                    <p className="text-slate-500 mb-4">
                       {shops.length > 0 
                         ? 'Sélectionnez une boutique pour voir les produits'
                         : 'Aucune boutique disponible dans cette catégorie'}
                     </p>
+                    {user?.profiles?.entreprise?.is_active && (
+                      <Button 
+                        onClick={() => setShowAddProductModal(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6"
+                      >
+                        Vendre mes produits
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
-            </main>
-          </div>
-        ) : (
+              </main>
+              </div>
+              ) : (
           /* TWO-PANE LAYOUT avec boutique sélectionnée */
           <div className="flex h-[calc(100vh-140px)] overflow-hidden">
             {/* SIDEBAR - Liste des boutiques */}
