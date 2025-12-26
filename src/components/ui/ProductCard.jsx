@@ -91,9 +91,16 @@ export default function ProductCard({ product, onAdd, onClick }) {
           )}
         </div>
         <p className="text-sm text-slate-700 leading-tight h-10 overflow-hidden">{product.name}</p>
-        {product.delivery_time && (
-          <p className="text-[10px] text-slate-400 mt-1">📦 {product.delivery_time}</p>
-        )}
+        <div className="flex items-center justify-between mt-1">
+          <img 
+            src="https://moncashbutton.digicelgroup.com/moncash-gateway/img/logo-moncash.png" 
+            alt="MonCash" 
+            className="h-4 opacity-80"
+          />
+          {product.delivery_time && (
+            <p className="text-[10px] text-slate-400">📦 {product.delivery_time}</p>
+          )}
+        </div>
       </div>
     </div>
   );
