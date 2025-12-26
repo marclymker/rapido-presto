@@ -88,7 +88,7 @@ export default function ProductsSection({ shopId }) {
                 </div>
                 <div className="p-3">
                   <p className="font-bold text-sm text-gray-900 truncate">{product.name}</p>
-                  <p className="text-blue-600 font-black text-lg">{product.price} HTG</p>
+                  <p className="text-blue-600 font-bold text-sm">{product.price} HTG</p>
                   {product.stock_quantity !== undefined && (
                     <p className="text-xs text-gray-500 mt-1">Stock: {product.stock_quantity}</p>
                   )}
