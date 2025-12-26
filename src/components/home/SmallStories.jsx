@@ -2,14 +2,18 @@ import React from 'react';
 
 export default function SmallStories({ onCategorySelect }) {
   const stories = [
-    { id: 'Pharmacie', title: 'Pharmacie', icon: '💊', color: 'bg-blue-50' },
+    { id: 'Pharmacie', title: 'Pharmacie', icon: '💊', color: 'bg-green-50' },
+    { id: 'Restaurants', title: 'Restaurants', icon: '🍽️', color: 'bg-red-50' },
+    { id: 'Epicerie', title: 'Épicerie', icon: '🛒', color: 'bg-cyan-50' },
+    { id: 'Café', title: 'Café', icon: '☕', color: 'bg-amber-50' },
+    { id: 'Electronics', title: 'Électronique', icon: '📱', color: 'bg-indigo-50' },
+    { id: 'Maison', title: 'Maison', icon: '🏠', color: 'bg-teal-50' },
     { id: 'Mariage', title: 'Mariage', icon: '💍', color: 'bg-pink-50', badge: 'NOUVEAU' },
     { id: 'Pour Femme', title: 'Mode', icon: '👗', color: 'bg-orange-50' },
-    { id: 'Boutique Fleurs', title: 'Fleurs', icon: '💐', color: 'bg-red-50', badge: '45 min' },
+    { id: 'Boutique Fleurs', title: 'Fleurs', icon: '💐', color: 'bg-pink-50', badge: '45 min' },
     { id: 'Pour homme', title: 'Homme', icon: '👔', color: 'bg-purple-50' },
-    { id: 'Bébé', title: 'Bébé', icon: '👶', color: 'bg-cyan-50' },
-    { id: 'Maison', title: 'Maison', icon: '🏠', color: 'bg-green-50' },
-    { id: 'Outils', title: 'Outils', icon: '🔧', color: 'bg-yellow-50' },
+    { id: 'Bébé', title: 'Bébé', icon: '👶', color: 'bg-yellow-50' },
+    { id: 'Outils', title: 'Outils', icon: '🔧', color: 'bg-slate-50' },
   ];
 
   return (
