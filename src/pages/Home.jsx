@@ -17,6 +17,7 @@ import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import ProfileCompletionModal from '@/components/modals/ProfileCompletionModal';
+import ProductRecommendations from '@/components/recommendations/ProductRecommendations';
 import SEO from '@/components/SEO';
 
 export default function Home() {
@@ -301,7 +302,26 @@ export default function Home() {
               {/* Tout - Random Products */}
               {selectedCategory === 'Tout' ? (
                 <div className="mt-6">
-                  <h2 className="text-lg font-semibold text-slate-800 mb-4">
+                  {/* AI Recommendations */}
+                  <ProductRecommendations
+                    user={user}
+                    onProductClick={(p) => {
+                      const shop = shops.find(s => s.id === p.shop_id);
+                      if (shop) setSelectedShop(shop);
+                      setSelectedProduct(p);
+                    }}
+                    onAddToCart={(p) => {
+                      const shop = shops.find(s => s.id === p.shop_id);
+                      if (shop) {
+                        setSelectedShop(shop);
+                        handleAddToCart(p);
+                      }
+                    }}
+                    selectedShop={selectedShop}
+                    limit={6}
+                  />
+
+                  <h2 className="text-lg font-semibold text-slate-800 mb-4 mt-8">
                     Découvrir
                   </h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
