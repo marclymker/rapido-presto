@@ -25,6 +25,10 @@ export default function ProductDetailModal({ product, open, onClose, onAddToCart
   
   if (!product) return null;
   
+  const allImages = product.additional_images && product.additional_images.length > 0
+    ? [product.image_url, ...product.additional_images].filter(Boolean)
+    : product.image_url ? [product.image_url] : [];
+  
   const basePrice = product.promo_price && product.promo_price < product.price 
     ? product.promo_price 
     : product.price;
