@@ -23,85 +23,78 @@ export default function ProductCard({ product, onAdd, onClick }) {
   };
   
   return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all"
-    >
+    <div className="relative flex flex-col group">
+      {/* Bouton d'ajout flottant - Le petit + vert */}
+      {product.is_available !== false && (
+        <button 
+          className="absolute top-2 right-2 z-10 bg-[#25D366] text-white w-9 h-9 rounded-full shadow-lg flex items-center justify-center font-bold text-xl hover:scale-110 transition-transform hover:bg-green-600"
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            onAdd(product);
+          }}
+        >
+          +
+        </button>
+      )}
+
+      {/* Bouton WhatsApp pour Mariage */}
+      {product.category?.toLowerCase().trim() === 'mariage' && (
+        <button 
+          className="absolute top-2 left-2 z-10 bg-orange-500 text-white w-9 h-9 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform hover:bg-orange-600"
+          onClick={handleWhatsAppClick}
+          title="Voir le catalogue Mariage"
+        >
+          <MessageCircle className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* Badge Promo */}
+      {hasPromo && (
+        <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold z-10 shadow-md">
+          -{Math.round((1 - product.promo_price / product.price) * 100)}%
+        </div>
+      )}
+
+      {/* Image cliquable pour voir les détails */}
       <div 
-        className="h-28 bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden cursor-pointer"
+        className="aspect-square w-full rounded-2xl bg-slate-50 p-4 mb-3 cursor-pointer overflow-hidden"
         onClick={() => product.is_available !== false && onClick && onClick(product)}
       >
         {product.image_url ? (
           <img 
             src={product.image_url} 
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform"
             alt={product.name}
-            className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50">
+          <div className="w-full h-full flex items-center justify-center">
             <div className="text-center">
-              <div className="text-4xl mb-1">🍽️</div>
-              <p className="text-[10px] text-orange-600 font-medium px-2">Photo à venir</p>
+              <div className="text-5xl mb-2">🍽️</div>
+              <p className="text-[10px] text-slate-400 font-medium">Photo à venir</p>
             </div>
           </div>
         )}
-        {hasPromo && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-            Promo
-          </div>
-        )}
+        
         {!product.is_available && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-2xl">
             <span className="text-white text-sm font-medium">Indisponible</span>
           </div>
         )}
-        
-        {/* Payment badges overlay - MonCash */}
-        <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1.5 rounded-md shadow-sm flex items-center gap-1 pointer-events-none">
-          <img 
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/c7840ac69_image.png" 
-            alt="MonCash accepté" 
-            className="h-6 w-auto object-contain"
-          />
-        </div>
       </div>
-      <div className="p-3">
-        <h4 className="font-medium text-slate-800 text-sm truncate">{product.name}</h4>
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-2">
-            <span className={`font-bold ${hasPromo ? 'text-red-500' : 'text-slate-800'}`}>
-              {displayPrice} HTG
-            </span>
-            {hasPromo && (
-              <span className="text-xs text-slate-400 line-through">{originalDisplayPrice} HTG</span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5">
-            {product.category?.toLowerCase().trim() === 'mariage' && (
-              <Button 
-                size="icon" 
-                className="h-8 w-8 rounded-full bg-[#25D366] hover:bg-green-600"
-                onClick={handleWhatsAppClick}
-                title="Voir le catalogue Mariage"
-              >
-                <MessageCircle className="w-4 h-4" />
-              </Button>
-            )}
-            {product.is_available !== false && (
-              <Button 
-                size="icon" 
-                className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 animate-pulse hover:animate-none hover:scale-110 transition-transform"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAdd(product);
-                }}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
+
+      {/* Infos prix et nom */}
+      <div className="px-1">
+        <div className="flex items-center gap-2 mb-1">
+          <p className="text-lg font-black text-slate-900">{displayPrice} HTG</p>
+          {hasPromo && (
+            <p className="text-sm text-slate-400 line-through">{originalDisplayPrice} HTG</p>
+          )}
         </div>
+        <p className="text-sm text-slate-700 leading-tight h-10 overflow-hidden">{product.name}</p>
+        {product.delivery_time && (
+          <p className="text-[10px] text-slate-400 mt-1">📦 {product.delivery_time}</p>
+        )}
       </div>
-    </motion.div>
+    </div>
   );
 }
