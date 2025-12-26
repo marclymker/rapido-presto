@@ -53,15 +53,6 @@ export default function ProductCard({ product, onAdd, onClick }) {
             className="h-6 w-auto object-contain"
           />
         </div>
-        
-        {/* Payment badges overlay - Visa */}
-        <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1.5 rounded-md shadow-sm flex items-center gap-1 pointer-events-none">
-          <img 
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/7cdd08f39_image.png" 
-            alt="Visa accepté" 
-            className="h-6 w-auto object-contain"
-          />
-        </div>
       </div>
       <div className="p-3">
         <h4 className="font-medium text-slate-800 text-sm truncate">{product.name}</h4>
