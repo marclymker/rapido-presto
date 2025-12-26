@@ -907,6 +907,46 @@ Format JSON strict requis.`;
               onUpdateShop={(data) => updateShopMutation.mutate(data)}
             />
           </TabsContent>
+
+          {/* Account Tab */}
+          <TabsContent value="account" className="space-y-6">
+            <div className="bg-white rounded-xl p-4">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden">
+                  {entrepriseData.company_logo_url ? (
+                    <img src={entrepriseData.company_logo_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Package className="w-8 h-8 text-orange-500" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="font-semibold text-lg text-slate-800">{entrepriseData.company_name}</h2>
+                  <p className="text-sm text-slate-500">{entrepriseData.company_category}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t">
+                <div className="flex items-center gap-3 text-slate-600">
+                  <span className="text-slate-500">Email:</span>
+                  <span>{user.email}</span>
+                </div>
+                {user.phone && (
+                  <div className="flex items-center gap-3 text-slate-600">
+                    <span className="text-slate-500">Téléphone:</span>
+                    <span>{user.phone}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Button 
+              variant="outline" 
+              className="w-full border-red-200 text-red-600 hover:bg-red-50"
+              onClick={() => base44.auth.logout()}
+            >
+              Déconnexion
+            </Button>
+          </TabsContent>
         </Tabs>
       </main>
 
