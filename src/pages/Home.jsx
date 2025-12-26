@@ -234,6 +234,29 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Login/Cart buttons */}
+            <div className="flex items-center gap-2">
+              {user ? (
+                <Link to={createPageUrl('Cart')}>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <ShoppingCart className="w-5 h-5" />
+                    {cartCount > 0 && (
+                      <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-orange-500 text-white text-xs">
+                        {cartCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  size="sm"
+                  onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  Se connecter
+                </Button>
+              )}
+            </div>
           </div>
           
           {/* Search Bar */}
