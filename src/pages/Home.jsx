@@ -27,6 +27,7 @@ import CreditBanner from '@/components/home/CreditBanner';
 import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import FloatingMerchantBanner from '@/components/home/FloatingMerchantBanner';
+import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -260,6 +261,9 @@ export default function Home() {
       
       {/* Floating Merchant Banner */}
       <FloatingMerchantBanner user={user} />
+      
+      {/* Merchant Profile Alert */}
+      <MerchantProfileAlert user={user} />
       
       {/* SEO Meta Tags */}
       <SEO 
