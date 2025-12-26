@@ -36,6 +36,8 @@ export default function Home() {
   const [googlePlaces, setGooglePlaces] = useState([]);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const queryClient = useQueryClient();
   
   // Auto-refresh des données
@@ -78,6 +80,21 @@ export default function Home() {
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, []);
+
+  // Auto-hide header on scroll
+  useEffect(() => {
+    const controlHeader = () => {
+      if (window.scrollY > lastScrollY && window.scrollY > 50) {
+        setShowHeader(false);
+      } else {
+        setShowHeader(true);
+      }
+      setLastScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', controlHeader);
+    return () => window.removeEventListener('scroll', controlHeader);
+  }, [lastScrollY]);
 
   const handleProfileComplete = (profileType) => {
     setShowProfileModal(false);
@@ -261,8 +278,8 @@ export default function Home() {
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 
-      {/* Header - Sticky */}
-      <div className="sticky top-0 bg-white z-50 shadow-sm">
+      {/* Header - Sticky with Auto-Hide */}
+      <div className={`fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md z-50 shadow-sm transition-transform duration-300 ${showHeader ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="p-4">
           {/* Titre et Login */}
           <div className="flex items-center justify-between mb-3">
