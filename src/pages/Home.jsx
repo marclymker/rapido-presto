@@ -246,6 +246,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white pb-20">
+      {/* Bannière Recrutement */}
+      <RecruitmentBanner />
+      
       {/* SEO Meta Tags */}
       <SEO 
         title={selectedShop ? selectedShop.company_name : "Commandez et faites-vous livrer rapidement"}
