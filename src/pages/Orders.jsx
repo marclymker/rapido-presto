@@ -13,6 +13,7 @@ import OrderDetailModal from '@/components/modals/OrderDetailModal';
 import OrderProgressBar from '@/components/orders/OrderProgressBar';
 import ReviewModal from '@/components/modals/ReviewModal';
 import DeliveryMap from '@/components/orders/DeliveryMap';
+import DeliveryTracking from '@/components/maps/DeliveryTracking';
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
 import { toast } from "sonner";
@@ -137,7 +138,7 @@ export default function Orders() {
 
       {/* Carte en temps réel pour les commandes en livraison */}
       {['driver_assigned', 'in_delivery'].includes(order.status) && order.driver_location && (
-        <div className="mt-4">
+        <div className="mt-4 h-48 rounded-xl overflow-hidden border border-slate-200">
           <DeliveryMap order={order} />
         </div>
       )}
@@ -253,12 +254,29 @@ export default function Orders() {
         </Tabs>
       </main>
 
-      <OrderDetailModal
-        order={selectedOrder}
-        open={!!selectedOrder}
-        onClose={() => setSelectedOrder(null)}
-        userType="client"
-      />
+      {selectedOrder && ['driver_assigned', 'in_delivery'].includes(selectedOrder.status) ? (
+        <div className={`fixed inset-0 z-50 ${selectedOrder ? 'block' : 'hidden'}`}>
+          <div className="absolute inset-0 bg-black/50" onClick={() => setSelectedOrder(null)} />
+          <div className="absolute inset-0">
+            <DeliveryTracking order={selectedOrder} />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedOrder(null)}
+              className="absolute top-4 right-4 bg-white shadow-lg rounded-full z-50"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <OrderDetailModal
+          order={selectedOrder}
+          open={!!selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          userType="client"
+        />
+      )}
 
       <ReviewModal
         order={reviewOrder}
