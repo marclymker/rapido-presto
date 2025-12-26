@@ -15,7 +15,7 @@ const REGIONS = [
   "Petion-ville", "Route de Freres", "Delmas", "Pelerin", "Thomassain", "Kenscoff",
   "Lalue", "Nazon", "Pernier", "Sarthe", "Tabarre", "Clercine", "Marrin",
   "Bon Repos", "Turgeau", "Canapevert", "Lavil", "Madeline", "Vaudreuil",
-  "Morne Rouge", "Cap Haitien", "St Marc", "Gonaives", "Les Cayes"
+  "Morne Rouge", "Cap Haitien", "St Marc", "Gonaives", "Les Cayes", "Limonade"
 ];
 
 export default function Account() {
