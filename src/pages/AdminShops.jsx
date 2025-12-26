@@ -257,7 +257,7 @@ export default function AdminShops() {
 
               <div className="col-span-2">
                 <Label>Assigner à un utilisateur entreprise</Label>
-                <Select value={formData.user_id} onValueChange={(val) => setFormData({ ...formData, user_id: val })}>
+                <Select value={formData.user_id} onValueChange={(val) => setFormData({ ...formData, user_id: val === "" ? "" : val })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un utilisateur (optionnel)" />
                   </SelectTrigger>
