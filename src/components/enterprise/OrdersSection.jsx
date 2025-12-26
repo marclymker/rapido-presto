@@ -24,10 +24,19 @@ export default function OrdersSection({ orders = [] }) {
       <h2 className="text-lg font-bold mb-6 text-gray-900">Commandes en cours</h2>
       
       {orders.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 text-center border">
-          <div className="text-6xl mb-4">📦</div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">Aucune commande</h3>
-          <p className="text-gray-500">Vos nouvelles commandes apparaîtront ici</p>
+        <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-12 text-center border-2 border-orange-200">
+          <div className="text-6xl mb-4">📈</div>
+          <h3 className="text-2xl font-bold text-gray-800 mb-3">Augmentez vos revenus</h3>
+          <p className="text-gray-600 mb-6">Ajoutez des articles pour recevoir vos premières commandes</p>
+          <button 
+            onClick={() => {
+              const addButton = document.querySelector('[data-add-product-btn]');
+              if (addButton) addButton.click();
+            }}
+            className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105 shadow-lg"
+          >
+            Ajouter des Articles +
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
