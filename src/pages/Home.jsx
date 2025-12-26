@@ -281,6 +281,10 @@ export default function Home() {
                   onClick={() => {
                     setSelectedCategory(service.id);
                     setSelectedShop(null);
+                    setGooglePlaces([]);
+                    if (service.googleType && userLocation) {
+                      fetchGooglePlaces(service.googleType);
+                    }
                   }}
                   className={`${service.bgColor} rounded-3xl p-4 flex flex-col items-center transition-transform hover:scale-105 active:scale-95`}
                 >
@@ -400,7 +404,7 @@ export default function Home() {
                     </span>
                   </button>
                 ))}
-                {shops.length === 0 && (
+                {allShops.length === 0 && !loadingPlaces && (
                   <div className="text-center py-8 text-slate-400 text-xs">
                     Aucune boutique
                   </div>
@@ -467,9 +471,25 @@ export default function Home() {
                 <h2 className="text-2xl font-black text-slate-800 capitalize">
                   {selectedShop.company_name}
                 </h2>
+                {selectedShop.is_google_place && (
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                    📍 Google Places
+                  </span>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+              {selectedShop.is_google_place ? (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">🏪</div>
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">Commerce Google Places</h3>
+                  <p className="text-slate-500 mb-4">{selectedShop.vicinity}</p>
+                  <p className="text-sm text-slate-400">
+                    Ce commerce n'est pas encore sur Rapido Presto.<br/>
+                    Les produits ne sont pas disponibles en ligne.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map(product => (
                   <ProductCard
                     key={product.id}
@@ -478,8 +498,9 @@ export default function Home() {
                     onClick={() => setSelectedProduct(product)}
                   />
                 ))}
-              </div>
-              {filteredProducts.length === 0 && (
+                </div>
+              )}
+              {!selectedShop.is_google_place && filteredProducts.length === 0 && (
                 <div className="text-center py-12 text-slate-500">
                   Aucun article trouvé
                 </div>
