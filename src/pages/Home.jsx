@@ -351,6 +351,28 @@ export default function Home() {
               }}
             />
 
+            {/* Bouton Marchand - Visible uniquement pour les entreprises */}
+            {user?.profiles?.entreprise?.is_active && (
+              <div className="px-4 mb-4">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                      <span className="text-2xl">🏪</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800">Vous êtes marchand ?</p>
+                      <p className="text-xs text-gray-600">Ajoutez vos produits maintenant</p>
+                    </div>
+                  </div>
+                  <Link to={createPageUrl('EnterpriseDashboard')}>
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6">
+                      + Vendre
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {/* Credit Banner */}
             <CreditBanner />
 
@@ -392,9 +414,22 @@ export default function Home() {
                 limit={6}
               />
 
-              <h3 className="text-lg font-semibold text-slate-800 mb-4 mt-6">
-                Découvrir
-              </h3>
+              <div className="flex justify-between items-center mb-4 mt-6">
+                <h3 className="text-lg font-semibold text-slate-800">
+                  Découvrir
+                </h3>
+                {user?.profiles?.entreprise?.is_active && (
+                  <Link to={createPageUrl('EnterpriseDashboard')}>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-full text-xs"
+                    >
+                      + Vendre ici
+                    </Button>
+                  </Link>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 {filteredRandomProducts.map(product => (
                   <ProductCard
@@ -499,9 +534,22 @@ export default function Home() {
                   {/* Liste défilante (65% de l'écran) */}
                   <div className="flex-1 overflow-y-auto rounded-t-3xl -mt-4 bg-white z-10 p-4 shadow-xl">
                     <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-4" />
-                    <h3 className="text-lg font-black text-slate-800 mb-4">
-                      📍 Boutiques à proximité
-                    </h3>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-black text-slate-800">
+                        📍 Boutiques à proximité
+                      </h3>
+                      {user?.profiles?.entreprise?.is_active && (
+                        <Link to={createPageUrl('EnterpriseDashboard')}>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-full text-xs"
+                          >
+                            + Vendre dans {selectedCategory}
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
                     <div className="flex flex-col gap-3">
                       {googlePlaces.map(place => (
                         <GooglePlaceCard
@@ -605,11 +653,24 @@ export default function Home() {
                 <h2 className="text-2xl font-black text-slate-800 capitalize">
                   {selectedShop.company_name}
                 </h2>
-                {selectedShop.is_google_place && (
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                    📍 Google Places
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {selectedShop.is_google_place && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                      📍 Google Places
+                    </span>
+                  )}
+                  {user?.profiles?.entreprise?.is_active && (
+                    <Link to={createPageUrl('EnterpriseDashboard')}>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-full text-xs"
+                      >
+                        + Vendre dans {selectedCategory}
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
 
               {selectedShop.is_google_place ? (
