@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
-import { UtensilsCrossed, Pill, Shirt, ShoppingBasket, Coffee, Pizza, Flower, User, Smartphone, UserCircle, Home, Baby, Wrench } from 'lucide-react';
+import { UtensilsCrossed, Pill, Heart, ShoppingBasket, Coffee, Pizza, Flower, User, Smartphone, UserCircle, Home, Baby, Wrench } from 'lucide-react';
 
 const categories = [
   { id: 'Tout', label: 'Tout', icon: Home },
@@ -8,7 +8,7 @@ const categories = [
   { id: 'Restaurants', label: 'Restaurants', icon: UtensilsCrossed },
   { id: 'Boutique Fleurs', label: 'Fleurs', icon: Flower },
   { id: 'Pharmacie', label: 'Pharmacie', icon: Pill },
-  { id: 'Vêtements', label: 'Vêtements', icon: Shirt },
+  { id: 'Mariage', label: 'Mariage', icon: Heart },
   { id: 'Epicerie', label: 'Épicerie', icon: ShoppingBasket },
   { id: 'Café', label: 'Café', icon: Coffee },
   { id: 'Pour Femme', label: 'Femme', icon: User },
