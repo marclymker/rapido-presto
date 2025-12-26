@@ -594,6 +594,7 @@ Format JSON strict requis.`;
                 )}
               </div>
             </div>
+            </div>
           )}
 
           {/* Products Tab */}
