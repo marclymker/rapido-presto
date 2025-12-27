@@ -742,6 +742,7 @@ export default function Home() {
                   <ProductCard
                     key={product.id}
                     product={product}
+                    shop={selectedShop}
                     onAdd={handleAddToCart}
                     onClick={() => {
                       if (!user) {

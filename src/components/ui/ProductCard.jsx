@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { base44 } from '@/api/base44Client';
 
-export default function ProductCard({ product, onAdd, onClick }) {
+export default function ProductCard({ product, onAdd, onClick, shop }) {
   const hasPromo = product.promo_price && product.promo_price < product.price;
   const displayPrice = hasPromo 
     ? applyClientMargin(product.promo_price) 

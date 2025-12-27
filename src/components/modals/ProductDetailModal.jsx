@@ -115,7 +115,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             )}
           </div>
           
-          {product.category?.toLowerCase().trim() === "mariage" && (
+          {shop?.company_category === "Mariage" && (
             <button
               onClick={handleWhatsAppClick}
               className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-3 bg-[#25D366] hover:bg-[#1ebd58] text-white rounded-xl font-semibold transition-colors shadow-lg"

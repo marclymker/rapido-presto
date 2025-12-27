@@ -93,14 +93,18 @@ export default function ProductRecommendations({ user, onProductClick, onAddToCa
       </div>
       
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
-        {recommendations.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            onClick={(p) => onProductClick(p)}
-            onAdd={(p) => onAddToCart(p)}
-          />
-        ))}
+        {recommendations.map((product) => {
+          const productShop = shops.find(s => s.id === product.shop_id);
+          return (
+            <ProductCard
+              key={product.id}
+              product={product}
+              shop={productShop}
+              onClick={(p) => onProductClick(p)}
+              onAdd={(p) => onAddToCart(p)}
+            />
+          );
+        })}
       </div>
     </motion.div>
   );
