@@ -12,6 +12,7 @@ import NotificationPermission from '@/components/notifications/NotificationPermi
 import { HelmetProvider, Helmet } from 'react-helmet-async';
 import ReactPixel from 'react-facebook-pixel';
 import SmartBottomNav from '@/components/navigation/SmartBottomNav';
+import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -117,11 +118,18 @@ export default function Layout({ children, currentPageName }) {
       
       {children}
 
-      {/* Smart Bottom Navigation */}
+      {/* Smart Bottom Navigation - Client */}
       {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (
         <SmartBottomNav 
           cartCount={cartCount} 
           activeOrdersCount={activeOrdersCount}
+        />
+      )}
+
+      {/* Business Smart Navigation - Entreprise & Livreur */}
+      {user && !noNavPages.includes(currentPageName) && (user.current_profile === 'entreprise' || user.current_profile === 'livreur') && currentPageName === 'Home' && (
+        <BusinessSmartNav 
+          userRole={user.current_profile}
         />
       )}
       </div>
