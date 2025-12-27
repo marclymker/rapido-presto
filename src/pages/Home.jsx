@@ -30,6 +30,7 @@ import FloatingMerchantBanner from '@/components/home/FloatingMerchantBanner';
 import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
 import FlashBanner from '@/components/home/FlashBanner';
 import FlowersBanner from '@/components/home/FlowersBanner';
+import GiftBanner from '@/components/home/GiftBanner';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -435,6 +436,9 @@ export default function Home() {
 
             {/* Flowers Banner */}
             <FlowersBanner />
+
+            {/* Gift Banner */}
+            <GiftBanner />
 
             {/* Boutons de Types d'Articles (Grid) */}
             <div className="grid grid-cols-2 gap-3 p-4">
