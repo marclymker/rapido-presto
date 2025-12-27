@@ -520,7 +520,13 @@ export default function Home() {
                 {shops.map(shop => (
                   <button
                     key={shop.id}
-                    onClick={() => setSelectedShop(shop)}
+                    onClick={() => {
+                      if (!user) {
+                        base44.auth.redirectToLogin(window.location.pathname);
+                        return;
+                      }
+                      setSelectedShop(shop);
+                    }}
                     className="w-full flex flex-col items-center mb-4 p-3 rounded-2xl hover:bg-white transition-colors cursor-pointer group"
                   >
                     <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mb-2 overflow-hidden group-hover:scale-110 transition-transform">
@@ -540,7 +546,13 @@ export default function Home() {
                 {googlePlaces.map(place => (
                   <button
                     key={place.id}
-                    onClick={() => setSelectedShop(place)}
+                    onClick={() => {
+                      if (!user) {
+                        base44.auth.redirectToLogin(window.location.pathname);
+                        return;
+                      }
+                      setSelectedShop(place);
+                    }}
                     className="w-full flex flex-col items-center mb-4 p-3 rounded-2xl hover:bg-white transition-colors cursor-pointer group"
                   >
                     <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mb-2 overflow-hidden group-hover:scale-110 transition-transform border-2 border-blue-200">
