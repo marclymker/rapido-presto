@@ -13,19 +13,25 @@ import { HelmetProvider, Helmet } from 'react-helmet-async';
 import ReactPixel from 'react-facebook-pixel';
 import SmartBottomNav from '@/components/navigation/SmartBottomNav';
 import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
+import WelcomeModal from '@/components/modals/WelcomeModal';
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   useEffect(() => {
     base44.auth.me()
       .then(u => {
         setUser(u);
         setLoading(false);
+        // Show welcome modal if user has no profile set up
+        if (u && !u.current_profile && currentPageName !== 'ProfileSetup') {
+          setShowWelcomeModal(true);
+        }
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [currentPageName]);
 
   // Initialize Meta Pixel
   useEffect(() => {
@@ -108,6 +114,13 @@ export default function Layout({ children, currentPageName }) {
         <Toaster position="top-center" />
         <OneSignalInit user={user} />
         <NotificationPermission />
+        
+        {/* Welcome Modal for first-time users */}
+        <WelcomeModal 
+          user={user}
+          open={showWelcomeModal}
+          onClose={() => setShowWelcomeModal(false)}
+        />
       
       {/* Profile Switcher (top right for desktop - clients only) */}
       {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (
