@@ -46,40 +46,42 @@ export default function FloatingMerchantBanner({ user }) {
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -50 }}
-        className="fixed top-20 left-4 right-4 z-50"
-      >
-        <div className="max-w-lg mx-auto">
-          <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-2xl p-4">
-            <button
-              onClick={() => setIsVisible(false)}
-              className="absolute top-2 right-2 w-6 h-6 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
-            >
-              <X className="w-4 h-4 text-white" />
-            </button>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          className="fixed top-20 left-4 right-4 z-50"
+        >
+          <div className="max-w-lg mx-auto">
+            <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-2xl p-4 relative">
+              <button
+                onClick={() => setIsVisible(false)}
+                className="absolute top-2 right-2 w-6 h-6 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
 
-            <Link 
-              to={createPageUrl('ManageProfiles')}
-              className="flex items-center gap-3"
-            >
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                <Store className="w-6 h-6 text-orange-500" />
-              </div>
-              <div className="flex-1">
-                <p className="text-white font-bold text-sm">
-                  💰 Gagner plus d'argent en publiant vos produits
-                </p>
-                <p className="text-white/90 text-xs mt-0.5">
-                  Devenir Marchand →
-                </p>
-              </div>
-            </Link>
+              <Link 
+                to={createPageUrl('ManageProfiles')}
+                className="flex items-center gap-3"
+              >
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                  <Store className="w-6 h-6 text-orange-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-bold text-sm">
+                    💰 Gagner plus d'argent en publiant vos produits
+                  </p>
+                  <p className="text-white/90 text-xs mt-0.5">
+                    Devenir Marchand →
+                  </p>
+                </div>
+              </Link>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }
