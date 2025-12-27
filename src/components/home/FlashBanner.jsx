@@ -60,7 +60,7 @@ export default function FlashBanner() {
           onClick={() => {
             window.location.href = createPageUrl('Home');
             setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('setSearchQuery', { detail: 'montre lunette' }));
+              window.dispatchEvent(new CustomEvent('selectCategory', { detail: 'Pour homme' }));
             }, 100);
           }}
           className="bg-white text-blue-600 px-6 py-3 rounded-full font-black text-sm hover:scale-105 transition-transform shadow-lg"
