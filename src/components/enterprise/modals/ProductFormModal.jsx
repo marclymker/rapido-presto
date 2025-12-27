@@ -100,7 +100,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `Analysez ce produit: "${formData.name}". Générez:
 1. Une description marketing attractive (2-3 phrases)
-2. La catégorie (choix: Fastfood, Restaurants, Boutique Fleurs, Pharmacie, Mariage, Epicerie, Café, Pour Femme, Electronics, Pour homme, Maison, Bébé, Outils)
+2. Le type d'article (choix: Fastfood, Restaurants, Boutique Fleurs, Pharmacie, Mariage, Epicerie, Café, Pour Femme, Electronics, Pour homme, Maison, Bébé, Outils)
 3. 5 tags SEO pertinents en français`,
         file_urls: [formData.image_url],
         response_json_schema: {
@@ -257,7 +257,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Catégorie *</Label>
+              <Label>Type d'article *</Label>
               <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -278,6 +278,9 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
                   <SelectItem value="Outils">Outils</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-slate-500 mt-1">
+                Le type d'article peut être différent de votre catégorie boutique
+              </p>
             </div>
 
             <div>
