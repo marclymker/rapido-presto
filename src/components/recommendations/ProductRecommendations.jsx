@@ -6,15 +6,49 @@ import { Sparkles, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function ProductRecommendations({ user, onProductClick, onAddToCart, selectedShop, limit = 6 }) {
-  const { data: recommendations = [], isLoading } = useQuery({
-    queryKey: ['recommendations', user?.id, limit],
-    queryFn: async () => {
-      const { data } = await base44.functions.invoke('getRecommendations', { limit });
-      return data.recommendations || [];
-    },
-    refetchInterval: 300000, // Refresh every 5 minutes
+  // Fetch all products and shops
+  const { data: allProducts = [] } = useQuery({
+    queryKey: ['all-products-recommendations'],
+    queryFn: () => base44.entities.Product.filter({ is_available: true }),
+    refetchInterval: 300000,
     staleTime: 240000
   });
+
+  const { data: shops = [] } = useQuery({
+    queryKey: ['shops-recommendations'],
+    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    refetchInterval: 300000,
+    staleTime: 240000
+  });
+
+  // Calculate recommendations: 1 product per category per shop
+  const recommendations = React.useMemo(() => {
+    const result = [];
+    const shopCategoryMap = new Map();
+
+    // Group products by shop and category
+    allProducts.forEach(product => {
+      if (!shopCategoryMap.has(product.shop_id)) {
+        shopCategoryMap.set(product.shop_id, new Map());
+      }
+      const categoryMap = shopCategoryMap.get(product.shop_id);
+      if (!categoryMap.has(product.category)) {
+        categoryMap.set(product.category, product);
+      }
+    });
+
+    // Extract 1 product per category per shop
+    shopCategoryMap.forEach((categoryMap) => {
+      categoryMap.forEach((product) => {
+        result.push(product);
+      });
+    });
+
+    // Shuffle and limit
+    return result.sort(() => Math.random() - 0.5).slice(0, limit);
+  }, [allProducts, limit]);
+
+  const isLoading = !allProducts.length && !shops.length;
 
   if (isLoading) {
     return (
