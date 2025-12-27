@@ -1,21 +1,30 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, Package, Store, Bike, TrendingUp } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 
 export default function BusinessSmartNav({ activeTab, setActiveTab, userRole, pendingCount = 0 }) {
+  const navigate = useNavigate();
 
   const navItems = userRole === 'entreprise' ? [
-    { id: 'orders', label: 'Commandes', icon: Package, badge: pendingCount },
-    { id: 'products', label: 'Articles', icon: Store },
-    { id: 'stats', label: 'Stats', icon: TrendingUp },
+    { id: 'orders', label: 'Commandes', icon: Package, badge: pendingCount, page: 'EnterpriseDashboard' },
+    { id: 'products', label: 'Articles', icon: Store, page: 'EnterpriseDashboard' },
+    { id: 'stats', label: 'Stats', icon: TrendingUp, page: 'EnterpriseDashboard' },
     { id: 'home', label: 'Catalogue', icon: Home, external: true }
   ] : [
-    { id: 'available', label: 'Disponibles', icon: Package },
-    { id: 'active', label: 'En cours', icon: Bike },
+    { id: 'available', label: 'Disponibles', icon: Package, page: 'DriverDashboard' },
+    { id: 'active', label: 'En cours', icon: Bike, page: 'DriverDashboard' },
     { id: 'home', label: 'Catalogue', icon: Home, external: true }
   ];
+
+  const handleNavClick = (item) => {
+    if (setActiveTab) {
+      setActiveTab(item.id);
+    } else if (item.page) {
+      navigate(createPageUrl(item.page));
+    }
+  };
 
   return (
     <nav 
@@ -51,7 +60,7 @@ export default function BusinessSmartNav({ activeTab, setActiveTab, userRole, pe
           return (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => handleNavClick(item)}
               className="flex flex-col items-center justify-center flex-1 gap-1 relative"
             >
               <div className={`p-2 rounded-2xl transition-all relative ${
