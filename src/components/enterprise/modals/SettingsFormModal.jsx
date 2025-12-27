@@ -3,9 +3,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from '@/api/base44Client';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
+
+const REGIONS = [
+  "Petion-ville", "Route de Freres", "Delmas", "Pelerin", "Thomassain", "Kenscoff",
+  "Lalue", "Nazon", "Pernier", "Sarthe", "Tabarre", "Clercine", "Marrin",
+  "Bon Repos", "Turgeau", "Canapevert", "Lavil", "Madeline", "Vaudreuil",
+  "Morne Rouge", "Cap Haitien", "St Marc", "Gonaives", "Les Cayes", "Limonade"
+];
 
 export default function SettingsFormModal({ shop, type, open, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -112,12 +120,20 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
             <>
               <div>
                 <Label>Région/Commune *</Label>
-                <Input
+                <Select 
                   required
                   value={formData.region}
-                  onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                  placeholder="Ex: Pétion-Ville"
-                />
+                  onValueChange={(val) => setFormData({ ...formData, region: val })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une région" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REGIONS.map(region => (
+                      <SelectItem key={region} value={region}>{region}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Téléphone WhatsApp *</Label>
