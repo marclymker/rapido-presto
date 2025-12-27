@@ -4,7 +4,7 @@ import OrderActionModal from './modals/OrderActionModal';
 import { useQueryClient } from '@tanstack/react-query';
 import OrderFilters from '@/components/filters/OrderFilters';
 
-export default function OrdersSection({ orders = [], onAddProduct }) {
+export default function OrdersSection({ orders = [], onAddProduct, userType = 'entreprise', isSelfOrders = false }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [filter, setFilter] = useState('all');
   const queryClient = useQueryClient();
@@ -30,9 +30,11 @@ export default function OrdersSection({ orders = [], onAddProduct }) {
       {/* Header fixe avec filtre */}
       <div className="sticky top-0 z-20 bg-white shadow-sm">
         <div className="p-6 pb-2">
-          <h2 className="text-2xl font-black text-gray-800">Mes Commandes</h2>
+          <h2 className="text-2xl font-black text-gray-800">
+            {isSelfOrders ? 'Mes Achats' : 'Mes Commandes'}
+          </h2>
         </div>
-        <OrderFilters currentFilter={filter} setFilter={setFilter} userRole="entreprise" />
+        {!isSelfOrders && <OrderFilters currentFilter={filter} setFilter={setFilter} userRole="entreprise" />}
       </div>
 
       <div className="p-6 pb-24">
@@ -88,7 +90,11 @@ export default function OrdersSection({ orders = [], onAddProduct }) {
         order={selectedOrder}
         open={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
-        onSuccess={() => queryClient.invalidateQueries(['shop-orders'])}
+        onSuccess={() => {
+          queryClient.invalidateQueries(['shop-orders']);
+          queryClient.invalidateQueries(['self-orders']);
+        }}
+        userType={isSelfOrders ? 'client' : userType}
       />
       </div>
     </div>
