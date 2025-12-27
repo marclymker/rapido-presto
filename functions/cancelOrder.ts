@@ -1,0 +1,103 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+
+    if (!user) {
+      return Response.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const {
+      orderId,
+      reason_id,
+      reason_label,
+      reason_details,
+      fee,
+      refund,
+      percent
+    } = await req.json();
+
+    // Get order details
+    const order = await base44.entities.Order.filter({ id: orderId });
+    if (!order || order.length === 0) {
+      return Response.json({ error: 'Commande introuvable' }, { status: 404 });
+    }
+
+    const orderData = order[0];
+
+    // Verify user owns this order
+    if (orderData.client_id !== user.id) {
+      return Response.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
+    // Check if order can be cancelled
+    if (['delivered', 'cancelled'].includes(orderData.status)) {
+      return Response.json({ error: 'Cette commande ne peut pas être annulée' }, { status: 400 });
+    }
+
+    // Create cancellation log
+    await base44.asServiceRole.entities.CancellationLog.create({
+      order_id: orderId,
+      order_number: orderData.order_number,
+      client_id: user.id,
+      client_name: user.full_name,
+      shop_id: orderData.shop_id,
+      shop_name: orderData.shop_name,
+      cancelled_by: 'client',
+      reason_id,
+      reason_label,
+      reason_details: reason_details || '',
+      order_status_at_cancellation: orderData.status,
+      order_total: orderData.total,
+      cancellation_fee: fee,
+      refund_amount: refund,
+      fee_percentage: percent,
+      payment_method: orderData.payment_method,
+      refund_status: orderData.payment_method === 'CASH' && fee > 0 ? 'added_to_balance' : 'pending'
+    });
+
+    // Update order status
+    await base44.asServiceRole.entities.Order.update(orderId, {
+      status: 'cancelled'
+    });
+
+    // Handle refund based on payment method
+    if (orderData.payment_method === 'CASH' && fee > 0) {
+      // Add fee to user's pending balance
+      const currentBalance = user.pending_balance || 0;
+      await base44.asServiceRole.auth.updateMe({
+        pending_balance: currentBalance + fee
+      });
+    } else if (orderData.payment_method !== 'CASH' && refund > 0) {
+      // For digital payments, initiate refund process
+      // This would integrate with Moncash/NatCash APIs
+      // For now, we just log it
+      console.log(`Refund of ${refund} HTG should be processed for order ${orderData.order_number}`);
+    }
+
+    // Send notifications to shop and driver
+    try {
+      await base44.asServiceRole.functions.invoke('sendOrderNotification', {
+        orderId,
+        type: 'cancelled',
+        message: `La commande ${orderData.order_number} a été annulée par le client.`
+      });
+    } catch (e) {
+      console.error('Failed to send notification:', e);
+    }
+
+    return Response.json({
+      success: true,
+      message: 'Commande annulée avec succès',
+      refund_amount: refund,
+      cancellation_fee: fee,
+      balance_updated: orderData.payment_method === 'CASH' && fee > 0
+    });
+
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    return Response.json({ error: error.message || 'Erreur serveur' }, { status: 500 });
+  }
+});

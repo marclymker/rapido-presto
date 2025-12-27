@@ -18,11 +18,14 @@ import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
 import { toast } from "sonner";
 import ReactPixel from 'react-facebook-pixel';
+import CancelOrderModal from '@/components/modals/CancelOrderModal';
+import { useMutation } from '@tanstack/react-query';
 
 export default function Orders() {
   const [user, setUser] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [reviewOrder, setReviewOrder] = useState(null);
+  const [cancellingOrder, setCancellingOrder] = useState(null);
   const queryClient = useQueryClient();
   
   // Auto-refresh toutes les 60 secondes
@@ -106,6 +109,33 @@ export default function Orders() {
     }
   };
 
+  const cancelOrderMutation = useMutation({
+    mutationFn: async ({ orderId, cancellationData }) => {
+      return await base44.functions.invoke('cancelOrder', {
+        orderId,
+        ...cancellationData
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['orders']);
+      queryClient.invalidateQueries(['cart']);
+      base44.auth.me().then(u => setUser(u));
+      toast.success('Commande annulée avec succès');
+      setCancellingOrder(null);
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erreur lors de l\'annulation');
+    }
+  });
+
+  const handleCancelOrder = (cancellationData) => {
+    if (!cancellingOrder) return;
+    cancelOrderMutation.mutate({
+      orderId: cancellingOrder.id,
+      cancellationData
+    });
+  };
+
   const activeOrders = orders.filter(o => 
     !['delivered', 'cancelled'].includes(o.status)
   );
@@ -159,6 +189,21 @@ export default function Orders() {
             </a>
           )}
         </div>
+      )}
+
+      {/* Cancel Button for Active Orders */}
+      {!['delivered', 'cancelled'].includes(order.status) && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setCancellingOrder(order);
+          }}
+          className="mt-3 w-full border-red-200 text-red-600 hover:bg-red-50"
+        >
+          Annuler la commande
+        </Button>
       )}
 
       {/* Review Button for Delivered Orders */}
@@ -283,6 +328,14 @@ export default function Orders() {
         open={!!reviewOrder}
         onClose={() => setReviewOrder(null)}
         onSubmit={(reviewData) => handleSubmitReview(reviewOrder?.id, reviewData)}
+      />
+
+      <CancelOrderModal
+        order={cancellingOrder}
+        open={!!cancellingOrder}
+        onClose={() => setCancellingOrder(null)}
+        onConfirm={handleCancelOrder}
+        loading={cancelOrderMutation.isPending}
       />
 
       <BackgroundSyncIndicator 
