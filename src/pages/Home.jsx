@@ -92,30 +92,35 @@ export default function Home() {
     window.location.href = createPageUrl(redirectPages[profileType]);
   };
 
-  // Fetch shops (boutiques) - public entity
+  // Fetch all shops
   const { data: shops = [] } = useQuery({
-    queryKey: ['shops', selectedCategory],
-    queryFn: () => {
-      if (selectedCategory === 'Tout') {
-        return base44.entities.Shop.filter({ is_active: true });
-      }
-      return base44.entities.Shop.filter({ 
-        company_category: selectedCategory,
-        is_active: true 
-      });
-    },
+    queryKey: ['shops'],
+    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
     refetchInterval: 60000,
     refetchIntervalInBackground: true
   });
 
-  // Fetch all products for "Tout" category
+  // Fetch all products
   const { data: allProducts = [] } = useQuery({
     queryKey: ['all-products'],
     queryFn: () => base44.entities.Product.list(),
-    enabled: selectedCategory === 'Tout' && !selectedShop,
+    enabled: !selectedShop,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
   });
+
+  // Filter products by selected article type
+  const filteredProductsByType = React.useMemo(() => {
+    if (selectedCategory === 'Tout') return allProducts;
+    return allProducts.filter(p => p.category === selectedCategory && p.is_available !== false);
+  }, [allProducts, selectedCategory]);
+
+  // Get unique shops from filtered products
+  const shopsWithProducts = React.useMemo(() => {
+    if (selectedCategory === 'Tout') return shops;
+    const shopIds = new Set(filteredProductsByType.map(p => p.shop_id));
+    return shops.filter(s => shopIds.has(s.id));
+  }, [shops, filteredProductsByType, selectedCategory]);
 
   // Fetch products for selected shop
   const { data: products = [] } = useQuery({
@@ -151,8 +156,8 @@ export default function Home() {
     }
   };
 
-  // Combiner boutiques locales et Google Places
-  const allShops = [...shops, ...googlePlaces];
+  // Combiner boutiques locales filtrées et Google Places
+  const allShops = [...shopsWithProducts, ...googlePlaces];
 
   // Fetch cart items
   const { data: cartItems = [] } = useQuery({
@@ -238,13 +243,13 @@ export default function Home() {
 
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const serviceCategories = [
-    { id: 'Fastfood', name: 'Fastfood', icon: '🍔', bgColor: 'bg-orange-50', textColor: 'text-orange-800', googleType: 'restaurant' },
-    { id: 'Pour Femme', name: 'Mode Femme', icon: '👗', bgColor: 'bg-purple-50', textColor: 'text-purple-800', googleType: 'clothing_store' },
-    { id: 'Boutique Fleurs', name: 'Fleurs', icon: '💐', bgColor: 'bg-pink-50', textColor: 'text-pink-800', googleType: 'florist' },
-    { id: 'Mariage', name: 'Mariage', icon: '💍', bgColor: 'bg-rose-50', textColor: 'text-rose-800', googleType: 'event_planner' },
-    { id: 'Pour homme', name: 'Mode Homme', icon: '👔', bgColor: 'bg-blue-50', textColor: 'text-blue-800', googleType: 'clothing_store' },
-    { id: 'Bébé', name: 'Bébé', icon: '👶', bgColor: 'bg-yellow-50', textColor: 'text-yellow-800', googleType: 'store' }
+  const articleTypes = [
+    { id: 'Fastfood', name: 'Fastfood', icon: '🍔', bgColor: 'bg-orange-50', textColor: 'text-orange-800' },
+    { id: 'Pour Femme', name: 'Mode Femme', icon: '👗', bgColor: 'bg-purple-50', textColor: 'text-purple-800' },
+    { id: 'Boutique Fleurs', name: 'Fleurs', icon: '💐', bgColor: 'bg-pink-50', textColor: 'text-pink-800' },
+    { id: 'Mariage', name: 'Mariage', icon: '💍', bgColor: 'bg-rose-50', textColor: 'text-rose-800' },
+    { id: 'Pour homme', name: 'Mode Homme', icon: '👔', bgColor: 'bg-blue-50', textColor: 'text-blue-800' },
+    { id: 'Bébé', name: 'Bébé', icon: '👶', bgColor: 'bg-yellow-50', textColor: 'text-yellow-800' }
   ];
 
   return (
@@ -341,28 +346,25 @@ export default function Home() {
       <main className="pb-32">
         {selectedCategory === 'Tout' && !selectedShop ? (
           <div>
-            {/* Boutons de Services (Grid) */}
+            {/* Boutons de Types d'Articles (Grid) */}
             <div className="grid grid-cols-2 gap-3 p-4">
-              {serviceCategories.map((service) => (
+              {articleTypes.map((type) => (
                 <button
-                  key={service.id}
+                  key={type.id}
                   onClick={() => {
                     if (!user) {
                       base44.auth.redirectToLogin(window.location.pathname);
                       return;
                     }
-                    setSelectedCategory(service.id);
+                    setSelectedCategory(type.id);
                     setSelectedShop(null);
                     setGooglePlaces([]);
-                    if (service.googleType && userLocation) {
-                      fetchGooglePlaces(service.googleType);
-                    }
                   }}
-                  className={`${service.bgColor} rounded-3xl p-4 flex flex-col items-center transition-transform hover:scale-105 active:scale-95`}
+                  className={`${type.bgColor} rounded-3xl p-4 flex flex-col items-center transition-transform hover:scale-105 active:scale-95`}
                 >
-                  <div className="text-4xl mb-1">{service.icon}</div>
-                  <span className={`${service.textColor} font-bold text-base text-center`}>
-                    {service.name}
+                  <div className="text-4xl mb-1">{type.icon}</div>
+                  <span className={`${type.textColor} font-bold text-base text-center`}>
+                    {type.name}
                   </span>
                 </button>
               ))}
@@ -567,9 +569,9 @@ export default function Home() {
                     </span>
                   </button>
                 ))}
-                {allShops.length === 0 && !loadingPlaces && (
+                {shopsWithProducts.length === 0 && !loadingPlaces && (
                   <div className="text-center py-8 text-slate-400 text-xs">
-                    Aucune boutique
+                    Aucune boutique avec ce type d'article
                   </div>
                 )}
               </div>
@@ -638,9 +640,9 @@ export default function Home() {
                       {selectedCategory}
                     </h2>
                     <p className="text-slate-500 mb-4">
-                      {shops.length > 0 
+                      {shopsWithProducts.length > 0 
                         ? 'Sélectionnez une boutique pour voir les produits'
-                        : 'Aucune boutique disponible dans cette catégorie'}
+                        : 'Aucun article de ce type disponible'}
                     </p>
                     {user?.profiles?.entreprise?.is_active && (
                       <Button 
@@ -670,7 +672,7 @@ export default function Home() {
                     <p className="text-xs text-slate-500 mt-2">Recherche...</p>
                   </div>
                 )}
-                {shops.map(shop => (
+                {shopsWithProducts.map(shop => (
                   <button
                     key={shop.id}
                     onClick={() => {
