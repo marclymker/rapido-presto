@@ -122,10 +122,18 @@ export default function Home() {
     return shops.filter(s => shopIds.has(s.id));
   }, [shops, filteredProductsByType, selectedCategory]);
 
-  // Fetch products for selected shop
+  // Fetch products for selected shop, filtered by category if applicable
   const { data: products = [] } = useQuery({
-    queryKey: ['products', selectedShop?.id],
-    queryFn: () => base44.entities.Product.filter({ shop_id: selectedShop?.id }),
+    queryKey: ['products', selectedShop?.id, selectedCategory],
+    queryFn: () => {
+      if (selectedCategory === 'Tout') {
+        return base44.entities.Product.filter({ shop_id: selectedShop?.id });
+      }
+      return base44.entities.Product.filter({ 
+        shop_id: selectedShop?.id,
+        category: selectedCategory
+      });
+    },
     enabled: !!selectedShop && !selectedShop.is_google_place,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
@@ -454,54 +462,7 @@ export default function Home() {
                 limit={6}
               />
 
-              <div className="flex justify-between items-center mb-4 mt-6">
-                <h3 className="text-lg font-semibold text-slate-800">
-                  Découvrir
-                </h3>
-                {user?.profiles?.entreprise?.is_active && (
-                  <Button 
-                    onClick={() => setShowAddProductModal(true)}
-                    variant="outline" 
-                    size="sm"
-                    className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-full text-xs"
-                  >
-                    Vendre mes produits
-                  </Button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {filteredRandomProducts.map(product => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onAdd={(p) => {
-                      if (!user) {
-                        base44.auth.redirectToLogin(window.location.pathname);
-                        return;
-                      }
-                      const shop = shops.find(s => s.id === p.shop_id);
-                      if (shop) {
-                        setSelectedShop(shop);
-                        handleAddToCart(p);
-                      }
-                    }}
-                    onClick={(p) => {
-                      if (!user) {
-                        base44.auth.redirectToLogin(window.location.pathname);
-                        return;
-                      }
-                      const shop = shops.find(s => s.id === p.shop_id);
-                      if (shop) setSelectedShop(shop);
-                      setSelectedProduct(p);
-                    }}
-                  />
-                ))}
-              </div>
-              {filteredRandomProducts.length === 0 && (
-                <div className="text-center py-12 text-slate-500">
-                  {searchQuery ? 'Aucun article trouvé' : 'Aucun article disponible'}
-                </div>
-              )}
+
             </div>
           </div>
         ) : selectedCategory !== 'Tout' && !selectedShop ? (
