@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { base44 } from '@/api/base44Client';
 import { toast } from "sonner";
-import { Check, X, Clock, Truck, Search } from 'lucide-react';
+import { Check, X, Clock, Truck, Search, CheckCircle } from 'lucide-react';
 
 export default function OrderActionModal({ order, open, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
+  const [confirmationCode, setConfirmationCode] = useState('');
 
   const handleStatusChange = async (newStatus) => {
     setLoading(true);
@@ -40,6 +43,32 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
         });
         toast.success('Recherche d\'un livreur en cours...');
       }
+      onSuccess?.();
+      onClose();
+    } catch (error) {
+      toast.error('Erreur: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCompleteDelivery = async () => {
+    if (!confirmationCode) {
+      toast.error('Entrez le code de confirmation');
+      return;
+    }
+    
+    if (confirmationCode !== order.confirmation_code) {
+      toast.error('Code incorrect');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await base44.entities.Order.update(order.id, { 
+        status: 'delivered'
+      });
+      toast.success('✅ Livraison terminée !');
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -94,6 +123,42 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
             <p className="text-sm text-gray-600 mt-2">Total</p>
             <p className="text-2xl font-black text-blue-600">{order?.total} HTG</p>
           </div>
+
+          {/* Confirmation de livraison si merchant_delivery et in_delivery */}
+          {order?.status === 'in_delivery' && order?.delivery_type === 'merchant_delivery' && (
+            <div className="space-y-3">
+              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                <p className="font-bold text-green-700 mb-2">📦 Livraison en cours</p>
+                <p className="text-xs text-green-600">
+                  Confirmez le code reçu du client pour terminer
+                </p>
+              </div>
+
+              <div>
+                <Label>Code de confirmation du client</Label>
+                <Input
+                  type="text"
+                  maxLength={4}
+                  value={confirmationCode}
+                  onChange={(e) => setConfirmationCode(e.target.value)}
+                  placeholder="4 chiffres"
+                  className="text-center text-2xl font-bold tracking-widest"
+                />
+                <p className="text-xs text-gray-500 mt-1 text-center">
+                  Demandez le code au client
+                </p>
+              </div>
+
+              <Button
+                onClick={handleCompleteDelivery}
+                disabled={loading || !confirmationCode}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-6"
+              >
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Terminer la livraison
+              </Button>
+            </div>
+          )}
 
           {/* Choix de livraison si status = ready */}
           {order?.status === 'ready' && (
