@@ -5,9 +5,9 @@ import { Minus, Plus, MessageCircle } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import ReactPixel from 'react-facebook-pixel';
 import { base44 } from '@/api/base44Client';
-import { Helmet } from 'react-helmet-async';
+import SEOArticle from '@/components/SEO/SEOArticle';
 
-export default function ProductDetailModal({ product, open, onClose, onAddToCart, user }) {
+export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user }) {
   const [quantity, setQuantity] = useState(1);
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   
@@ -52,43 +52,10 @@ export default function ProductDetailModal({ product, open, onClose, onAddToCart
     }
   };
 
-  // Schema.org structured data for SEO
-  const structuredData = {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": product.name,
-    "image": allImages.length > 0 ? allImages : [product.image_url],
-    "description": product.description || `${product.name} disponible sur Rapido Presto`,
-    "brand": {
-      "@type": "Brand",
-      "name": product.shop_name || "Rapido Presto"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": typeof window !== 'undefined' ? window.location.href : '',
-      "priceCurrency": "HTG",
-      "price": price,
-      "availability": product.is_available !== false ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      "seller": {
-        "@type": "Organization",
-        "name": product.shop_name || "Rapido Presto"
-      }
-    }
-  };
-
   return (
     <>
-      <Helmet>
-        <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
-        </script>
-        <meta property="og:title" content={product.name} />
-        <meta property="og:description" content={product.description || `${product.name} disponible sur Rapido Presto`} />
-        <meta property="og:image" content={product.image_url} />
-        <meta property="og:type" content="product" />
-        <meta property="product:price:amount" content={price} />
-        <meta property="product:price:currency" content="HTG" />
-      </Helmet>
+      {/* SEO optimisé pour le produit */}
+      {open && <SEOArticle product={product} shop={shop} />}
       
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden max-h-[95vh] overflow-y-auto">
