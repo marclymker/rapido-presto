@@ -519,7 +519,7 @@ export default function Home() {
                     <p className="text-xs text-slate-500 mt-2">Recherche...</p>
                   </div>
                 )}
-                {shops.map(shop => (
+                {shopsWithProducts.map(shop => (
                   <button
                     key={shop.id}
                     onClick={() => {
