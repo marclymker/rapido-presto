@@ -6,7 +6,8 @@ export default function OrderFilters({ currentFilter, setFilter, userRole }) {
         { label: 'Toutes', value: 'all', color: 'gray' },
         { label: 'Disponibles', value: 'searching_driver', color: 'blue', dot: '🔵' },
         { label: 'En route', value: 'in_delivery', color: 'orange', dot: '🟠' },
-        { label: 'Livrées', value: 'delivered', color: 'green', dot: '🟢' }
+        { label: 'Livrées', value: 'delivered', color: 'green', dot: '🟢' },
+        { label: 'Mes Achats', value: 'self_orders', color: 'purple', dot: '🛒' }
       ]
     : [
         { label: 'Toutes', value: 'all', color: 'gray' },
