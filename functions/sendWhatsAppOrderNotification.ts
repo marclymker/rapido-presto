@@ -31,8 +31,13 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, message: 'Shop has no phone number' });
     }
 
-    // Format phone number (remove spaces, dashes, plus sign)
-    const merchantPhone = shop.phone.replace(/[\s\-\+]/g, '');
+    // Format phone number (remove spaces, dashes, plus sign, parentheses)
+    let merchantPhone = shop.phone.replace(/[\s\-\+\(\)]/g, '');
+    
+    // S'assurer que le numéro commence par 509 pour Haïti (si ce n'est pas déjà le cas)
+    if (!merchantPhone.startsWith('509') && merchantPhone.length === 8) {
+      merchantPhone = '509' + merchantPhone;
+    }
     
     console.log('Shop:', shop.company_name);
     console.log('Original phone:', shop.phone);
@@ -48,15 +53,25 @@ Deno.serve(async (req) => {
     }
 
     // Send WhatsApp message via Meta API
-    const whatsappUrl = `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`;
+    const whatsappUrl = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
     
+    // Template avec paramètres (nom client et ID commande)
     const messageData = {
       messaging_product: "whatsapp",
       to: merchantPhone,
       type: "template",
       template: {
         name: "order_request",
-        language: { code: "fr" }
+        language: { code: "fr" },
+        components: [
+          {
+            type: "body",
+            parameters: [
+              { type: "text", text: orderData.client_name || "Client" },
+              { type: "text", text: orderData.order_number || orderData.id.slice(0, 8) }
+            ]
+          }
+        ]
       }
     };
     
