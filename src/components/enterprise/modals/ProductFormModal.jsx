@@ -193,9 +193,8 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>Nom de l'article *</Label>
+            <Label>Nom de l'article</Label>
             <Input
-              required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ex: Pizza Margherita"
@@ -203,7 +202,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
           </div>
 
           <div>
-            <Label>Photo de l'article *</Label>
+            <Label>Photo de l'article</Label>
             <input 
               type="file" 
               accept="image/*" 
@@ -242,12 +241,11 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Prix (HTG) *</Label>
+              <Label>Prix (HTG)</Label>
               <Input
-                required
                 type="number"
                 value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || '' })}
               />
             </div>
             <div>
@@ -286,7 +284,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Type d'article *</Label>
+              <Label>Type d'article</Label>
               <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
                 <SelectTrigger>
                   <SelectValue />
