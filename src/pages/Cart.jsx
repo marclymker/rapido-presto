@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Banknote, Clock } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Banknote, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -277,7 +277,8 @@ export default function Cart() {
     deliveryFee += calculateDeliveryFee(user.region, shopRegion);
   });
   
-  const total = subtotal + deliveryFee;
+  const pendingBalance = user?.pending_balance || 0;
+  const total = subtotal + deliveryFee + pendingBalance;
   const shopCount = Object.keys(itemsByShop).length;
 
   return (
@@ -409,6 +410,15 @@ export default function Cart() {
                     <div className="text-xs text-slate-400">Livraison: 20-30 min</div>
                   </div>
                 </div>
+                {pendingBalance > 0 && (
+                  <div className="flex justify-between items-center text-orange-600 font-medium">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span>Balance due (annulation)</span>
+                    </div>
+                    <span>+{pendingBalance} HTG</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-bold text-lg pt-2 border-t">
                   <span>Total</span>
                   <span className="text-orange-500">{total} HTG</span>
@@ -518,6 +528,12 @@ export default function Cart() {
                     <span>Livraison {shopCount > 1 ? `(${shopCount} boutiques)` : ''}</span>
                     <span>{deliveryFee} HTG</span>
                   </div>
+                  {pendingBalance > 0 && (
+                    <div className="flex justify-between text-orange-600 font-medium">
+                      <span>Balance due (annulation)</span>
+                      <span>+{pendingBalance} HTG</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-lg pt-2">
                     <span>Total</span>
                     <span className="text-orange-500">{total} HTG</span>
