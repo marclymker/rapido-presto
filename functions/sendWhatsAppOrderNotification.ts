@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     }
 
     // Send WhatsApp message via Meta API
-    const whatsappUrl = `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`;
+    const whatsappUrl = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
     
     const messageData = {
       messaging_product: "whatsapp",
@@ -56,12 +56,18 @@ Deno.serve(async (req) => {
       type: "template",
       template: {
         name: "order_request",
-        language: { code: "fr" }
+        language: {
+          code: "fr"
+        }
       }
     };
     
-    console.log('Sending to URL:', whatsappUrl);
-    console.log('Message payload:', JSON.stringify(messageData, null, 2));
+    console.log('=== WHATSAPP API CALL ===');
+    console.log('URL:', whatsappUrl);
+    console.log('Phone Number ID:', phoneNumberId);
+    console.log('Merchant Phone:', merchantPhone);
+    console.log('Access Token:', accessToken ? `${accessToken.substring(0, 20)}...` : 'MISSING');
+    console.log('Message Data:', JSON.stringify(messageData, null, 2));
 
     const response = await fetch(whatsappUrl, {
       method: 'POST',
@@ -74,20 +80,32 @@ Deno.serve(async (req) => {
 
     const result = await response.json();
     
-    console.log('WhatsApp API response status:', response.status);
-    console.log('WhatsApp API response:', JSON.stringify(result, null, 2));
+    console.log('=== WHATSAPP API RESPONSE ===');
+    console.log('Status:', response.status);
+    console.log('Response:', JSON.stringify(result, null, 2));
 
     if (!response.ok) {
-      console.error('WhatsApp API error:', result);
+      console.error('=== WHATSAPP API ERROR ===');
+      console.error('Full error:', JSON.stringify(result, null, 2));
+      console.error('Error message:', result.error?.message);
+      console.error('Error code:', result.error?.code);
+      console.error('Error details:', result.error?.error_data);
+      
       return Response.json({ 
         success: false, 
         error: result.error?.message || 'WhatsApp send failed',
+        errorCode: result.error?.code,
         details: result 
       }, { status: response.status });
     }
 
-    console.log('WhatsApp sent successfully:', result);
-    return Response.json({ success: true, messageId: result.messages?.[0]?.id });
+    console.log('=== WHATSAPP SUCCESS ===');
+    console.log('Message ID:', result.messages?.[0]?.id);
+    return Response.json({ 
+      success: true, 
+      messageId: result.messages?.[0]?.id,
+      phone: merchantPhone 
+    });
 
   } catch (error) {
     console.error('WhatsApp notification error:', error);
