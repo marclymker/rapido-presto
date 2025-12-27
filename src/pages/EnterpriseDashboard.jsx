@@ -59,6 +59,13 @@ export default function EnterpriseDashboard() {
     enabled: !!myShop?.id
   });
 
+  // Fetch self orders (commandes passées par le marchand lui-même)
+  const { data: selfOrders = [] } = useQuery({
+    queryKey: ['self-orders', user?.id],
+    queryFn: () => base44.entities.Order.filter({ client_id: user?.id }, '-created_date'),
+    enabled: !!user?.id
+  });
+
   if (!user || user.current_profile !== 'entreprise') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -72,6 +79,7 @@ export default function EnterpriseDashboard() {
 
   const menuItems = [
     { id: 'orders', label: 'Commandes', icon: '📦', badge: pendingOrders.length },
+    { id: 'selfOrders', label: 'Mes Achats', icon: '🛒' },
     { id: 'products', label: 'Mes Articles', icon: '🛍️' },
     { id: 'stats', label: 'Statistiques', icon: '📈' },
     { id: 'settings', label: 'Réglages', icon: '⚙️' },
@@ -140,6 +148,7 @@ export default function EnterpriseDashboard() {
       <main className="flex-1 overflow-y-auto bg-gray-50 pb-32">
         <div className="animate-fade-in h-full">
           {activeTab === 'orders' && <OrdersSection orders={orders} onAddProduct={() => setActiveTab('products')} />}
+          {activeTab === 'selfOrders' && <OrdersSection orders={selfOrders} onAddProduct={() => setActiveTab('products')} userType="client" isSelfOrders={true} />}
           {activeTab === 'products' && <ProductsSection shopId={myShop?.id} />}
           {activeTab === 'stats' && <StatsSection orders={orders} />}
           {activeTab === 'settings' && <SettingsSection shop={myShop} />}

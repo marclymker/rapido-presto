@@ -106,6 +106,15 @@ export default function DriverDashboard() {
     refetchIntervalInBackground: true
   });
 
+  // Fetch self orders (commandes passées par le livreur lui-même)
+  const { data: selfOrders = [] } = useQuery({
+    queryKey: ['self-orders', user?.id],
+    queryFn: () => base44.entities.Order.filter({ client_id: user?.id }, '-created_date'),
+    enabled: !!user?.id,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true
+  });
+
   const toggleAvailabilityMutation = useMutation({
     mutationFn: (available) => {
       const profiles = { ...user.profiles };
@@ -359,6 +368,47 @@ export default function DriverDashboard() {
             </div>
             <p className="text-slate-600">Vous êtes hors ligne</p>
             <p className="text-sm text-slate-400 mt-1">Activez votre disponibilité pour recevoir des commandes</p>
+          </div>
+        )}
+
+        {/* My Self Orders (Mes Achats) */}
+        {orderFilter === 'self_orders' && (
+          <div className="mb-6">
+            <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+              <Package className="w-5 h-5 text-purple-500" />
+              Mes Achats
+            </h3>
+            <div className="space-y-3">
+            {selfOrders.map(order => (
+              <div
+                key={order.id}
+                onClick={() => setSelectedOrder(order)}
+                className="bg-white rounded-xl p-4 cursor-pointer hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">#{order.order_number}</span>
+                      <OrderStatusBadge status={order.status} />
+                    </div>
+                    <p className="text-sm text-slate-500 mt-1">{order.shop_name}</p>
+                  </div>
+                  <span className="font-bold text-orange-500">{order.total} HTG</span>
+                </div>
+                
+                <div className="mt-3 pt-3 border-t">
+                  <p className="text-sm text-slate-600">
+                    {formatHaitiDate(order.created_date, "d MMM yyyy 'à' HH:mm")}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {selfOrders.length === 0 && (
+              <div className="text-center py-8 text-slate-500">
+                Aucun achat personnel
+              </div>
+            )}
+            </div>
           </div>
         )}
 
