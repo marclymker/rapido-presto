@@ -118,7 +118,7 @@ export default function Account() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
       <header className="bg-white sticky top-0 z-40 border-b">
         <div className="max-w-2xl mx-auto px-4 py-4">
