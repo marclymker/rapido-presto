@@ -236,12 +236,6 @@ export default function Home() {
       return;
     }
     
-    // Restriction: seuls les clients peuvent ajouter au panier
-    if (user.current_profile !== 'client') {
-      toast.error('Cette fonctionnalité est réservée aux clients');
-      return;
-    }
-    
     // Show profile completion modal if not set
     if (!user.current_profile) {
       setShowProfileModal(true);
