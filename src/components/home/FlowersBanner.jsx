@@ -45,7 +45,15 @@ export default function FlowersBanner() {
           exit={{ opacity: 0, y: -20 }}
           className="px-4 mb-4"
         >
-          <Link to={createPageUrl('Home') + '?category=Boutique Fleurs'}>
+          <button
+            onClick={() => {
+              window.location.href = createPageUrl('Home');
+              setTimeout(() => {
+                const event = new CustomEvent('selectCategory', { detail: 'Boutique Fleurs' });
+                window.dispatchEvent(event);
+              }, 100);
+            }}
+          >
             <div className="relative bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl p-4 overflow-hidden shadow-xl">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
@@ -75,7 +83,7 @@ export default function FlowersBanner() {
                 </div>
               </div>
             </div>
-          </Link>
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
