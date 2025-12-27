@@ -37,8 +37,8 @@ export default function ProductCard({ product, onAdd, onClick, shop }) {
         </button>
       )}
 
-      {/* Bouton WhatsApp pour Mariage */}
-      {product.category?.toLowerCase().trim() === 'mariage' && (
+      {/* Bouton WhatsApp pour boutiques Mariage */}
+      {shop?.company_category === "Mariage" && (
         <button 
           className="absolute top-2 left-2 z-10 bg-orange-500 text-white w-9 h-9 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform hover:bg-orange-600"
           onClick={handleWhatsAppClick}
