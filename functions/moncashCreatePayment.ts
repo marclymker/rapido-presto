@@ -72,13 +72,18 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Retourner l'URL de paiement
+    // Retourner l'URL de paiement avec l'orderId en paramètre pour le callback
+    const callbackUrl = `${Deno.env.get('BASE_URL') || 'https://your-domain.com'}/PaymentCallback?transactionId=${paymentData.payment_token.token}&orderId=${orderId}`;
     const paymentUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=${paymentData.payment_token.token}`;
+    
+    console.log('Payment URL generated:', paymentUrl);
+    console.log('Callback URL:', callbackUrl);
     
     return Response.json({
       success: true,
-      payment_url: paymentUrl,
-      transactionId: paymentData.payment_token.token
+      paymentUrl: paymentUrl,
+      transactionId: paymentData.payment_token.token,
+      orderId: orderId
     });
 
   } catch (error) {

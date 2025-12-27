@@ -105,16 +105,25 @@ export default function Cart() {
       if (paymentMethod === 'moncash') {
         try {
           const orderNum = 'RP' + Date.now().toString().slice(-6);
+
+          console.log('Initialisation paiement MonCash:', { orderNum, amount: totalAmount });
+
           const response = await base44.functions.invoke('moncashCreatePayment', {
             orderId: orderNum,
-            amount: totalAmount
+            amount: totalAmount,
+            description: `Commande ${orderNum}`
           });
-          
+
+          console.log('Réponse MonCash:', response);
+
           const paymentData = response.data;
-          
+
           if (!paymentData || !paymentData.success) {
+            console.error('Erreur paiement MonCash:', paymentData);
             throw new Error(paymentData?.error || 'Erreur lors de l\'initialisation du paiement MonCash');
           }
+
+          console.log('URL de paiement générée:', paymentData.paymentUrl);
           
           // Créer une commande par boutique SANS envoyer de notifications
           const createdOrders = [];
@@ -158,8 +167,16 @@ export default function Cart() {
           await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
 
           // NOTE: Les notifications seront envoyées APRÈS la confirmation du paiement dans PaymentCallback
+          console.log('Redirection vers MonCash:', paymentData.paymentUrl);
+
           // Retourner les données pour redirection
-          return { orderNum, codes: createdOrders.map(o => o.code), moncashUrl: paymentData.paymentUrl, redirecting: true };
+          return { 
+            orderNum, 
+            codes: createdOrders.map(o => o.code), 
+            moncashUrl: paymentData.paymentUrl, 
+            transactionId: paymentData.transactionId,
+            redirecting: true 
+          };
         } catch (error) {
           console.error('MonCash payment error:', error);
           throw new Error(error.message || 'Erreur MonCash');
@@ -227,11 +244,13 @@ export default function Cart() {
     onSuccess: (data) => {
       if (data.redirecting && data.moncashUrl) {
         // Redirection vers MonCash
+        console.log('Succès - redirection vers:', data.moncashUrl);
         setRedirectingToMoncash(true);
         toast.success('Redirection vers MonCash...');
         setTimeout(() => {
+          console.log('Redirection maintenant...');
           window.location.href = data.moncashUrl;
-        }, 500);
+        }, 1000);
         return;
       }
       
