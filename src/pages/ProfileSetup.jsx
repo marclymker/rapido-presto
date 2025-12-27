@@ -104,6 +104,20 @@ export default function ProfileSetup() {
           last_used: now
         };
       } else if (formData.user_type === 'entreprise') {
+        // Create Shop entity for enterprise
+        const shopData = {
+          user_id: user.id,
+          company_name: formData.company_name,
+          company_category: formData.company_category,
+          company_logo_url: formData.company_logo_url || '',
+          region: formData.region,
+          phone: formData.phone,
+          rating: 5,
+          delivery_time_minutes: 30,
+          is_active: true
+        };
+        const shop = await base44.entities.Shop.create(shopData);
+        
         profiles.entreprise = {
           is_active: true,
           created_at: now,
@@ -111,8 +125,15 @@ export default function ProfileSetup() {
           company_name: formData.company_name,
           company_category: formData.company_category,
           company_logo_url: formData.company_logo_url || '',
+          shop_id: shop.id,
           rating: 5,
           delivery_time_minutes: 30
+        };
+        
+        // Keep client profile inactive
+        profiles.client = {
+          is_active: false,
+          created_at: null
         };
       } else if (formData.user_type === 'livreur') {
         profiles.livreur = {
