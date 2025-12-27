@@ -2,40 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Package, Trash2, Edit, Store, X, Tag } from 'lucide-react';
-import ProductGuidelinesModal from '@/components/enterprise/modals/ProductGuidelinesModal';
+import { Plus, Package, Trash2, Edit, Store } from 'lucide-react';
+import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 
 export default function AdminProducts() {
   const [user, setUser] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [showGuidelines, setShowGuidelines] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [uploading, setUploading] = useState(false);
   const queryClient = useQueryClient();
-
-  const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    promo_price: '',
-    description: '',
-    image_url: '',
-    additional_images: [],
-    category: '',
-    taille_emballage: '',
-    stock_quantity: '',
-    seo_tags: [],
-    is_available: true
-  });
-  const [tagInput, setTagInput] = useState('');
 
   React.useEffect(() => {
     base44.auth.me().then(u => {
@@ -69,49 +46,6 @@ export default function AdminProducts() {
     enabled: !!selectedShop
   });
 
-  const createProductMutation = useMutation({
-    mutationFn: async (productData) => {
-      const { data } = await base44.functions.invoke('adminProducts', { 
-        action: 'create', 
-        data: {
-          ...productData,
-          shop_id: selectedShop.id,
-          shop_name: selectedShop.company_name
-        }
-      });
-      return data.product;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['admin-products']);
-      toast.success('Article créé avec succès');
-      setShowForm(false);
-      resetForm();
-    },
-    onError: (error) => {
-      toast.error('Erreur: ' + error.message);
-    }
-  });
-
-  const updateProductMutation = useMutation({
-    mutationFn: async ({ id, data }) => {
-      const result = await base44.functions.invoke('adminProducts', { 
-        action: 'update', 
-        productId: id, 
-        data 
-      });
-      return result.data.product;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['admin-products']);
-      toast.success('Article mis à jour');
-      setShowForm(false);
-      resetForm();
-    },
-    onError: (error) => {
-      toast.error('Erreur: ' + error.message);
-    }
-  });
-
   const deleteProductMutation = useMutation({
     mutationFn: async (id) => {
       await base44.functions.invoke('adminProducts', { action: 'delete', productId: id });
@@ -122,118 +56,8 @@ export default function AdminProducts() {
     }
   });
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const { data } = await base44.functions.invoke('uploadFile', { file });
-      setFormData({ ...formData, image_url: data.file_url });
-      toast.success('Image téléchargée');
-    } catch (error) {
-      toast.error('Erreur lors du téléchargement');
-    }
-    setUploading(false);
-  };
-
-  const handleAdditionalImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const { data } = await base44.functions.invoke('uploadFile', { file });
-      setFormData({ 
-        ...formData, 
-        additional_images: [...(formData.additional_images || []), data.file_url] 
-      });
-      toast.success('Image ajoutée');
-    } catch (error) {
-      toast.error('Erreur lors du téléchargement');
-    }
-    setUploading(false);
-  };
-
-  const removeAdditionalImage = (index) => {
-    setFormData({
-      ...formData,
-      additional_images: formData.additional_images.filter((_, i) => i !== index)
-    });
-  };
-
-  const addTag = () => {
-    if (tagInput.trim() && !formData.seo_tags.includes(tagInput.trim())) {
-      setFormData({
-        ...formData,
-        seo_tags: [...(formData.seo_tags || []), tagInput.trim()]
-      });
-      setTagInput('');
-    }
-  };
-
-  const removeTag = (tag) => {
-    setFormData({
-      ...formData,
-      seo_tags: formData.seo_tags.filter(t => t !== tag)
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.price) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
-      return;
-    }
-
-    const productData = {
-      ...formData,
-      price: parseFloat(formData.price),
-      promo_price: formData.promo_price ? parseFloat(formData.promo_price) : null,
-      stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0
-    };
-
-    if (editingProduct) {
-      updateProductMutation.mutate({ id: editingProduct.id, data: productData });
-    } else {
-      createProductMutation.mutate(productData);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      price: '',
-      promo_price: '',
-      description: '',
-      image_url: '',
-      additional_images: [],
-      category: '',
-      taille_emballage: '',
-      stock_quantity: '',
-      seo_tags: [],
-      is_available: true
-    });
-    setTagInput('');
-    setEditingProduct(null);
-  };
-
   const handleEdit = (product) => {
     setEditingProduct(product);
-    setFormData({
-      name: product.name || '',
-      price: product.price || '',
-      promo_price: product.promo_price || '',
-      description: product.description || '',
-      image_url: product.image_url || '',
-      additional_images: product.additional_images || [],
-      category: product.category || '',
-      taille_emballage: product.taille_emballage || '',
-      stock_quantity: product.stock_quantity || '',
-      seo_tags: product.seo_tags || [],
-      is_available: product.is_available !== false
-    });
     setShowForm(true);
   };
 
@@ -294,8 +118,8 @@ export default function AdminProducts() {
               </div>
               <Button 
                 onClick={() => { 
-                  resetForm(); 
-                  setShowGuidelines(true);
+                  setEditingProduct(null); 
+                  setShowForm(true);
                 }} 
                 className="bg-orange-500 hover:bg-orange-600"
               >
@@ -369,199 +193,20 @@ export default function AdminProducts() {
         )}
       </div>
 
-      <ProductGuidelinesModal
-        open={showGuidelines}
-        onConfirm={() => {
-          setShowGuidelines(false);
-          setShowForm(true);
+      <ProductFormModal
+        product={editingProduct}
+        shopId={selectedShop?.id}
+        open={showForm}
+        onClose={() => {
+          setShowForm(false);
+          setEditingProduct(null);
         }}
-        onCancel={() => setShowGuidelines(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries(['admin-products']);
+          setShowForm(false);
+          setEditingProduct(null);
+        }}
       />
-
-      <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) resetForm(); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingProduct ? 'Modifier' : 'Ajouter'} un article</DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label>Nom de l'article *</Label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label>Prix (HTG) *</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label>Prix promotionnel (HTG)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.promo_price}
-                  onChange={(e) => setFormData({ ...formData, promo_price: e.target.value })}
-                />
-              </div>
-
-              <div className="col-span-2">
-                <Label>Quantité en stock *</Label>
-                <Input
-                  type="number"
-                  value={formData.stock_quantity}
-                  onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
-                  placeholder="0"
-                  required
-                />
-              </div>
-
-              <div className="col-span-2">
-                <Label>Catégorie</Label>
-                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une catégorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Fastfood">Fastfood</SelectItem>
-                    <SelectItem value="Restaurants">Restaurants</SelectItem>
-                    <SelectItem value="Boutique Fleurs">Boutique Fleurs</SelectItem>
-                    <SelectItem value="Pharmacie">Pharmacie</SelectItem>
-                    <SelectItem value="Vêtements">Vêtements</SelectItem>
-                    <SelectItem value="Epicerie">Épicerie</SelectItem>
-                    <SelectItem value="Café">Café</SelectItem>
-                    <SelectItem value="Pour Femme">Pour Femme</SelectItem>
-                    <SelectItem value="Electronics">Electronics</SelectItem>
-                    <SelectItem value="Pour homme">Pour homme</SelectItem>
-                    <SelectItem value="Maison">Maison</SelectItem>
-                    <SelectItem value="Bébé">Bébé</SelectItem>
-                    <SelectItem value="Outils">Outils</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="col-span-2">
-                <Label>Taille d'emballage</Label>
-                <Select value={formData.taille_emballage} onValueChange={(value) => setFormData({ ...formData, taille_emballage: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une taille" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Petit">Petit</SelectItem>
-                    <SelectItem value="Moyen">Moyen</SelectItem>
-                    <SelectItem value="Grand">Grand</SelectItem>
-                    <SelectItem value="Lourd">Lourd</SelectItem>
-                    <SelectItem value="Encombrant">Encombrant</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="col-span-2">
-                <Label>Description</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              <div className="col-span-2">
-                <Label>Image principale *</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploading}
-                />
-                {formData.image_url && (
-                  <img src={formData.image_url} alt="Preview" className="mt-2 h-32 w-32 object-cover rounded-lg" />
-                )}
-              </div>
-
-              <div className="col-span-2">
-                <Label>Images supplémentaires</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAdditionalImageUpload}
-                  disabled={uploading}
-                />
-                {formData.additional_images && formData.additional_images.length > 0 && (
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    {formData.additional_images.map((img, idx) => (
-                      <div key={idx} className="relative">
-                        <img src={img} alt="" className="h-20 w-20 object-cover rounded-lg" />
-                        <button
-                          type="button"
-                          onClick={() => removeAdditionalImage(idx)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="col-span-2">
-                <Label>Tags SEO (pour la recherche)</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                    placeholder="Ajouter un tag (ex: poulet, pizza, burger)"
-                  />
-                  <Button type="button" onClick={addTag} variant="outline">
-                    <Tag className="w-4 h-4" />
-                  </Button>
-                </div>
-                {formData.seo_tags && formData.seo_tags.length > 0 && (
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    {formData.seo_tags.map((tag, idx) => (
-                      <div key={idx} className="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-sm flex items-center gap-1">
-                        {tag}
-                        <button type="button" onClick={() => removeTag(tag)}>
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="col-span-2 flex items-center gap-2">
-                <Switch
-                  checked={formData.is_available}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_available: checked })}
-                />
-                <Label>Article disponible</Label>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => { setShowForm(false); resetForm(); }}>
-                Annuler
-              </Button>
-              <Button type="submit" className="bg-orange-500 hover:bg-orange-600">
-                {editingProduct ? 'Mettre à jour' : 'Créer'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
