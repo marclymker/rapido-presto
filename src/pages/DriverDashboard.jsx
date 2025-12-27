@@ -18,6 +18,7 @@ import { useWebSocket, useAutoRefresh } from '@/components/realtime/useWebSocket
 import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 import { useBackgroundSync, BackgroundSyncIndicator } from '@/components/realtime/BackgroundSync';
 import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
+import OrderFilters from '@/components/filters/OrderFilters';
 
 export default function DriverDashboard() {
   const [user, setUser] = useState(null);
@@ -217,6 +218,7 @@ export default function DriverDashboard() {
   const livreurData = user.profiles?.livreur || {};
 
   const [navTab, setNavTab] = useState('available');
+  const [orderFilter, setOrderFilter] = useState('all');
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
@@ -262,9 +264,15 @@ export default function DriverDashboard() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="max-w-2xl mx-auto">
+        {/* Order Filters */}
+        <div className="sticky top-[73px] z-30 bg-white shadow-sm">
+          <OrderFilters currentFilter={orderFilter} setFilter={setOrderFilter} userRole="livreur" />
+        </div>
+
+        <div className="px-4 py-6">
         {/* Available Orders */}
-        {isAvailable && availableOrders.length > 0 && (
+        {isAvailable && orderFilter === 'searching_driver' && availableOrders.length > 0 && (
           <div className="mb-6">
             <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
               <Package className="w-5 h-5 text-orange-500" />
@@ -334,7 +342,7 @@ export default function DriverDashboard() {
           </div>
         )}
 
-        {isAvailable && availableOrders.length === 0 && activeOrders.length === 0 && (
+        {isAvailable && (orderFilter === 'all' || orderFilter === 'searching_driver') && availableOrders.length === 0 && activeOrders.length === 0 && (
           <div className="text-center py-12 bg-white rounded-xl mb-6">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Clock className="w-8 h-8 text-green-600" />
@@ -355,18 +363,14 @@ export default function DriverDashboard() {
         )}
 
         {/* My Orders */}
-        <Tabs defaultValue="active" className="w-full">
-          <TabsList className="w-full bg-white">
-            <TabsTrigger value="active" className="flex-1">
-              En cours ({activeOrders.length})
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex-1">
-              Historique ({historyOrders.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="active" className="mt-4 space-y-3">
-            {activeOrders.map(order => (
+        {(orderFilter === 'all' || orderFilter === 'in_delivery') && (
+          <div className="mb-6">
+            <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+              <Package className="w-5 h-5 text-blue-500" />
+              En livraison
+            </h3>
+            <div className="space-y-3">
+            {activeOrders.filter(o => orderFilter === 'all' || o.status === orderFilter).map(order => (
               <div
                 key={order.id}
                 onClick={() => setSelectedOrder(order)}
@@ -398,15 +402,23 @@ export default function DriverDashboard() {
                 </div>
               </div>
             ))}
-            {activeOrders.length === 0 && (
+            {activeOrders.filter(o => orderFilter === 'all' || o.status === orderFilter).length === 0 && (
               <div className="text-center py-8 text-slate-500">
                 Aucune livraison en cours
               </div>
             )}
-          </TabsContent>
+            </div>
+          </div>
+        )}
 
-          <TabsContent value="history" className="mt-4 space-y-3">
-            {historyOrders.slice(0, 20).map(order => (
+        {(orderFilter === 'all' || orderFilter === 'delivered') && (
+          <div className="mb-6">
+            <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+              <Package className="w-5 h-5 text-green-500" />
+              Historique
+            </h3>
+            <div className="space-y-3">
+            {historyOrders.slice(0, 20).filter(o => orderFilter === 'all' || o.status === orderFilter).map(order => (
               <div
                 key={order.id}
                 onClick={() => setSelectedOrder(order)}
@@ -426,13 +438,15 @@ export default function DriverDashboard() {
                 </div>
               </div>
             ))}
-            {historyOrders.length === 0 && (
+            {historyOrders.filter(o => orderFilter === 'all' || o.status === orderFilter).length === 0 && (
               <div className="text-center py-8 text-slate-500">
                 Aucune livraison dans l'historique
               </div>
             )}
-          </TabsContent>
-        </Tabs>
+            </div>
+          </div>
+        )}
+        </div>
       </main>
 
       <OrderDetailModal

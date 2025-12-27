@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Badge } from "@/components/ui/badge";
 import OrderActionModal from './modals/OrderActionModal';
 import { useQueryClient } from '@tanstack/react-query';
+import OrderFilters from '@/components/filters/OrderFilters';
 
 export default function OrdersSection({ orders = [], onAddProduct }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [filter, setFilter] = useState('all');
   const queryClient = useQueryClient();
   const getStatusBadge = (status) => {
     const statusConfig = {
@@ -19,11 +21,22 @@ export default function OrdersSection({ orders = [], onAddProduct }) {
     return statusConfig[status] || statusConfig.pending;
   };
 
+  const filteredOrders = filter === 'all' 
+    ? orders 
+    : orders.filter(order => order.status === filter);
+
   return (
-    <div className="p-8">
-      <h2 className="text-lg font-bold mb-6 text-gray-900">Commandes en cours</h2>
-      
-      {orders.length === 0 ? (
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Header fixe avec filtre */}
+      <div className="sticky top-0 z-20 bg-white shadow-sm">
+        <div className="p-6 pb-2">
+          <h2 className="text-2xl font-black text-gray-800">Mes Commandes</h2>
+        </div>
+        <OrderFilters currentFilter={filter} setFilter={setFilter} userRole="entreprise" />
+      </div>
+
+      <div className="p-6 pb-24">
+      {filteredOrders.length === 0 && orders.length === 0 ? (
         <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-12 text-center border-2 border-orange-200">
           <div className="text-6xl mb-4">📈</div>
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Augmentez vos revenus</h3>
@@ -35,9 +48,14 @@ export default function OrdersSection({ orders = [], onAddProduct }) {
             Ajouter des Articles +
           </button>
         </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <span className="text-4xl mb-2">📦</span>
+          <p className="font-bold">Aucune commande pour ce filtre</p>
+        </div>
       ) : (
         <div className="space-y-3">
-          {orders.map(order => {
+          {filteredOrders.map(order => {
             const statusInfo = getStatusBadge(order.status);
             return (
               <div 
@@ -72,6 +90,7 @@ export default function OrdersSection({ orders = [], onAddProduct }) {
         onClose={() => setSelectedOrder(null)}
         onSuccess={() => queryClient.invalidateQueries(['shop-orders'])}
       />
+      </div>
     </div>
   );
 }
