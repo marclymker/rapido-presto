@@ -354,7 +354,58 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="pb-32">
-        {selectedCategory === 'Tout' && !selectedShop ? (
+        {searchQuery.trim() ? (
+          /* SEARCH RESULTS - Tous les articles */
+          <div className="p-4">
+            <h2 className="text-lg font-bold text-slate-800 mb-4">
+              Résultats pour "{searchQuery}"
+            </h2>
+            <div className="grid grid-cols-2 gap-4">
+              {allProducts
+                .filter(p => 
+                  p.is_available !== false && 
+                  p.name?.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map(product => {
+                  const shop = shops.find(s => s.id === product.shop_id);
+                  return (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      shop={shop}
+                      onAdd={(p) => {
+                        if (!user) {
+                          base44.auth.redirectToLogin(window.location.pathname);
+                          return;
+                        }
+                        if (shop) {
+                          setSelectedShop(shop);
+                          handleAddToCart(p);
+                        }
+                      }}
+                      onClick={() => {
+                        if (!user) {
+                          base44.auth.redirectToLogin(window.location.pathname);
+                          return;
+                        }
+                        const shop = shops.find(s => s.id === product.shop_id);
+                        if (shop) setSelectedShop(shop);
+                        setSelectedProduct(product);
+                      }}
+                    />
+                  );
+                })}
+            </div>
+            {allProducts.filter(p => 
+              p.is_available !== false && 
+              p.name?.toLowerCase().includes(searchQuery.toLowerCase())
+            ).length === 0 && (
+              <div className="text-center py-12 text-slate-500">
+                Aucun article trouvé
+              </div>
+            )}
+          </div>
+        ) : selectedCategory === 'Tout' && !selectedShop ? (
           <div>
             {/* Flash Marketing Banner */}
             <FlashBanner />
