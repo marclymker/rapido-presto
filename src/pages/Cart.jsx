@@ -226,10 +226,33 @@ export default function Cart() {
           status: 'pending'
         }).catch(err => console.error('Notification error:', err));
 
-        // Envoyer notification WhatsApp au marchand
-        await base44.functions.invoke('sendWhatsAppOrderNotification', {
+        // DEBUG: Vérifier les données avant d'envoyer WhatsApp
+        console.log('=== AVANT ENVOI WHATSAPP ===');
+        console.log('Order ID:', order.id);
+        console.log('Shop ID:', shopId);
+        console.log('Shop Name:', shopItems[0].shop_name);
+        
+        const debugResult = await base44.functions.invoke('debugWhatsApp', {
           orderId: order.id
-        }).catch(err => console.error('WhatsApp notification error:', err));
+        }).catch(err => {
+          console.error('Debug error:', err);
+          return null;
+        });
+        
+        if (debugResult) {
+          console.log('Debug result:', debugResult.data);
+        }
+
+        // Envoyer notification WhatsApp au marchand
+        const whatsappResult = await base44.functions.invoke('sendWhatsAppOrderNotification', {
+          orderId: order.id
+        }).catch(err => {
+          console.error('WhatsApp notification error:', err);
+          return { error: err.message };
+        });
+        
+        console.log('WhatsApp result:', whatsappResult);
+        console.log('=== FIN ENVOI WHATSAPP ===');
       }
 
       // Clear cart
