@@ -1,27 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, Package, Store, Bike, TrendingUp } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 
 export default function BusinessSmartNav({ activeTab, setActiveTab, userRole, pendingCount = 0 }) {
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY && currentScrollY > 10) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
 
   const navItems = userRole === 'entreprise' ? [
     { id: 'orders', label: 'Commandes', icon: Package, badge: pendingCount },
@@ -36,9 +19,7 @@ export default function BusinessSmartNav({ activeTab, setActiveTab, userRole, pe
 
   return (
     <nav 
-      className={`fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-100 transition-transform duration-500 z-50 safe-bottom ${
-        isVisible ? 'translate-y-0' : 'translate-y-full'
-      }`}
+      className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-100 z-50 safe-bottom"
       style={{ boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.05)' }}
     >
       <div className="flex justify-around items-center h-20 max-w-lg mx-auto px-4">
