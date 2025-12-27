@@ -56,12 +56,17 @@ export default function FlashBanner() {
           <h3 className="text-xl font-bold">Lunettes & Montres Premium ⌚🕶️</h3>
           <p className="text-sm opacity-90 mt-1">Accessoires de luxe à prix réduits</p>
         </div>
-        <Link 
-          to={createPageUrl('Home') + '?search=accessoires'}
+        <button
+          onClick={() => {
+            window.location.href = createPageUrl('Home');
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('setSearchQuery', { detail: 'montre lunette' }));
+            }, 100);
+          }}
           className="bg-white text-blue-600 px-6 py-3 rounded-full font-black text-sm hover:scale-105 transition-transform shadow-lg"
         >
           Découvrir
-        </Link>
+        </button>
       </div>
     </div>
   );

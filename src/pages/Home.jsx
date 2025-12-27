@@ -65,6 +65,20 @@ export default function Home() {
       setUser(null);
     });
 
+    // Écouter les événements de sélection de catégorie
+    const handleCategorySelect = (e) => {
+      setSelectedCategory(e.detail);
+      setSelectedShop(null);
+      setGooglePlaces([]);
+    };
+
+    const handleSearchQuery = (e) => {
+      setSearchQuery(e.detail);
+    };
+
+    window.addEventListener('selectCategory', handleCategorySelect);
+    window.addEventListener('setSearchQuery', handleSearchQuery);
+
     // Suivi en temps réel de la géolocalisation
     if (navigator.geolocation) {
       const watchId = navigator.geolocation.watchPosition(
@@ -80,8 +94,17 @@ export default function Home() {
         { enableHighAccuracy: true }
       );
 
-      return () => navigator.geolocation.clearWatch(watchId);
+      return () => {
+        navigator.geolocation.clearWatch(watchId);
+        window.removeEventListener('selectCategory', handleCategorySelect);
+        window.removeEventListener('setSearchQuery', handleSearchQuery);
+      };
     }
+
+    return () => {
+      window.removeEventListener('selectCategory', handleCategorySelect);
+      window.removeEventListener('setSearchQuery', handleSearchQuery);
+    };
   }, []);
 
   const handleProfileComplete = (profileType) => {
