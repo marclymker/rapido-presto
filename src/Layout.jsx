@@ -52,7 +52,7 @@ export default function Layout({ children, currentPageName }) {
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
     queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
-    enabled: !!user?.id && user?.current_profile === 'client'
+    enabled: !!user?.id
   });
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -61,7 +61,7 @@ export default function Layout({ children, currentPageName }) {
   const { data: orders = [] } = useQuery({
     queryKey: ['orders', user?.id],
     queryFn: () => base44.entities.Order.filter({ client_id: user?.id }),
-    enabled: !!user?.id && user?.current_profile === 'client'
+    enabled: !!user?.id
   });
 
   const activeOrdersCount = orders.filter(o => 

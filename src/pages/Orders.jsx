@@ -44,14 +44,6 @@ export default function Orders() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
-      // Redirect if wrong profile
-      if (u.current_profile !== 'client') {
-        const redirectPages = {
-          entreprise: 'EnterpriseDashboard',
-          livreur: 'DriverDashboard'
-        };
-        window.location.href = createPageUrl(redirectPages[u.current_profile] || 'Home');
-      }
     }).catch(() => {});
   }, []);
 
