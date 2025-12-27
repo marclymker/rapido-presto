@@ -3,9 +3,12 @@ import { Badge } from "@/components/ui/badge";
 import OrderActionModal from './modals/OrderActionModal';
 import { useQueryClient } from '@tanstack/react-query';
 import OrderFilters from '@/components/filters/OrderFilters';
+import MerchantDeliveryTracking from '@/components/maps/MerchantDeliveryTracking';
+import { MapPin } from 'lucide-react';
 
 export default function OrdersSection({ orders = [], onAddProduct, userType = 'entreprise', isSelfOrders = false }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [trackingOrder, setTrackingOrder] = useState(null);
   const [filter, setFilter] = useState('all');
   const queryClient = useQueryClient();
   const getStatusBadge = (status) => {
@@ -62,24 +65,39 @@ export default function OrdersSection({ orders = [], onAddProduct, userType = 'e
             return (
               <div 
                 key={order.id} 
-                onClick={() => setSelectedOrder(order)}
-                className="bg-white p-4 rounded-xl border flex justify-between items-center shadow-[0_4px_12px_rgba(251,146,60,0.3)] hover:shadow-[0_6px_16px_rgba(251,146,60,0.4)] transition-all cursor-pointer"
+                className="bg-white p-4 rounded-xl border shadow-[0_4px_12px_rgba(251,146,60,0.3)] hover:shadow-[0_6px_16px_rgba(251,146,60,0.4)] transition-all"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <p className="font-bold text-gray-900">Commande #{order.order_number || order.id.slice(0, 8)}</p>
-                    <Badge className={`${statusInfo.color} text-[10px] font-bold uppercase px-2 py-0.5`}>
-                      {statusInfo.label}
-                    </Badge>
+                <div 
+                  onClick={() => setSelectedOrder(order)}
+                  className="flex justify-between items-center cursor-pointer"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <p className="font-bold text-gray-900">Commande #{order.order_number || order.id.slice(0, 8)}</p>
+                      <Badge className={`${statusInfo.color} text-[10px] font-bold uppercase px-2 py-0.5`}>
+                        {statusInfo.label}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600">{order.client_name}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {order.items?.length || 0} article{(order.items?.length || 0) > 1 ? 's' : ''} • {order.total} HTG
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-600">{order.client_name}</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {order.items?.length || 0} article{(order.items?.length || 0) > 1 ? 's' : ''} • {order.total} HTG
-                  </p>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-400">{new Date(order.created_date).toLocaleDateString('fr-FR')}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-400">{new Date(order.created_date).toLocaleDateString('fr-FR')}</p>
-                </div>
+
+                {/* Tracking button for merchant delivery */}
+                {order.status === 'in_delivery' && order.delivery_type === 'merchant_delivery' && (
+                  <button
+                    onClick={() => setTrackingOrder(order)}
+                    className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg flex items-center justify-center gap-2 font-medium"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Voir le parcours
+                  </button>
+                )}
               </div>
             );
           })}
@@ -96,6 +114,16 @@ export default function OrdersSection({ orders = [], onAddProduct, userType = 'e
         }}
         userType={isSelfOrders ? 'client' : userType}
       />
+
+      {trackingOrder && (
+        <MerchantDeliveryTracking
+          order={trackingOrder}
+          onClose={() => {
+            setTrackingOrder(null);
+            queryClient.invalidateQueries(['shop-orders']);
+          }}
+        />
+      )}
       </div>
     </div>
   );
