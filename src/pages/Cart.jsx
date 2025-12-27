@@ -116,14 +116,14 @@ export default function Cart() {
             throw new Error(paymentData?.error || 'Erreur lors de l\'initialisation du paiement MonCash');
           }
           
-          // Créer une commande par boutique
+          // Créer une commande par boutique SANS envoyer de notifications
           const createdOrders = [];
           for (const shopId of shopIds) {
             const shopItems = itemsByShop[shopId];
             const shopSubtotal = shopItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
             const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
             const code = generateConfirmationCode();
-            
+
             const order = await base44.entities.Order.create({
               order_number: `${orderNum}-${shopId.slice(-4)}`,
               client_id: user.id,
@@ -150,13 +150,14 @@ export default function Cart() {
               confirmation_code: code,
               moncash_transaction_id: paymentData.transactionId
             });
-            
+
             createdOrders.push({ orderId: order.id, code });
           }
-          
+
           // Vider le panier
           await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
-          
+
+          // NOTE: Les notifications seront envoyées APRÈS la confirmation du paiement dans PaymentCallback
           // Retourner les données pour redirection
           return { orderNum, codes: createdOrders.map(o => o.code), moncashUrl: paymentData.paymentUrl, redirecting: true };
         } catch (error) {
@@ -173,7 +174,7 @@ export default function Cart() {
         const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
         const orderNum = 'RP' + Date.now().toString().slice(-6) + '-' + shopId.slice(-4);
         const code = generateConfirmationCode();
-        
+
         const order = await base44.entities.Order.create({
           order_number: orderNum,
           client_id: user.id,
@@ -196,12 +197,13 @@ export default function Cart() {
           total: shopSubtotal + shopDeliveryFee,
           payment_method: paymentMethod,
           status: 'pending',
+          payment_status: paymentMethod === 'CASH' ? 'pending' : 'paid', // CASH = à la livraison, autres = déjà payé
           confirmation_code: code
         });
 
         createdOrders.push({ orderId: order.id, orderNum, code });
 
-        // Envoyer notifications pour chaque boutique
+        // Envoyer notifications IMMÉDIATEMENT pour paiements non-MonCash
         await base44.functions.invoke('sendOrderNotification', {
           orderId: order.id,
           status: 'pending'

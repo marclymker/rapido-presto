@@ -60,13 +60,26 @@ export default function PaymentCallback() {
           });
 
           if (orders.length > 0) {
-            const order = orders[0];
-            await base44.entities.Order.update(order.id, {
-              payment_status: 'paid'
-            });
+            // Mettre à jour TOUTES les commandes avec ce transactionId
+            for (const order of orders) {
+              await base44.entities.Order.update(order.id, {
+                payment_status: 'paid'
+              });
+
+              // ENVOYER LES NOTIFICATIONS APRÈS PAIEMENT RÉUSSI
+              await base44.functions.invoke('sendOrderNotification', {
+                orderId: order.id,
+                status: 'pending'
+              }).catch(err => console.error('Notification error:', err));
+
+              // Envoyer notification WhatsApp au marchand
+              await base44.functions.invoke('sendWhatsAppOrderNotification', {
+                orderId: order.id
+              }).catch(err => console.error('WhatsApp notification error:', err));
+            }
 
             setOrderDetails({
-              orderNumber: order.order_number,
+              orderNumber: orders[0].order_number,
               amount: paymentData.amount,
               isPremium: false
             });
