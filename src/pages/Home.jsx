@@ -28,6 +28,7 @@ import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import FloatingMerchantBanner from '@/components/home/FloatingMerchantBanner';
 import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
+import FlashBanner from '@/components/home/FlashBanner';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -354,6 +355,8 @@ export default function Home() {
       <main className="pb-32">
         {selectedCategory === 'Tout' && !selectedShop ? (
           <div>
+            {/* Flash Marketing Banner */}
+            <FlashBanner />
             {/* Boutons de Types d'Articles (Grid) */}
             <div className="grid grid-cols-2 gap-3 p-4">
               {articleTypes.map((type) => (
