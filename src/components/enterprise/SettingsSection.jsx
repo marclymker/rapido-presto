@@ -64,15 +64,18 @@ export default function SettingsSection({ shop }) {
           </Button>
         </div>
 
-        {/* Localisation */}
+        {/* Localisation & Contact */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
               <MapPin className="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <p className="font-bold text-gray-900">Adresse de livraison</p>
-              <p className="text-sm text-gray-500">{shop?.region || 'Non définie'}</p>
+              <p className="font-bold text-gray-900">Coordonnées de livraison</p>
+              <p className="text-sm text-gray-500">
+                {shop?.region || 'Non définie'} 
+                {shop?.phone && ` • ${shop.phone}`}
+              </p>
             </div>
           </div>
           <Button 
@@ -80,7 +83,7 @@ export default function SettingsSection({ shop }) {
             onClick={() => setModalType('location')}
             className="w-full rounded-xl"
           >
-            Modifier l'adresse
+            Modifier les coordonnées
           </Button>
         </div>
 

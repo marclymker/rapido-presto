@@ -11,6 +11,8 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     region: shop?.region || '',
+    phone: shop?.phone || '',
+    email: shop?.email || '',
     bank_name: shop?.bank_name || '',
     account_number: shop?.account_number || '',
     account_holder_name: shop?.account_holder_name || ''
@@ -107,15 +109,38 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
               ))}
             </div>
           ) : type === 'location' ? (
-            <div>
-              <Label>Région/Commune *</Label>
-              <Input
-                required
-                value={formData.region}
-                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                placeholder="Ex: Pétion-Ville"
-              />
-            </div>
+            <>
+              <div>
+                <Label>Région/Commune *</Label>
+                <Input
+                  required
+                  value={formData.region}
+                  onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                  placeholder="Ex: Pétion-Ville"
+                />
+              </div>
+              <div>
+                <Label>Téléphone WhatsApp *</Label>
+                <Input
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="509XXXXXXXX (format: 50912345678)"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Format: 509XXXXXXXX (sans espaces ni tirets)
+                </p>
+              </div>
+              <div>
+                <Label>Email (optionnel)</Label>
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="votre@email.com"
+                />
+              </div>
+            </>
           ) : (
             <>
               <div>
