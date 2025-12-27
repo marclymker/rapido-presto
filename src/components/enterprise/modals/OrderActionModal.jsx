@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { base44 } from '@/api/base44Client';
 import { toast } from "sonner";
-import { Check, X, Clock, Truck } from 'lucide-react';
+import { Check, X, Clock, Truck, Search } from 'lucide-react';
 
 export default function OrderActionModal({ order, open, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -13,6 +13,33 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
     try {
       await base44.entities.Order.update(order.id, { status: newStatus });
       toast.success('Commande mise à jour');
+      onSuccess?.();
+      if (newStatus !== 'ready') {
+        onClose();
+      }
+    } catch (error) {
+      toast.error('Erreur: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeliveryChoice = async (deliveryType) => {
+    setLoading(true);
+    try {
+      if (deliveryType === 'merchant_delivery') {
+        await base44.entities.Order.update(order.id, { 
+          delivery_type: 'merchant_delivery',
+          status: 'in_delivery'
+        });
+        toast.success('Vous êtes en charge de la livraison');
+      } else {
+        await base44.entities.Order.update(order.id, { 
+          delivery_type: 'platform_delivery',
+          status: 'searching_driver'
+        });
+        toast.success('Recherche d\'un livreur en cours...');
+      }
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -68,22 +95,62 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
             <p className="text-2xl font-black text-blue-600">{order?.total} HTG</p>
           </div>
 
-          <div className="space-y-2">
-            {actions.filter(a => a.show).map(action => {
-              const Icon = action.icon;
-              return (
-                <Button
-                  key={action.status}
-                  onClick={() => handleStatusChange(action.status)}
-                  disabled={loading}
-                  className={`w-full ${action.color} text-white`}
-                >
-                  <Icon className="w-5 h-5 mr-2" />
-                  {action.label}
-                </Button>
-              );
-            })}
-          </div>
+          {/* Choix de livraison si status = ready */}
+          {order?.status === 'ready' && (
+            <div className="space-y-3">
+              <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4">
+                <p className="font-bold text-orange-700 mb-2">🚚 Qui assure la livraison ?</p>
+                <p className="text-xs text-orange-600">
+                  Choisissez comment la commande sera livrée au client
+                </p>
+              </div>
+              
+              <Button
+                onClick={() => handleDeliveryChoice('merchant_delivery')}
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6"
+              >
+                <Truck className="w-5 h-5 mr-2" />
+                <div className="text-left">
+                  <div className="font-bold">J'assure la livraison</div>
+                  <div className="text-xs opacity-90">Vous gardez les frais de livraison</div>
+                </div>
+              </Button>
+
+              <Button
+                onClick={() => handleDeliveryChoice('platform_delivery')}
+                disabled={loading}
+                className="w-full bg-gray-700 hover:bg-gray-800 text-white py-6"
+                variant="outline"
+              >
+                <Search className="w-5 h-5 mr-2" />
+                <div className="text-left">
+                  <div className="font-bold">Chercher un livreur Rapido</div>
+                  <div className="text-xs opacity-90">Un livreur prendra en charge</div>
+                </div>
+              </Button>
+            </div>
+          )}
+
+          {/* Actions normales si pas ready */}
+          {order?.status !== 'ready' && (
+            <div className="space-y-2">
+              {actions.filter(a => a.show).map(action => {
+                const Icon = action.icon;
+                return (
+                  <Button
+                    key={action.status}
+                    onClick={() => handleStatusChange(action.status)}
+                    disabled={loading}
+                    className={`w-full ${action.color} text-white`}
+                  >
+                    <Icon className="w-5 h-5 mr-2" />
+                    {action.label}
+                  </Button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
