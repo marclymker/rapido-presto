@@ -17,18 +17,18 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
   const [showGuidelines, setShowGuidelines] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    name: product?.name || '',
-    price: product?.price || '',
-    promo_price: product?.promo_price || '',
-    description: product?.description || '',
-    category: product?.category || 'Fastfood',
-    stock_quantity: product?.stock_quantity || 0,
-    image_url: product?.image_url || '',
-    additional_images: product?.additional_images || [],
-    taille_emballage: product?.taille_emballage || 'Moyen',
-    delivery_time: product?.delivery_time || '30-45 minutes',
-    seo_tags: product?.seo_tags || [],
-    is_available: product?.is_available !== false
+    name: '',
+    price: '',
+    promo_price: '',
+    description: '',
+    category: 'Fastfood',
+    stock_quantity: 0,
+    image_url: '',
+    additional_images: [],
+    taille_emballage: 'Moyen',
+    delivery_time: '30-45 minutes',
+    seo_tags: [],
+    is_available: true
   });
   const [newTag, setNewTag] = useState('');
 
@@ -37,10 +37,39 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
       // Show guidelines only for new products
       setShowGuidelines(true);
       setShowForm(false);
+      // Reset form for new product
+      setFormData({
+        name: '',
+        price: '',
+        promo_price: '',
+        description: '',
+        category: 'Fastfood',
+        stock_quantity: 0,
+        image_url: '',
+        additional_images: [],
+        taille_emballage: 'Moyen',
+        delivery_time: '30-45 minutes',
+        seo_tags: [],
+        is_available: true
+      });
     } else if (open && product) {
-      // Skip guidelines for editing
+      // Skip guidelines for editing and load product data
       setShowGuidelines(false);
       setShowForm(true);
+      setFormData({
+        name: product.name || '',
+        price: product.price || '',
+        promo_price: product.promo_price || '',
+        description: product.description || '',
+        category: product.category || 'Fastfood',
+        stock_quantity: product.stock_quantity || 0,
+        image_url: product.image_url || '',
+        additional_images: product.additional_images || [],
+        taille_emballage: product.taille_emballage || 'Moyen',
+        delivery_time: product.delivery_time || '30-45 minutes',
+        seo_tags: product.seo_tags || [],
+        is_available: product.is_available !== false
+      });
     } else {
       setShowGuidelines(false);
       setShowForm(false);
