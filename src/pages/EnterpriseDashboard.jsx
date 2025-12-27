@@ -137,7 +137,7 @@ export default function EnterpriseDashboard() {
       </aside>
 
       {/* MAIN CONTENT - PANE 2 */}
-      <main className="flex-1 overflow-y-auto bg-gray-50 pb-24">
+      <main className="flex-1 overflow-y-auto bg-gray-50 pb-32">
         <div className="animate-fade-in h-full">
           {activeTab === 'orders' && <OrdersSection orders={orders} onAddProduct={() => setActiveTab('products')} />}
           {activeTab === 'products' && <ProductsSection shopId={myShop?.id} />}
