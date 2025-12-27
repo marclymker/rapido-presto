@@ -44,8 +44,9 @@ export default function Orders() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
-      // Redirect if wrong profile
+      // Redirect if wrong profile - only clients can view orders
       if (u.current_profile !== 'client') {
+        toast.error('Accès réservé aux clients');
         const redirectPages = {
           entreprise: 'EnterpriseDashboard',
           livreur: 'DriverDashboard'

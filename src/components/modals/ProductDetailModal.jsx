@@ -37,6 +37,10 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   const originalPrice = applyClientMargin(product.price);
 
   const handleAdd = () => {
+    // Vérifier que l'utilisateur est un client
+    if (user && user.current_profile !== 'client') {
+      return; // Bouton sera désactivé
+    }
     onAddToCart(product, quantity);
     setQuantity(1);
     setCurrentImgIndex(0);
@@ -179,9 +183,11 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             <Button 
               className="bg-orange-500 hover:bg-orange-600 px-6"
               onClick={handleAdd}
-              disabled={product.is_available === false}
+              disabled={product.is_available === false || (user && user.current_profile !== 'client')}
             >
-              Ajouter • {price * quantity} HTG
+              {user && user.current_profile !== 'client' 
+                ? 'Réservé aux clients' 
+                : `Ajouter • ${price * quantity} HTG`}
             </Button>
           </div>
         </div>

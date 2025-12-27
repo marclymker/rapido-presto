@@ -48,8 +48,9 @@ export default function Cart() {
     base44.auth.me().then(u => {
       setUser(u);
       
-      // Redirect if wrong profile
+      // Redirect if wrong profile - only clients can access cart
       if (u.current_profile !== 'client') {
+        toast.error('Accès réservé aux clients');
         window.location.href = createPageUrl(
           u.current_profile === 'entreprise' ? 'EnterpriseDashboard' : 'DriverDashboard'
         );
