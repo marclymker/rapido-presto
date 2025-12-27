@@ -59,9 +59,7 @@ export default function Home() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
-      // Catalogue accessible à tous les profils (client, entreprise, livreur)
     }).catch(() => {
-      // User not logged in - can still browse catalogue
       setUser(null);
     });
 
@@ -349,6 +347,10 @@ export default function Home() {
                 <button
                   key={service.id}
                   onClick={() => {
+                    if (!user) {
+                      base44.auth.redirectToLogin(window.location.pathname);
+                      return;
+                    }
                     setSelectedCategory(service.id);
                     setSelectedShop(null);
                     setGooglePlaces([]);
@@ -369,6 +371,10 @@ export default function Home() {
             {/* Horizontal Stories */}
             <SmallStories 
               onCategorySelect={(category) => {
+                if (!user) {
+                  base44.auth.redirectToLogin(window.location.pathname);
+                  return;
+                }
                 setSelectedCategory(category);
                 setSelectedShop(null);
               }}
@@ -423,11 +429,19 @@ export default function Home() {
               <ProductRecommendations
                 user={user}
                 onProductClick={(p) => {
+                  if (!user) {
+                    base44.auth.redirectToLogin(window.location.pathname);
+                    return;
+                  }
                   const shop = shops.find(s => s.id === p.shop_id);
                   if (shop) setSelectedShop(shop);
                   setSelectedProduct(p);
                 }}
                 onAddToCart={(p) => {
+                  if (!user) {
+                    base44.auth.redirectToLogin(window.location.pathname);
+                    return;
+                  }
                   const shop = shops.find(s => s.id === p.shop_id);
                   if (shop) {
                     setSelectedShop(shop);
@@ -459,6 +473,10 @@ export default function Home() {
                     key={product.id}
                     product={product}
                     onAdd={(p) => {
+                      if (!user) {
+                        base44.auth.redirectToLogin(window.location.pathname);
+                        return;
+                      }
                       const shop = shops.find(s => s.id === p.shop_id);
                       if (shop) {
                         setSelectedShop(shop);
@@ -466,6 +484,10 @@ export default function Home() {
                       }
                     }}
                     onClick={(p) => {
+                      if (!user) {
+                        base44.auth.redirectToLogin(window.location.pathname);
+                        return;
+                      }
                       const shop = shops.find(s => s.id === p.shop_id);
                       if (shop) setSelectedShop(shop);
                       setSelectedProduct(p);
@@ -550,7 +572,13 @@ export default function Home() {
                     <StoreMapView
                       stores={[...shops, ...googlePlaces]}
                       userLocation={userLocation}
-                      onStoreSelect={setSelectedShop}
+                      onStoreSelect={(shop) => {
+                        if (!user) {
+                          base44.auth.redirectToLogin(window.location.pathname);
+                          return;
+                        }
+                        setSelectedShop(shop);
+                      }}
                     />
                   </div>
 
@@ -578,7 +606,13 @@ export default function Home() {
                           key={place.id}
                           place={place}
                           userLocation={userLocation}
-                          onClick={() => setSelectedShop(place)}
+                          onClick={() => {
+                            if (!user) {
+                              base44.auth.redirectToLogin(window.location.pathname);
+                              return;
+                            }
+                            setSelectedShop(place);
+                          }}
                         />
                       ))}
                     </div>
@@ -627,7 +661,13 @@ export default function Home() {
                 {shops.map(shop => (
                   <button
                     key={shop.id}
-                    onClick={() => setSelectedShop(shop)}
+                    onClick={() => {
+                      if (!user) {
+                        base44.auth.redirectToLogin(window.location.pathname);
+                        return;
+                      }
+                      setSelectedShop(shop);
+                    }}
                     className={`w-full flex flex-col items-center mb-4 p-3 rounded-2xl transition-colors cursor-pointer group ${
                       selectedShop?.id === shop.id ? 'bg-white shadow-md' : 'hover:bg-white'
                     }`}
@@ -653,7 +693,13 @@ export default function Home() {
                 {googlePlaces.map(place => (
                   <button
                     key={place.id}
-                    onClick={() => setSelectedShop(place)}
+                    onClick={() => {
+                      if (!user) {
+                        base44.auth.redirectToLogin(window.location.pathname);
+                        return;
+                      }
+                      setSelectedShop(place);
+                    }}
                     className={`w-full flex flex-col items-center mb-4 p-3 rounded-2xl transition-colors cursor-pointer group ${
                       selectedShop?.id === place.id ? 'bg-white shadow-md' : 'hover:bg-white'
                     }`}
@@ -719,7 +765,13 @@ export default function Home() {
                     key={product.id}
                     product={product}
                     onAdd={handleAddToCart}
-                    onClick={() => setSelectedProduct(product)}
+                    onClick={() => {
+                      if (!user) {
+                        base44.auth.redirectToLogin(window.location.pathname);
+                        return;
+                      }
+                      setSelectedProduct(product);
+                    }}
                   />
                 ))}
                 </div>
