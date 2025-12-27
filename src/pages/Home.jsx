@@ -29,6 +29,7 @@ import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import FloatingMerchantBanner from '@/components/home/FloatingMerchantBanner';
 import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
 import FlashBanner from '@/components/home/FlashBanner';
+import FlowersBanner from '@/components/home/FlowersBanner';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -357,6 +358,10 @@ export default function Home() {
           <div>
             {/* Flash Marketing Banner */}
             <FlashBanner />
+
+            {/* Flowers Banner */}
+            <FlowersBanner />
+
             {/* Boutons de Types d'Articles (Grid) */}
             <div className="grid grid-cols-2 gap-3 p-4">
               {articleTypes.map((type) => (
