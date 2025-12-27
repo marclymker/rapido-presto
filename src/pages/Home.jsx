@@ -877,14 +877,18 @@ export default function Home() {
                 )}
 
                 {/* Product Detail Modal */}
-      <ProductDetailModal
-        product={selectedProduct}
-        shop={selectedProduct ? shops.find(s => s.id === selectedProduct.shop_id) : null}
-        open={!!selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
-        user={user}
-      />
+                <ProductDetailModal
+                  product={selectedProduct}
+                  shop={selectedProduct ? shops.find(s => s.id === selectedProduct.shop_id) : null}
+                  open={!!selectedProduct}
+                  onClose={() => setSelectedProduct(null)}
+                  onAddToCart={handleAddToCart}
+                  user={user}
+                  onShopClick={(shop) => {
+                    setSelectedShop(shop);
+                    setSelectedProduct(null);
+                  }}
+                />
 
       {/* Profile Completion Modal */}
       <ProfileCompletionModal

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, MessageCircle } from 'lucide-react';
+import { Minus, Plus, MessageCircle, Store, ChevronRight } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import ReactPixel from 'react-facebook-pixel';
 import { base44 } from '@/api/base44Client';
 import SEOArticle from '@/components/SEO/SEOArticle';
 
-export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user }) {
+export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, onShopClick }) {
   const [quantity, setQuantity] = useState(1);
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   
@@ -114,6 +114,36 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               <span className="text-lg text-slate-400 line-through">{originalPrice} HTG</span>
             )}
           </div>
+
+          {/* Shop Info */}
+          {shop && (
+            <button
+              onClick={() => {
+                if (onShopClick) {
+                  onShopClick(shop);
+                  onClose();
+                }
+              }}
+              className="flex items-center gap-3 w-full mt-4 p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors group"
+            >
+              <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
+                {shop.company_logo_url ? (
+                  <img src={shop.company_logo_url} alt={shop.company_name} className="w-full h-full object-cover" />
+                ) : (
+                  <Store className="w-6 h-6 text-orange-500" />
+                )}
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-semibold text-slate-800 group-hover:text-orange-600 transition-colors">
+                  {shop.company_name}
+                </p>
+                <p className="text-xs text-slate-500">
+                  Voir tous les produits
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-orange-500 transition-colors" />
+            </button>
+          )}
           
           {shop?.company_category === "Mariage" && (
             <button
