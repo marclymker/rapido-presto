@@ -145,13 +145,45 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             </button>
           )}
           
+          {/* Bouton Chat Interne Rapido Presto */}
+          <button
+            onClick={async () => {
+              if (!user) {
+                base44.auth.redirectToLogin(window.location.pathname);
+                return;
+              }
+              try {
+                const response = await base44.functions.invoke('chatService', {
+                  action: 'init',
+                  vendor_id: shop.user_id,
+                  shop_id: shop.id,
+                  shop_name: shop.company_name,
+                  shop_logo: shop.company_logo_url,
+                  product_id: product.id,
+                  product_name: product.name,
+                  initial_message: `Bonjour, je suis intéressé par votre article : ${product.name}`
+                });
+                window.location.href = `/chat?id=${response.data.conversation.id}`;
+              } catch (error) {
+                console.error(error);
+              }
+            }}
+            className="flex items-center justify-center gap-3 w-full mt-4 px-4 py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold transition-all shadow-lg"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Contacter le Vendeur
+          </button>
+
+          {/* Bouton WhatsApp (si catégorie Mariage) */}
           {shop?.company_category === "Mariage" && (
             <button
               onClick={handleWhatsAppClick}
-              className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-3 bg-[#25D366] hover:bg-[#1ebd58] text-white rounded-xl font-semibold transition-colors shadow-lg"
+              className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-4 bg-[#25D366] hover:bg-[#1ebd58] text-white rounded-xl font-semibold transition-colors shadow-lg"
             >
               <MessageCircle className="w-5 h-5" />
-              Discuter sur WhatsApp
+              Catalogue Mariage WhatsApp
             </button>
           )}
           
