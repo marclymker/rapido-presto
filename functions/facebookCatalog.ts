@@ -1,155 +1,102 @@
 import { Base44 } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  // Permettre l'accès public pour Meta (pas besoin d'auth)
+  // CORS headers pour Meta
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': '*',
+  };
+
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      }
+      headers: corsHeaders
     });
   }
 
-  // Utiliser directement le service role pour accès public
-  const base44 = new Base44({
-    appId: Deno.env.get('BASE44_APP_ID'),
-    useServiceRole: true
-  });
-
-  const baseUrl = "https://rapidopresto.shop";
-
   try {
-    // Récupérer toutes les boutiques Premium actives
+    // Accès public sans authentification
+    const base44 = new Base44({
+      appId: Deno.env.get('BASE44_APP_ID'),
+      useServiceRole: true
+    });
+
+    // Récupérer les boutiques Premium
     const shops = await base44.entities.Shop.filter({ 
       is_premium: true,
-      boost_enabled: true
+      boost_enabled: true,
+      is_active: true
     });
+    
     const shopIds = shops.map(s => s.id);
 
-    // Récupérer seulement les produits des boutiques Premium
-    // ET qui ont une image (obligatoire pour Facebook)
+    // Récupérer les produits avec images
     const products = await base44.entities.Product.filter({ 
       is_available: true,
       shop_id: { $in: shopIds },
       image_url: { $ne: null, $ne: '' }
     });
 
-    // Si aucun produit, retourner un flux vide mais valide
-    if (products.length === 0) {
-      const emptyXml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
-  <channel>
-    <title>Rapido Presto Product Catalog</title>
-    <link>${baseUrl}</link>
-    <description>Tous les produits disponibles sur Rapido Presto Haïti</description>
-  </channel>
-</rss>`;
-      
-      return new Response(emptyXml, {
-        status: 200,
-        headers: { 
-          "Content-Type": "text/xml; charset=utf-8",
-          "Cache-Control": "public, max-age=3600",
-          "Access-Control-Allow-Origin": "*"
-        },
-      });
-    }
+    // Créer CSV format Facebook
+    let csv = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category\n';
 
-    // Construction du header XML (format RSS 2.0 / Google Shopping)
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
-  <channel>
-    <title>Rapido Presto Product Catalog</title>
-    <link>${baseUrl}</link>
-    <description>Tous les produits disponibles sur Rapido Presto Haïti</description>`;
-
-    // Mapping des catégories vers Google Product Categories
-    const getCategoryMapping = (category) => {
-      const categoryMap = {
-        'Fastfood': 'Food, Beverages &amp; Tobacco',
-        'Restaurants': 'Food, Beverages &amp; Tobacco',
-        'Café': 'Food, Beverages &amp; Tobacco',
-        'Epicerie': 'Food, Beverages &amp; Tobacco',
-        'Pharmacie': 'Health &amp; Beauty',
-        'Vêtements': 'Apparel &amp; Accessories',
-        'Pour Femme': 'Apparel &amp; Accessories',
-        'Pour homme': 'Apparel &amp; Accessories',
-        'Boutique Fleurs': 'Home &amp; Garden',
-        'Maison': 'Home &amp; Garden',
-        'Bébé': 'Baby &amp; Toddler',
-        'Electronics': 'Electronics',
-        'Outils': 'Hardware'
-      };
-      return categoryMap[category] || 'Apparel &amp; Accessories';
-    };
-
-    // Boucle sur chaque produit
     products.forEach(product => {
-      // Échapper les caractères spéciaux pour XML
-      const escapeXml = (str) => {
+      const escapeCSV = (str) => {
         if (!str) return '';
-        return String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&apos;');
+        str = String(str).replace(/"/g, '""');
+        if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+          return `"${str}"`;
+        }
+        return str;
       };
 
-      const shopName = escapeXml(product.shop_name || 'Rapido Presto');
-      const title = escapeXml(`${product.name} | ${shopName}`);
-      const description = escapeXml(product.description || `Achetez ${product.name} sur Rapido Presto`);
-      const imageUrl = product.image_url || '';
+      const shopName = product.shop_name || 'Rapido Presto';
+      const title = escapeCSV(`${product.name} | ${shopName}`);
+      const description = escapeCSV(product.description || `Achetez ${product.name} sur Rapido Presto en Haïti`);
+      const availability = product.stock_quantity > 0 ? 'in stock' : 'out of stock';
       const price = `${product.price} HTG`;
-      const category = product.category || 'General';
-      const googleCategory = getCategoryMapping(category);
-
-      xml += `
-    <item>
-      <g:id>${product.id}</g:id>
-      <g:title><![CDATA[${title}]]></g:title>
-      <g:description><![CDATA[${description}]]></g:description>
-      <g:link>${baseUrl}/product/${product.id}</g:link>
-      <g:image_link>${imageUrl}</g:image_link>
-      <g:condition>new</g:condition>
-      <g:availability>${product.stock_quantity > 0 ? 'in stock' : 'out of stock'}</g:availability>
-      <g:price>${price}</g:price>
-      <g:brand>${shopName}</g:brand>
-      <g:google_product_category>${googleCategory}</g:google_product_category>
-      <g:product_type>${escapeXml(category)}</g:product_type>
-      <g:custom_label_0>Premium_Merchant</g:custom_label_0>`;
+      const link = `https://rapidopresto.shop/#/Home?product=${product.id}`;
+      const imageLink = product.image_url;
+      const brand = escapeCSV(shopName);
       
-      // Ajouter les images supplémentaires si disponibles
-      if (product.additional_images && product.additional_images.length > 0) {
-        product.additional_images.forEach(img => {
-          xml += `
-      <g:additional_image_link>${img}</g:additional_image_link>`;
-        });
-      }
+      // Mapping catégorie
+      const categoryMap = {
+        'Fastfood': 'Food, Beverages & Tobacco',
+        'Restaurants': 'Food, Beverages & Tobacco',
+        'Café': 'Food, Beverages & Tobacco',
+        'Epicerie': 'Food, Beverages & Tobacco',
+        'Pharmacie': 'Health & Beauty',
+        'Pour Femme': 'Apparel & Accessories',
+        'Pour homme': 'Apparel & Accessories',
+        'Boutique Fleurs': 'Home & Garden',
+        'Maison': 'Home & Garden',
+        'Bébé': 'Baby & Toddler',
+        'Electronics': 'Electronics',
+        'Outils': 'Hardware',
+        'Mariage': 'Home & Garden',
+        'Bijoux': 'Apparel & Accessories'
+      };
+      const googleCategory = categoryMap[product.category] || 'Apparel & Accessories';
 
-      xml += `
-    </item>`;
+      csv += `${product.id},${title},${description},${availability},new,${price},${link},${imageLink},${brand},${googleCategory}\n`;
     });
 
-    xml += `
-  </channel>
-</rss>`;
-
-    return new Response(xml, {
+    return new Response(csv, {
       status: 200,
-      headers: { 
-        "Content-Type": "text/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=3600",
-        "Access-Control-Allow-Origin": "*"
-      },
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="catalog.csv"',
+        'Cache-Control': 'public, max-age=3600'
+      }
     });
 
   } catch (error) {
-    console.error('Erreur génération flux Facebook:', error);
-    return new Response(`Erreur de génération du flux: ${error.message}`, { 
-      status: 500 
+    console.error('Erreur catalogue:', error);
+    return new Response(`Error: ${error.message}`, { 
+      status: 500,
+      headers: corsHeaders
     });
   }
 });
