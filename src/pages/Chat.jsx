@@ -3,8 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Send, MessageSquare, ArrowLeft, Store } from 'lucide-react';
-import { toast } from "sonner";
+import { Loader2, Send, MessageSquare, ArrowLeft } from 'lucide-react';
 
 export default function Chat() {
   const [user, setUser] = useState(null);
@@ -12,112 +11,103 @@ export default function Chat() {
   const [messageText, setMessageText] = useState('');
   const messagesEndRef = useRef(null);
   const queryClient = useQueryClient();
+  const convIdFromUrl = new URLSearchParams(window.location.search).get('id');
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => base44.auth.redirectToLogin('/chat'));
+    base44.auth.me().then(setUser).catch(() => window.location.href = '/login');
   }, []);
 
-  // 1. Liste des conversations
+  // Liste des conversations (Polling 10s pour éviter 429)
   const { data: conversations = [], isLoading: isLoadingConvs } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: () => base44.functions.invoke('chatService', { action: 'list' }).then(r => r.data || []),
     enabled: !!user?.id,
-    refetchInterval: 5000
+    refetchInterval: 10000, 
+    retry: false
   });
 
-  // 2. Messages de la conversation sélectionnée
+  // Messages (Polling 5s)
   const { data: messages = [] } = useQuery({
     queryKey: ['messages', selectedConv?.id],
     queryFn: () => base44.functions.invoke('chatService', { action: 'messages', convId: selectedConv.id }).then(r => r.data || []),
     enabled: !!selectedConv?.id,
-    refetchInterval: 3000
+    refetchInterval: 5000,
+    retry: false
   });
 
-  // 3. LOGIQUE D'INITIALISATION AUTO
+  // Auto-sélection de la conversation depuis l'URL
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const vId = params.get('vendorId');
-    const pId = params.get('productId');
-    const cId = params.get('id');
-
-    // Cas A : On a déjà un ID dans l'URL, on cherche la conv dans la liste
-    if (cId && conversations.length > 0) {
-      const found = conversations.find(c => String(c.id) === String(cId));
+    if (convIdFromUrl && conversations.length > 0) {
+      const found = conversations.find(c => String(c.id) === String(convIdFromUrl));
       if (found) setSelectedConv(found);
-    } 
-    // Cas B : On arrive d'un produit (vId présent) mais sans ID de conversation
-    else if (vId && conversations.length > 0 && user) {
-      const existing = conversations.find(c => String(c.vendor_id) === String(vId) || String(c.customer_id) === String(vId));
-      
-      if (existing) {
-        setSelectedConv(existing);
-        window.history.replaceState({}, '', `/chat?id=${existing.id}`);
-      } else {
-        // Création réelle si elle n'existe pas du tout
-        base44.functions.invoke('chatService', { action: 'init', vendor_id: vId, product_id: pId })
-          .then(res => {
-            if (res.data?.id) {
-              queryClient.invalidateQueries(['conversations']);
-              window.history.replaceState({}, '', `/chat?id=${res.data.id}`);
-            }
-          });
-      }
     }
-  }, [conversations, user]);
+  }, [convIdFromUrl, conversations]);
 
-  // 4. Mutation d'envoi
   const sendMessage = useMutation({
-    mutationFn: (vars) => base44.functions.invoke('chatService', { action: 'send', conversation_id: selectedConv.id, ...vars }),
+    mutationFn: (text) => base44.functions.invoke('chatService', { 
+      action: 'send', 
+      conversation_id: selectedConv.id, 
+      content: text 
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries(['messages', selectedConv.id]);
       setMessageText('');
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   });
 
-  if (!user) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (!user || isLoadingConvs) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-orange-500" /></div>;
 
   return (
     <div className="flex h-screen bg-white">
-      {/* Liste des convs */}
-      <div className={`${selectedConv ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r`}>
-        <div className="p-4 border-b font-bold flex gap-2"><MessageSquare /> Discussions</div>
-        <div className="overflow-y-auto">
+      {/* Sidebar */}
+      <div className={`${selectedConv ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r bg-slate-50`}>
+        <div className="p-4 border-b font-bold flex gap-2 items-center"><MessageSquare size={20}/> Discussions</div>
+        <div className="overflow-y-auto flex-1">
           {conversations.map(c => (
-            <div key={c.id} onClick={() => setSelectedConv(c)} className={`p-4 border-b cursor-pointer ${selectedConv?.id === c.id ? 'bg-orange-50' : ''}`}>
-              <p className="font-bold text-sm">{user.id === c.vendor_id ? c.customer_name : c.shop_name}</p>
-              <p className="text-xs text-gray-500 truncate">{c.last_message}</p>
+            <div key={c.id} onClick={() => setSelectedConv(c)} className={`p-4 border-b cursor-pointer transition ${selectedConv?.id === c.id ? 'bg-orange-50 border-l-4 border-l-orange-500' : 'bg-white'}`}>
+              <p className="font-bold text-sm truncate">{user.id === c.vendor_id ? c.customer_name : c.shop_name}</p>
+              <p className="text-xs text-slate-500 truncate">{c.last_message}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Zone Chat */}
+      {/* Chat Area */}
       <div className={`${!selectedConv ? 'hidden md:flex' : 'flex'} flex-1 flex-col`}>
         {selectedConv ? (
           <>
-            <div className="p-4 border-b flex items-center gap-3">
-              <ArrowLeft className="md:hidden" onClick={() => setSelectedConv(null)} />
+            <div className="p-4 border-b flex items-center gap-3 bg-white">
+              <ArrowLeft className="md:hidden cursor-pointer" onClick={() => setSelectedConv(null)} />
               <p className="font-bold">{user.id === selectedConv.vendor_id ? selectedConv.customer_name : selectedConv.shop_name}</p>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
               {messages.map(m => (
                 <div key={m.id} className={`flex ${m.sender_id === user.id ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`p-3 rounded-2xl max-w-[80%] ${m.sender_id === user.id ? 'bg-orange-500 text-white' : 'bg-white border'}`}>
+                  <div className={`p-3 rounded-2xl max-w-[80%] shadow-sm ${m.sender_id === user.id ? 'bg-orange-500 text-white' : 'bg-white text-slate-800 border'}`}>
                     {m.content}
                   </div>
                 </div>
               ))}
               <div ref={messagesEndRef} />
             </div>
-            <div className="p-4 border-t flex gap-2">
-              <Input value={messageText} onChange={e => setMessageText(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage.mutate({ content: messageText })} />
-              <Button onClick={() => sendMessage.mutate({ content: messageText })} className="bg-orange-500"><Send size={18} /></Button>
+            <div className="p-4 bg-white border-t flex gap-2">
+              <Input 
+                value={messageText} 
+                onChange={e => setMessageText(e.target.value)} 
+                onKeyDown={e => e.key === 'Enter' && sendMessage.mutate(messageText)}
+                placeholder="Votre message..."
+                disabled={sendMessage.isPending}
+              />
+              <Button onClick={() => sendMessage.mutate(messageText)} disabled={sendMessage.isPending} className="bg-orange-500 hover:bg-orange-600">
+                {sendMessage.isPending ? <Loader2 className="animate-spin" /> : <Send size={18} />}
+              </Button>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-300">
-            <MessageSquare size={48} />
-            <p>Sélectionnez une discussion</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-300">
+            <MessageSquare size={60} className="mb-4 opacity-20" />
+            <p>Sélectionnez une discussion pour commencer</p>
           </div>
         )}
       </div>
