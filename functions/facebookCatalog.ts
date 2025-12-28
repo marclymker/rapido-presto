@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { Base44 } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   // Permettre l'accès public pour Meta (pas besoin d'auth)
@@ -12,12 +12,17 @@ Deno.serve(async (req) => {
     });
   }
 
-  const base44 = createClientFromRequest(req);
+  // Utiliser directement le service role pour accès public
+  const base44 = new Base44({
+    appId: Deno.env.get('BASE44_APP_ID'),
+    useServiceRole: true
+  });
+
   const baseUrl = "https://rapidopresto.shop";
 
   try {
     // Récupérer toutes les boutiques Premium actives
-    const shops = await base44.asServiceRole.entities.Shop.filter({ 
+    const shops = await base44.entities.Shop.filter({ 
       is_premium: true,
       boost_enabled: true
     });
@@ -25,7 +30,7 @@ Deno.serve(async (req) => {
 
     // Récupérer seulement les produits des boutiques Premium
     // ET qui ont une image (obligatoire pour Facebook)
-    const products = await base44.asServiceRole.entities.Product.filter({ 
+    const products = await base44.entities.Product.filter({ 
       is_available: true,
       shop_id: { $in: shopIds },
       image_url: { $ne: null, $ne: '' }
