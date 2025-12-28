@@ -36,7 +36,9 @@ Deno.serve(async (req) => {
     };
 
     validProducts.forEach(product => {
-      const shopName = product.shop_name || 'Rapido Presto';
+      // Trouver le shop_name depuis l'entité Shop si null
+      const shop = shops.find(s => s.id === product.shop_id);
+      const shopName = product.shop_name || shop?.company_name || 'Rapido Presto';
       
       const id = escapeCSV(product.id);
       const title = escapeCSV(`${product.name} - ${shopName}`.substring(0, 150));
