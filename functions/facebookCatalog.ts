@@ -68,8 +68,8 @@ Deno.serve(async (req) => {
       status: 200, 
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': 'attachment; filename=facebook_catalog.csv',
-        'Access-Control-Allow-Origin': '*' 
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache'
       }
     });
 
