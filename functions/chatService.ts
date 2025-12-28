@@ -19,9 +19,9 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = body.action;
 
-    // --- INITIALISATION ---
+    // --- LOGIQUE INITIALISATION ---
     if (action === 'init') {
-      const { vendor_id, shop_id, shop_name, shop_logo, product_id, initial_message } = body;
+      const { vendor_id, shop_id, shop_name, shop_logo, product_id, product_name, initial_message } = body;
 
       const existing = await base44.entities.Conversation.filter({
         customer_id: user.id,
@@ -51,13 +51,14 @@ Deno.serve(async (req) => {
         sender_name: user.full_name || 'Client',
         content: initial_message,
         type: 'text',
-        is_read: false
+        is_read: false,
+        timestamp: new Date().toISOString() // Ajout du timestamp
       });
 
       return new Response(JSON.stringify(conversation), { headers });
     }
 
-    // --- LISTE DES CONVERSATIONS ---
+    // --- LOGIQUE LISTE ---
     if (action === 'list') {
       const list = await base44.entities.Conversation.filter({
         $or: [{ customer_id: user.id }, { vendor_id: user.id }]
@@ -65,24 +66,33 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ data: list }), { headers });
     }
 
-    // --- MESSAGES (CORRIGÉ POUR L'ORDRE) ---
+    // --- LOGIQUE MESSAGES ---
     if (action === 'messages') {
-      const msgs = await base44.entities.ChatMessage.filter(
-        { conversation_id: body.convId },
-        { sort: { created_at: 'asc' } } // Plus ancien au plus récent
-      );
-      return new Response(JSON.stringify({ data: msgs }), { headers });
+      const msgs = await base44.entities.ChatMessage.filter({ conversation_id: body.convId });
+      
+      // TRIER les messages par date croissante (plus ancien en premier)
+      const sortedMessages = msgs.sort((a, b) => {
+        // Utiliser created_at ou timestamp s'ils existent
+        const dateA = a.created_at || a.timestamp || a.id;
+        const dateB = b.created_at || b.timestamp || b.id;
+        return new Date(dateA).getTime() - new Date(dateB).getTime();
+      });
+      
+      return new Response(JSON.stringify({ data: sortedMessages }), { headers });
     }
 
-    // --- ENVOI ---
+    // --- LOGIQUE ENVOI ---
     if (action === 'send') {
-      const message = await base44.entities.ChatMessage.create({
+      const messageData = {
         conversation_id: body.conversation_id,
         sender_id: user.id,
         sender_name: user.full_name || 'Utilisateur',
         content: body.content,
-        type: 'text'
-      });
+        type: 'text',
+        timestamp: new Date().toISOString() // Ajout du timestamp
+      };
+      
+      const message = await base44.entities.ChatMessage.create(messageData);
       
       await base44.asServiceRole.entities.Conversation.update(body.conversation_id, {
         last_message: body.content,
