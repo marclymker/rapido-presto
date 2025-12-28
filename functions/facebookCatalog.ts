@@ -11,10 +11,8 @@ Deno.serve(async (req) => {
       useServiceRole: true
     });
 
-    // 1. Récupérer les boutiques Premium
+    // 1. Récupérer toutes les boutiques actives
     const shops = await base44.entities.Shop.filter({ 
-      is_premium: true,
-      boost_enabled: true,
       is_active: true
     });
     
