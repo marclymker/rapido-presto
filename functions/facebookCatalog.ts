@@ -39,14 +39,11 @@ Deno.serve(async (req) => {
     let csv = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category,quantity_to_sell_on_facebook,sale_price\n';
 
     validProducts.forEach(product => {
-      // Fonction d'échappement CSV
+      // Échappement CSV strict (remplace " par "" et entoure de guillemets)
       const escapeCSV = (str) => {
-        if (!str) return '';
+        if (!str) return '""';
         str = String(str).replace(/"/g, '""').replace(/\n/g, ' ').replace(/\r/g, '');
-        if (str.includes(',') || str.includes('"')) {
-          return `"${str}"`;
-        }
-        return str;
+        return `"${str}"`;
       };
 
       // Mapping catégories vers Google Product Categories
@@ -75,7 +72,7 @@ Deno.serve(async (req) => {
       const availability = (product.stock_quantity || 0) > 0 ? 'in stock' : 'out of stock';
       const condition = 'new';
       
-      // Prix au format strict: NOMBRE.DECIMALES DEVISE
+      // Prix au format strict: NOMBRE.DECIMALES[ESPACE]DEVISE
       const priceValue = product.price || 0;
       const price = `${parseFloat(priceValue).toFixed(2)} HTG`;
       
@@ -85,7 +82,7 @@ Deno.serve(async (req) => {
       // Image (obligatoire)
       const imageLink = product.image_url;
       
-      // Marque
+      // Marque (toujours entre guillemets)
       const brand = escapeCSV(shopName);
 
       // Champs optionnels
@@ -98,7 +95,7 @@ Deno.serve(async (req) => {
         salePrice = `${parseFloat(product.promo_price).toFixed(2)} HTG`;
       }
 
-      // Ligne CSV
+      // Ligne CSV avec tous les champs texte entre guillemets
       csv += `${id},${title},${description},${availability},${condition},${price},${link},${imageLink},${brand},${googleCategory},${quantity},${salePrice}\n`;
     });
 
