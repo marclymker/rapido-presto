@@ -163,9 +163,17 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                   product_name: product.name,
                   initial_message: `Bonjour, je suis intéressé par votre article : ${product.name}`
                 });
-                window.location.href = `/chat?id=${response.data.conversation.id}`;
+                
+                const conversationId = response.data?.conversation?.id;
+                if (conversationId) {
+                  window.location.href = `/chat?id=${conversationId}`;
+                } else {
+                  console.error('No conversation ID returned:', response.data);
+                  alert('Erreur lors de l\'initialisation du chat');
+                }
               } catch (error) {
-                console.error(error);
+                console.error('Chat init error:', error);
+                alert('Erreur lors de l\'ouverture du chat');
               }
             }}
             className="flex items-center justify-center gap-3 w-full mt-4 px-4 py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold transition-all shadow-lg"

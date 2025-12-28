@@ -289,8 +289,16 @@ export default function Product() {
                     product_name: product.name,
                     initial_message: `Bonjour, je suis intéressé par votre article : ${product.name}`
                   });
-                  window.location.href = `/chat?id=${response.data.conversation.id}`;
+                  
+                  const conversationId = response.data?.conversation?.id;
+                  if (conversationId) {
+                    window.location.href = `/chat?id=${conversationId}`;
+                  } else {
+                    console.error('No conversation ID returned:', response.data);
+                    toast.error("Erreur lors de l'initialisation du chat");
+                  }
                 } catch (error) {
+                  console.error('Chat init error:', error);
                   toast.error("Erreur lors de l'ouverture du chat");
                 }
               }}
