@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       return new Response(emptyXml, {
         status: 200,
         headers: { 
-          "Content-Type": "application/rss+xml; charset=utf-8",
+          "Content-Type": "text/xml; charset=utf-8",
           "Cache-Control": "public, max-age=3600",
           "Access-Control-Allow-Origin": "*"
         },
@@ -140,10 +140,9 @@ Deno.serve(async (req) => {
     return new Response(xml, {
       status: 200,
       headers: { 
-        "Content-Type": "application/rss+xml; charset=utf-8",
+        "Content-Type": "text/xml; charset=utf-8",
         "Cache-Control": "public, max-age=3600",
-        "Access-Control-Allow-Origin": "*",
-        "Content-Disposition": "inline; filename=catalog.xml"
+        "Access-Control-Allow-Origin": "*"
       },
     });
 
