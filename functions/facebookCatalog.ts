@@ -15,6 +15,7 @@ Deno.serve(async (req) => {
     const shops = await base44.entities.Shop.filter({ 
       is_active: true
     });
+    console.log(`✅ Boutiques trouvées: ${shops.length}`);
     
     const shopIds = shops.map(s => s.id);
 
@@ -23,8 +24,14 @@ Deno.serve(async (req) => {
       is_available: true,
       shop_id: { $in: shopIds }
     });
+    console.log(`✅ Produits trouvés: ${products.length}`);
 
     const validProducts = products.filter(p => p.image_url && p.image_url.trim() !== '');
+    console.log(`✅ Produits valides (avec image): ${validProducts.length}`);
+    
+    if (validProducts.length === 0) {
+      console.error('⚠️ ALERTE: Aucun produit valide après filtrage!');
+    }
 
     // En-têtes CSV (format Meta/Google)
     let csv = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category,quantity_to_sell_on_facebook,sale_price\n';
