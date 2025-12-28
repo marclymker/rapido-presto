@@ -6,6 +6,7 @@ Deno.serve(async (req) => {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-id, x-client-secret",
+    "Content-Type": "application/json",
   };
 
   if (req.method === "OPTIONS") {
@@ -15,15 +16,23 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
+        status: 401, 
+        headers 
+      });
+    }
 
     const body = await req.json().catch(() => ({}));
     const action = body.action;
 
+    console.log(`Action: ${action}, User: ${user.id}`);
+
     // --- LOGIQUE INITIALISATION ---
     if (action === 'init') {
-      const { vendor_id, shop_id, shop_name, shop_logo, product_id, product_name, initial_message } = body;
+      const { vendor_id, shop_id, shop_name, shop_logo, product_id, initial_message } = body;
 
+      // Vérifier si une conversation existe déjà
       const existing = await base44.entities.Conversation.filter({
         customer_id: user.id,
         vendor_id: vendor_id,
@@ -31,9 +40,14 @@ Deno.serve(async (req) => {
       });
 
       if (existing && existing.length > 0) {
-        return new Response(JSON.stringify(existing[0]), { headers });
+        console.log('Conversation existante trouvée:', existing[0].id);
+        return new Response(JSON.stringify({ 
+          success: true, 
+          conversation: existing[0] 
+        }), { headers });
       }
 
+      // Créer une nouvelle conversation
       const conversation = await base44.entities.Conversation.create({
         customer_id: user.id,
         customer_name: user.full_name || 'Client',
@@ -41,83 +55,163 @@ Deno.serve(async (req) => {
         shop_id: shop_id,
         shop_name: shop_name || 'Boutique',
         shop_logo: shop_logo || '',
-        last_message: initial_message,
+        last_message: initial_message || 'Conversation démarrée',
         last_message_date: new Date().toISOString(),
-        product_context_id: product_id
+        product_context_id: product_id || null
       });
 
-      // Créer le message initial avec timestamp
+      console.log('Nouvelle conversation créée:', conversation.id);
+
+      // Créer le message initial
       await base44.entities.ChatMessage.create({
         conversation_id: conversation.id,
         sender_id: user.id,
         sender_name: user.full_name || 'Client',
-        content: initial_message,
+        content: initial_message || 'Bonjour, je souhaite en savoir plus sur ce produit.',
         type: 'text',
         is_read: false,
         timestamp: new Date().toISOString(),
         created_at: new Date().toISOString()
       });
 
-      return new Response(JSON.stringify(conversation), { headers });
+      return new Response(JSON.stringify({ 
+        success: true, 
+        conversation: conversation 
+      }), { headers });
     }
 
     // --- LOGIQUE LISTE ---
     if (action === 'list') {
-      const list = await base44.entities.Conversation.filter({
-        $or: [{ customer_id: user.id }, { vendor_id: user.id }]
-      });
-      return new Response(JSON.stringify({ data: list }), { headers });
+      try {
+        // Récupérer les conversations où l'utilisateur est client OU vendeur
+        const conversationsAsCustomer = await base44.entities.Conversation.filter({
+          customer_id: user.id
+        });
+
+        const conversationsAsVendor = await base44.entities.Conversation.filter({
+          vendor_id: user.id
+        });
+
+        // Fusionner et dédupliquer les conversations
+        const allConversations = [...conversationsAsCustomer, ...conversationsAsVendor];
+        const uniqueConversations = allConversations.filter((conv, index, self) =>
+          index === self.findIndex(c => c.id === conv.id)
+        );
+
+        // Trier par date du dernier message (plus récent en premier)
+        const sortedConversations = uniqueConversations.sort((a, b) => {
+          const dateA = new Date(a.last_message_date || a.created_at || 0);
+          const dateB = new Date(b.last_message_date || b.created_at || 0);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        console.log(`Retourne ${sortedConversations.length} conversations pour l'utilisateur ${user.id}`);
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          data: sortedConversations 
+        }), { headers });
+      } catch (error) {
+        console.error('Erreur lors de la récupération des conversations:', error);
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: error.message,
+          data: []
+        }), { headers });
+      }
     }
 
     // --- LOGIQUE MESSAGES ---
     if (action === 'messages') {
-      const msgs = await base44.entities.ChatMessage.filter({ 
-        conversation_id: body.convId 
-      });
+      const { convId } = body;
       
-      // Trier les messages par date de création ascendante (plus ancien -> plus récent)
-      const sortedMessages = msgs.sort((a, b) => {
-        // Priorité au champ timestamp, sinon created_at, sinon id
-        const timeA = a.timestamp || a.created_at || a.id;
-        const timeB = b.timestamp || b.created_at || b.id;
+      if (!convId) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'convId requis' 
+        }), { status: 400, headers });
+      }
+
+      try {
+        const msgs = await base44.entities.ChatMessage.filter({ 
+          conversation_id: convId 
+        });
         
-        // Convertir en timestamp numérique pour comparaison
-        const dateA = new Date(timeA).getTime();
-        const dateB = new Date(timeB).getTime();
+        // Trier les messages par date de création ascendante (plus ancien -> plus récent)
+        const sortedMessages = msgs.sort((a, b) => {
+          const timeA = a.timestamp || a.created_at || a.id;
+          const timeB = b.timestamp || b.created_at || b.id;
+          
+          const dateA = new Date(timeA).getTime();
+          const dateB = new Date(timeB).getTime();
+          
+          return dateA - dateB;
+        });
         
-        // Ordre ascendant: plus ancien en premier, plus récent en dernier
-        return dateA - dateB;
-      });
-      
-      return new Response(JSON.stringify({ data: sortedMessages }), { headers });
+        console.log(`Retourne ${sortedMessages.length} messages pour la conversation ${convId}`);
+        
+        return new Response(JSON.stringify({ 
+          success: true, 
+          data: sortedMessages 
+        }), { headers });
+      } catch (error) {
+        console.error('Erreur lors de la récupération des messages:', error);
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: error.message,
+          data: []
+        }), { headers });
+      }
     }
 
     // --- LOGIQUE ENVOI ---
     if (action === 'send') {
+      const { conversation_id, content } = body;
+      
+      if (!conversation_id || !content) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'conversation_id et content requis' 
+        }), { status: 400, headers });
+      }
+
       const now = new Date().toISOString();
       
+      // Créer le message
       const message = await base44.entities.ChatMessage.create({
-        conversation_id: body.conversation_id,
+        conversation_id: conversation_id,
         sender_id: user.id,
         sender_name: user.full_name || 'Utilisateur',
-        content: body.content,
+        content: content,
         type: 'text',
         timestamp: now,
         created_at: now
       });
       
       // Mettre à jour la conversation avec le dernier message
-      await base44.asServiceRole.entities.Conversation.update(body.conversation_id, {
-        last_message: body.content,
+      await base44.asServiceRole.entities.Conversation.update(conversation_id, {
+        last_message: content,
         last_message_date: now
       });
       
-      return new Response(JSON.stringify({ data: message }), { headers });
+      console.log(`Message envoyé: ${message.id} dans la conversation ${conversation_id}`);
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        data: message 
+      }), { headers });
     }
 
-    return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers });
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: 'Action invalide' 
+    }), { status: 400, headers });
+    
   } catch (error) {
-    console.error('ChatService error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
+    console.error('Erreur dans chatService:', error);
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: error.message 
+    }), { status: 500, headers });
   }
 });
