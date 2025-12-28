@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, MessageCircle, Store, ChevronRight } from 'lucide-react';
+import { Minus, Plus, MessageCircle, Store, ChevronRight, MessageSquare, Loader2 } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import ReactPixel from 'react-facebook-pixel';
 import { base44 } from '@/api/base44Client';
@@ -10,8 +10,9 @@ import SEOArticle from '@/components/SEO/SEOArticle';
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, onShopClick }) {
   const [quantity, setQuantity] = useState(1);
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const [isChatLoading, setIsChatLoading] = useState(false);
   
-  // Track product view when modal opens
+  // Tracking Pixel Facebook
   useEffect(() => {
     if (product && open) {
       ReactPixel.track('ViewContent', {
@@ -26,215 +27,200 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   
   if (!product) return null;
   
-  const allImages = product.additional_images && product.additional_images.length > 0
+  // Gestion des images
+  const allImages = product.additional_images?.length > 0
     ? [product.image_url, ...product.additional_images].filter(Boolean)
     : product.image_url ? [product.image_url] : [];
   
-  const basePrice = product.promo_price && product.promo_price < product.price 
-    ? product.promo_price 
-    : product.price;
+  // Calcul des prix
+  const basePrice = product.promo_price && product.promo_price < product.price ? product.promo_price : product.price;
   const price = applyClientMargin(basePrice);
   const originalPrice = applyClientMargin(product.price);
 
-  const handleAdd = () => {
-    onAddToCart(product, quantity);
-    setQuantity(1);
-    setCurrentImgIndex(0);
-    onClose();
-  };
-
-  const handleWhatsAppClick = async (e) => {
-    e.preventDefault();
+  /**
+   * LOGIQUE DE CHAT RÉVISÉE
+   */
+  const handleContactVendor = async () => {
+    // 1. Vérification connexion
     if (!user) {
       base44.auth.redirectToLogin(window.location.pathname);
-    } else {
-      window.open('https://wa.me/c/50948690366', '_blank');
+      return;
+    }
+
+    // 2. Identification du vendeur (plusieurs sources possibles dans la data)
+    const targetVendorId = shop?.user_id || product?.user_id || product?.vendor_id || product?.created_by;
+    
+    if (!targetVendorId) {
+      alert("Erreur : Impossible d'identifier le vendeur pour cet article.");
+      return;
+    }
+
+    // 3. Empêcher l'auto-chat
+    if (user.id === targetVendorId) {
+      alert("Vous êtes le propriétaire de cet article.");
+      return;
+    }
+
+    setIsChatLoading(true);
+
+    try {
+      // 4. Appel au service de chat via Base44 Functions
+      const response = await base44.functions.invoke('chat-service', {
+        body: {
+          action: 'init_conversation',
+          params: {
+            vendor_id: targetVendorId,
+            buyer_id: user.id,
+            product_id: product.id,
+            product_name: product.name,
+            initial_message: `Bonjour, je suis intéressé par l'article : ${product.name}`
+          }
+        }
+      });
+
+      // 5. Extraction de l'ID de conversation (Gestion de tous les formats de retour)
+      const data = response.data || response;
+      const conversationId = data?.id || data?.conversation?.id || data?.conversation_id;
+
+      if (conversationId) {
+        window.location.href = `/chat?id=${conversationId}`;
+      } else {
+        // Fallback 1: Si l'API répond mais sans ID, on tente avec les params URL
+        window.location.href = `/chat?vendorId=${targetVendorId}&productId=${product.id}`;
+      }
+    } catch (error) {
+      console.error('Chat initialization failed:', error);
+      // Fallback 2: En cas d'erreur réseau/fonction, on redirige quand même vers la page chat
+      window.location.href = `/chat?vendorId=${targetVendorId}&productId=${product.id}`;
+    } finally {
+      setIsChatLoading(false);
     }
   };
 
   return (
     <>
-      {/* SEO optimisé pour le produit */}
       {open && <SEOArticle product={product} shop={shop} />}
       
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden max-h-[95vh] overflow-y-auto">
-        <div className="p-2">
-          {/* Image principale */}
-          <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
-            {allImages.length > 0 ? (
-              <img 
-                src={allImages[currentImgIndex]} 
-                alt={product.name}
-                className="w-full h-full object-cover transition-all duration-300"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-5xl">📦</span>
-              </div>
-            )}
-            
-            {product.promo_price && product.promo_price < product.price && (
-              <div className="absolute top-3 left-3 bg-red-500 text-white text-xs px-3 py-1 rounded-full font-semibold">
-                Promo
-              </div>
-            )}
-          </div>
-
-          {/* Miniatures */}
-          {allImages.length > 1 && (
-            <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">
-              {allImages.map((img, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentImgIndex(index)}
-                  className={`relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
-                    currentImgIndex === index ? 'border-orange-500 scale-95' : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <img src={img} className="w-full h-full object-cover" alt="" />
-                </button>
-              ))}
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden max-h-[95vh] overflow-y-auto bg-white">
+          {/* Section Visuelle */}
+          <div className="p-2 bg-white">
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-50 border border-slate-100">
+              {allImages.length > 0 && (
+                <img 
+                  src={allImages[currentImgIndex]} 
+                  alt={product.name} 
+                  className="w-full h-full object-cover" 
+                />
+              )}
+              {product.promo_price && (
+                <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wider">
+                  PROMO
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
         
-        <div className="p-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl">{product.name}</DialogTitle>
-          </DialogHeader>
-          
-          <p className="text-slate-600 mt-2 text-sm leading-relaxed">
-            {product.description || 'Aucune description disponible.'}
-          </p>
-          
-          <div className="flex items-center gap-3 mt-4">
-            <span className="text-2xl font-bold text-orange-500">{price} HTG</span>
-            {product.promo_price && product.promo_price < product.price && (
-              <span className="text-lg text-slate-400 line-through">{originalPrice} HTG</span>
+          <div className="p-6">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-extrabold text-slate-900">{product.name}</DialogTitle>
+            </DialogHeader>
+            
+            <p className="text-slate-500 mt-2 text-sm leading-relaxed line-clamp-3">
+              {product.description || "Aucune description fournie."}
+            </p>
+            
+            <div className="flex items-baseline gap-3 mt-4">
+              <span className="text-2xl font-black text-orange-600">{price} HTG</span>
+              {product.promo_price && (
+                <span className="text-sm text-slate-400 line-through">{originalPrice} HTG</span>
+              )}
+            </div>
+
+            {/* Carte Boutique */}
+            {shop && (
+              <div 
+                onClick={() => onShopClick?.(shop)}
+                className="flex items-center gap-3 w-full mt-6 p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl cursor-pointer border border-slate-100 transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-full bg-white overflow-hidden border border-slate-200">
+                  {shop.company_logo_url ? (
+                    <img src={shop.company_logo_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Store className="w-full h-full p-2 text-orange-500" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-sm text-slate-800 group-hover:text-orange-600 transition-colors">
+                    {shop.company_name}
+                  </p>
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Boutique certifiée</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300" />
+              </div>
             )}
-          </div>
-
-          {/* Shop Info */}
-          {shop && (
-            <button
-              onClick={() => {
-                if (onShopClick) {
-                  onShopClick(shop);
-                  onClose();
-                }
-              }}
-              className="flex items-center gap-3 w-full mt-4 p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors group"
-            >
-              <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
-                {shop.company_logo_url ? (
-                  <img src={shop.company_logo_url} alt={shop.company_name} className="w-full h-full object-cover" />
+            
+            <div className="space-y-3 mt-6">
+              {/* BOUTON CHAT RAPIDO PRESTO */}
+              <Button
+                onClick={handleContactVendor}
+                disabled={isChatLoading}
+                className="w-full py-7 bg-slate-900 hover:bg-black text-white rounded-2xl shadow-xl flex gap-3 text-base font-bold transition-all active:scale-95"
+              >
+                {isChatLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <Store className="w-6 h-6 text-orange-500" />
+                  <MessageSquare className="w-5 h-5" />
                 )}
-              </div>
-              <div className="flex-1 text-left">
-                <p className="font-semibold text-slate-800 group-hover:text-orange-600 transition-colors">
-                  {shop.company_name}
-                </p>
-                <p className="text-xs text-slate-500">
-                  Voir tous les produits
-                </p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-orange-500 transition-colors" />
-            </button>
-          )}
-          
-          {/* Bouton Chat Interne Rapido Presto */}
-          <button
-            onClick={async () => {
-              if (!user) {
-                base44.auth.redirectToLogin(window.location.pathname);
-                return;
-              }
-
-              console.log("Tentative d'init chat avec vendor:", shop?.user_id);
-
-              try {
-                const response = await base44.functions.invoke('chatService', {
-                  action: 'init',
-                  vendor_id: shop.user_id,
-                  shop_id: shop.id,
-                  shop_name: shop.company_name,
-                  shop_logo: shop.company_logo_url,
-                  product_id: product.id,
-                  product_name: product.name,
-                  initial_message: `Bonjour, je suis intéressé par votre article : ${product.name}`
-                });
-
-                console.log('Réponse chatService:', response);
-
-                // Test des deux structures possibles
-                const convData = response.data || response;
-                const conversationId = convData.conversation?.id || convData.id;
-
-                if (conversationId) {
-                  window.location.href = `/chat?id=${conversationId}`;
-                } else {
-                  console.error('Réponse API incomplète:', response);
-                  alert('Erreur : Impossible de récupérer l\'identifiant de conversation.');
-                }
-              } catch (error) {
-                console.error('Chat init error:', error);
-                alert('Erreur lors de l\'ouverture du chat. Vérifiez votre connexion.');
-              }
-            }}
-            className="flex items-center justify-center gap-3 w-full mt-4 px-4 py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold transition-all shadow-lg"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            Contacter le Vendeur
-          </button>
-
-          {/* Bouton WhatsApp (si catégorie Mariage) */}
-          {shop?.company_category === "Mariage" && (
-            <button
-              onClick={handleWhatsAppClick}
-              className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-4 bg-[#25D366] hover:bg-[#1ebd58] text-white rounded-xl font-semibold transition-colors shadow-lg"
-            >
-              <MessageCircle className="w-5 h-5" />
-              Catalogue Mariage WhatsApp
-            </button>
-          )}
-          
-          <div className="flex items-center justify-between mt-6 pt-4 border-t">
-            <div className="flex items-center gap-3 bg-slate-100 rounded-full p-1">
-              <Button 
-                size="icon" 
-                variant="ghost"
-                className="h-8 w-8 rounded-full"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              >
-                <Minus className="w-4 h-4" />
+                {isChatLoading ? "Ouverture..." : "Contacter le Vendeur"}
               </Button>
-              <span className="w-8 text-center font-semibold">{quantity}</span>
-              <Button 
-                size="icon" 
-                variant="ghost"
-                className="h-8 w-8 rounded-full"
-                onClick={() => setQuantity(quantity + 1)}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
+
+              {/* BOUTON WHATSAPP (Optionnel) */}
+              {shop?.company_category === "Mariage" && (
+                <Button
+                  onClick={() => window.open('https://wa.me/c/50948690366', '_blank')}
+                  variant="outline"
+                  className="w-full py-7 border-2 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white rounded-2xl font-bold transition-all"
+                >
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  WhatsApp Mariage
+                </Button>
+              )}
             </div>
             
-            <Button 
-              className="bg-orange-500 hover:bg-orange-600 px-6"
-              onClick={handleAdd}
-              disabled={product.is_available === false}
-            >
-              Ajouter • {price * quantity} HTG
-            </Button>
+            {/* Section Achat rapide */}
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-100">
+              <div className="flex items-center gap-2 bg-slate-100 rounded-xl p-1">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-9 w-9"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <span className="w-6 text-center font-bold text-slate-700">{quantity}</span>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-9 w-9"
+                  onClick={() => setQuantity(quantity + 1)}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              <Button 
+                className="bg-orange-500 hover:bg-orange-600 h-12 px-8 rounded-xl font-black text-white shadow-lg shadow-orange-200 transition-all active:scale-95"
+                onClick={() => { onAddToCart(product, quantity); onClose(); }}
+                disabled={product.is_available === false}
+              >
+                Ajouter • {price * quantity} HTG
+              </Button>
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
