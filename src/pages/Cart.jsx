@@ -90,7 +90,10 @@ export default function Cart() {
       }, {});
 
       const shopIds = Object.keys(itemsByShop);
-      const subtotal = cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+      const subtotal = cartItems.reduce((sum, item) => {
+        const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+        return sum + itemTotal;
+      }, 0);
       
       // Calculer frais de livraison total (par boutique)
       let totalDeliveryFee = 0;
@@ -129,7 +132,10 @@ export default function Cart() {
           const createdOrders = [];
           for (const shopId of shopIds) {
             const shopItems = itemsByShop[shopId];
-            const shopSubtotal = shopItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+            const shopSubtotal = shopItems.reduce((sum, item) => {
+              const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+              return sum + itemTotal;
+            }, 0);
             const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
             const code = generateConfirmationCode();
 
@@ -147,8 +153,9 @@ export default function Cart() {
                 product_id: item.product_id,
                 name: item.product_name,
                 quantity: item.quantity,
-                unit_price: item.unit_price,
-                total: item.unit_price * item.quantity
+                unit_price: item.unit_price + (item.total_customization_price || 0),
+                total: (item.unit_price + (item.total_customization_price || 0)) * item.quantity,
+                customization: item.customization
               })),
               subtotal: shopSubtotal,
               delivery_fee: shopDeliveryFee,
@@ -187,7 +194,10 @@ export default function Cart() {
       const createdOrders = [];
       for (const shopId of shopIds) {
         const shopItems = itemsByShop[shopId];
-        const shopSubtotal = shopItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+        const shopSubtotal = shopItems.reduce((sum, item) => {
+          const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+          return sum + itemTotal;
+        }, 0);
         const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
         const orderNum = 'RP' + Date.now().toString().slice(-6) + '-' + shopId.slice(-4);
         const code = generateConfirmationCode();
@@ -206,8 +216,9 @@ export default function Cart() {
             product_id: item.product_id,
             name: item.product_name,
             quantity: item.quantity,
-            unit_price: item.unit_price,
-            total: item.unit_price * item.quantity
+            unit_price: item.unit_price + (item.total_customization_price || 0),
+            total: (item.unit_price + (item.total_customization_price || 0)) * item.quantity,
+            customization: item.customization
           })),
           subtotal: shopSubtotal,
           delivery_fee: shopDeliveryFee,
@@ -388,10 +399,48 @@ export default function Cart() {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-slate-800 truncate">{item.product_name}</h3>
                       <p className="text-sm text-slate-500">{item.shop_name}</p>
+                      
+                      {/* Customization Details */}
+                      {item.customization && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {item.customization.color && (
+                            <span className="inline-flex items-center gap-1 text-xs bg-slate-100 rounded-full px-2 py-0.5">
+                              <div 
+                                className="w-3 h-3 rounded-full border" 
+                                style={{ backgroundColor: item.customization.color.hex }}
+                              />
+                              {item.customization.color.name}
+                            </span>
+                          )}
+                          {item.customization.size && (
+                            <span className="text-xs bg-slate-100 rounded-full px-2 py-0.5">
+                              Taille: {item.customization.size.name}
+                            </span>
+                          )}
+                          {item.customization.text && (
+                            <span className="text-xs bg-slate-100 rounded-full px-2 py-0.5">
+                              "{item.customization.text}"
+                            </span>
+                          )}
+                          {item.customization.arrangement && (
+                            <span className="text-xs bg-slate-100 rounded-full px-2 py-0.5">
+                              {item.customization.arrangement.name}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between mt-2">
-                        <span className="font-semibold text-orange-500">
-                          {item.unit_price * item.quantity} HTG
-                        </span>
+                        <div>
+                          <span className="font-semibold text-orange-500">
+                            {(item.unit_price + (item.total_customization_price || 0)) * item.quantity} HTG
+                          </span>
+                          {item.total_customization_price > 0 && (
+                            <span className="text-xs text-slate-500 ml-1">
+                              (+{item.total_customization_price * item.quantity} HTG)
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2">
                           <Button
                             size="icon"
@@ -542,14 +591,35 @@ export default function Cart() {
                 {/* Group by shop */}
                 {Object.keys(itemsByShop).map(shopId => {
                   const shopItems = itemsByShop[shopId];
-                  const shopSubtotal = shopItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+                  const shopSubtotal = shopItems.reduce((sum, item) => {
+                    const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+                    return sum + itemTotal;
+                  }, 0);
                   return (
                     <div key={shopId} className="mb-3 pb-3 border-b">
                       <p className="text-xs font-semibold text-slate-500 mb-2">{shopItems[0].shop_name}</p>
                       {shopItems.map(item => (
-                        <div key={item.id} className="flex justify-between text-sm text-slate-600">
-                          <span>{item.quantity}x {item.product_name}</span>
-                          <span>{item.unit_price * item.quantity} HTG</span>
+                        <div key={item.id} className="text-sm text-slate-600">
+                          <div className="flex justify-between">
+                            <span>{item.quantity}x {item.product_name}</span>
+                            <span>{(item.unit_price + (item.total_customization_price || 0)) * item.quantity} HTG</span>
+                          </div>
+                          {item.customization && (
+                            <div className="flex flex-wrap gap-1 mt-0.5 ml-4">
+                              {item.customization.color && (
+                                <span className="text-xs text-slate-500">• {item.customization.color.name}</span>
+                              )}
+                              {item.customization.size && (
+                                <span className="text-xs text-slate-500">• Taille: {item.customization.size.name}</span>
+                              )}
+                              {item.customization.text && (
+                                <span className="text-xs text-slate-500">• "{item.customization.text}"</span>
+                              )}
+                              {item.customization.arrangement && (
+                                <span className="text-xs text-slate-500">• {item.customization.arrangement.name}</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
