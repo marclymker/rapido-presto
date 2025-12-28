@@ -35,8 +35,8 @@ Deno.serve(async (req) => {
     // Filtrer produits avec image valide
     const validProducts = products.filter(p => p.image_url && p.image_url.trim() !== '');
 
-    // En-têtes CSV (strictement en anglais, lowercase)
-    let csv = 'id,title,description,availability,condition,price,link,image_link,brand\n';
+    // En-têtes CSV avec champs optionnels
+    let csv = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category,quantity_to_sell_on_facebook,sale_price\n';
 
     validProducts.forEach(product => {
       // Fonction d'échappement CSV
@@ -49,16 +49,34 @@ Deno.serve(async (req) => {
         return str;
       };
 
+      // Mapping catégories vers Google Product Categories
+      const categoryMap = {
+        'Fastfood': 'Food, Beverages & Tobacco',
+        'Restaurants': 'Food, Beverages & Tobacco',
+        'Café': 'Food, Beverages & Tobacco',
+        'Epicerie': 'Food, Beverages & Tobacco',
+        'Pharmacie': 'Health & Beauty',
+        'Pour Femme': 'Apparel & Accessories',
+        'Pour homme': 'Apparel & Accessories',
+        'Boutique Fleurs': 'Home & Garden',
+        'Maison': 'Home & Garden',
+        'Bébé': 'Baby & Toddler',
+        'Electronics': 'Electronics',
+        'Outils': 'Hardware',
+        'Mariage': 'Home & Garden',
+        'Bijoux': 'Apparel & Accessories'
+      };
+
       // Champs obligatoires
       const id = product.id;
       const shopName = product.shop_name || 'Rapido Presto';
-      const title = escapeCSV(`${product.name} - ${shopName}`.substring(0, 150));
+      const title = escapeCSV(`${product.name} - ${shopName}`.substring(0, 200));
       const description = escapeCSV((product.description || `Achetez ${product.name} sur Rapido Presto Haiti`).substring(0, 500));
       const availability = (product.stock_quantity || 0) > 0 ? 'in stock' : 'out of stock';
       const condition = 'new';
       
       // Prix au format strict: NOMBRE.DECIMALES DEVISE
-      const priceValue = product.promo_price || product.price || 0;
+      const priceValue = product.price || 0;
       const price = `${parseFloat(priceValue).toFixed(2)} HTG`;
       
       // URL complète
@@ -70,8 +88,18 @@ Deno.serve(async (req) => {
       // Marque
       const brand = escapeCSV(shopName);
 
+      // Champs optionnels
+      const googleCategory = categoryMap[product.category] || 'Apparel & Accessories';
+      const quantity = product.stock_quantity || 0;
+      
+      // Sale price si promo active
+      let salePrice = '';
+      if (product.promo_price && product.promo_price < product.price) {
+        salePrice = `${parseFloat(product.promo_price).toFixed(2)} HTG`;
+      }
+
       // Ligne CSV
-      csv += `${id},${title},${description},${availability},${condition},${price},${link},${imageLink},${brand}\n`;
+      csv += `${id},${title},${description},${availability},${condition},${price},${link},${imageLink},${brand},${googleCategory},${quantity},${salePrice}\n`;
     });
 
     return new Response(csv, { status: 200, headers });
@@ -79,7 +107,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error generating catalog:', error);
     // Retourner un CSV vide mais valide en cas d'erreur
-    const errorCsv = 'id,title,description,availability,condition,price,link,image_link,brand\n';
+    const errorCsv = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category,quantity_to_sell_on_facebook,sale_price\n';
     return new Response(errorCsv, { status: 200, headers });
   }
 });
