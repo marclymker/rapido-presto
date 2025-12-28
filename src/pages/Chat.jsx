@@ -53,8 +53,8 @@ export default function Chat() {
         // Vérifier la structure de la réponse
         if (response && response.success === true) {
           return response.data || [];
-        } else if (response && response.data && response.data.data) {
-          return response.data.data;
+        } else if (response && response.data && Array.isArray(response.data)) {
+          return response.data;
         } else if (Array.isArray(response)) {
           return response;
         } else {
@@ -67,7 +67,7 @@ export default function Chat() {
       }
     },
     enabled: !!user?.id,
-    refetchInterval: 30000, // Rafraîchir toutes les 30 secondes
+    refetchInterval: 30000,
     retry: 2,
     onSuccess: (data) => {
       console.log('Conversations chargées:', data.length);
@@ -96,12 +96,10 @@ export default function Chat() {
         let messagesData = [];
         if (response && response.success === true) {
           messagesData = response.data || [];
-        } else if (response && response.data && response.data.data) {
-          messagesData = response.data.data;
-        } else if (Array.isArray(response)) {
-          messagesData = response;
         } else if (response && response.data && Array.isArray(response.data)) {
           messagesData = response.data;
+        } else if (Array.isArray(response)) {
+          messagesData = response;
         }
         
         // Trier les messages par date (du plus ancien au plus récent)
@@ -123,13 +121,15 @@ export default function Chat() {
       }
     },
     enabled: !!selectedConv?.id,
-    refetchInterval: 10000, // Rafraîchir toutes les 10 secondes
+    refetchInterval: 5000,
   });
 
-  // 4. Mutation d'envoi de message
+  // 4. Mutation d'envoi de message - CORRIGÉE
   const sendMessage = useMutation({
     mutationFn: async (text) => {
       if (!selectedConv?.id) throw new Error('Aucune conversation sélectionnée');
+      
+      console.log('Envoi du message:', text, 'à la conversation:', selectedConv.id);
       
       const response = await base44.functions.invoke('chatService', { 
         action: 'send', 
@@ -137,22 +137,25 @@ export default function Chat() {
         content: text 
       });
       
-      if (!response || !response.success) {
-        throw new Error(response?.error || 'Erreur lors de l\'envoi');
+      console.log('Réponse d\'envoi:', response);
+      
+      if (!response || response.success === false) {
+        throw new Error(response?.error || 'Erreur lors de l\'envoi du message');
       }
       
       return response.data;
     },
-    onSuccess: () => {
-      // Rafraîchir les messages
-      refetchMessages();
+    onSuccess: (data) => {
+      console.log('Message envoyé avec succès:', data);
+      // Invalider et rafraîchir les messages
+      queryClient.invalidateQueries(['messages', selectedConv?.id]);
       // Rafraîchir la liste des conversations pour mettre à jour le dernier message
-      refetchConversations();
+      queryClient.invalidateQueries(['conversations', user?.id]);
       setMessageText('');
     },
     onError: (error) => {
       console.error('Erreur lors de l\'envoi du message:', error);
-      alert('Erreur lors de l\'envoi du message. Veuillez réessayer.');
+      alert(`Erreur: ${error.message}`);
     }
   });
 
@@ -169,7 +172,7 @@ export default function Chat() {
       
       console.log('Réponse init:', response);
       
-      if (!response || !response.success) {
+      if (!response || response.success === false) {
         throw new Error(response?.error || 'Erreur lors de la création de la conversation');
       }
       
@@ -212,16 +215,17 @@ export default function Chat() {
 
   // 8. Fonction pour démarrer une nouvelle conversation de test
   const handleStartTestChat = () => {
-    // Remplacez ces valeurs par celles de votre test
+    // Pour tester, utilisez un vrai ID de vendeur et boutique
+    // Vous pouvez les obtenir depuis votre base de données
     startNewChat.mutate({
-      vendorId: 'vendeur_test_id', // À remplacer par un vrai ID de vendeur
-      shopId: 'boutique_test_id', // À remplacer par un vrai ID de boutique
+      vendorId: 'vendeur_id_exemple', // À remplacer
+      shopId: 'boutique_id_exemple', // À remplacer
       shopName: 'Boutique Test',
       initialMessage: 'Bonjour, je souhaite vous poser une question.'
     });
   };
 
-  // Rendu de chargement (Évite la page blanche pendant l'auth)
+  // Rendu de chargement
   if (!user) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-500">
@@ -460,19 +464,19 @@ export default function Chat() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">ID du vendeur</label>
-                <Input placeholder="vendeur_id" />
+                <Input placeholder="vendeur_id" id="vendorId" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">ID de la boutique</label>
-                <Input placeholder="shop_id" />
+                <Input placeholder="shop_id" id="shopId" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Nom de la boutique</label>
-                <Input placeholder="Nom de la boutique" />
+                <Input placeholder="Nom de la boutique" id="shopName" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Message initial</label>
-                <Input placeholder="Votre message..." />
+                <Input placeholder="Votre message..." id="initialMessage" />
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
@@ -483,7 +487,24 @@ export default function Chat() {
                 Annuler
               </Button>
               <Button 
-                onClick={handleStartTestChat}
+                onClick={() => {
+                  const vendorId = document.getElementById('vendorId').value;
+                  const shopId = document.getElementById('shopId').value;
+                  const shopName = document.getElementById('shopName').value;
+                  const initialMessage = document.getElementById('initialMessage').value;
+                  
+                  if (!vendorId || !shopId || !shopName) {
+                    alert('Veuillez remplir tous les champs obligatoires');
+                    return;
+                  }
+                  
+                  startNewChat.mutate({
+                    vendorId,
+                    shopId,
+                    shopName,
+                    initialMessage
+                  });
+                }}
                 className="bg-orange-500 hover:bg-orange-600"
                 disabled={startNewChat.isPending}
               >
