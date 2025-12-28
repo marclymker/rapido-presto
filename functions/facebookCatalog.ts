@@ -89,12 +89,21 @@ Deno.serve(async (req) => {
       csv += `${id},${title},${description},${availability},${condition},${price},${link},${imageLink},${brand},${googleCategory},${quantity},${salePrice}\n`;
     });
 
-    return new Response(csv, { status: 200, headers });
+    return new Response(csv, { 
+      status: 200, 
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8'
+      }
+    });
 
   } catch (error) {
     console.error('Error generating catalog:', error);
-    // Retourner un CSV vide mais valide en cas d'erreur
     const errorCsv = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category,quantity_to_sell_on_facebook,sale_price\n';
-    return new Response(errorCsv, { status: 200, headers });
+    return new Response(errorCsv, { 
+      status: 200, 
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8'
+      }
+    });
   }
 });
