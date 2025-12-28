@@ -1,13 +1,17 @@
-import { Base44 } from 'npm:@base44/sdk@0.8.6';
+// On importe tout le module sous un seul nom
+import * as base44Module from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   try {
+    // On identifie dynamiquement où se trouve la classe Base44
+    const Base44 = base44Module.Base44 || base44Module.default || base44Module;
+
     const base44 = new Base44({
       appId: Deno.env.get('BASE44_APP_ID'),
       useServiceRole: true
     });
 
-    // Récupérer boutiques Premium
+    // 1. Récupérer les boutiques Premium
     const shops = await base44.entities.Shop.filter({ 
       is_premium: true,
       boost_enabled: true,
@@ -16,94 +20,65 @@ Deno.serve(async (req) => {
     
     const shopIds = shops.map(s => s.id);
 
-    // Récupérer produits
+    // 2. Récupérer les produits
     const products = await base44.entities.Product.filter({ 
       is_available: true,
       shop_id: { $in: shopIds }
     });
 
-    // Filtrer produits avec image valide
     const validProducts = products.filter(p => p.image_url && p.image_url.trim() !== '');
 
-    // En-têtes CSV avec champs optionnels
+    // En-têtes CSV (format Meta/Google)
     let csv = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category,quantity_to_sell_on_facebook,sale_price\n';
 
+    const escapeCSV = (str) => {
+      if (str === null || str === undefined) return '""';
+      const cleanStr = String(str).replace(/"/g, '""').replace(/\n|\r/g, ' ');
+      return `"${cleanStr}"`;
+    };
+
     validProducts.forEach(product => {
-      // Échappement CSV strict (remplace " par "" et entoure de guillemets)
-      const escapeCSV = (str) => {
-        if (!str) return '""';
-        str = String(str).replace(/"/g, '""').replace(/\n/g, ' ').replace(/\r/g, '');
-        return `"${str}"`;
-      };
-
-      // Mapping catégories vers Google Product Categories
-      const categoryMap = {
-        'Fastfood': 'Food, Beverages & Tobacco',
-        'Restaurants': 'Food, Beverages & Tobacco',
-        'Café': 'Food, Beverages & Tobacco',
-        'Epicerie': 'Food, Beverages & Tobacco',
-        'Pharmacie': 'Health & Beauty',
-        'Pour Femme': 'Apparel & Accessories',
-        'Pour homme': 'Apparel & Accessories',
-        'Boutique Fleurs': 'Home & Garden',
-        'Maison': 'Home & Garden',
-        'Bébé': 'Baby & Toddler',
-        'Electronics': 'Electronics',
-        'Outils': 'Hardware',
-        'Mariage': 'Home & Garden',
-        'Bijoux': 'Apparel & Accessories'
-      };
-
-      // Champs obligatoires
-      const id = product.id;
       const shopName = product.shop_name || 'Rapido Presto';
-      const title = escapeCSV(`${product.name} - ${shopName}`.substring(0, 200));
-      const description = escapeCSV((product.description || `Achetez ${product.name} sur Rapido Presto Haiti`).substring(0, 500));
-      const availability = (product.stock_quantity || 0) > 0 ? 'in stock' : 'out of stock';
-      const condition = 'new';
       
-      // Prix au format strict: NOMBRE.DECIMALES[ESPACE]DEVISE
-      const priceValue = product.price || 0;
-      const price = `${parseFloat(priceValue).toFixed(2)} HTG`;
+      const id = escapeCSV(product.id);
+      const title = escapeCSV(`${product.name} - ${shopName}`.substring(0, 150));
+      const description = escapeCSV((product.description || `Achetez ${product.name} sur Rapido Presto`).substring(0, 5000));
+      const availability = escapeCSV((product.stock_quantity || 0) > 0 ? 'in stock' : 'out of stock');
+      const condition = escapeCSV('new');
       
-      // URL complète
-      const link = `https://rapidopresto.shop`;
+      const priceRaw = parseFloat(product.price);
+      const priceValue = isNaN(priceRaw) ? "0.00" : priceRaw.toFixed(2);
+      const price = escapeCSV(`${priceValue} HTG`);
       
-      // Image (obligatoire)
-      const imageLink = product.image_url;
-      
-      // Marque (toujours entre guillemets)
+      const link = escapeCSV(`https://rapidopresto.shop/product/${product.id}`);
+      const imageLink = escapeCSV(product.image_url);
       const brand = escapeCSV(shopName);
-
-      // Champs optionnels
-      const googleCategory = categoryMap[product.category] || 'Apparel & Accessories';
-      const quantity = product.stock_quantity || 0;
+      const googleCategory = escapeCSV('Apparel & Accessories'); 
+      const quantity = escapeCSV(product.stock_quantity || 0);
       
-      // Sale price si promo active
-      let salePrice = '';
-      if (product.promo_price && product.promo_price < product.price) {
-        salePrice = `${parseFloat(product.promo_price).toFixed(2)} HTG`;
+      let salePrice = '""';
+      if (product.promo_price && parseFloat(product.promo_price) < parseFloat(product.price)) {
+        salePrice = escapeCSV(`${parseFloat(product.promo_price).toFixed(2)} HTG`);
       }
 
-      // Ligne CSV avec tous les champs texte entre guillemets
       csv += `${id},${title},${description},${availability},${condition},${price},${link},${imageLink},${brand},${googleCategory},${quantity},${salePrice}\n`;
     });
 
     return new Response(csv, { 
       status: 200, 
       headers: {
-        'Content-Type': 'text/csv; charset=utf-8'
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename=facebook_catalog.csv',
+        'Access-Control-Allow-Origin': '*' 
       }
     });
 
   } catch (error) {
-    console.error('Error generating catalog:', error);
-    const errorCsv = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category,quantity_to_sell_on_facebook,sale_price\n';
-    return new Response(errorCsv, { 
+    console.error('Erreur catalogue :', error);
+    const headersOnly = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category,quantity_to_sell_on_facebook,sale_price\n';
+    return new Response(headersOnly, { 
       status: 200, 
-      headers: {
-        'Content-Type': 'text/csv; charset=utf-8'
-      }
+      headers: { 'Content-Type': 'text/csv' } 
     });
   }
 });
