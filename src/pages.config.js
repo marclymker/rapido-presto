@@ -4,6 +4,7 @@ import AdminShops from './pages/AdminShops';
 import AdminValidation from './pages/AdminValidation';
 import AllOrdersAdmin from './pages/AllOrdersAdmin';
 import Cart from './pages/Cart';
+import Chat from './pages/Chat';
 import DriverAccount from './pages/DriverAccount';
 import DriverDashboard from './pages/DriverDashboard';
 import EnterpriseAccount from './pages/EnterpriseAccount';
@@ -16,7 +17,6 @@ import Pricing from './pages/Pricing';
 import Product from './pages/Product';
 import Products from './pages/Products';
 import ProfileSetup from './pages/ProfileSetup';
-import Chat from './pages/Chat';
 import __Layout from './Layout.jsx';
 
 
@@ -27,6 +27,7 @@ export const PAGES = {
     "AdminValidation": AdminValidation,
     "AllOrdersAdmin": AllOrdersAdmin,
     "Cart": Cart,
+    "Chat": Chat,
     "DriverAccount": DriverAccount,
     "DriverDashboard": DriverDashboard,
     "EnterpriseAccount": EnterpriseAccount,
@@ -39,7 +40,6 @@ export const PAGES = {
     "Product": Product,
     "Products": Products,
     "ProfileSetup": ProfileSetup,
-    "Chat": Chat,
 }
 
 export const pagesConfig = {
