@@ -46,13 +46,16 @@ Deno.serve(async (req) => {
         product_context_id: product_id
       });
 
+      // Créer le message initial avec timestamp
       await base44.entities.ChatMessage.create({
         conversation_id: conversation.id,
         sender_id: user.id,
         sender_name: user.full_name || 'Client',
         content: initial_message,
         type: 'text',
-        is_read: false
+        is_read: false,
+        timestamp: new Date().toISOString(),
+        created_at: new Date().toISOString()
       });
 
       return new Response(JSON.stringify(conversation), { headers });
@@ -68,28 +71,53 @@ Deno.serve(async (req) => {
 
     // --- LOGIQUE MESSAGES ---
     if (action === 'messages') {
-      const msgs = await base44.entities.ChatMessage.filter({ conversation_id: body.convId });
-      return new Response(JSON.stringify({ data: msgs }), { headers });
+      const msgs = await base44.entities.ChatMessage.filter({ 
+        conversation_id: body.convId 
+      });
+      
+      // Trier les messages par date de création ascendante (plus ancien -> plus récent)
+      const sortedMessages = msgs.sort((a, b) => {
+        // Priorité au champ timestamp, sinon created_at, sinon id
+        const timeA = a.timestamp || a.created_at || a.id;
+        const timeB = b.timestamp || b.created_at || b.id;
+        
+        // Convertir en timestamp numérique pour comparaison
+        const dateA = new Date(timeA).getTime();
+        const dateB = new Date(timeB).getTime();
+        
+        // Ordre ascendant: plus ancien en premier, plus récent en dernier
+        return dateA - dateB;
+      });
+      
+      return new Response(JSON.stringify({ data: sortedMessages }), { headers });
     }
 
     // --- LOGIQUE ENVOI ---
     if (action === 'send') {
+      const now = new Date().toISOString();
+      
       const message = await base44.entities.ChatMessage.create({
         conversation_id: body.conversation_id,
         sender_id: user.id,
         sender_name: user.full_name || 'Utilisateur',
         content: body.content,
-        type: 'text'
+        type: 'text',
+        timestamp: now,
+        created_at: now
       });
+      
+      // Mettre à jour la conversation avec le dernier message
       await base44.asServiceRole.entities.Conversation.update(body.conversation_id, {
         last_message: body.content,
-        last_message_date: new Date().toISOString()
+        last_message_date: now
       });
+      
       return new Response(JSON.stringify({ data: message }), { headers });
     }
 
     return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers });
   } catch (error) {
+    console.error('ChatService error:', error);
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
   }
 });
