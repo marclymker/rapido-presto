@@ -12,9 +12,55 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
-    // ENVOYER UN MESSAGE
+    // INITIALISER UNE CONVERSATION
     if (req.method === 'POST') {
-      const { conversation_id, content, type, metadata } = await req.json();
+      const body = await req.json();
+      
+      if (body.action === 'init') {
+        const { vendor_id, shop_id, shop_name, shop_logo, product_id, product_name, initial_message } = body;
+
+        // Vérifier si une conversation existe déjà
+        const existing = await base44.entities.Conversation.filter({
+          customer_id: user.id,
+          shop_id: shop_id
+        });
+
+        let conversation;
+        if (existing && existing.length > 0) {
+          conversation = existing[0];
+        } else {
+          // Créer nouvelle conversation
+          conversation = await base44.entities.Conversation.create({
+            customer_id: user.id,
+            customer_name: user.full_name,
+            vendor_id: vendor_id,
+            shop_id: shop_id,
+            shop_name: shop_name,
+            shop_logo: shop_logo,
+            last_message: initial_message,
+            last_message_date: new Date().toISOString(),
+            product_context_id: product_id
+          });
+
+          // Envoyer le message initial avec contexte produit
+          await base44.entities.ChatMessage.create({
+            conversation_id: conversation.id,
+            sender_id: user.id,
+            sender_name: user.full_name,
+            content: initial_message,
+            type: 'text',
+            metadata: {
+              product_id: product_id,
+              product_name: product_name
+            }
+          });
+        }
+
+        return Response.json({ conversation });
+      }
+
+      // ENVOYER UN MESSAGE
+      const { conversation_id, content, type, metadata } = body;
 
       // SÉCURITÉ : Anti-numéros de téléphone
       const phoneRegex = /(\+?\d[\s\-\.]?){8,}/g;
