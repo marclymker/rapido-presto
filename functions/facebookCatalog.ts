@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       const priceValue = isNaN(priceRaw) ? "0.00" : priceRaw.toFixed(2);
       const price = escapeCSV(`${priceValue} HTG`);
       
-      const link = escapeCSV(`https://rapidopresto.shop/product/${product.id}`);
+      const link = escapeCSV(`https://rapidopresto.shop/product?id=${product.id}`);
       const imageLink = escapeCSV(product.image_url);
       const brand = escapeCSV(shopName);
       const googleCategory = escapeCSV('Apparel & Accessories'); 
