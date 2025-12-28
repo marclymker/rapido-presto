@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ShoppingCart, Minus, Plus, Store, MapPin } from 'lucide-react';
+import ChatButton from '@/components/chat/ChatButton';
 import { toast } from "sonner";
 import { Helmet } from 'react-helmet-async';
 import { getClientPrice } from '@/components/utils/priceCalculation';
@@ -307,7 +308,12 @@ export default function Product() {
           product={product} 
           onChange={setCustomization}
         />
-      </div>
+
+        {/* Chat Button */}
+        {shop && (
+          <ChatButton product={product} shop={shop} />
+        )}
+        </div>
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-bottom">

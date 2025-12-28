@@ -2,6 +2,7 @@ import Account from './pages/Account';
 import AdminProducts from './pages/AdminProducts';
 import AdminShops from './pages/AdminShops';
 import AdminValidation from './pages/AdminValidation';
+import AllOrdersAdmin from './pages/AllOrdersAdmin';
 import Cart from './pages/Cart';
 import DriverAccount from './pages/DriverAccount';
 import DriverDashboard from './pages/DriverDashboard';
@@ -12,10 +13,10 @@ import ManageProfiles from './pages/ManageProfiles';
 import Orders from './pages/Orders';
 import PaymentCallback from './pages/PaymentCallback';
 import Pricing from './pages/Pricing';
-import ProfileSetup from './pages/ProfileSetup';
 import Product from './pages/Product';
 import Products from './pages/Products';
-import AllOrdersAdmin from './pages/AllOrdersAdmin';
+import ProfileSetup from './pages/ProfileSetup';
+import Chat from './pages/Chat';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +25,7 @@ export const PAGES = {
     "AdminProducts": AdminProducts,
     "AdminShops": AdminShops,
     "AdminValidation": AdminValidation,
+    "AllOrdersAdmin": AllOrdersAdmin,
     "Cart": Cart,
     "DriverAccount": DriverAccount,
     "DriverDashboard": DriverDashboard,
@@ -34,10 +36,10 @@ export const PAGES = {
     "Orders": Orders,
     "PaymentCallback": PaymentCallback,
     "Pricing": Pricing,
-    "ProfileSetup": ProfileSetup,
     "Product": Product,
     "Products": Products,
-    "AllOrdersAdmin": AllOrdersAdmin,
+    "ProfileSetup": ProfileSetup,
+    "Chat": Chat,
 }
 
 export const pagesConfig = {

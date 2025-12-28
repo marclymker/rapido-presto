@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Home, ShoppingBag, User, Package, Store, Bike } from 'lucide-react';
+import { Home, ShoppingBag, User, Package, Store, Bike, MessageCircle } from 'lucide-react';
 import { Toaster } from "@/components/ui/sonner";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from '@tanstack/react-query';
@@ -67,6 +67,17 @@ export default function Layout({ children, currentPageName }) {
   const activeOrdersCount = orders.filter(o => 
     !['delivered', 'cancelled'].includes(o.status)
   ).length;
+
+  // Fetch unread messages count
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unread-count', user?.id],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('chatService', { action: 'unread-count' });
+      return response.data.unreadCount;
+    },
+    enabled: !!user?.id,
+    refetchInterval: 30000
+  });
 
   const getNavItems = () => {
     const currentProfile = user?.current_profile || user?.profiles?.client?.is_active ? 'client' : null;
