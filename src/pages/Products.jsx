@@ -87,13 +87,13 @@ export default function Products() {
                     key={product.id}
                     product={product}
                     shop={shop}
-                    onClick={() => window.location.href = `/product/${product.id}`}
+                    onClick={() => window.location.href = `/product?id=${product.id}`}
                     onAdd={() => {
                       if (!user) {
                         base44.auth.redirectToLogin(window.location.pathname);
                         return;
                       }
-                      window.location.href = `/product/${product.id}`;
+                      window.location.href = `/product?id=${product.id}`;
                     }}
                   />
                 );
