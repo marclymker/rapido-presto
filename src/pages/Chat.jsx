@@ -3,14 +3,14 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Send, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Loader2, Send, MessageSquare, ArrowLeft, Plus } from 'lucide-react';
 
 export default function Chat() {
   const [user, setUser] = useState(null);
   const [selectedConv, setSelectedConv] = useState(null);
   const [messageText, setMessageText] = useState('');
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
   const messagesEndRef = useRef(null);
-  const messagesContainerRef = useRef(null);
   const queryClient = useQueryClient();
 
   // 1. Protection Auth au montage
@@ -21,10 +21,11 @@ export default function Chat() {
         if (!u) {
           window.location.href = '/login';
         } else {
+          console.log('Utilisateur connecté:', u.id, u.full_name);
           setUser(u);
         }
       } catch (error) {
-        console.error('Auth error:', error);
+        console.error('Erreur d\'authentification:', error);
         window.location.href = '/login';
       }
     };
@@ -32,39 +33,52 @@ export default function Chat() {
     checkAuth();
   }, []);
 
-  // Extraction sécurisée de l'ID de l'URL
-  const getUrlId = useCallback(() => {
-    if (typeof window === 'undefined') return null;
-    return new URLSearchParams(window.location.search).get('id');
-  }, []);
-
   // 2. Liste des conversations
   const { 
     data: conversations = [], 
-    isLoading: isLoadingConvs 
+    isLoading: isLoadingConvs,
+    refetch: refetchConversations
   } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
       try {
         const response = await base44.functions.invoke('chatService', { 
           action: 'list' 
         });
-        // S'assurer que nous retournons toujours un tableau
-        return Array.isArray(response?.data) ? response.data : [];
+        
+        console.log('Réponse conversations:', response);
+        
+        // Vérifier la structure de la réponse
+        if (response && response.success === true) {
+          return response.data || [];
+        } else if (response && response.data && response.data.data) {
+          return response.data.data;
+        } else if (Array.isArray(response)) {
+          return response;
+        } else {
+          console.error('Format de réponse inattendu:', response);
+          return [];
+        }
       } catch (error) {
-        console.error('Error fetching conversations:', error);
+        console.error('Erreur lors de la récupération des conversations:', error);
         return [];
       }
     },
     enabled: !!user?.id,
-    refetchInterval: 15000, // Rafraîchir toutes les 15 secondes
-    retry: 2
+    refetchInterval: 30000, // Rafraîchir toutes les 30 secondes
+    retry: 2,
+    onSuccess: (data) => {
+      console.log('Conversations chargées:', data.length);
+    }
   });
 
-  // 3. Messages avec tri de secours côté front
+  // 3. Messages d'une conversation
   const { 
     data: messages = [], 
-    isLoading: isLoadingMessages 
+    isLoading: isLoadingMessages,
+    refetch: refetchMessages
   } = useQuery({
     queryKey: ['messages', selectedConv?.id],
     queryFn: async () => {
@@ -72,87 +86,121 @@ export default function Chat() {
       
       try {
         const response = await base44.functions.invoke('chatService', { 
-          action: 'messages', 
-          convId: selectedConv.id 
+          action: 'messages',
+          convId: selectedConv.id
         });
         
-        let messages = Array.isArray(response?.data) ? response.data : [];
+        console.log('Réponse messages:', response);
         
-        // Tri de secours côté client (par timestamp ou created_at)
-        messages.sort((a, b) => {
+        // Vérifier la structure de la réponse
+        let messagesData = [];
+        if (response && response.success === true) {
+          messagesData = response.data || [];
+        } else if (response && response.data && response.data.data) {
+          messagesData = response.data.data;
+        } else if (Array.isArray(response)) {
+          messagesData = response;
+        } else if (response && response.data && Array.isArray(response.data)) {
+          messagesData = response.data;
+        }
+        
+        // Trier les messages par date (du plus ancien au plus récent)
+        return messagesData.sort((a, b) => {
           const timeA = a.timestamp || a.created_at || a.id;
           const timeB = b.timestamp || b.created_at || b.id;
           
           try {
             const dateA = new Date(timeA).getTime();
             const dateB = new Date(timeB).getTime();
-            return dateA - dateB; // Ascendant: ancien -> récent
+            return dateA - dateB;
           } catch {
-            return a.id - b.id; // Fallback sur ID
+            return a.id - b.id;
           }
         });
-        
-        return messages;
       } catch (error) {
-        console.error('Error fetching messages:', error);
+        console.error('Erreur lors de la récupération des messages:', error);
         return [];
       }
     },
     enabled: !!selectedConv?.id,
-    refetchInterval: 5000, // Rafraîchir toutes les 5 secondes
+    refetchInterval: 10000, // Rafraîchir toutes les 10 secondes
   });
 
-  // 4. Mutation d'envoi
+  // 4. Mutation d'envoi de message
   const sendMessage = useMutation({
     mutationFn: async (text) => {
-      if (!selectedConv?.id) throw new Error('No conversation selected');
+      if (!selectedConv?.id) throw new Error('Aucune conversation sélectionnée');
       
-      return await base44.functions.invoke('chatService', { 
+      const response = await base44.functions.invoke('chatService', { 
         action: 'send', 
         conversation_id: selectedConv.id, 
         content: text 
       });
+      
+      if (!response || !response.success) {
+        throw new Error(response?.error || 'Erreur lors de l\'envoi');
+      }
+      
+      return response.data;
     },
     onSuccess: () => {
-      // Invalider et rafraîchir les messages
-      queryClient.invalidateQueries(['messages', selectedConv?.id]);
-      // Rafraîchir aussi la liste des conversations pour mettre à jour le dernier message
-      queryClient.invalidateQueries(['conversations', user?.id]);
+      // Rafraîchir les messages
+      refetchMessages();
+      // Rafraîchir la liste des conversations pour mettre à jour le dernier message
+      refetchConversations();
       setMessageText('');
     },
     onError: (error) => {
-      console.error('Error sending message:', error);
+      console.error('Erreur lors de l\'envoi du message:', error);
       alert('Erreur lors de l\'envoi du message. Veuillez réessayer.');
     }
   });
 
-  // 5. Synchronisation URL -> Sélection
-  useEffect(() => {
-    const convIdFromUrl = getUrlId();
-    if (convIdFromUrl && conversations.length > 0) {
-      const found = conversations.find(c => String(c.id) === String(convIdFromUrl));
-      if (found && selectedConv?.id !== found.id) {
-        setSelectedConv(found);
+  // 5. Mutation pour démarrer une nouvelle conversation
+  const startNewChat = useMutation({
+    mutationFn: async ({ vendorId, shopId, shopName, initialMessage }) => {
+      const response = await base44.functions.invoke('chatService', {
+        action: 'init',
+        vendor_id: vendorId,
+        shop_id: shopId,
+        shop_name: shopName,
+        initial_message: initialMessage || 'Bonjour, je souhaite discuter avec vous.'
+      });
+      
+      console.log('Réponse init:', response);
+      
+      if (!response || !response.success) {
+        throw new Error(response?.error || 'Erreur lors de la création de la conversation');
       }
+      
+      return response.conversation;
+    },
+    onSuccess: (newConversation) => {
+      setSelectedConv(newConversation);
+      setShowNewChatModal(false);
+      // Rafraîchir la liste des conversations
+      refetchConversations();
+      // Mettre à jour l'URL
+      window.history.pushState({}, '', `/chat?id=${newConversation.id}`);
+    },
+    onError: (error) => {
+      console.error('Erreur lors de la création de la conversation:', error);
+      alert('Erreur lors de la création de la conversation: ' + error.message);
     }
-  }, [getUrlId, conversations, selectedConv?.id]);
+  });
 
   // 6. Scroll automatique vers le dernier message
   useEffect(() => {
-    if (messages.length > 0 && messagesContainerRef.current) {
-      const scrollToBottom = () => {
-        messagesContainerRef.current?.scrollTo({
-          top: messagesContainerRef.current.scrollHeight,
-          behavior: 'smooth'
+    if (messages.length > 0) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: 'smooth' 
         });
-      };
-      
-      // Petit délai pour s'assurer que le DOM est mis à jour
-      setTimeout(scrollToBottom, 100);
+      }, 100);
     }
   }, [messages]);
 
-  // Gestionnaire pour la touche Entrée
+  // 7. Gestionnaire pour la touche Entrée
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -162,11 +210,15 @@ export default function Chat() {
     }
   };
 
-  // 7. Mise à jour de l'URL lors de la sélection
-  const handleSelectConversation = (conversation) => {
-    setSelectedConv(conversation);
-    // Mettre à jour l'URL sans recharger la page
-    window.history.pushState({}, '', `/chat?id=${conversation.id}`);
+  // 8. Fonction pour démarrer une nouvelle conversation de test
+  const handleStartTestChat = () => {
+    // Remplacez ces valeurs par celles de votre test
+    startNewChat.mutate({
+      vendorId: 'vendeur_test_id', // À remplacer par un vrai ID de vendeur
+      shopId: 'boutique_test_id', // À remplacer par un vrai ID de boutique
+      shopName: 'Boutique Test',
+      initialMessage: 'Bonjour, je souhaite vous poser une question.'
+    });
   };
 
   // Rendu de chargement (Évite la page blanche pendant l'auth)
@@ -183,9 +235,19 @@ export default function Chat() {
     <div className="flex h-screen bg-white">
       {/* Sidebar : Liste des discussions */}
       <div className={`${selectedConv ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r bg-slate-50`}>
-        <div className="p-4 border-b font-bold flex gap-2 items-center bg-white">
-          <MessageSquare className="text-orange-500" /> 
-          <span className="truncate">Vos messages</span>
+        <div className="p-4 border-b font-bold flex gap-2 items-center bg-white justify-between">
+          <div className="flex gap-2 items-center">
+            <MessageSquare className="text-orange-500" /> 
+            <span className="truncate">Vos messages</span>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowNewChatModal(true)}
+            className="h-8 text-xs"
+          >
+            <Plus size={14} /> Nouveau
+          </Button>
         </div>
         
         <div className="overflow-y-auto flex-1">
@@ -194,27 +256,47 @@ export default function Chat() {
               <Loader2 className="animate-spin mx-auto text-slate-300" />
             </div>
           ) : conversations.length === 0 ? (
-            <div className="p-10 text-center text-slate-400 text-sm">
-              Aucune discussion trouvée.
+            <div className="p-6 text-center text-slate-400">
+              <MessageSquare size={48} className="mx-auto mb-3 opacity-20" />
+              <p className="mb-2">Aucune discussion trouvée.</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleStartTestChat}
+                className="mt-2"
+                disabled={startNewChat.isPending}
+              >
+                {startNewChat.isPending ? (
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                ) : null}
+                Démarrer une discussion test
+              </Button>
             </div>
           ) : (
             conversations.map(conversation => (
               <div 
                 key={conversation.id} 
-                onClick={() => handleSelectConversation(conversation)}
+                onClick={() => {
+                  setSelectedConv(conversation);
+                  window.history.pushState({}, '', `/chat?id=${conversation.id}`);
+                }}
                 className={`p-4 border-b cursor-pointer transition-all duration-200 ${
                   selectedConv?.id === conversation.id 
                     ? 'bg-orange-50 border-r-4 border-r-orange-500' 
                     : 'bg-white hover:bg-slate-50'
                 }`}
               >
-                <div className="flex items-start gap-2">
-                  {conversation.shop_logo && (
+                <div className="flex items-start gap-3">
+                  {conversation.shop_logo ? (
                     <img 
                       src={conversation.shop_logo} 
                       alt="Logo boutique" 
-                      className="w-8 h-8 rounded-full object-cover"
+                      className="w-10 h-10 rounded-full object-cover border"
                     />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                      <MessageSquare size={20} className="text-orange-400" />
+                    </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">
@@ -222,9 +304,14 @@ export default function Chat() {
                         ? conversation.customer_name 
                         : conversation.shop_name}
                     </p>
-                    <p className="text-xs text-slate-500 truncate">
-                      {conversation.last_message || "Démarrer la discussion"}
+                    <p className="text-xs text-slate-500 truncate mt-1">
+                      {conversation.last_message || "Nouvelle discussion"}
                     </p>
+                    {conversation.last_message_date && (
+                      <p className="text-xs text-slate-400 mt-1">
+                        {new Date(conversation.last_message_date).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -253,26 +340,32 @@ export default function Chat() {
               </Button>
               
               <div className="flex items-center gap-3">
-                {selectedConv.shop_logo && (
+                {selectedConv.shop_logo ? (
                   <img 
                     src={selectedConv.shop_logo} 
                     alt="Logo boutique" 
-                    className="w-8 h-8 rounded-full object-cover"
+                    className="w-10 h-10 rounded-full object-cover border"
                   />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                    <MessageSquare size={20} className="text-orange-400" />
+                  </div>
                 )}
-                <div className="font-bold truncate">
-                  {user.id === selectedConv.vendor_id 
-                    ? selectedConv.customer_name 
-                    : selectedConv.shop_name}
+                <div>
+                  <div className="font-bold">
+                    {user.id === selectedConv.vendor_id 
+                      ? selectedConv.customer_name 
+                      : selectedConv.shop_name}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {selectedConv.product_context_id ? 'Discussion sur un produit' : 'Discussion générale'}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Zone des messages */}
-            <div 
-              ref={messagesContainerRef}
-              className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-slate-50 to-white"
-            >
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
               {isLoadingMessages ? (
                 <div className="flex justify-center items-center h-32">
                   <Loader2 className="animate-spin text-slate-300" />
@@ -285,30 +378,21 @@ export default function Chat() {
                 </div>
               ) : (
                 <>
-                  {/* Message d'information */}
-                  <div className="text-center text-xs text-slate-400 py-2">
-                    Conversation avec {user.id === selectedConv.vendor_id 
-                      ? selectedConv.customer_name 
-                      : selectedConv.shop_name}
-                  </div>
-                  
-                  {/* Liste des messages */}
                   {messages.map(message => (
                     <div 
                       key={message.id} 
                       className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className="max-w-[75%]">
-                        <div className={`px-4 py-3 rounded-2xl shadow-sm ${
-                          message.sender_id === user.id 
-                            ? 'bg-orange-500 text-white rounded-br-none' 
-                            : 'bg-white text-slate-800 border rounded-bl-none'
-                        }`}>
+                      <div className="max-w-[70%]">
+                        <div className={`p-3 rounded-2xl ${message.sender_id === user.id 
+                          ? 'bg-orange-500 text-white rounded-br-none' 
+                          : 'bg-white text-slate-800 border rounded-bl-none'}`}
+                        >
                           <p className="text-sm whitespace-pre-wrap break-words">
                             {message.content}
                           </p>
                         </div>
-                        <div className={`text-xs text-slate-400 mt-1 px-1 ${
+                        <div className={`text-xs text-slate-400 mt-1 px-2 ${
                           message.sender_id === user.id ? 'text-right' : 'text-left'
                         }`}>
                           {message.timestamp || message.created_at
@@ -345,10 +429,7 @@ export default function Chat() {
                   {sendMessage.isPending ? (
                     <Loader2 className="animate-spin h-4 w-4" />
                   ) : (
-                    <div className="flex items-center gap-1">
-                      <Send size={16} />
-                      <span className="hidden sm:inline">Envoyer</span>
-                    </div>
+                    <Send size={18} />
                   )}
                 </Button>
               </div>
@@ -367,6 +448,54 @@ export default function Chat() {
           </div>
         )}
       </div>
+
+      {/* Modal pour nouvelle conversation */}
+      {showNewChatModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="font-bold text-lg mb-4">Nouvelle conversation</h3>
+            <p className="text-slate-600 mb-4">
+              Pour démarrer une nouvelle conversation, vous devez spécifier le vendeur et la boutique.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">ID du vendeur</label>
+                <Input placeholder="vendeur_id" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">ID de la boutique</label>
+                <Input placeholder="shop_id" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Nom de la boutique</label>
+                <Input placeholder="Nom de la boutique" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Message initial</label>
+                <Input placeholder="Votre message..." />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowNewChatModal(false)}
+              >
+                Annuler
+              </Button>
+              <Button 
+                onClick={handleStartTestChat}
+                className="bg-orange-500 hover:bg-orange-600"
+                disabled={startNewChat.isPending}
+              >
+                {startNewChat.isPending ? (
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                ) : null}
+                Démarrer la conversation
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
