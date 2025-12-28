@@ -14,6 +14,7 @@ import PaymentCallback from './pages/PaymentCallback';
 import Pricing from './pages/Pricing';
 import ProfileSetup from './pages/ProfileSetup';
 import Product from './pages/Product';
+import Products from './pages/Products';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +35,7 @@ export const PAGES = {
     "Pricing": Pricing,
     "ProfileSetup": ProfileSetup,
     "Product": Product,
+    "Products": Products,
 }
 
 export const pagesConfig = {
