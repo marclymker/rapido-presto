@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     });
 
     // 1. RÉCUPÉRER TOUS LES PRODUITS SANS FILTRES
-    const products = await base44.entities.Product.list();
+    const products = await base44.entities.Product.filter({});
     console.log(`✅ Total produits: ${products.length}`);
 
     // 2. EN-TÊTES DU CATALOGUE
