@@ -3,182 +3,91 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const url = new URL(req.url);
-    const { searchParams } = url;
-
-    // Vérifier l'authentification
     const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Non authentifié' }, { status: 401 });
-    }
+    if (!user) return Response.json({ error: 'Non authentifié' }, { status: 401 });
 
-    // INITIALISER UNE CONVERSATION
-    if (req.method === 'POST') {
-      const body = await req.json();
-      
-      if (body.action === 'init') {
-        const { vendor_id, shop_id, shop_name, shop_logo, product_id, product_name, initial_message } = body;
+    const body = await req.json().catch(() => ({}));
+    const url = new URL(req.url);
+    // On supporte l'action dans le body (POST) ou dans l'URL (GET)
+    const action = body.action || url.searchParams.get('action');
 
-        // Vérifier si une conversation existe déjà
-        const existing = await base44.entities.Conversation.filter({
-          customer_id: user.id,
-          shop_id: shop_id
-        });
+    // --- INITIALISER ---
+    if (action === 'init') {
+      const { vendor_id, shop_id, shop_name, shop_logo, product_id, product_name, initial_message } = body;
 
-        let conversation;
-        if (existing && existing.length > 0) {
-          conversation = existing[0];
-        } else {
-          // Créer nouvelle conversation
-          conversation = await base44.entities.Conversation.create({
-            customer_id: user.id,
-            customer_name: user.full_name,
-            vendor_id: vendor_id,
-            shop_id: shop_id,
-            shop_name: shop_name,
-            shop_logo: shop_logo,
-            last_message: initial_message,
-            last_message_date: new Date().toISOString(),
-            product_context_id: product_id
-          });
-
-          // Envoyer le message initial avec contexte produit
-          await base44.entities.ChatMessage.create({
-            conversation_id: conversation.id,
-            sender_id: user.id,
-            sender_name: user.full_name,
-            content: initial_message,
-            type: 'text',
-            metadata: {
-              product_id: product_id,
-              product_name: product_name
-            }
-          });
-        }
-
-        return Response.json({ conversation });
-      }
-
-      // ENVOYER UN MESSAGE
-      const { conversation_id, content, type, metadata } = body;
-
-      // SÉCURITÉ : Anti-numéros de téléphone
-      const phoneRegex = /(\+?\d[\s\-\.]?){8,}/g;
-      if (phoneRegex.test(content)) {
-        return Response.json({ 
-          error: 'Action bloquée : Le partage de numéros de téléphone est interdit pour votre sécurité.' 
-        }, { status: 403 });
-      }
-
-      // Récupérer la conversation pour déterminer le rôle
-      const convs = await base44.entities.Conversation.filter({ id: conversation_id });
-      if (!convs || convs.length === 0) {
-        return Response.json({ error: 'Conversation introuvable' }, { status: 404 });
-      }
-      
-      const conv = convs[0];
-      const isVendor = conv.vendor_id === user.id;
-      const isCustomer = conv.customer_id === user.id;
-
-      if (!isVendor && !isCustomer) {
-        return Response.json({ error: 'Non autorisé' }, { status: 403 });
-      }
-
-      // RESTRICTION : Vendeur ne peut pas envoyer de photos
-      if (isVendor && type === 'image') {
-        return Response.json({ 
-          error: 'Les vendeurs ne peuvent pas envoyer de photos. Partagez un article de votre boutique.' 
-        }, { status: 403 });
-      }
-
-      // RESTRICTION : Client ne peut pas partager de produits
-      if (isCustomer && type === 'product') {
-        return Response.json({ error: 'Action non autorisée.' }, { status: 403 });
-      }
-
-      // Créer le message
-      const message = await base44.entities.ChatMessage.create({
-        conversation_id,
-        sender_id: user.id,
-        sender_name: user.full_name,
-        content,
-        type: type || 'text',
-        metadata: metadata || {},
-        is_read: false
+      // On filtre par les deux participants pour être sûr
+      const existing = await base44.entities.Conversation.filter({
+        customer_id: user.id,
+        vendor_id: vendor_id
       });
 
-      // Mettre à jour la conversation
-      await base44.asServiceRole.entities.Conversation.update(conversation_id, {
-        last_message: content.substring(0, 50),
+      if (existing && existing.length > 0) {
+        return Response.json(existing[0]); // Retour direct de l'objet
+      }
+
+      const conversation = await base44.entities.Conversation.create({
+        customer_id: user.id,
+        customer_name: user.full_name,
+        vendor_id: vendor_id,
+        shop_id: shop_id,
+        shop_name: shop_name || "Boutique",
+        shop_logo: shop_logo,
+        last_message: initial_message,
         last_message_date: new Date().toISOString()
       });
 
-      return Response.json(message);
+      await base44.entities.ChatMessage.create({
+        conversation_id: conversation.id,
+        sender_id: user.id,
+        content: initial_message,
+        type: 'text',
+        metadata: { product_id, product_name }
+      });
+
+      return Response.json(conversation);
     }
 
-    // LISTER LES CONVERSATIONS
-    if (req.method === 'GET' && searchParams.get('action') === 'list') {
-      const conversations = await base44.entities.Conversation.filter({
-        $or: [
-          { customer_id: user.id },
-          { vendor_id: user.id }
-        ]
+    // --- LISTER ---
+    if (action === 'list') {
+      const list = await base44.entities.Conversation.filter({
+        $or: [{ customer_id: user.id }, { vendor_id: user.id }]
       });
+      return Response.json({ data: list });
+    }
+
+    // --- MESSAGES ---
+    if (action === 'messages') {
+      const convId = body.convId || url.searchParams.get('convId');
+      const msgs = await base44.entities.ChatMessage.filter({ conversation_id: convId });
+      return Response.json({ data: msgs });
+    }
+
+    // --- ENVOYER ---
+    if (action === 'send') {
+      const { conversation_id, content, type, metadata } = body;
       
-      return Response.json(conversations);
-    }
-
-    // RÉCUPÉRER LES MESSAGES
-    if (req.method === 'GET' && searchParams.get('action') === 'messages') {
-      const convId = searchParams.get('convId');
-      const messages = await base44.entities.ChatMessage.filter({ 
-        conversation_id: convId 
-      });
-      
-      return Response.json(messages);
-    }
-
-    // COMPTER LES NON LUS
-    if (req.method === 'GET' && searchParams.get('action') === 'unread-count') {
-      const conversations = await base44.entities.Conversation.filter({
-        $or: [
-          { customer_id: user.id },
-          { vendor_id: user.id }
-        ]
-      });
-
-      let totalUnread = 0;
-      for (const conv of conversations) {
-        const unread = await base44.entities.ChatMessage.filter({
-          conversation_id: conv.id,
-          sender_id: { $ne: user.id },
-          is_read: false
-        });
-        totalUnread += unread.length;
+      // Sécurité anti-numéro
+      if (/(\+?\d[\s\-\.]?){8,}/g.test(content)) {
+        return Response.json({ error: 'Partage de numéro interdit' }, { status: 403 });
       }
 
-      return Response.json({ unreadCount: totalUnread });
-    }
-
-    // MARQUER COMME LU
-    if (req.method === 'PUT') {
-      const { conversation_id } = await req.json();
-      
-      const unreadMessages = await base44.entities.ChatMessage.filter({
+      const message = await base44.entities.ChatMessage.create({
         conversation_id,
-        sender_id: { $ne: user.id },
-        is_read: false
+        sender_id: user.id,
+        content,
+        type: type || 'text',
+        metadata: metadata || {}
       });
 
-      for (const msg of unreadMessages) {
-        await base44.asServiceRole.entities.ChatMessage.update(msg.id, { is_read: true });
-      }
+      await base44.asServiceRole.entities.Conversation.update(conversation_id, {
+        last_message: content,
+        last_message_date: new Date().toISOString()
+      });
 
-      return Response.json({ success: true, count: unreadMessages.length });
+      return Response.json({ data: message });
     }
 
     return Response.json({ error: 'Action non reconnue' }, { status: 400 });
-
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
