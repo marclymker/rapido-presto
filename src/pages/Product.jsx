@@ -7,10 +7,12 @@ import { ArrowLeft, ShoppingCart, Minus, Plus, Store, MapPin } from 'lucide-reac
 import { toast } from "sonner";
 import { Helmet } from 'react-helmet-async';
 import { getClientPrice } from '@/components/utils/priceCalculation';
+import CustomizationOptions from '@/components/product/CustomizationOptions';
 
 export default function Product() {
   const [user, setUser] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [customization, setCustomization] = useState({});
   const queryClient = useQueryClient();
 
   // Get product ID from URL
@@ -46,27 +48,42 @@ export default function Product() {
   });
 
   const addToCartMutation = useMutation({
-    mutationFn: async ({ product, quantity }) => {
-      const existing = cartItems.find(item => item.product_id === product.id);
+    mutationFn: async ({ product, quantity, customization }) => {
       const clientPrice = getClientPrice(product);
       
-      if (existing) {
-        return base44.entities.CartItem.update(existing.id, {
-          quantity: existing.quantity + quantity
-        });
-      } else {
-        return base44.entities.CartItem.create({
-          user_id: user.id,
-          product_id: product.id,
-          product_name: product.name,
-          product_image: product.image_url,
-          quantity: quantity,
-          unit_price: clientPrice,
-          shop_id: product.shop_id,
-          shop_name: product.shop_name,
-          shop_region: shop?.region
-        });
+      // Calculate customization total
+      let customizationTotal = 0;
+      if (customization.color) customizationTotal += customization.color.additional_price || 0;
+      if (customization.size) customizationTotal += customization.size.additional_price || 0;
+      if (customization.text && product.customization_options?.text_customization?.price) {
+        customizationTotal += product.customization_options.text_customization.price;
       }
+      if (customization.arrangement) customizationTotal += customization.arrangement.additional_price || 0;
+
+      // Don't merge with existing if has customization
+      const hasCustomization = Object.keys(customization).length > 0;
+      if (!hasCustomization) {
+        const existing = cartItems.find(item => item.product_id === product.id && !item.customization);
+        if (existing) {
+          return base44.entities.CartItem.update(existing.id, {
+            quantity: existing.quantity + quantity
+          });
+        }
+      }
+
+      return base44.entities.CartItem.create({
+        user_id: user.id,
+        product_id: product.id,
+        product_name: product.name,
+        product_image: product.image_url,
+        quantity: quantity,
+        unit_price: clientPrice,
+        shop_id: product.shop_id,
+        shop_name: product.shop_name,
+        shop_region: shop?.region,
+        customization: hasCustomization ? customization : undefined,
+        total_customization_price: customizationTotal
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
@@ -79,7 +96,19 @@ export default function Product() {
       base44.auth.redirectToLogin(window.location.pathname);
       return;
     }
-    addToCartMutation.mutate({ product, quantity });
+    addToCartMutation.mutate({ product, quantity, customization });
+  };
+
+  const calculateTotalPrice = () => {
+    const basePrice = clientPrice * quantity;
+    let customizationTotal = 0;
+    if (customization.color) customizationTotal += customization.color.additional_price || 0;
+    if (customization.size) customizationTotal += customization.size.additional_price || 0;
+    if (customization.text && product.customization_options?.text_customization?.price) {
+      customizationTotal += product.customization_options.text_customization.price;
+    }
+    if (customization.arrangement) customizationTotal += customization.arrangement.additional_price || 0;
+    return basePrice + (customizationTotal * quantity);
   };
 
   if (isLoading) {
@@ -272,6 +301,12 @@ export default function Product() {
             </div>
           )}
         </div>
+
+        {/* Customization Options */}
+        <CustomizationOptions 
+          product={product} 
+          onChange={setCustomization}
+        />
       </div>
 
       {/* Bottom Action Bar */}
@@ -302,10 +337,17 @@ export default function Product() {
           <Button
             onClick={handleAddToCart}
             disabled={!product.is_available || (product.stock_quantity !== undefined && product.stock_quantity === 0)}
-            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-6 rounded-full font-bold"
+            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-6 rounded-full font-bold flex-col gap-1"
           >
-            <ShoppingCart className="w-5 h-5 mr-2" />
-            Ajouter au panier
+            <div className="flex items-center">
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              Ajouter au panier
+            </div>
+            {calculateTotalPrice() !== clientPrice * quantity && (
+              <span className="text-xs opacity-90">
+                Total: {calculateTotalPrice().toFixed(0)} HTG
+              </span>
+            )}
           </Button>
         </div>
       </div>
