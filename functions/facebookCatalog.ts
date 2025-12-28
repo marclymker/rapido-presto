@@ -36,6 +36,27 @@ Deno.serve(async (req) => {
       image_url: { $ne: null, $ne: '' }
     });
 
+    // Si aucun produit, retourner un flux vide mais valide
+    if (products.length === 0) {
+      const emptyXml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+  <channel>
+    <title>Rapido Presto Product Catalog</title>
+    <link>${baseUrl}</link>
+    <description>Tous les produits disponibles sur Rapido Presto Haïti</description>
+  </channel>
+</rss>`;
+      
+      return new Response(emptyXml, {
+        status: 200,
+        headers: { 
+          "Content-Type": "application/rss+xml; charset=utf-8",
+          "Cache-Control": "public, max-age=3600",
+          "Access-Control-Allow-Origin": "*"
+        },
+      });
+    }
+
     // Construction du header XML (format RSS 2.0 / Google Shopping)
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
@@ -119,9 +140,10 @@ Deno.serve(async (req) => {
     return new Response(xml, {
       status: 200,
       headers: { 
-        "Content-Type": "application/xml; charset=utf-8",
+        "Content-Type": "application/rss+xml; charset=utf-8",
         "Cache-Control": "public, max-age=3600",
-        "Access-Control-Allow-Origin": "*"
+        "Access-Control-Allow-Origin": "*",
+        "Content-Disposition": "inline; filename=catalog.xml"
       },
     });
 
