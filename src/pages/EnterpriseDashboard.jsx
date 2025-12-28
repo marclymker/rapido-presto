@@ -81,6 +81,7 @@ export default function EnterpriseDashboard() {
     { id: 'orders', label: 'Commandes', icon: '📦', badge: pendingOrders.length },
     { id: 'selfOrders', label: 'Mes Achats', icon: '🛒' },
     { id: 'products', label: 'Mes Articles', icon: '🛍️' },
+    { id: 'chat', label: 'Chat', icon: '💬', page: 'Chat' },
     { id: 'stats', label: 'Statistiques', icon: '📈' },
     { id: 'settings', label: 'Réglages', icon: '⚙️' },
     { id: 'account', label: 'Mon Compte', icon: '👤' },
@@ -98,7 +99,13 @@ export default function EnterpriseDashboard() {
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                if (item.page) {
+                  window.location.href = createPageUrl(item.page);
+                } else {
+                  setActiveTab(item.id);
+                }
+              }}
               className={`w-full flex flex-col items-center justify-center py-4 rounded-xl transition-all relative group ${
                 activeTab === item.id 
                 ? 'bg-blue-600 text-white shadow-lg' 
