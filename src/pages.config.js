@@ -15,6 +15,7 @@ import Pricing from './pages/Pricing';
 import ProfileSetup from './pages/ProfileSetup';
 import Product from './pages/Product';
 import Products from './pages/Products';
+import AllOrdersAdmin from './pages/AllOrdersAdmin';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +37,7 @@ export const PAGES = {
     "ProfileSetup": ProfileSetup,
     "Product": Product,
     "Products": Products,
+    "AllOrdersAdmin": AllOrdersAdmin,
 }
 
 export const pagesConfig = {
