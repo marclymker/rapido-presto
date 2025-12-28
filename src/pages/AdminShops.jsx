@@ -240,7 +240,7 @@ export default function AdminShops() {
                 <p><strong>Région:</strong> {shop.region}</p>
                 <p><strong>Email:</strong> {shop.email || 'Non renseigné'}</p>
                 <p><strong>Téléphone:</strong> {shop.phone || 'Non renseigné'}</p>
-                <p><strong>Horaires:</strong> {shop.opening_hours || 'Non renseigné'}</p>
+                <p><strong>Horaires:</strong> {typeof shop.opening_hours === 'object' ? 'Configuré' : (shop.opening_hours || 'Non renseigné')}</p>
               </CardContent>
             </Card>
           ))}
