@@ -1,6 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
+  // Permettre l'accès public pour Meta (pas besoin d'auth)
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      }
+    });
+  }
+
   const base44 = createClientFromRequest(req);
   const baseUrl = "https://rapidopresto.shop";
 
@@ -104,7 +115,8 @@ Deno.serve(async (req) => {
       status: 200,
       headers: { 
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=3600"
+        "Cache-Control": "public, max-age=3600",
+        "Access-Control-Allow-Origin": "*"
       },
     });
 
