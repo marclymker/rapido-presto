@@ -17,32 +17,21 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = body.action;
 
-    // --- RÉCUPÉRER L'HISTORIQUE ---
+    // RECUPERATION DES MESSAGES
     if (action === 'messages') {
-      // On prend l'ID, peu importe comment le frontend l'appelle
-      const id = body.conversation_id || body.convId || body.id;
-      
+      const id = body.conversation_id; // On utilise strictement ce que le front envoie
       const msgs = await base44.entities.ChatMessage.filter(
         { conversation_id: id },
         { sort: { created_at: 'asc' } }
       );
-      
-      // On renvoie un format TRÈS simple
       return new Response(JSON.stringify({ data: msgs }), { headers });
     }
 
-    // --- LISTER LES DISCUSSIONS ---
-    if (action === 'list') {
-      const list = await base44.entities.Conversation.filter({
-        $or: [{ customer_id: user.id }, { vendor_id: user.id }]
-      });
-      return new Response(JSON.stringify({ data: list }), { headers });
-    }
-
-    // --- ENVOYER UN MESSAGE ---
+    // ENVOI D'UN MESSAGE
     if (action === 'send') {
+      // VERIFICATION CRUCIALE : On s'assure que l'ID est bien celui de la conversation
       const message = await base44.entities.ChatMessage.create({
-        conversation_id: body.conversation_id,
+        conversation_id: body.conversation_id, // L'ID que tu vois sur ton écran (69518...)
         sender_id: user.id,
         sender_name: user.full_name || 'Moi',
         content: body.content,
@@ -55,6 +44,14 @@ Deno.serve(async (req) => {
       });
 
       return new Response(JSON.stringify({ data: message }), { headers });
+    }
+
+    // LISTE DES DISCUSSIONS
+    if (action === 'list') {
+      const list = await base44.entities.Conversation.filter({
+        $or: [{ customer_id: user.id }, { vendor_id: user.id }]
+      });
+      return new Response(JSON.stringify({ data: list }), { headers });
     }
 
     return new Response(JSON.stringify({ error: 'Action inconnue' }), { status: 400, headers });
