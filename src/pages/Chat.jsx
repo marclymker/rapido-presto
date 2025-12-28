@@ -11,38 +11,51 @@ export default function Chat() {
   const [messageText, setMessageText] = useState('');
   const messagesEndRef = useRef(null);
   const queryClient = useQueryClient();
-  const convIdFromUrl = new URLSearchParams(window.location.search).get('id');
 
+  // 1. Protection Auth au montage
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => window.location.href = '/login');
+    base44.auth.me()
+      .then(u => {
+        if (!u) window.location.href = '/login';
+        else setUser(u);
+      })
+      .catch(() => {
+        window.location.href = '/login';
+      });
   }, []);
 
-  // Liste des conversations (Polling 10s pour éviter 429)
+  // Extraction sécurisée de l'ID de l'URL
+  const getUrlId = () => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('id');
+  };
+  const convIdFromUrl = getUrlId();
+
+  // 2. Liste des conversations
   const { data: conversations = [], isLoading: isLoadingConvs } = useQuery({
     queryKey: ['conversations', user?.id],
-    queryFn: () => base44.functions.invoke('chatService', { action: 'list' }).then(r => r.data || []),
+    queryFn: async () => {
+      const r = await base44.functions.invoke('chatService', { action: 'list' });
+      // On s'assure que r.data est bien un tableau
+      return Array.isArray(r.data) ? r.data : (r.data?.data || []);
+    },
     enabled: !!user?.id,
-    refetchInterval: 10000, 
-    retry: false
+    refetchInterval: 10000,
+    retry: 1
   });
 
-  // Messages (Polling 5s)
+  // 3. Messages
   const { data: messages = [] } = useQuery({
     queryKey: ['messages', selectedConv?.id],
-    queryFn: () => base44.functions.invoke('chatService', { action: 'messages', convId: selectedConv.id }).then(r => r.data || []),
+    queryFn: async () => {
+      const r = await base44.functions.invoke('chatService', { action: 'messages', convId: selectedConv.id });
+      return Array.isArray(r.data) ? r.data : (r.data?.data || []);
+    },
     enabled: !!selectedConv?.id,
-    refetchInterval: 5000,
-    retry: false
+    refetchInterval: 5000
   });
 
-  // Auto-sélection de la conversation depuis l'URL
-  useEffect(() => {
-    if (convIdFromUrl && conversations.length > 0) {
-      const found = conversations.find(c => String(c.id) === String(convIdFromUrl));
-      if (found) setSelectedConv(found);
-    }
-  }, [convIdFromUrl, conversations]);
-
+  // 4. Mutation d'envoi
   const sendMessage = useMutation({
     mutationFn: (text) => base44.functions.invoke('chatService', { 
       action: 'send', 
@@ -50,64 +63,110 @@ export default function Chat() {
       content: text 
     }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['messages', selectedConv.id]);
+      queryClient.invalidateQueries(['messages', selectedConv?.id]);
       setMessageText('');
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   });
 
-  if (!user || isLoadingConvs) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-orange-500" /></div>;
+  // 5. Synchronisation URL -> Sélection
+  useEffect(() => {
+    if (convIdFromUrl && conversations.length > 0) {
+      const found = conversations.find(c => String(c.id) === String(convIdFromUrl));
+      if (found && selectedConv?.id !== found.id) {
+        setSelectedConv(found);
+      }
+    }
+  }, [convIdFromUrl, conversations]);
+
+  // 6. Scroll auto
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Rendu de chargement (Évite la page blanche pendant l'auth)
+  if (!user) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-500">
+        <Loader2 className="animate-spin text-orange-500 mb-2" />
+        <p>Vérification de votre session...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-white">
-      {/* Sidebar */}
+      {/* Sidebar : Liste des discussions */}
       <div className={`${selectedConv ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r bg-slate-50`}>
-        <div className="p-4 border-b font-bold flex gap-2 items-center"><MessageSquare size={20}/> Discussions</div>
+        <div className="p-4 border-b font-bold flex gap-2 items-center bg-white">
+          <MessageSquare className="text-orange-500" /> Vos messages
+        </div>
         <div className="overflow-y-auto flex-1">
-          {conversations.map(c => (
-            <div key={c.id} onClick={() => setSelectedConv(c)} className={`p-4 border-b cursor-pointer transition ${selectedConv?.id === c.id ? 'bg-orange-50 border-l-4 border-l-orange-500' : 'bg-white'}`}>
-              <p className="font-bold text-sm truncate">{user.id === c.vendor_id ? c.customer_name : c.shop_name}</p>
-              <p className="text-xs text-slate-500 truncate">{c.last_message}</p>
-            </div>
-          ))}
+          {isLoadingConvs ? (
+            <div className="p-4 text-center"><Loader2 className="animate-spin mx-auto text-slate-300" /></div>
+          ) : conversations.length === 0 ? (
+            <div className="p-10 text-center text-slate-400 text-sm">Aucune discussion trouvée.</div>
+          ) : (
+            conversations.map(c => (
+              <div 
+                key={c.id} 
+                onClick={() => {
+                   setSelectedConv(c);
+                   window.history.pushState({}, '', `/chat?id=${c.id}`);
+                }} 
+                className={`p-4 border-b cursor-pointer transition ${selectedConv?.id === c.id ? 'bg-orange-50 border-r-4 border-r-orange-500' : 'bg-white hover:bg-slate-50'}`}
+              >
+                <p className="font-bold text-sm truncate">{user.id === c.vendor_id ? c.customer_name : c.shop_name}</p>
+                <p className="text-xs text-slate-500 truncate">{c.last_message || "Démarrer la discussion"}</p>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
-      {/* Chat Area */}
+      {/* Zone de Chat */}
       <div className={`${!selectedConv ? 'hidden md:flex' : 'flex'} flex-1 flex-col`}>
         {selectedConv ? (
           <>
-            <div className="p-4 border-b flex items-center gap-3 bg-white">
-              <ArrowLeft className="md:hidden cursor-pointer" onClick={() => setSelectedConv(null)} />
-              <p className="font-bold">{user.id === selectedConv.vendor_id ? selectedConv.customer_name : selectedConv.shop_name}</p>
+            <div className="p-4 border-b flex items-center gap-3 bg-white shadow-sm">
+              <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSelectedConv(null)}>
+                <ArrowLeft />
+              </Button>
+              <div className="font-bold">
+                {user.id === selectedConv.vendor_id ? selectedConv.customer_name : selectedConv.shop_name}
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
               {messages.map(m => (
                 <div key={m.id} className={`flex ${m.sender_id === user.id ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`p-3 rounded-2xl max-w-[80%] shadow-sm ${m.sender_id === user.id ? 'bg-orange-500 text-white' : 'bg-white text-slate-800 border'}`}>
+                  <div className={`p-3 rounded-2xl max-w-[85%] shadow-sm text-sm ${m.sender_id === user.id ? 'bg-orange-500 text-white rounded-br-none' : 'bg-white text-slate-800 border rounded-bl-none'}`}>
                     {m.content}
                   </div>
                 </div>
               ))}
               <div ref={messagesEndRef} />
             </div>
+
             <div className="p-4 bg-white border-t flex gap-2">
               <Input 
                 value={messageText} 
                 onChange={e => setMessageText(e.target.value)} 
-                onKeyDown={e => e.key === 'Enter' && sendMessage.mutate(messageText)}
-                placeholder="Votre message..."
-                disabled={sendMessage.isPending}
+                onKeyDown={e => e.key === 'Enter' && messageText.trim() && sendMessage.mutate(messageText)}
+                placeholder="Écrivez votre message..."
               />
-              <Button onClick={() => sendMessage.mutate(messageText)} disabled={sendMessage.isPending} className="bg-orange-500 hover:bg-orange-600">
+              <Button 
+                onClick={() => messageText.trim() && sendMessage.mutate(messageText)} 
+                disabled={!messageText.trim() || sendMessage.isPending}
+                className="bg-orange-500 hover:bg-orange-600"
+              >
                 {sendMessage.isPending ? <Loader2 className="animate-spin" /> : <Send size={18} />}
               </Button>
             </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-300">
-            <MessageSquare size={60} className="mb-4 opacity-20" />
-            <p>Sélectionnez une discussion pour commencer</p>
+            <MessageSquare size={80} className="opacity-10 mb-4" />
+            <p>Sélectionnez un contact pour discuter</p>
           </div>
         )}
       </div>
