@@ -28,7 +28,22 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
     taille_emballage: 'Moyen',
     delivery_time: '30-45 minutes',
     seo_tags: [],
-    is_available: true
+    is_available: true,
+    product_attributes: {
+      color: '',
+      size: '',
+      material: '',
+      gender: '',
+      age_group: '',
+      pattern: '',
+      custom_labels: {
+        label_0: '',
+        label_1: '',
+        label_2: '',
+        label_3: '',
+        label_4: ''
+      }
+    }
   });
   const [newTag, setNewTag] = useState('');
 
@@ -50,7 +65,22 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         taille_emballage: 'Moyen',
         delivery_time: '30-45 minutes',
         seo_tags: [],
-        is_available: true
+        is_available: true,
+        product_attributes: {
+          color: '',
+          size: '',
+          material: '',
+          gender: '',
+          age_group: '',
+          pattern: '',
+          custom_labels: {
+            label_0: '',
+            label_1: '',
+            label_2: '',
+            label_3: '',
+            label_4: ''
+          }
+        }
       });
     } else if (open && product) {
       // Skip guidelines for editing and load product data
@@ -68,7 +98,22 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         taille_emballage: product.taille_emballage || 'Moyen',
         delivery_time: product.delivery_time || '30-45 minutes',
         seo_tags: product.seo_tags || [],
-        is_available: product.is_available !== false
+        is_available: product.is_available !== false,
+        product_attributes: product.product_attributes || {
+          color: '',
+          size: '',
+          material: '',
+          gender: '',
+          age_group: '',
+          pattern: '',
+          custom_labels: {
+            label_0: '',
+            label_1: '',
+            label_2: '',
+            label_3: '',
+            label_4: ''
+          }
+        }
       });
     } else {
       setShowGuidelines(false);
@@ -372,6 +417,134 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
                   {tag} <X className="w-3 h-3 ml-1" />
                 </Badge>
               ))}
+            </div>
+          </div>
+
+          {/* Attributs produits pour catalogues Facebook/Google */}
+          <div className="border-t pt-4 mt-4">
+            <h3 className="font-semibold text-sm mb-3 text-slate-700">
+              📊 Attributs pour catalogues (Facebook/Google Shopping)
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Ces informations améliorent la visibilité de vos produits sur Facebook et Google Shopping
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs">Couleur</Label>
+                <Input
+                  value={formData.product_attributes.color}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    product_attributes: { ...formData.product_attributes, color: e.target.value }
+                  })}
+                  placeholder="Ex: Rouge, Bleu, Noir"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-xs">Taille</Label>
+                <Input
+                  value={formData.product_attributes.size}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    product_attributes: { ...formData.product_attributes, size: e.target.value }
+                  })}
+                  placeholder="Ex: S, M, L, XL"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-xs">Matière</Label>
+                <Input
+                  value={formData.product_attributes.material}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    product_attributes: { ...formData.product_attributes, material: e.target.value }
+                  })}
+                  placeholder="Ex: Coton, Polyester"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-xs">Genre</Label>
+                <Select 
+                  value={formData.product_attributes.gender} 
+                  onValueChange={(v) => setFormData({
+                    ...formData,
+                    product_attributes: { ...formData.product_attributes, gender: v }
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>Aucun</SelectItem>
+                    <SelectItem value="male">Homme</SelectItem>
+                    <SelectItem value="female">Femme</SelectItem>
+                    <SelectItem value="unisex">Unisexe</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label className="text-xs">Groupe d'âge</Label>
+                <Select 
+                  value={formData.product_attributes.age_group} 
+                  onValueChange={(v) => setFormData({
+                    ...formData,
+                    product_attributes: { ...formData.product_attributes, age_group: v }
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>Aucun</SelectItem>
+                    <SelectItem value="adult">Adulte</SelectItem>
+                    <SelectItem value="kids">Enfant</SelectItem>
+                    <SelectItem value="toddler">Tout-petit</SelectItem>
+                    <SelectItem value="infant">Bébé</SelectItem>
+                    <SelectItem value="newborn">Nouveau-né</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label className="text-xs">Motif</Label>
+                <Input
+                  value={formData.product_attributes.pattern}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    product_attributes: { ...formData.product_attributes, pattern: e.target.value }
+                  })}
+                  placeholder="Ex: Rayé, Uni, À pois"
+                />
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <Label className="text-xs mb-2 block">Labels personnalisés (pour filtrage dans vos publicités)</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {[0, 1, 2, 3, 4].map(i => (
+                  <Input
+                    key={i}
+                    value={formData.product_attributes.custom_labels[`label_${i}`]}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      product_attributes: {
+                        ...formData.product_attributes,
+                        custom_labels: {
+                          ...formData.product_attributes.custom_labels,
+                          [`label_${i}`]: e.target.value
+                        }
+                      }
+                    })}
+                    placeholder={`Label ${i + 1}: Ex: Bestseller, Nouveau, Promo`}
+                    className="text-sm"
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
