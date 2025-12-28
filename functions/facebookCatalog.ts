@@ -3,8 +3,10 @@ import { Base44 } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   const headers = {
     'Content-Type': 'text/csv; charset=utf-8',
+    'Content-Disposition': 'inline; filename="catalog.csv"',
     'Access-Control-Allow-Origin': '*',
-    'Cache-Control': 'public, max-age=3600'
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Cache-Control': 'no-cache, no-store, must-revalidate'
   };
 
   if (req.method === 'OPTIONS') {
