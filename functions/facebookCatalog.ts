@@ -1,102 +1,125 @@
 import { Base44 } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  // CORS headers pour Meta
-  const corsHeaders = {
+  // Headers pour accès public
+  const headers = {
+    'Content-Type': 'application/rss+xml; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': '*',
+    'Cache-Control': 'no-cache'
   };
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders
-    });
+    return new Response(null, { status: 204, headers });
   }
 
   try {
-    // Accès public sans authentification
     const base44 = new Base44({
       appId: Deno.env.get('BASE44_APP_ID'),
       useServiceRole: true
     });
 
-    // Récupérer les boutiques Premium
+    // Récupérer boutiques Premium actives
     const shops = await base44.entities.Shop.filter({ 
       is_premium: true,
       boost_enabled: true,
       is_active: true
     });
     
+    if (!shops || shops.length === 0) {
+      const emptyFeed = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+<channel>
+<title>Rapido Presto Catalog</title>
+<link>https://rapidopresto.shop</link>
+<description>Product Catalog</description>
+</channel>
+</rss>`;
+      return new Response(emptyFeed, { status: 200, headers });
+    }
+    
     const shopIds = shops.map(s => s.id);
 
-    // Récupérer les produits avec images
+    // Récupérer produits avec images obligatoires
     const products = await base44.entities.Product.filter({ 
       is_available: true,
-      shop_id: { $in: shopIds },
-      image_url: { $ne: null, $ne: '' }
+      shop_id: { $in: shopIds }
     });
 
-    // Créer CSV format Facebook
-    let csv = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category\n';
+    // Filtrer produits avec image
+    const validProducts = products.filter(p => p.image_url && p.image_url.trim() !== '');
 
-    products.forEach(product => {
-      const escapeCSV = (str) => {
+    // Construire flux RSS
+    let rss = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+<channel>
+<title>Rapido Presto - Catalogue Produits Haiti</title>
+<link>https://rapidopresto.shop</link>
+<description>Tous les produits disponibles sur Rapido Presto en Haiti</description>
+`;
+
+    validProducts.forEach(product => {
+      const escape = (str) => {
         if (!str) return '';
-        str = String(str).replace(/"/g, '""');
-        if (str.includes(',') || str.includes('\n') || str.includes('"')) {
-          return `"${str}"`;
-        }
-        return str;
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
       };
 
-      const shopName = product.shop_name || 'Rapido Presto';
-      const title = escapeCSV(`${product.name} | ${shopName}`);
-      const description = escapeCSV(product.description || `Achetez ${product.name} sur Rapido Presto en Haïti`);
-      const availability = product.stock_quantity > 0 ? 'in stock' : 'out of stock';
-      const price = `${product.price} HTG`;
-      const link = `https://rapidopresto.shop/#/Home?product=${product.id}`;
-      const imageLink = product.image_url;
-      const brand = escapeCSV(shopName);
+      const title = escape(`${product.name} - ${product.shop_name || 'Rapido Presto'}`);
+      const desc = escape(product.description || product.name);
+      const link = `https://rapidopresto.shop/#/Home`;
+      const price = product.promo_price || product.price;
+      const available = (product.stock_quantity || 0) > 0 ? 'in stock' : 'out of stock';
       
-      // Mapping catégorie
       const categoryMap = {
-        'Fastfood': 'Food, Beverages & Tobacco',
-        'Restaurants': 'Food, Beverages & Tobacco',
-        'Café': 'Food, Beverages & Tobacco',
-        'Epicerie': 'Food, Beverages & Tobacco',
-        'Pharmacie': 'Health & Beauty',
-        'Pour Femme': 'Apparel & Accessories',
-        'Pour homme': 'Apparel & Accessories',
-        'Boutique Fleurs': 'Home & Garden',
-        'Maison': 'Home & Garden',
-        'Bébé': 'Baby & Toddler',
+        'Fastfood': 'Food, Beverages &amp; Tobacco',
+        'Restaurants': 'Food, Beverages &amp; Tobacco',
+        'Café': 'Food, Beverages &amp; Tobacco',
+        'Epicerie': 'Food, Beverages &amp; Tobacco',
+        'Pharmacie': 'Health &amp; Beauty',
+        'Pour Femme': 'Apparel &amp; Accessories',
+        'Pour homme': 'Apparel &amp; Accessories',
+        'Boutique Fleurs': 'Home &amp; Garden',
+        'Maison': 'Home &amp; Garden',
+        'Bébé': 'Baby &amp; Toddler',
         'Electronics': 'Electronics',
         'Outils': 'Hardware',
-        'Mariage': 'Home & Garden',
-        'Bijoux': 'Apparel & Accessories'
+        'Mariage': 'Home &amp; Garden',
+        'Bijoux': 'Apparel &amp; Accessories'
       };
-      const googleCategory = categoryMap[product.category] || 'Apparel & Accessories';
 
-      csv += `${product.id},${title},${description},${availability},new,${price},${link},${imageLink},${brand},${googleCategory}\n`;
+      rss += `<item>
+<g:id>${product.id}</g:id>
+<g:title>${title}</g:title>
+<g:description>${desc}</g:description>
+<g:link>${link}</g:link>
+<g:image_link>${product.image_url}</g:image_link>
+<g:condition>new</g:condition>
+<g:availability>${available}</g:availability>
+<g:price>${price} HTG</g:price>
+<g:brand>${escape(product.shop_name || 'Rapido Presto')}</g:brand>
+<g:google_product_category>${categoryMap[product.category] || 'Apparel &amp; Accessories'}</g:google_product_category>
+</item>
+`;
     });
 
-    return new Response(csv, {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': 'attachment; filename="catalog.csv"',
-        'Cache-Control': 'public, max-age=3600'
-      }
-    });
+    rss += `</channel>
+</rss>`;
+
+    return new Response(rss, { status: 200, headers });
 
   } catch (error) {
-    console.error('Erreur catalogue:', error);
-    return new Response(`Error: ${error.message}`, { 
-      status: 500,
-      headers: corsHeaders
-    });
+    console.error('Error:', error);
+    const errorFeed = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+<title>Error</title>
+<description>${error.message}</description>
+</channel>
+</rss>`;
+    return new Response(errorFeed, { status: 200, headers });
   }
 });
