@@ -12,15 +12,20 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) return new Response(JSON.stringify({ error: 'Non authentifié' }), { status: 401, headers });
+    if (!user) return new Response(JSON.stringify({ error: 'Non autorisé' }), { status: 401, headers });
 
     const body = await req.json().catch(() => ({}));
     const action = body.action;
 
-    // INITIALISER LE CHAT
+    // --- INITIALISATION ---
     if (action === 'init') {
       const { vendor_id, shop_id, shop_name, shop_logo, product_id, product_name, initial_message } = body;
-      const existing = await base44.entities.Conversation.filter({ customer_id: user.id, vendor_id: vendor_id });
+      
+      const existing = await base44.entities.Conversation.filter({ 
+        customer_id: user.id, 
+        vendor_id: vendor_id,
+        shop_id: shop_id 
+      });
 
       if (existing && existing.length > 0) return new Response(JSON.stringify(existing[0]), { headers });
 
@@ -41,14 +46,13 @@ Deno.serve(async (req) => {
         sender_id: user.id,
         sender_name: user.full_name || 'Client',
         content: initial_message,
-        type: 'text',
-        is_read: false
+        type: 'text'
       });
 
       return new Response(JSON.stringify(conversation), { headers });
     }
 
-    // LISTER LES DISCUSSIONS
+    // --- LISTE DES DISCUSSIONS ---
     if (action === 'list') {
       const list = await base44.entities.Conversation.filter({
         $or: [{ customer_id: user.id }, { vendor_id: user.id }]
@@ -56,16 +60,21 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ data: list }), { headers });
     }
 
-    // RÉCUPÉRER LES MESSAGES (ORDONNÉS DE HAUT EN BAS)
+    // --- RÉCUPÉRATION DES MESSAGES (CORRIGÉ) ---
     if (action === 'messages') {
+      // On utilise 'conversation_id' pour être raccord avec le Frontend
+      const targetId = body.conversation_id; 
+      
+      if (!targetId) return new Response(JSON.stringify({ data: [] }), { headers });
+
       const msgs = await base44.entities.ChatMessage.filter(
-        { conversation_id: body.convId },
-        { sort: { created_at: 'asc' } } // Tri du plus ancien au plus récent
+        { conversation_id: targetId },
+        { sort: { created_at: 'asc' } } // Tri chronologique
       );
       return new Response(JSON.stringify({ data: msgs }), { headers });
     }
 
-    // ENVOYER UN MESSAGE
+    // --- ENVOI DE MESSAGE ---
     if (action === 'send') {
       const message = await base44.entities.ChatMessage.create({
         conversation_id: body.conversation_id,
@@ -74,14 +83,16 @@ Deno.serve(async (req) => {
         content: body.content,
         type: 'text'
       });
+      
       await base44.asServiceRole.entities.Conversation.update(body.conversation_id, {
         last_message: body.content,
         last_message_date: new Date().toISOString()
       });
+      
       return new Response(JSON.stringify({ data: message }), { headers });
     }
 
-    return new Response(JSON.stringify({ error: 'Action inconnue' }), { status: 400, headers });
+    return new Response(JSON.stringify({ error: 'Action non reconnue' }), { status: 400, headers });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
   }
