@@ -91,8 +91,8 @@ export default function Cart() {
 
       const shopIds = Object.keys(itemsByShop);
       const subtotal = cartItems.reduce((sum, item) => {
-        const itemPrice = item.unit_price + (item.total_customization_price || 0);
-        return sum + (itemPrice * item.quantity);
+        const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+        return sum + itemTotal;
       }, 0);
       
       // Calculer frais de livraison total (par boutique)
@@ -133,8 +133,8 @@ export default function Cart() {
           for (const shopId of shopIds) {
             const shopItems = itemsByShop[shopId];
             const shopSubtotal = shopItems.reduce((sum, item) => {
-              const itemPrice = item.unit_price + (item.total_customization_price || 0);
-              return sum + (itemPrice * item.quantity);
+              const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+              return sum + itemTotal;
             }, 0);
             const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
             const code = generateConfirmationCode();
@@ -153,7 +153,7 @@ export default function Cart() {
                 product_id: item.product_id,
                 name: item.product_name,
                 quantity: item.quantity,
-                unit_price: item.unit_price,
+                unit_price: item.unit_price + (item.total_customization_price || 0),
                 total: (item.unit_price + (item.total_customization_price || 0)) * item.quantity,
                 customization: item.customization
               })),
@@ -195,8 +195,8 @@ export default function Cart() {
       for (const shopId of shopIds) {
         const shopItems = itemsByShop[shopId];
         const shopSubtotal = shopItems.reduce((sum, item) => {
-          const itemPrice = item.unit_price + (item.total_customization_price || 0);
-          return sum + (itemPrice * item.quantity);
+          const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+          return sum + itemTotal;
         }, 0);
         const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
         const orderNum = 'RP' + Date.now().toString().slice(-6) + '-' + shopId.slice(-4);
@@ -216,7 +216,7 @@ export default function Cart() {
             product_id: item.product_id,
             name: item.product_name,
             quantity: item.quantity,
-            unit_price: item.unit_price,
+            unit_price: item.unit_price + (item.total_customization_price || 0),
             total: (item.unit_price + (item.total_customization_price || 0)) * item.quantity,
             customization: item.customization
           })),
@@ -317,8 +317,8 @@ export default function Cart() {
   }, {});
 
   const subtotal = cartItems.reduce((sum, item) => {
-    const itemPrice = item.unit_price + (item.total_customization_price || 0);
-    return sum + (itemPrice * item.quantity);
+    const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+    return sum + itemTotal;
   }, 0);
   
   // Calculer frais de livraison pour chaque boutique
@@ -403,37 +403,36 @@ export default function Cart() {
                       <h3 className="font-medium text-slate-800 truncate">{item.product_name}</h3>
                       <p className="text-sm text-slate-500">{item.shop_name}</p>
                       
-                      {/* Customization Display */}
+                      {/* Customization Details */}
                       {item.customization && (
-                        <div className="mt-2 space-y-1">
+                        <div className="flex flex-wrap gap-1 mt-1">
                           {item.customization.color && (
-                            <p className="text-xs text-slate-600 flex items-center gap-1">
-                              <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: item.customization.color.hex }} />
+                            <span className="inline-flex items-center gap-1 text-xs bg-slate-100 rounded-full px-2 py-0.5">
+                              <div 
+                                className="w-3 h-3 rounded-full border" 
+                                style={{ backgroundColor: item.customization.color.hex }}
+                              />
                               {item.customization.color.name}
-                              {item.customization.color.additional_price > 0 && ` (+${item.customization.color.additional_price} HTG)`}
-                            </p>
+                            </span>
                           )}
                           {item.customization.size && (
-                            <p className="text-xs text-slate-600">
+                            <span className="text-xs bg-slate-100 rounded-full px-2 py-0.5">
                               Taille: {item.customization.size.name}
-                              {item.customization.size.additional_price > 0 && ` (+${item.customization.size.additional_price} HTG)`}
-                            </p>
+                            </span>
                           )}
                           {item.customization.text && (
-                            <p className="text-xs text-slate-600">
-                              Texte: "{item.customization.text}"
-                              {item.customization.text_price > 0 && ` (+${item.customization.text_price} HTG)`}
-                            </p>
+                            <span className="text-xs bg-slate-100 rounded-full px-2 py-0.5">
+                              "{item.customization.text}"
+                            </span>
                           )}
                           {item.customization.arrangement && (
-                            <p className="text-xs text-slate-600">
+                            <span className="text-xs bg-slate-100 rounded-full px-2 py-0.5">
                               {item.customization.arrangement.name}
-                              {item.customization.arrangement.additional_price > 0 && ` (+${item.customization.arrangement.additional_price} HTG)`}
-                            </p>
+                            </span>
                           )}
                         </div>
                       )}
-                      
+
                       <div className="flex items-center justify-between mt-2">
                         <div>
                           <span className="font-semibold text-orange-500">
@@ -441,7 +440,7 @@ export default function Cart() {
                           </span>
                           {item.total_customization_price > 0 && (
                             <span className="text-xs text-slate-500 ml-1">
-                              (dont {item.total_customization_price * item.quantity} HTG personnalisation)
+                              (+{item.total_customization_price * item.quantity} HTG)
                             </span>
                           )}
                         </div>
@@ -596,8 +595,8 @@ export default function Cart() {
                 {Object.keys(itemsByShop).map(shopId => {
                   const shopItems = itemsByShop[shopId];
                   const shopSubtotal = shopItems.reduce((sum, item) => {
-                    const itemPrice = item.unit_price + (item.total_customization_price || 0);
-                    return sum + (itemPrice * item.quantity);
+                    const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+                    return sum + itemTotal;
                   }, 0);
                   return (
                     <div key={shopId} className="mb-3 pb-3 border-b">
@@ -609,11 +608,19 @@ export default function Cart() {
                             <span>{(item.unit_price + (item.total_customization_price || 0)) * item.quantity} HTG</span>
                           </div>
                           {item.customization && (
-                            <div className="ml-4 mt-1 text-xs text-slate-500">
-                              {item.customization.color && <div>• Couleur: {item.customization.color.name}</div>}
-                              {item.customization.size && <div>• Taille: {item.customization.size.name}</div>}
-                              {item.customization.text && <div>• Texte: "{item.customization.text}"</div>}
-                              {item.customization.arrangement && <div>• {item.customization.arrangement.name}</div>}
+                            <div className="flex flex-wrap gap-1 mt-0.5 ml-4">
+                              {item.customization.color && (
+                                <span className="text-xs text-slate-500">• {item.customization.color.name}</span>
+                              )}
+                              {item.customization.size && (
+                                <span className="text-xs text-slate-500">• Taille: {item.customization.size.name}</span>
+                              )}
+                              {item.customization.text && (
+                                <span className="text-xs text-slate-500">• "{item.customization.text}"</span>
+                              )}
+                              {item.customization.arrangement && (
+                                <span className="text-xs text-slate-500">• {item.customization.arrangement.name}</span>
+                              )}
                             </div>
                           )}
                         </div>
