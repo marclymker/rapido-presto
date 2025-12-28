@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,35 @@ import { base44 } from '@/api/base44Client';
 import ChatButton from '@/components/chat/ChatButton';
 
 export default function ProductCard({ product, onAdd, onClick, shop }) {
+  const [showChatButton, setShowChatButton] = useState(false);
   const hasPromo = product.promo_price && product.promo_price < product.price;
   const displayPrice = hasPromo 
     ? applyClientMargin(product.promo_price) 
     : applyClientMargin(product.price);
   const originalDisplayPrice = applyClientMargin(product.price);
+
+  useEffect(() => {
+    // Show chat button on hover after 300ms
+    let timeout;
+    const handleMouseEnter = () => {
+      timeout = setTimeout(() => setShowChatButton(true), 300);
+    };
+    const handleMouseLeave = () => {
+      clearTimeout(timeout);
+      setShowChatButton(false);
+    };
+
+    const card = document.getElementById(`product-card-${product.id}`);
+    if (card) {
+      card.addEventListener('mouseenter', handleMouseEnter);
+      card.addEventListener('mouseleave', handleMouseLeave);
+      return () => {
+        card.removeEventListener('mouseenter', handleMouseEnter);
+        card.removeEventListener('mouseleave', handleMouseLeave);
+        clearTimeout(timeout);
+      };
+    }
+  }, [product.id]);
 
   const handleWhatsAppClick = async (e) => {
     e.stopPropagation();
@@ -24,7 +48,7 @@ export default function ProductCard({ product, onAdd, onClick, shop }) {
   };
   
   return (
-    <div className="relative flex flex-col group">
+    <div id={`product-card-${product.id}`} className="relative flex flex-col group">
       {/* Bouton d'ajout flottant - Le petit + vert */}
       {product.is_available !== false && (
         <button 
@@ -103,9 +127,9 @@ export default function ProductCard({ product, onAdd, onClick, shop }) {
           />
         </div>
 
-        {/* Chat Button - Always visible */}
-        {shop && (
-          <div className="mt-2">
+        {/* Chat Button - appears on hover */}
+        {shop && showChatButton && (
+          <div className="mt-2 animate-in slide-in-from-bottom-2">
             <ChatButton product={product} shop={shop} />
           </div>
         )}
