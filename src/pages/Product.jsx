@@ -15,7 +15,7 @@ export default function Product() {
 
   // Get product ID from URL
   const urlParams = new URLSearchParams(window.location.search);
-  const productId = window.location.pathname.split('/product/')[1];
+  const productId = urlParams.get('id');
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => setUser(null));
