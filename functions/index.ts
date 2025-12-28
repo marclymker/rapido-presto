@@ -32,6 +32,11 @@ Deno.serve((req) => {
   src="https://www.facebook.com/tr?id=1346505637253912&ev=PageView&noscript=1" /></noscript>
   <!-- End Meta Pixel Code -->
   
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299"
+     crossorigin="anonymous"></script>
+  <!-- End Google AdSense -->
+  
   <meta http-equiv="refresh" content="0; url=/Home" />
 </head>
 <body>
