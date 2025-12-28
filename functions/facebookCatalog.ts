@@ -81,11 +81,16 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Erreur catalogue :', error);
-    const headersOnly = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category,quantity_to_sell_on_facebook,sale_price\n';
-    return new Response(headersOnly, { 
+    console.error('❌ Erreur catalogue complète:', error);
+    console.error('Stack:', error.stack);
+    // Retourner un CSV vide mais valide avec au moins une ligne de test
+    const errorCsv = 'id,title,description,availability,condition,price,link,image_link,brand,google_product_category,quantity_to_sell_on_facebook,sale_price\n';
+    return new Response(errorCsv, { 
       status: 200, 
-      headers: { 'Content-Type': 'text/csv' } 
+      headers: { 
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Access-Control-Allow-Origin': '*'
+      } 
     });
   }
 });
