@@ -278,6 +278,9 @@ export default function Product() {
                   base44.auth.redirectToLogin(window.location.pathname);
                   return;
                 }
+
+                console.log("Tentative d'init chat avec vendor:", shop?.user_id);
+
                 try {
                   const response = await base44.functions.invoke('chatService', {
                     action: 'init',
@@ -290,12 +293,17 @@ export default function Product() {
                     initial_message: `Bonjour, je suis intéressé par votre article : ${product.name}`
                   });
                   
-                  const conversationId = response.data?.conversation?.id;
+                  console.log('Réponse chatService:', response);
+
+                  // Test des deux structures possibles
+                  const convData = response.data || response;
+                  const conversationId = convData.conversation?.id || convData.id;
+
                   if (conversationId) {
                     window.location.href = `/chat?id=${conversationId}`;
                   } else {
-                    console.error('No conversation ID returned:', response.data);
-                    toast.error("Erreur lors de l'initialisation du chat");
+                    console.error('Réponse API incomplète:', response);
+                    toast.error("Erreur : Impossible de récupérer l'identifiant de conversation");
                   }
                 } catch (error) {
                   console.error('Chat init error:', error);

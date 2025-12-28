@@ -152,6 +152,9 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                 base44.auth.redirectToLogin(window.location.pathname);
                 return;
               }
+
+              console.log("Tentative d'init chat avec vendor:", shop?.user_id);
+
               try {
                 const response = await base44.functions.invoke('chatService', {
                   action: 'init',
@@ -163,17 +166,22 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                   product_name: product.name,
                   initial_message: `Bonjour, je suis intéressé par votre article : ${product.name}`
                 });
-                
-                const conversationId = response.data?.conversation?.id;
+
+                console.log('Réponse chatService:', response);
+
+                // Test des deux structures possibles
+                const convData = response.data || response;
+                const conversationId = convData.conversation?.id || convData.id;
+
                 if (conversationId) {
                   window.location.href = `/chat?id=${conversationId}`;
                 } else {
-                  console.error('No conversation ID returned:', response.data);
-                  alert('Erreur lors de l\'initialisation du chat');
+                  console.error('Réponse API incomplète:', response);
+                  alert('Erreur : Impossible de récupérer l\'identifiant de conversation.');
                 }
               } catch (error) {
                 console.error('Chat init error:', error);
-                alert('Erreur lors de l\'ouverture du chat');
+                alert('Erreur lors de l\'ouverture du chat. Vérifiez votre connexion.');
               }
             }}
             className="flex items-center justify-center gap-3 w-full mt-4 px-4 py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold transition-all shadow-lg"
