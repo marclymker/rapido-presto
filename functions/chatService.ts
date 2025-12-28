@@ -17,7 +17,10 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'Unauthorized' 
+      }), { 
         status: 401, 
         headers 
       });
@@ -26,7 +29,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = body.action;
 
-    console.log(`Action: ${action}, User: ${user.id}`);
+    console.log(`Action: ${action}, User: ${user.id}, Body:`, body);
 
     // --- LOGIQUE INITIALISATION ---
     if (action === 'init') {
@@ -70,8 +73,7 @@ Deno.serve(async (req) => {
         content: initial_message || 'Bonjour, je souhaite en savoir plus sur ce produit.',
         type: 'text',
         is_read: false,
-        timestamp: new Date().toISOString(),
-        created_at: new Date().toISOString()
+        timestamp: new Date().toISOString()
       });
 
       return new Response(JSON.stringify({ 
@@ -145,7 +147,7 @@ Deno.serve(async (req) => {
           const dateA = new Date(timeA).getTime();
           const dateB = new Date(timeB).getTime();
           
-          return dateA - dateB;
+          return dateA - dateB; // Ordre ascendant
         });
         
         console.log(`Retourne ${sortedMessages.length} messages pour la conversation ${convId}`);
@@ -168,38 +170,50 @@ Deno.serve(async (req) => {
     if (action === 'send') {
       const { conversation_id, content } = body;
       
+      console.log('Envoi de message:', { conversation_id, content, user: user.id });
+      
       if (!conversation_id || !content) {
+        console.error('Paramètres manquants:', { conversation_id, content });
         return new Response(JSON.stringify({ 
           success: false, 
           error: 'conversation_id et content requis' 
         }), { status: 400, headers });
       }
 
-      const now = new Date().toISOString();
-      
-      // Créer le message
-      const message = await base44.entities.ChatMessage.create({
-        conversation_id: conversation_id,
-        sender_id: user.id,
-        sender_name: user.full_name || 'Utilisateur',
-        content: content,
-        type: 'text',
-        timestamp: now,
-        created_at: now
-      });
-      
-      // Mettre à jour la conversation avec le dernier message
-      await base44.asServiceRole.entities.Conversation.update(conversation_id, {
-        last_message: content,
-        last_message_date: now
-      });
-      
-      console.log(`Message envoyé: ${message.id} dans la conversation ${conversation_id}`);
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        data: message 
-      }), { headers });
+      try {
+        const now = new Date().toISOString();
+        
+        // Créer le message
+        const message = await base44.entities.ChatMessage.create({
+          conversation_id: conversation_id,
+          sender_id: user.id,
+          sender_name: user.full_name || 'Utilisateur',
+          content: content,
+          type: 'text',
+          timestamp: now
+        });
+        
+        console.log('Message créé avec succès:', message.id);
+        
+        // Mettre à jour la conversation avec le dernier message
+        await base44.asServiceRole.entities.Conversation.update(conversation_id, {
+          last_message: content,
+          last_message_date: now
+        });
+        
+        console.log(`Message envoyé: ${message.id} dans la conversation ${conversation_id}`);
+        
+        return new Response(JSON.stringify({ 
+          success: true, 
+          data: message 
+        }), { headers });
+      } catch (error) {
+        console.error('Erreur lors de l\'envoi du message:', error);
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: error.message 
+        }), { status: 500, headers });
+      }
     }
 
     return new Response(JSON.stringify({ 
