@@ -18,7 +18,7 @@ export default function Chat() {
 
   const convIdFromUrl = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('id');
 
-  // Liste des conversations
+  // 1. Charger la liste
   const { data: conversations = [], isLoading: isLoadingConvs } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: () => base44.functions.invoke('chatService', { action: 'list' }).then(r => r.data?.data || []),
@@ -26,24 +26,29 @@ export default function Chat() {
     refetchInterval: 8000
   });
 
-  // Liste des messages (Triés du haut vers le bas)
+  // 2. Charger les messages (CORRIGÉ)
   const { data: messages = [] } = useQuery({
     queryKey: ['messages', selectedConv?.id],
-    queryFn: () => base44.functions.invoke('chatService', { action: 'messages', convId: selectedConv.id }).then(r => r.data?.data || []),
+    queryFn: () => base44.functions.invoke('chatService', { 
+      action: 'messages', 
+      conversation_id: selectedConv.id // On envoie le bon nom de champ
+    }).then(r => r.data?.data || []),
     enabled: !!selectedConv?.id,
     refetchInterval: 4000
   });
 
-  // Envoyer un message
   const sendMessage = useMutation({
-    mutationFn: (text) => base44.functions.invoke('chatService', { action: 'send', conversation_id: selectedConv.id, content: text }),
+    mutationFn: (text) => base44.functions.invoke('chatService', { 
+      action: 'send', 
+      conversation_id: selectedConv.id, 
+      content: text 
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries(['messages', selectedConv.id]);
       setMessageText('');
     }
   });
 
-  // Gérer la sélection et le défilement
   useEffect(() => {
     if (convIdFromUrl && conversations.length > 0) {
       const found = conversations.find(c => String(c.id) === String(convIdFromUrl));
@@ -59,7 +64,6 @@ export default function Chat() {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden">
-      {/* Liste à gauche */}
       <div className={`${selectedConv ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r bg-slate-50`}>
         <div className="p-4 border-b font-bold flex items-center gap-2 bg-white"><MessageSquare className="text-orange-500" /> Messages</div>
         <div className="flex-1 overflow-y-auto">
@@ -72,16 +76,14 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Zone de chat à droite */}
       <div className={`${!selectedConv ? 'hidden md:flex' : 'flex'} flex-1 flex-col`}>
         {selectedConv ? (
           <>
-            <div className="p-4 border-b flex items-center gap-3 bg-white shadow-sm">
+            <div className="p-4 border-b flex items-center gap-3 bg-white">
               <ArrowLeft className="md:hidden" onClick={() => setSelectedConv(null)} />
               <p className="font-bold">{user.id === selectedConv.vendor_id ? selectedConv.customer_name : selectedConv.shop_name}</p>
             </div>
             
-            {/* Flux de messages : Haut = Ancien / Bas = Nouveau */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
               {messages.map(m => (
                 <div key={m.id} className={`flex ${m.sender_id === user.id ? 'justify-end' : 'justify-start'}`}>
