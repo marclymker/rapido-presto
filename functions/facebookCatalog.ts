@@ -1,11 +1,6 @@
 import { Base44 } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const headers = {
-    'Content-Type': 'text/csv',
-    'Access-Control-Allow-Origin': '*'
-  };
-
   try {
     const base44 = new Base44({
       appId: Deno.env.get('BASE44_APP_ID'),
