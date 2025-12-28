@@ -55,9 +55,9 @@ Deno.serve(async (req) => {
   </url>`;
     });
 
-    // Ajouter chaque produit disponible
+    // Ajouter chaque produit disponible avec URL correcte
     products.forEach(product => {
-      const productUrl = `${baseUrl}/product/${product.id}`;
+      const productUrl = `${baseUrl}/product?id=${product.id}`;
       xml += `
   <url>
     <loc>${productUrl}</loc>
@@ -66,6 +66,14 @@ Deno.serve(async (req) => {
     <lastmod>${new Date(product.updated_date).toISOString().split('T')[0]}</lastmod>
   </url>`;
     });
+
+    // Ajouter la page des produits
+    xml += `
+  <url>
+    <loc>${baseUrl}/Products</loc>
+    <priority>0.9</priority>
+    <changefreq>daily</changefreq>
+  </url>`;
 
     xml += `\n</urlset>`;
 

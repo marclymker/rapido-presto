@@ -107,15 +107,74 @@ export default function Product() {
   const clientPrice = getClientPrice(product);
   const hasPromo = product.promo_price && parseFloat(product.promo_price) < parseFloat(product.price);
 
+  // Generate SEO-optimized description
+  const seoDescription = product.description 
+    ? `${product.description.substring(0, 155)}... | Prix: ${clientPrice.toFixed(0)} HTG | Livraison rapide en Haïti`
+    : `Achetez ${product.name} à ${clientPrice.toFixed(0)} HTG - Livraison rapide en Haïti ${product.category ? `| ${product.category}` : ''}`;
+
+  const keywords = [
+    product.name,
+    product.category,
+    shop?.company_name,
+    shop?.region,
+    'Haïti',
+    'livraison rapide',
+    'acheter en ligne',
+    ...(product.seo_tags || [])
+  ].filter(Boolean).join(', ');
+
   return (
     <div className="min-h-screen bg-white pb-20">
       <Helmet>
-        <title>{product.name} - Rapido Presto</title>
-        <meta name="description" content={product.description || `Achetez ${product.name} sur Rapido Presto`} />
-        <meta property="og:title" content={`${product.name} - Rapido Presto`} />
-        <meta property="og:description" content={product.description || `Achetez ${product.name} sur Rapido Presto`} />
+        <title>{product.name} - {shop?.company_name || 'Rapido Presto'}</title>
+        <meta name="description" content={seoDescription} />
+        <meta name="keywords" content={keywords} />
+        <link rel="canonical" href={`https://rapidopresto.shop/product?id=${product.id}`} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={`${product.name} - ${shop?.company_name || 'Rapido Presto'}`} />
+        <meta property="og:description" content={seoDescription} />
         <meta property="og:image" content={product.image_url} />
-        <meta property="og:url" content={window.location.href} />
+        <meta property="og:url" content={`https://rapidopresto.shop/product?id=${product.id}`} />
+        <meta property="product:price:amount" content={clientPrice.toFixed(2)} />
+        <meta property="product:price:currency" content="HTG" />
+        {hasPromo && <meta property="product:sale_price:amount" content={clientPrice.toFixed(2)} />}
+        {product.category && <meta property="product:category" content={product.category} />}
+        {product.is_available && <meta property="product:availability" content="in stock" />}
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${product.name} - ${shop?.company_name || 'Rapido Presto'}`} />
+        <meta name="twitter:description" content={seoDescription} />
+        <meta name="twitter:image" content={product.image_url} />
+
+        {/* Schema.org structured data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": product.name,
+            "description": product.description || seoDescription,
+            "image": product.image_url,
+            "sku": product.id,
+            "offers": {
+              "@type": "Offer",
+              "url": `https://rapidopresto.shop/product?id=${product.id}`,
+              "priceCurrency": "HTG",
+              "price": clientPrice.toFixed(2),
+              "availability": product.is_available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              "seller": {
+                "@type": "Organization",
+                "name": shop?.company_name || "Rapido Presto"
+              }
+            },
+            ...(product.category && { "category": product.category }),
+            ...(hasPromo && { 
+              "priceValidUntil": new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            })
+          })}
+        </script>
       </Helmet>
 
       {/* Header */}

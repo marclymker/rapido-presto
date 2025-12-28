@@ -33,11 +33,49 @@ export default function Products() {
     p.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Generate dynamic SEO based on search and products
+  const seoTitle = searchQuery 
+    ? `Recherche: ${searchQuery} - Rapido Presto`
+    : "Tous les produits - Rapido Presto";
+
+  const seoDescription = searchQuery
+    ? `${filteredProducts.length} résultat${filteredProducts.length > 1 ? 's' : ''} pour "${searchQuery}" - Livraison rapide en Haïti`
+    : `Découvrez ${allProducts.length} produits disponibles - Fastfood, Restaurants, Fleurs, Pharmacie, Mode et plus encore - Livraison en 30 minutes`;
+
+  const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
+  const keywords = [
+    'acheter en ligne Haïti',
+    'livraison rapide',
+    'e-commerce Haïti',
+    ...categories,
+    ...(searchQuery ? [searchQuery] : [])
+  ].join(', ');
+
   return (
     <div className="min-h-screen bg-white pb-20">
       <Helmet>
-        <title>Tous les produits - Rapido Presto</title>
-        <meta name="description" content="Découvrez tous les produits disponibles sur Rapido Presto - Livraison rapide en Haïti" />
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDescription} />
+        <meta name="keywords" content={keywords} />
+        <link rel="canonical" href="https://rapidopresto.shop/Products" />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:url" content="https://rapidopresto.shop/Products" />
+
+        {/* Schema.org for product listing */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": "Tous les produits",
+            "description": seoDescription,
+            "url": "https://rapidopresto.shop/Products",
+            "numberOfItems": filteredProducts.length
+          })}
+        </script>
       </Helmet>
 
       {/* Header */}
