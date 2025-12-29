@@ -440,7 +440,7 @@ export default function Home() {
             {/* Gift Banner */}
             <GiftBanner />
 
-            {/* MODIFICATION ICI : Boutons de Types d'Articles (Grid) avec icônes réduites */}
+            {/* Boutons de Types d'Articles (Grid) */}
             <div className="grid grid-cols-2 gap-3 p-4">
               {articleTypes.map((type) => (
                 <button
@@ -454,10 +454,9 @@ export default function Home() {
                     setSelectedShop(null);
                     setGooglePlaces([]);
                   }}
-                  className={`${type.bgColor} rounded-3xl p-4 flex flex-col items-center transition-transform hover:scale-105 active:scale-95 min-h-[120px]`}
+                  className={`${type.bgColor} rounded-3xl p-4 flex flex-col items-center transition-transform hover:scale-105 active:scale-95`}
                 >
-                  {/* Icône réduite et plus d'espace en dessous */}
-                  <div className="text-3xl mb-3">{type.icon}</div>
+                  <div className="text-4xl mb-1">{type.icon}</div>
                   <span className={`${type.textColor} font-bold text-base text-center`}>
                     {type.name}
                   </span>
@@ -521,7 +520,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* SECTION "RECOMMANDE POUR VOUS" MODIFIÉE AVEC 50% MAKARIOS BRIDAL, 50% AUTRES BOUTIQUES */}
+            {/* SECTION "RECOMMANDE POUR VOUS" MODIFIÉE */}
             <RecommendedSection 
               allProducts={allProducts} 
               shops={shops}
@@ -896,7 +895,7 @@ export default function Home() {
       );
       }
 
-// Composant séparé pour la section "RECOMMANDE POUR VOUS"
+// Composant séparé pour la section "RECOMMANDE POUR VOUS" - SIMPLIFIÉ
 function RecommendedSection({ 
   allProducts, 
   shops, 
@@ -1055,64 +1054,14 @@ function RecommendedSection({
   };
 
   if (productRows[0].length === 0 && productRows[1].length === 0 && productRows[2].length === 0) {
-    return (
-      <div className="px-4 mt-8 mb-12">
-        <h2 className="text-xl font-bold text-slate-800 mb-6">RECOMMANDE POUR VOUS</h2>
-        <div className="text-center py-12 text-slate-400">
-          <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <p>Aucun produit avec photos disponible</p>
-        </div>
-      </div>
-    );
+    return null;
   }
-
-  // Compter les produits Makarios dans chaque rangée pour l'affichage
-  const getMakariosCount = (rowProducts) => {
-    return rowProducts.filter(product => {
-      const shop = shops.find(s => s.id === product.shop_id);
-      return shop && shop.company_name && 
-        (shop.company_name.toLowerCase().includes('makarios bridal') || 
-         shop.company_name.toLowerCase().includes('makarios'));
-    }).length;
-  };
 
   return (
     <div className="px-4 mt-8 mb-12">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-slate-800">RECOMMANDE POUR VOUS</h2>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <span className="animate-pulse">  •  </span>
-        </div>
-      </div>
-
-      {/* Info sur la répartition */}
-      <div className="mb-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-3">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs font-bold">👰</span>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-purple-800">
-              Paiement Sécurisé, Livraison Rapide & Garantie
-            </p>
-            <p className="text-xs text-purple-600">
-              Sélection spéciale de produits de mariage et d'autres boutiques
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Conteneur principal pour les 3 rangées */}
       <div className="space-y-8">
         {productRows.map((rowProducts, rowIndex) => {
-          const makariosCount = getMakariosCount(rowProducts);
-          const othersCount = rowProducts.length - makariosCount;
-          const makariosPercentage = rowProducts.length > 0 ? Math.round((makariosCount / rowProducts.length) * 100) : 0;
-          
           return (
             <div 
               key={rowIndex} 
@@ -1120,63 +1069,6 @@ function RecommendedSection({
               onMouseEnter={() => handleMouseEnter(rowIndex)}
               onMouseLeave={() => handleMouseLeave(rowIndex)}
             >
-              {/* En-tête de rangée avec indicateur de progression et statistiques */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-700">
-                      {rowIndex === 0 ? ' ' : 
-                       rowIndex === 1 ? 'Tendances Mariage & Diverses' : 
-                       'Sélection Spéciale 50/50'}
-                    </h3>
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                        <span>{makariosCount} Makarios</span>
-                      </div>
-                      <span>•</span>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                        <span>{othersCount} autres boutiques</span>
-                      </div>
-                      <span>•</span>
-                      <span>{makariosPercentage}% Makarios</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-slate-400">
-                      {currentRowIndexes[rowIndex] + 1}/{rowProducts.length}
-                    </span>
-                    <div className="w-16 h-1 bg-slate-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-purple-500 to-orange-500 transition-all duration-300"
-                        style={{ 
-                          width: `${((currentRowIndexes[rowIndex] + 1) / rowProducts.length) * 100}%` 
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Indicateur de défilement */}
-                <div className="flex items-center gap-1 text-xs text-slate-500">
-                  {isPaused[rowIndex] ? (
-                    <span className="text-purple-500">◼ Pause</span>
-                  ) : (
-                    <>
-                      <span>Changement dans 60s</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Dégradés indicateurs */}
-              <div className="absolute left-0 top-20 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10"></div>
-              <div className="absolute right-0 top-20 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10"></div>
-
               {/* Rangée de produits avec défilement horizontal */}
               <div className="relative overflow-hidden">
                 <div 
@@ -1190,7 +1082,6 @@ function RecommendedSection({
                 >
                   {rowProducts.map((product, productIndex) => {
                     const shop = shops.find(s => s.id === product.shop_id);
-                    const isActive = productIndex === currentRowIndexes[rowIndex];
                     const isMakarios = shop && shop.company_name && 
                       (shop.company_name.toLowerCase().includes('makarios bridal') || 
                        shop.company_name.toLowerCase().includes('makarios'));
@@ -1209,34 +1100,10 @@ function RecommendedSection({
                         }}
                       >
                         <div className={`relative overflow-hidden rounded-xl border-2 ${
-                          isActive 
-                            ? isMakarios ? 'border-purple-400 shadow-lg' : 'border-orange-400 shadow-lg'
-                            : isMakarios ? 'border-purple-200 shadow-sm hover:shadow-md' : 'border-slate-200 shadow-sm hover:shadow-md'
+                          isMakarios ? 'border-purple-200 shadow-sm hover:shadow-md' : 'border-slate-200 shadow-sm hover:shadow-md'
                         } ${isMakarios ? 'bg-gradient-to-b from-purple-50 to-white' : 'bg-white'}`}>
                           
-                          {/* Badge Makarios */}
-                          {isMakarios && (
-                            <div className="absolute top-2 left-2 z-10">
-                              <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                                Makarios
-                              </span>
-                            </div>
-                          )}
-                          
-                          {/* Indicateur d'article actif */}
-                          {isActive && (
-                            <div className="absolute top-2 right-2 z-10">
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                isMakarios 
-                                  ? 'bg-purple-500 text-white' 
-                                  : 'bg-orange-500 text-white'
-                              }`}>
-                                Actuellement
-                              </span>
-                            </div>
-                          )}
-                          
-                          {/* Image réduite */}
+                          {/* Image */}
                           <div className="h-32 overflow-hidden bg-slate-100">
                             {product.image_url ? (
                               <img 
@@ -1257,7 +1124,7 @@ function RecommendedSection({
                             )}
                           </div>
                           
-                          {/* Contenu réduit */}
+                          {/* Contenu */}
                           <div className="p-2">
                             <div className="mb-1">
                               <span className={`text-[10px] px-1.5 py-0.5 rounded ${
@@ -1305,7 +1172,7 @@ function RecommendedSection({
                 </div>
               </div>
 
-              {/* Boutons de navigation manuelle */}
+              {/* Boutons de navigation manuelle seulement */}
               <div className="flex justify-center gap-4 mt-4">
                 <Button
                   variant="outline"
@@ -1315,40 +1182,6 @@ function RecommendedSection({
                 >
                   ◀ Précédent
                 </Button>
-                
-                <div className="flex gap-1">
-                  {Array.from({ length: Math.min(5, rowProducts.length) }).map((_, dotIndex) => {
-                    const isActive = dotIndex === currentRowIndexes[rowIndex] % 5;
-                    return (
-                      <button
-                        key={dotIndex}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          isActive 
-                            ? 'bg-gradient-to-r from-purple-500 to-orange-500 w-4' 
-                            : 'bg-slate-300 hover:bg-slate-400'
-                        }`}
-                        onClick={() => {
-                          const targetIndex = dotIndex;
-                          setCurrentRowIndexes(prev => {
-                            const newIndexes = [...prev];
-                            newIndexes[rowIndex] = targetIndex;
-                            
-                            if (rowContainers[rowIndex].current) {
-                              const container = rowContainers[rowIndex].current;
-                              const scrollAmount = targetIndex * (170 + 12);
-                              container.scrollTo({
-                                left: scrollAmount,
-                                behavior: 'smooth'
-                              });
-                            }
-                            
-                            return newIndexes;
-                          });
-                        }}
-                      />
-                    );
-                  })}
-                </div>
                 
                 <Button
                   variant="outline"
