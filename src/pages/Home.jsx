@@ -1084,7 +1084,7 @@ function RecommendedSection({
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-slate-800">RECOMMANDE POUR VOUS</h2>
         <div className="flex items-center gap-2 text-xs text-slate-500">
-          <span className="animate-pulse">Défilement automatique • 60s/article</span>
+          <span className="animate-pulse">  •  </span>
         </div>
       </div>
 
@@ -1096,7 +1096,7 @@ function RecommendedSection({
           </div>
           <div>
             <p className="text-sm font-medium text-purple-800">
-              50% Makarios Bridal • 50% autres boutiques
+              Paiement Sécurisé, Livraison Rapide & Garantie
             </p>
             <p className="text-xs text-purple-600">
               Sélection spéciale de produits de mariage et d'autres boutiques
