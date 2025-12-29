@@ -123,6 +123,25 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation des champs obligatoires
+    if (!formData.name || !formData.name.trim()) {
+      toast.error('Le nom de l\'article est obligatoire');
+      return;
+    }
+    if (!formData.image_url) {
+      toast.error('La photo de l\'article est obligatoire');
+      return;
+    }
+    if (!formData.price || formData.price <= 0) {
+      toast.error('Le prix est obligatoire et doit être supérieur à 0');
+      return;
+    }
+    if (!shopId) {
+      toast.error('Erreur: Boutique non identifiée');
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -238,21 +257,23 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>Nom de l'article</Label>
+            <Label>Nom de l'article <span className="text-red-500">*</span></Label>
             <Input
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ex: Pizza Margherita"
+              required
             />
           </div>
 
           <div>
-            <Label>Photo de l'article</Label>
+            <Label>Photo de l'article <span className="text-red-500">*</span></Label>
             <input 
               type="file" 
               accept="image/*" 
               onChange={(e) => handleImageUpload(e, false)} 
               className="w-full border rounded-lg p-2"
+              required={!formData.image_url}
             />
             {formData.image_url && (
               <div className="flex items-center gap-4 mt-2">
@@ -286,11 +307,13 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Prix (HTG)</Label>
+              <Label>Prix (HTG) <span className="text-red-500">*</span></Label>
               <Input
                 type="number"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || '' })}
+                required
+                min="1"
               />
             </div>
             <div>
