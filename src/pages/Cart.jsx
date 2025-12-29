@@ -58,11 +58,8 @@ function calculateNatcashFee(amount) {
   }
 
   // Si le montant dépasse 40,000 HTG, appliquer une règle proportionnelle
-  // (on utilise le taux de la dernière tranche comme base)
   if (amount > 40000) {
-    // Pour les montants > 40,000, on applique la même logique que la dernière tranche
-    // ou on peut calculer proportionnellement
-    return 274.00 + Math.floor((amount - 40000) / 20000) * 100; // estimation
+    return 274.00 + Math.floor((amount - 40000) / 20000) * 100;
   }
 
   // Si le montant est inférieur à 20 HTG (cas improbable pour une commande)
@@ -78,6 +75,9 @@ function calculateNatcashTotal(orderAmount) {
     transferAmount: orderAmount + fee
   };
 }
+
+// Compte marchand Natcash fixe
+const NATCASH_MERCHANT_ACCOUNT = "3527-0511 Rebecca Christa Rigaud";
 
 export default function Cart() {
   const [user, setUser] = useState(null);
@@ -429,6 +429,7 @@ export default function Cart() {
             natcash_transaction_code: natcashTransactionCode.trim(),
             natcash_fee: natcashData.natcashFee,
             natcash_transfer_amount: natcashData.transferAmount,
+            natcash_merchant_account: NATCASH_MERCHANT_ACCOUNT,
             special_instructions: specialInstructions
           });
 
@@ -862,18 +863,25 @@ export default function Cart() {
                       <p className="text-sm text-purple-600 mb-2">
                         <strong>Étape 1:</strong> Faites un transfert Natcash vers notre compte marchand :
                       </p>
-                      <div className="flex items-center justify-between bg-white p-3 rounded border">
-                        <div>
-                          <p className="text-xs text-slate-500">Compte Marchand</p>
-                          <p className="font-bold text-lg">4012-3456</p>
+                      <div className="bg-white p-4 rounded-lg border">
+                        <p className="text-xs text-slate-500 mb-2">Compte Marchand</p>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-lg text-purple-700">3527-0511</p>
+                            <p className="text-sm text-slate-700">Rebecca Christa Rigaud</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              Copiez le numéro et le nom pour faire le transfert dans l'application Natcash
+                            </p>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => copyToClipboard(NATCASH_MERCHANT_ACCOUNT, 'account')}
+                            className="h-10"
+                          >
+                            {copiedAccount ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                          </Button>
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => copyToClipboard('4012-3456', 'account')}
-                        >
-                          {copiedAccount ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        </Button>
                       </div>
                     </div>
 
@@ -886,6 +894,9 @@ export default function Cart() {
                           <p className="text-xs text-slate-500">Montant à transférer</p>
                           <p className="font-bold text-lg text-orange-600">
                             {natcashInfo ? natcashInfo.transferAmount : total} HTG
+                          </p>
+                          <p className="text-xs text-slate-400 mt-1">
+                            Inclut {natcashInfo ? natcashInfo.natcashFee : 'les frais'} HTG de frais Natcash
                           </p>
                         </div>
                         <Button 
