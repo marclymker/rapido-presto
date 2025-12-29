@@ -286,81 +286,6 @@ export default function Home() {
     { id: 'Bébé', name: 'Bébé', icon: '👶', bgColor: 'bg-yellow-50', textColor: 'text-yellow-800' }
   ];
 
-  // Fonction pour générer des rangées de produits aléatoires
-  const generateProductRows = React.useCallback(() => {
-    // 1. Filtrer les produits qui ont des photos
-    const productsWithPhotos = allProducts.filter(p => 
-      p.image_url && p.image_url.trim() !== '' && p.is_available !== false
-    );
-    
-    // 2. Grouper par boutique
-    const productsByShop = {};
-    productsWithPhotos.forEach(product => {
-      if (!productsByShop[product.shop_id]) {
-        productsByShop[product.shop_id] = [];
-      }
-      productsByShop[product.shop_id].push(product);
-    });
-    
-    // 3. Créer 3 rangées avec des produits différents
-    const rows = [];
-    
-    for (let i = 0; i < 3; i++) {
-      const selectedProducts = [];
-      const shopIds = Object.keys(productsByShop);
-      
-      // Prendre 1-2 produits aléatoires de chaque boutique
-      shopIds.forEach(shopId => {
-        const shopProducts = productsByShop[shopId];
-        if (shopProducts.length > 0) {
-          const count = Math.min(Math.floor(Math.random() * 2) + 1, shopProducts.length);
-          const shuffled = [...shopProducts].sort(() => Math.random() - 0.5);
-          selectedProducts.push(...shuffled.slice(0, count));
-        }
-      });
-      
-      // Mélanger et limiter à 15 produits par rangée
-      const shuffled = [...selectedProducts].sort(() => Math.random() - 0.5).slice(0, 15);
-      rows.push(shuffled);
-    }
-    
-    return rows;
-  }, [allProducts]);
-
-  const productRows = React.useMemo(() => generateProductRows(), [generateProductRows]);
-
-  // États pour le défilement automatique
-  const [currentIndexes, setCurrentIndexes] = useState([0, 0, 0]);
-  const [isPaused, setIsPaused] = useState([false, false, false]);
-
-  useEffect(() => {
-    const intervals = productRows.map((_, rowIndex) => {
-      return setInterval(() => {
-        if (!isPaused[rowIndex] && productRows[rowIndex].length > 0) {
-          setCurrentIndexes(prev => {
-            const newIndexes = [...prev];
-            newIndexes[rowIndex] = (newIndexes[rowIndex] + 1) % productRows[rowIndex].length;
-            return newIndexes;
-          });
-        }
-      }, 3000); // 3 secondes par article
-    });
-
-    return () => intervals.forEach(interval => clearInterval(interval));
-  }, [productRows, isPaused]);
-
-  const handleMouseEnter = (rowIndex) => {
-    const newPaused = [...isPaused];
-    newPaused[rowIndex] = true;
-    setIsPaused(newPaused);
-  };
-
-  const handleMouseLeave = (rowIndex) => {
-    const newPaused = [...isPaused];
-    newPaused[rowIndex] = false;
-    setIsPaused(newPaused);
-  };
-
   return (
     <div className="min-h-screen bg-white pb-20">
       <Helmet>
@@ -595,222 +520,202 @@ export default function Home() {
               </div>
             </div>
 
-            {/* SECTION "RECOMMANDE POUR VOUS" MODIFIÉE AVEC 3 RANGÉES */}
+            {/* SECTION "RECOMMANDE POUR VOUS" MODIFIÉE AVEC 3 RANGÉES ET DÉFILEMENT MANUEL */}
             <div className="px-4 mt-8 mb-12">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-slate-800">RECOMMANDE POUR VOUS</h2>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="animate-pulse">Défilement automatique • 3s/article</span>
+                  <span>Faites défiler pour découvrir</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
                 </div>
               </div>
 
               {/* Conteneur principal pour les 3 rangées */}
               <div className="space-y-8">
-                {productRows.map((rowProducts, rowIndex) => (
-                  <div 
-                    key={rowIndex} 
-                    className="relative group"
-                    onMouseEnter={() => handleMouseEnter(rowIndex)}
-                    onMouseLeave={() => handleMouseLeave(rowIndex)}
-                  >
-                    {/* En-tête de rangée avec indicateur de progression */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-semibold text-slate-700">
-                          {rowIndex === 0 ? 'Découvertes du jour' : 
-                           rowIndex === 1 ? 'Tendances populaires' : 
-                           'Sélection spéciale'}
-                        </h3>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-slate-400">
-                            {currentIndexes[rowIndex] + 1}/{rowProducts.length}
+                {(() => {
+                  // 1. Filtrer les produits qui ont des photos
+                  const productsWithPhotos = allProducts.filter(p => 
+                    p.image_url && p.image_url.trim() !== '' && p.is_available !== false
+                  );
+                  
+                  // 2. Grouper par boutique
+                  const productsByShop = {};
+                  productsWithPhotos.forEach(product => {
+                    if (!productsByShop[product.shop_id]) {
+                      productsByShop[product.shop_id] = [];
+                    }
+                    productsByShop[product.shop_id].push(product);
+                  });
+                  
+                  // 3. Créer 3 rangées avec des produits différents
+                  const rows = [];
+                  const shopIds = Object.keys(productsByShop);
+                  
+                  for (let i = 0; i < 3; i++) {
+                    const selectedProducts = [];
+                    
+                    // Prendre 1-2 produits aléatoires de chaque boutique pour chaque rangée
+                    shopIds.forEach(shopId => {
+                      const shopProducts = productsByShop[shopId];
+                      if (shopProducts.length > 0) {
+                        const count = Math.min(Math.floor(Math.random() * 2) + 1, shopProducts.length);
+                        const shuffled = [...shopProducts].sort(() => Math.random() - 0.5);
+                        selectedProducts.push(...shuffled.slice(0, count));
+                      }
+                    });
+                    
+                    // Mélanger et limiter à 15 produits par rangée
+                    const shuffled = [...selectedProducts].sort(() => Math.random() - 0.5).slice(0, 15);
+                    rows.push(shuffled);
+                  }
+                  
+                  return rows.map((rowProducts, rowIndex) => (
+                    <div key={rowIndex} className="relative group">
+                      {/* En-tête de rangée */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-lg font-semibold text-slate-700">
+                            {rowIndex === 0 ? 'Découvertes du jour' : 
+                             rowIndex === 1 ? 'Tendances populaires' : 
+                             'Sélection spéciale'}
+                          </h3>
+                          <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-full">
+                            {rowProducts.length} articles
                           </span>
-                          <div className="w-16 h-1 bg-slate-200 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-orange-500 transition-all duration-300"
-                              style={{ 
-                                width: `${((currentIndexes[rowIndex] + 1) / rowProducts.length) * 100}%` 
-                              }}
-                            />
-                          </div>
+                        </div>
+                        
+                        {/* Indicateur de défilement */}
+                        <div className="flex items-center gap-1 text-xs text-slate-500">
+                          <span className="hidden sm:inline">Glisser pour défiler</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
                         </div>
                       </div>
-                      
-                      {/* Indicateur de défilement */}
-                      <div className="flex items-center gap-1 text-xs text-slate-500">
-                        {isPaused[rowIndex] ? (
-                          <span className="text-orange-500">◼ Pause</span>
-                        ) : (
-                          <>
-                            <span className="animate-pulse">▶ Défilement en cours</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                            </svg>
-                          </>
-                        )}
-                      </div>
-                    </div>
 
-                    {/* Dégradés indicateurs */}
-                    <div className="absolute left-0 top-12 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10"></div>
-                    <div className="absolute right-0 top-12 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10"></div>
+                      {/* Dégradés indicateurs */}
+                      <div className="absolute left-0 top-12 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="absolute right-0 top-12 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10"></div>
 
-                    {/* Rangée de produits avec défilement horizontal */}
-                    <div className="relative overflow-hidden">
-                      <div 
-                        className="flex transition-transform duration-1000 ease-in-out gap-3"
-                        style={{ 
-                          transform: `translateX(-${currentIndexes[rowIndex] * (170 + 12)}px)`, // 170px largeur produit + 12px gap
-                        }}
-                      >
-                        {rowProducts.map((product, productIndex) => {
-                          const shop = shops.find(s => s.id === product.shop_id);
-                          const isActive = productIndex === currentIndexes[rowIndex];
-                          
-                          return (
-                            <div 
-                              key={`${product.id}-${productIndex}`}
-                              className={`flex-shrink-0 w-[170px] transition-all duration-500 ${
-                                isActive 
-                                  ? 'transform scale-105 z-20' 
-                                  : 'opacity-90 hover:opacity-100'
-                              }`}
-                              onClick={() => {
-                                if (!user) {
-                                  base44.auth.redirectToLogin(window.location.pathname);
-                                  return;
-                                }
-                                if (shop) setSelectedShop(shop);
-                                setSelectedProduct(product);
-                              }}
-                            >
-                              <div className={`relative overflow-hidden rounded-xl border-2 ${
-                                isActive 
-                                  ? 'border-orange-400 shadow-lg' 
-                                  : 'border-slate-200 shadow-sm hover:shadow-md'
-                              }`}>
-                                {/* Indicateur d'article actif */}
-                                {isActive && (
-                                  <div className="absolute top-2 right-2 z-10">
-                                    <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
-                                      En vedette
-                                    </span>
+                      {/* Rangée de produits avec défilement horizontal MANUEL */}
+                      <div className="relative overflow-hidden">
+                        <div 
+                          className="flex overflow-x-auto pb-4 gap-3 scroll-smooth"
+                          style={{ 
+                            scrollbarWidth: 'thin',
+                            scrollbarColor: '#cbd5e1 #f1f5f9',
+                            WebkitOverflowScrolling: 'touch'
+                          }}
+                        >
+                          {rowProducts.map((product, productIndex) => {
+                            const shop = shops.find(s => s.id === product.shop_id);
+                            
+                            return (
+                              <div 
+                                key={`${product.id}-${productIndex}`}
+                                className="flex-shrink-0 w-[170px] snap-start transition-all duration-300 hover:scale-[1.02]"
+                                onClick={() => {
+                                  if (!user) {
+                                    base44.auth.redirectToLogin(window.location.pathname);
+                                    return;
+                                  }
+                                  if (shop) setSelectedShop(shop);
+                                  setSelectedProduct(product);
+                                }}
+                              >
+                                <div className="relative overflow-hidden rounded-xl border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-orange-300 transition-all duration-300">
+                                  {/* Image réduite */}
+                                  <div className="h-32 overflow-hidden bg-slate-100">
+                                    {product.image_url ? (
+                                      <img 
+                                        src={product.image_url} 
+                                        alt={product.name}
+                                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center bg-slate-200">
+                                        <span className="text-slate-400 text-4xl">🛍️</span>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                                
-                                {/* Image réduite */}
-                                <div className="h-32 overflow-hidden bg-slate-100">
-                                  {product.image_url ? (
-                                    <img 
-                                      src={product.image_url} 
-                                      alt={product.name}
-                                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-slate-200">
-                                      <span className="text-slate-400 text-4xl">🛍️</span>
+                                  
+                                  {/* Contenu réduit */}
+                                  <div className="p-2">
+                                    <div className="mb-1">
+                                      <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                        {shop?.company_name?.substring(0, 15) || 'Boutique'}
+                                      </span>
                                     </div>
-                                  )}
-                                </div>
-                                
-                                {/* Contenu réduit */}
-                                <div className="p-2">
-                                  <div className="mb-1">
-                                    <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                                      {shop?.company_name?.substring(0, 15) || 'Boutique'}
-                                    </span>
-                                  </div>
-                                  <h4 className="text-sm font-medium text-slate-800 line-clamp-2 h-8 mb-1">
-                                    {product.name?.substring(0, 40)}
-                                  </h4>
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-sm font-bold text-orange-600">
-                                      {getClientPrice(product)} HTG
-                                    </span>
-                                    <Button
-                                      size="sm"
-                                      className="h-7 text-xs bg-orange-100 text-orange-600 hover:bg-orange-200"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (!user) {
-                                          base44.auth.redirectToLogin(window.location.pathname);
-                                          return;
-                                        }
-                                        if (shop) {
-                                          setSelectedShop(shop);
-                                          handleAddToCart(product);
-                                        }
-                                      }}
-                                    >
-                                      Ajouter
-                                    </Button>
+                                    <h4 className="text-sm font-medium text-slate-800 line-clamp-2 h-8 mb-1">
+                                      {product.name?.substring(0, 40)}
+                                    </h4>
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm font-bold text-orange-600">
+                                        {getClientPrice(product)} HTG
+                                      </span>
+                                      <Button
+                                        size="sm"
+                                        className="h-7 text-xs bg-orange-100 text-orange-600 hover:bg-orange-200"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (!user) {
+                                            base44.auth.redirectToLogin(window.location.pathname);
+                                            return;
+                                          }
+                                          if (shop) {
+                                            setSelectedShop(shop);
+                                            handleAddToCart(product);
+                                          }
+                                        }}
+                                      >
+                                        Ajouter
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
+                            );
+                          })}
+                          
+                          {/* Carte "Voir plus" à la fin de chaque rangée */}
+                          <div className="flex-shrink-0 w-[170px] snap-start">
+                            <div className="h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300 rounded-xl p-4">
+                              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                              <p className="text-sm font-medium text-slate-700 text-center mb-1">Voir plus</p>
+                              <p className="text-xs text-slate-500 text-center">Continuez à défiler</p>
                             </div>
-                          );
-                        })}
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Boutons de navigation manuelle */}
-                    <div className="flex justify-center gap-4 mt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => {
-                          setCurrentIndexes(prev => {
-                            const newIndexes = [...prev];
-                            newIndexes[rowIndex] = 
-                              (newIndexes[rowIndex] - 1 + rowProducts.length) % rowProducts.length;
-                            return newIndexes;
-                          });
-                        }}
-                      >
-                        ◀ Précédent
-                      </Button>
-                      
-                      <div className="flex gap-1">
-                        {Array.from({ length: Math.min(5, rowProducts.length) }).map((_, dotIndex) => {
-                          const actualIndex = (currentIndexes[rowIndex] + dotIndex) % rowProducts.length;
-                          return (
-                            <button
-                              key={dotIndex}
-                              className={`w-2 h-2 rounded-full transition-all ${
-                                dotIndex === 0 
-                                  ? 'bg-orange-500 w-4' 
-                                  : 'bg-slate-300 hover:bg-slate-400'
-                              }`}
-                              onClick={() => {
-                                setCurrentIndexes(prev => {
-                                  const newIndexes = [...prev];
-                                  newIndexes[rowIndex] = actualIndex;
-                                  return newIndexes;
+                      {/* Indicateurs de navigation par points */}
+                      <div className="flex justify-center gap-2 mt-4">
+                        {Array.from({ length: Math.min(5, Math.ceil(rowProducts.length / 4)) }).map((_, dotIndex) => (
+                          <button
+                            key={dotIndex}
+                            className="w-2 h-2 rounded-full bg-slate-300 hover:bg-slate-400 transition-colors duration-200"
+                            onClick={() => {
+                              const container = document.querySelectorAll('.flex.overflow-x-auto')[rowIndex];
+                              if (container) {
+                                const scrollAmount = container.clientWidth * dotIndex;
+                                container.scrollTo({
+                                  left: scrollAmount,
+                                  behavior: 'smooth'
                                 });
-                              }}
-                            />
-                          );
-                        })}
+                              }
+                            }}
+                          />
+                        ))}
                       </div>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => {
-                          setCurrentIndexes(prev => {
-                            const newIndexes = [...prev];
-                            newIndexes[rowIndex] = (newIndexes[rowIndex] + 1) % rowProducts.length;
-                            return newIndexes;
-                          });
-                        }}
-                      >
-                        Suivant ▶
-                      </Button>
                     </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           </div>
