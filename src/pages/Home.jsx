@@ -520,7 +520,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* SECTION "RECOMMANDE POUR VOUS" MODIFIÉE AVEC DÉFILEMENT AUTOMATIQUE 60 SECONDES */}
+            {/* SECTION "RECOMMANDE POUR VOUS" MODIFIÉE AVEC 50% MAKARIOS BRIDAL, 50% AUTRES BOUTIQUES */}
             <RecommendedSection 
               allProducts={allProducts} 
               shops={shops}
@@ -910,46 +910,87 @@ function RecommendedSection({
   const [isPaused, setIsPaused] = useState([false, false, false]);
   const rowContainers = [useRef(null), useRef(null), useRef(null)];
 
-  // Générer les rangées de produits
+  // Générer les rangées de produits avec 50% Makarios Bridal, 50% autres boutiques
   const productRows = React.useMemo(() => {
     // 1. Filtrer les produits qui ont des photos
     const productsWithPhotos = allProducts.filter(p => 
       p.image_url && p.image_url.trim() !== '' && p.is_available !== false
     );
     
-    // 2. Grouper par boutique
-    const productsByShop = {};
+    // 2. Séparer les produits de Makarios Bridal des autres boutiques
+    const makariosProducts = [];
+    const otherProducts = [];
+    
     productsWithPhotos.forEach(product => {
-      if (!productsByShop[product.shop_id]) {
-        productsByShop[product.shop_id] = [];
+      const shop = shops.find(s => s.id === product.shop_id);
+      if (shop && shop.company_name && 
+          (shop.company_name.toLowerCase().includes('makarios bridal') || 
+           shop.company_name.toLowerCase().includes('makarios'))) {
+        makariosProducts.push(product);
+      } else {
+        otherProducts.push(product);
       }
-      productsByShop[product.shop_id].push(product);
     });
     
-    // 3. Créer 3 rangées avec des produits différents
+    // 3. Créer 3 rangées avec 50% Makarios, 50% autres
     const rows = [];
-    const shopIds = Object.keys(productsByShop);
+    const productsPerRow = 15; // Nombre de produits par rangée
+    const makariosPerRow = Math.floor(productsPerRow / 2); // 50% arrondi à l'inférieur
+    const othersPerRow = productsPerRow - makariosPerRow; // Le reste
     
     for (let i = 0; i < 3; i++) {
       const selectedProducts = [];
       
-      // Prendre 1-2 produits aléatoires de chaque boutique pour chaque rangée
-      shopIds.forEach(shopId => {
-        const shopProducts = productsByShop[shopId];
-        if (shopProducts.length > 0) {
-          const count = Math.min(Math.floor(Math.random() * 2) + 1, shopProducts.length);
-          const shuffled = [...shopProducts].sort(() => Math.random() - 0.5);
-          selectedProducts.push(...shuffled.slice(0, count));
-        }
-      });
+      // Sélectionner aléatoirement les produits Makarios pour cette rangée
+      if (makariosProducts.length > 0) {
+        const shuffledMakarios = [...makariosProducts].sort(() => Math.random() - 0.5);
+        const count = Math.min(makariosPerRow, shuffledMakarios.length);
+        selectedProducts.push(...shuffledMakarios.slice(0, count));
+      }
       
-      // Mélanger et limiter à 15 produits par rangée
-      const shuffled = [...selectedProducts].sort(() => Math.random() - 0.5).slice(0, 15);
-      rows.push(shuffled);
+      // Sélectionner aléatoirement les produits d'autres boutiques pour cette rangée
+      if (otherProducts.length > 0) {
+        const shuffledOthers = [...otherProducts].sort(() => Math.random() - 0.5);
+        const remainingCount = productsPerRow - selectedProducts.length;
+        if (remainingCount > 0) {
+          selectedProducts.push(...shuffledOthers.slice(0, Math.min(remainingCount, shuffledOthers.length)));
+        }
+      }
+      
+      // Si nous n'avons pas assez de produits, compléter avec ceux de l'autre catégorie
+      if (selectedProducts.length < productsPerRow) {
+        const neededCount = productsPerRow - selectedProducts.length;
+        
+        if (makariosProducts.length > 0) {
+          // Prendre plus de produits Makarios
+          const shuffledMakarios = [...makariosProducts].sort(() => Math.random() - 0.5);
+          // Éviter les doublons
+          const existingIds = new Set(selectedProducts.map(p => p.id));
+          const additionalMakarios = shuffledMakarios
+            .filter(p => !existingIds.has(p.id))
+            .slice(0, neededCount);
+          selectedProducts.push(...additionalMakarios);
+        }
+        
+        if (selectedProducts.length < productsPerRow && otherProducts.length > 0) {
+          // Prendre plus d'autres produits
+          const neededCount2 = productsPerRow - selectedProducts.length;
+          const shuffledOthers = [...otherProducts].sort(() => Math.random() - 0.5);
+          const existingIds = new Set(selectedProducts.map(p => p.id));
+          const additionalOthers = shuffledOthers
+            .filter(p => !existingIds.has(p.id))
+            .slice(0, neededCount2);
+          selectedProducts.push(...additionalOthers);
+        }
+      }
+      
+      // Mélanger les produits pour éviter le regroupement
+      const shuffledRow = [...selectedProducts].sort(() => Math.random() - 0.5);
+      rows.push(shuffledRow.slice(0, productsPerRow));
     }
     
     return rows;
-  }, [allProducts]);
+  }, [allProducts, shops]);
 
   // Gérer le défilement automatique toutes les 60 secondes
   useEffect(() => {
@@ -1028,6 +1069,16 @@ function RecommendedSection({
     );
   }
 
+  // Compter les produits Makarios dans chaque rangée pour l'affichage
+  const getMakariosCount = (rowProducts) => {
+    return rowProducts.filter(product => {
+      const shop = shops.find(s => s.id === product.shop_id);
+      return shop && shop.company_name && 
+        (shop.company_name.toLowerCase().includes('makarios bridal') || 
+         shop.company_name.toLowerCase().includes('makarios'));
+    }).length;
+  };
+
   return (
     <div className="px-4 mt-8 mb-12">
       <div className="flex items-center justify-between mb-6">
@@ -1037,210 +1088,279 @@ function RecommendedSection({
         </div>
       </div>
 
+      {/* Info sur la répartition */}
+      <div className="mb-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-3">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">👰</span>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-purple-800">
+              50% Makarios Bridal • 50% autres boutiques
+            </p>
+            <p className="text-xs text-purple-600">
+              Sélection spéciale de produits de mariage et d'autres boutiques
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Conteneur principal pour les 3 rangées */}
       <div className="space-y-8">
-        {productRows.map((rowProducts, rowIndex) => (
-          <div 
-            key={rowIndex} 
-            className="relative group"
-            onMouseEnter={() => handleMouseEnter(rowIndex)}
-            onMouseLeave={() => handleMouseLeave(rowIndex)}
-          >
-            {/* En-tête de rangée avec indicateur de progression */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <h3 className="text-lg font-semibold text-slate-700">
-                  {rowIndex === 0 ? 'Découvertes du jour' : 
-                   rowIndex === 1 ? 'Tendances populaires' : 
-                   'Sélection spéciale'}
-                </h3>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-slate-400">
-                    {currentRowIndexes[rowIndex] + 1}/{rowProducts.length}
-                  </span>
-                  <div className="w-16 h-1 bg-slate-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-orange-500 transition-all duration-300"
-                      style={{ 
-                        width: `${((currentRowIndexes[rowIndex] + 1) / rowProducts.length) * 100}%` 
-                      }}
-                    />
+        {productRows.map((rowProducts, rowIndex) => {
+          const makariosCount = getMakariosCount(rowProducts);
+          const othersCount = rowProducts.length - makariosCount;
+          const makariosPercentage = rowProducts.length > 0 ? Math.round((makariosCount / rowProducts.length) * 100) : 0;
+          
+          return (
+            <div 
+              key={rowIndex} 
+              className="relative group"
+              onMouseEnter={() => handleMouseEnter(rowIndex)}
+              onMouseLeave={() => handleMouseLeave(rowIndex)}
+            >
+              {/* En-tête de rangée avec indicateur de progression et statistiques */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-700">
+                      {rowIndex === 0 ? 'Makarios Bridal & Sélection' : 
+                       rowIndex === 1 ? 'Tendances Mariage & Diverses' : 
+                       'Sélection Spéciale 50/50'}
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                        <span>{makariosCount} Makarios</span>
+                      </div>
+                      <span>•</span>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                        <span>{othersCount} autres boutiques</span>
+                      </div>
+                      <span>•</span>
+                      <span>{makariosPercentage}% Makarios</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-slate-400">
+                      {currentRowIndexes[rowIndex] + 1}/{rowProducts.length}
+                    </span>
+                    <div className="w-16 h-1 bg-slate-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-purple-500 to-orange-500 transition-all duration-300"
+                        style={{ 
+                          width: `${((currentRowIndexes[rowIndex] + 1) / rowProducts.length) * 100}%` 
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
+                
+                {/* Indicateur de défilement */}
+                <div className="flex items-center gap-1 text-xs text-slate-500">
+                  {isPaused[rowIndex] ? (
+                    <span className="text-purple-500">◼ Pause</span>
+                  ) : (
+                    <>
+                      <span>Changement dans 60s</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </>
+                  )}
+                </div>
               </div>
-              
-              {/* Indicateur de défilement */}
-              <div className="flex items-center gap-1 text-xs text-slate-500">
-                {isPaused[rowIndex] ? (
-                  <span className="text-orange-500">◼ Pause</span>
-                ) : (
-                  <>
-                    <span>Changement dans 60s</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </>
-                )}
-              </div>
-            </div>
 
-            {/* Dégradés indicateurs */}
-            <div className="absolute left-0 top-12 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10"></div>
-            <div className="absolute right-0 top-12 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10"></div>
+              {/* Dégradés indicateurs */}
+              <div className="absolute left-0 top-20 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10"></div>
+              <div className="absolute right-0 top-20 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10"></div>
 
-            {/* Rangée de produits avec défilement horizontal */}
-            <div className="relative overflow-hidden">
-              <div 
-                ref={rowContainers[rowIndex]}
-                className="flex overflow-x-auto pb-4 gap-3 scroll-smooth"
-                style={{ 
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#cbd5e1 #f1f5f9',
-                  WebkitOverflowScrolling: 'touch'
-                }}
-              >
-                {rowProducts.map((product, productIndex) => {
-                  const shop = shops.find(s => s.id === product.shop_id);
-                  const isActive = productIndex === currentRowIndexes[rowIndex];
-                  
-                  return (
-                    <div 
-                      key={`${product.id}-${productIndex}`}
-                      className="flex-shrink-0 w-[170px] snap-start transition-all duration-300 hover:scale-[1.02]"
-                      onClick={() => {
-                        if (!user) {
-                          base44.auth.redirectToLogin(window.location.pathname);
-                          return;
-                        }
-                        if (shop) setSelectedShop(shop);
-                        setSelectedProduct(product);
-                      }}
-                    >
-                      <div className={`relative overflow-hidden rounded-xl border-2 ${
-                        isActive 
-                          ? 'border-orange-400 shadow-lg' 
-                          : 'border-slate-200 shadow-sm hover:shadow-md'
-                      }`}>
-                        {/* Indicateur d'article actif */}
-                        {isActive && (
-                          <div className="absolute top-2 right-2 z-10">
-                            <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
-                              Actuellement
-                            </span>
-                          </div>
-                        )}
-                        
-                        {/* Image réduite */}
-                        <div className="h-32 overflow-hidden bg-slate-100">
-                          {product.image_url ? (
-                            <img 
-                              src={product.image_url} 
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-slate-200">
-                              <span className="text-slate-400 text-4xl">🛍️</span>
+              {/* Rangée de produits avec défilement horizontal */}
+              <div className="relative overflow-hidden">
+                <div 
+                  ref={rowContainers[rowIndex]}
+                  className="flex overflow-x-auto pb-4 gap-3 scroll-smooth"
+                  style={{ 
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#cbd5e1 #f1f5f9',
+                    WebkitOverflowScrolling: 'touch'
+                  }}
+                >
+                  {rowProducts.map((product, productIndex) => {
+                    const shop = shops.find(s => s.id === product.shop_id);
+                    const isActive = productIndex === currentRowIndexes[rowIndex];
+                    const isMakarios = shop && shop.company_name && 
+                      (shop.company_name.toLowerCase().includes('makarios bridal') || 
+                       shop.company_name.toLowerCase().includes('makarios'));
+                    
+                    return (
+                      <div 
+                        key={`${product.id}-${productIndex}`}
+                        className="flex-shrink-0 w-[170px] snap-start transition-all duration-300 hover:scale-[1.02]"
+                        onClick={() => {
+                          if (!user) {
+                            base44.auth.redirectToLogin(window.location.pathname);
+                            return;
+                          }
+                          if (shop) setSelectedShop(shop);
+                          setSelectedProduct(product);
+                        }}
+                      >
+                        <div className={`relative overflow-hidden rounded-xl border-2 ${
+                          isActive 
+                            ? isMakarios ? 'border-purple-400 shadow-lg' : 'border-orange-400 shadow-lg'
+                            : isMakarios ? 'border-purple-200 shadow-sm hover:shadow-md' : 'border-slate-200 shadow-sm hover:shadow-md'
+                        } ${isMakarios ? 'bg-gradient-to-b from-purple-50 to-white' : 'bg-white'}`}>
+                          
+                          {/* Badge Makarios */}
+                          {isMakarios && (
+                            <div className="absolute top-2 left-2 z-10">
+                              <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+                                Makarios
+                              </span>
                             </div>
                           )}
-                        </div>
-                        
-                        {/* Contenu réduit */}
-                        <div className="p-2">
-                          <div className="mb-1">
-                            <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                              {shop?.company_name?.substring(0, 15) || 'Boutique'}
-                            </span>
+                          
+                          {/* Indicateur d'article actif */}
+                          {isActive && (
+                            <div className="absolute top-2 right-2 z-10">
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                isMakarios 
+                                  ? 'bg-purple-500 text-white' 
+                                  : 'bg-orange-500 text-white'
+                              }`}>
+                                Actuellement
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Image réduite */}
+                          <div className="h-32 overflow-hidden bg-slate-100">
+                            {product.image_url ? (
+                              <img 
+                                src={product.image_url} 
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className={`w-full h-full flex items-center justify-center ${
+                                isMakarios ? 'bg-gradient-to-br from-purple-100 to-pink-100' : 'bg-slate-200'
+                              }`}>
+                                <span className={`text-4xl ${
+                                  isMakarios ? 'text-purple-300' : 'text-slate-400'
+                                }`}>
+                                  {isMakarios ? '👰' : '🛍️'}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                          <h4 className="text-sm font-medium text-slate-800 line-clamp-2 h-8 mb-1">
-                            {product.name?.substring(0, 40)}
-                          </h4>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-orange-600">
-                              {getClientPrice(product)} HTG
-                            </span>
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs bg-orange-100 text-orange-600 hover:bg-orange-200"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (!user) {
-                                  base44.auth.redirectToLogin(window.location.pathname);
-                                  return;
-                                }
-                                if (shop) {
-                                  setSelectedShop(shop);
-                                  handleAddToCart(product);
-                                }
-                              }}
-                            >
-                              Ajouter
-                            </Button>
+                          
+                          {/* Contenu réduit */}
+                          <div className="p-2">
+                            <div className="mb-1">
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                isMakarios
+                                  ? 'text-purple-700 bg-purple-100'
+                                  : 'text-slate-500 bg-slate-100'
+                              }`}>
+                                {shop?.company_name?.substring(0, 15) || 'Boutique'}
+                              </span>
+                            </div>
+                            <h4 className="text-sm font-medium text-slate-800 line-clamp-2 h-8 mb-1">
+                              {product.name?.substring(0, 40)}
+                            </h4>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-bold text-orange-600">
+                                {getClientPrice(product)} HTG
+                              </span>
+                              <Button
+                                size="sm"
+                                className={`h-7 text-xs ${
+                                  isMakarios
+                                    ? 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+                                    : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                                }`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!user) {
+                                    base44.auth.redirectToLogin(window.location.pathname);
+                                    return;
+                                  }
+                                  if (shop) {
+                                    setSelectedShop(shop);
+                                    handleAddToCart(product);
+                                  }
+                                }}
+                              >
+                                Ajouter
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
-            {/* Boutons de navigation manuelle */}
-            <div className="flex justify-center gap-4 mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => handleManualScroll(rowIndex, 'prev')}
-              >
-                ◀ Précédent
-              </Button>
-              
-              <div className="flex gap-1">
-                {Array.from({ length: Math.min(5, rowProducts.length) }).map((_, dotIndex) => {
-                  const isActive = dotIndex === currentRowIndexes[rowIndex] % 5;
-                  return (
-                    <button
-                      key={dotIndex}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        isActive 
-                          ? 'bg-orange-500 w-4' 
-                          : 'bg-slate-300 hover:bg-slate-400'
-                      }`}
-                      onClick={() => {
-                        const targetIndex = dotIndex;
-                        setCurrentRowIndexes(prev => {
-                          const newIndexes = [...prev];
-                          newIndexes[rowIndex] = targetIndex;
-                          
-                          if (rowContainers[rowIndex].current) {
-                            const container = rowContainers[rowIndex].current;
-                            const scrollAmount = targetIndex * (170 + 12);
-                            container.scrollTo({
-                              left: scrollAmount,
-                              behavior: 'smooth'
-                            });
-                          }
-                          
-                          return newIndexes;
-                        });
-                      }}
-                    />
-                  );
-                })}
+              {/* Boutons de navigation manuelle */}
+              <div className="flex justify-center gap-4 mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => handleManualScroll(rowIndex, 'prev')}
+                >
+                  ◀ Précédent
+                </Button>
+                
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, rowProducts.length) }).map((_, dotIndex) => {
+                    const isActive = dotIndex === currentRowIndexes[rowIndex] % 5;
+                    return (
+                      <button
+                        key={dotIndex}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          isActive 
+                            ? 'bg-gradient-to-r from-purple-500 to-orange-500 w-4' 
+                            : 'bg-slate-300 hover:bg-slate-400'
+                        }`}
+                        onClick={() => {
+                          const targetIndex = dotIndex;
+                          setCurrentRowIndexes(prev => {
+                            const newIndexes = [...prev];
+                            newIndexes[rowIndex] = targetIndex;
+                            
+                            if (rowContainers[rowIndex].current) {
+                              const container = rowContainers[rowIndex].current;
+                              const scrollAmount = targetIndex * (170 + 12);
+                              container.scrollTo({
+                                left: scrollAmount,
+                                behavior: 'smooth'
+                              });
+                            }
+                            
+                            return newIndexes;
+                          });
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => handleManualScroll(rowIndex, 'next')}
+                >
+                  Suivant ▶
+                </Button>
               </div>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => handleManualScroll(rowIndex, 'next')}
-              >
-                Suivant ▶
-              </Button>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
