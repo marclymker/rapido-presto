@@ -440,7 +440,7 @@ export default function Home() {
             {/* Gift Banner */}
             <GiftBanner />
 
-            {/* Boutons de Types d'Articles (Grid) */}
+            {/* MODIFICATION ICI : Boutons de Types d'Articles (Grid) avec icônes réduites */}
             <div className="grid grid-cols-2 gap-3 p-4">
               {articleTypes.map((type) => (
                 <button
@@ -454,9 +454,10 @@ export default function Home() {
                     setSelectedShop(null);
                     setGooglePlaces([]);
                   }}
-                  className={`${type.bgColor} rounded-3xl p-4 flex flex-col items-center transition-transform hover:scale-105 active:scale-95`}
+                  className={`${type.bgColor} rounded-3xl p-4 flex flex-col items-center transition-transform hover:scale-105 active:scale-95 min-h-[120px]`}
                 >
-                  <div className="text-4xl mb-1">{type.icon}</div>
+                  {/* Icône réduite et plus d'espace en dessous */}
+                  <div className="text-3xl mb-3">{type.icon}</div>
                   <span className={`${type.textColor} font-bold text-base text-center`}>
                     {type.name}
                   </span>
