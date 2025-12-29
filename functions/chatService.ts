@@ -91,6 +91,25 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ data: message }), { headers });
     }
 
+    // --- LOGIQUE COMPTAGE NON LUS ---
+    if (action === 'unread-count') {
+      const conversations = await base44.entities.Conversation.filter({
+        $or: [{ customer_id: user.id }, { vendor_id: user.id }]
+      });
+
+      let totalUnread = 0;
+      for (const conv of conversations) {
+        const unread = await base44.entities.ChatMessage.filter({
+          conversation_id: conv.id,
+          sender_id: { $ne: user.id },
+          is_read: false
+        });
+        totalUnread += unread.length;
+      }
+
+      return new Response(JSON.stringify({ unreadCount: totalUnread }), { headers });
+    }
+
     return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
