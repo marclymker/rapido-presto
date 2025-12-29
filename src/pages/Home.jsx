@@ -520,35 +520,181 @@ export default function Home() {
               </div>
             </div>
 
-            {/* AI Recommendations */}
-            <div className="px-4">
-              <ProductRecommendations
-                user={user}
-                onProductClick={(p) => {
-                  if (!user) {
-                    base44.auth.redirectToLogin(window.location.pathname);
-                    return;
-                  }
-                  const shop = shops.find(s => s.id === p.shop_id);
-                  if (shop) setSelectedShop(shop);
-                  setSelectedProduct(p);
-                }}
-                onAddToCart={(p) => {
-                  if (!user) {
-                    base44.auth.redirectToLogin(window.location.pathname);
-                    return;
-                  }
-                  const shop = shops.find(s => s.id === p.shop_id);
-                  if (shop) {
-                    setSelectedShop(shop);
-                    handleAddToCart(p);
-                  }
-                }}
-                selectedShop={selectedShop}
-                limit={6}
-              />
-
-
+            {/* SECTION "RECOMMANDE POUR VOUS" MODIFIÉE */}
+            <div className="px-4 mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-slate-800">RECOMMANDE POUR VOUS</h2>
+                <div className="flex items-center gap-1 text-xs text-slate-500 animate-pulse">
+                  <span>Faites défiler</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </div>
+              </div>
+              
+              <div className="relative group">
+                {/* Flèche gauche */}
+                <div className="hidden group-hover:block absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-lg -translate-x-1/2 transition-all duration-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </div>
+                
+                {/* Flèche droite */}
+                <div className="hidden group-hover:block absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-lg translate-x-1/2 transition-all duration-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+                
+                {/* Dégradé indicateur de défilement à droite */}
+                <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white to-transparent pointer-events-none z-5"></div>
+                
+                {/* Dégradé indicateur de défilement à gauche */}
+                <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white to-transparent pointer-events-none z-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                {/* Conteneur de défilement horizontal */}
+                <div 
+                  className="flex overflow-x-auto pb-6 snap-x snap-mandatory scroll-smooth gap-4"
+                  style={{ 
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#f1f5f9 #fff',
+                    WebkitOverflowScrolling: 'touch'
+                  }}
+                  onScroll={(e) => {
+                    const container = e.target;
+                    const leftIndicator = container.previousElementSibling;
+                    const rightIndicator = leftIndicator?.previousElementSibling;
+                    
+                    if (container.scrollLeft > 10) {
+                      leftIndicator?.classList.remove('opacity-0');
+                    } else {
+                      leftIndicator?.classList.add('opacity-0');
+                    }
+                    
+                    if (container.scrollLeft + container.clientWidth < container.scrollWidth - 10) {
+                      rightIndicator?.classList.remove('opacity-0');
+                    } else {
+                      rightIndicator?.classList.add('opacity-0');
+                    }
+                  }}
+                >
+                  {(() => {
+                    // 1. Filtrer les produits qui ont des photos
+                    const productsWithPhotos = allProducts.filter(p => 
+                      p.image_url && p.image_url.trim() !== '' && p.is_available !== false
+                    );
+                    
+                    // 2. Grouper par boutique
+                    const productsByShop = {};
+                    productsWithPhotos.forEach(product => {
+                      if (!productsByShop[product.shop_id]) {
+                        productsByShop[product.shop_id] = [];
+                      }
+                      productsByShop[product.shop_id].push(product);
+                    });
+                    
+                    // 3. Sélectionner aléatoirement au moins un produit de chaque boutique
+                    const selectedProducts = [];
+                    Object.keys(productsByShop).forEach(shopId => {
+                      const shopProducts = productsByShop[shopId];
+                      if (shopProducts.length > 0) {
+                        // Prendre 1-3 produits aléatoires par boutique
+                        const count = Math.min(Math.floor(Math.random() * 3) + 1, shopProducts.length);
+                        const shuffled = [...shopProducts].sort(() => Math.random() - 0.5);
+                        selectedProducts.push(...shuffled.slice(0, count));
+                      }
+                    });
+                    
+                    // 4. Mélanger l'ordre d'affichage
+                    const shuffledProducts = [...selectedProducts].sort(() => Math.random() - 0.5);
+                    
+                    // Limiter à 20 produits max
+                    const finalProducts = shuffledProducts.slice(0, 20);
+                    
+                    if (finalProducts.length === 0) {
+                      return (
+                        <div className="w-full py-12 text-center text-slate-400">
+                          <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <p>Aucun produit avec photos disponible</p>
+                        </div>
+                      );
+                    }
+                    
+                    return finalProducts.map(product => {
+                      const shop = shops.find(s => s.id === product.shop_id);
+                      return (
+                        <div 
+                          key={`${product.id}-${Math.random()}`} 
+                          className="flex-shrink-0 w-64 snap-center transition-transform duration-300 hover:scale-[1.02]"
+                        >
+                          <ProductCard
+                            product={product}
+                            shop={shop}
+                            onAdd={() => {
+                              if (!user) {
+                                base44.auth.redirectToLogin(window.location.pathname);
+                                return;
+                              }
+                              if (shop) {
+                                setSelectedShop(shop);
+                                handleAddToCart(product);
+                              }
+                            }}
+                            onClick={() => {
+                              if (!user) {
+                                base44.auth.redirectToLogin(window.location.pathname);
+                                return;
+                              }
+                              if (shop) setSelectedShop(shop);
+                              setSelectedProduct(product);
+                            }}
+                            showShopName={true}
+                            className="h-full shadow-sm hover:shadow-md transition-shadow duration-300"
+                          />
+                        </div>
+                      );
+                    });
+                  })()}
+                  
+                  {/* Carte "Voir plus" à la fin */}
+                  <div className="flex-shrink-0 w-64 snap-center">
+                    <div className="h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-200 rounded-xl p-6">
+                      <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-medium text-slate-700 text-center mb-2">Continuez à défiler</p>
+                      <p className="text-xs text-slate-500 text-center">Découvrez plus de produits recommandés</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Indicateurs de navigation (points) */}
+                <div className="flex justify-center gap-2 mt-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <button
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-slate-300 hover:bg-slate-400 transition-colors duration-200"
+                      onClick={() => {
+                        const container = document.querySelector('.flex.overflow-x-auto');
+                        if (container) {
+                          const scrollAmount = container.clientWidth;
+                          container.scrollTo({
+                            left: scrollAmount * i,
+                            behavior: 'smooth'
+                          });
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         ) : selectedCategory !== 'Tout' && !selectedShop ? (
