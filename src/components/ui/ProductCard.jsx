@@ -85,7 +85,7 @@ export default function ProductCard({ product, onAdd, onClick, shop }) {
 
       {/* Image cliquable pour voir les détails */}
       <div 
-        className="aspect-square w-full rounded-xl sm:rounded-2xl bg-slate-50 p-2 sm:p-4 mb-2 sm:mb-3 cursor-pointer overflow-hidden touch-manipulation"
+        className="aspect-square w-full rounded-lg sm:rounded-xl bg-slate-50 p-1.5 sm:p-3 mb-1.5 sm:mb-2 cursor-pointer overflow-hidden touch-manipulation"
         onClick={() => product.is_available !== false && onClick && onClick(product)}
       >
         {product.image_url ? (
@@ -113,23 +113,23 @@ export default function ProductCard({ product, onAdd, onClick, shop }) {
 
         {/* Infos prix et nom */}
         <div className="px-0.5 sm:px-1">
-        <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-          <p className="text-base sm:text-lg font-black text-slate-900">{displayPrice} HTG</p>
-          {hasPromo && (
-            <p className="text-xs sm:text-sm text-slate-400 line-through">{originalDisplayPrice} HTG</p>
-          )}
-        </div>
-        <p className="text-xs sm:text-sm text-slate-700 leading-tight h-8 sm:h-10 overflow-hidden line-clamp-2">{product.name}</p>
-        <div className="flex items-center justify-between mt-0.5 sm:mt-1">
-          {product.delivery_time && (
-            <p className="text-[9px] sm:text-[10px] text-slate-400">📦 {product.delivery_time}</p>
-          )}
-          <img 
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png" 
-            alt="MonCash" 
-            className="h-4 sm:h-5 object-contain"
-          />
-        </div>
+          <div className="flex items-center gap-1 sm:gap-1.5 mb-0.5">
+            <p className="text-sm sm:text-base font-black text-slate-900">{displayPrice} HTG</p>
+            {hasPromo && (
+              <p className="text-[10px] sm:text-xs text-slate-400 line-through">{originalDisplayPrice} HTG</p>
+            )}
+          </div>
+          <p className="text-[10px] sm:text-xs text-slate-700 leading-snug h-6 sm:h-8 overflow-hidden line-clamp-2">{product.name}</p>
+          <div className="flex items-center justify-between mt-0.5">
+            {product.delivery_time && (
+              <p className="text-[8px] sm:text-[9px] text-slate-400">📦 {product.delivery_time}</p>
+            )}
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png" 
+              alt="MonCash" 
+              className="h-3 sm:h-4 object-contain"
+            />
+          </div>
 
         {/* Chat Button - appears on hover (desktop only) */}
         {shop && showChatButton && (
