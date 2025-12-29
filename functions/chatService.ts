@@ -68,7 +68,10 @@ Deno.serve(async (req) => {
 
     // --- LOGIQUE MESSAGES ---
     if (action === 'messages') {
-      const msgs = await base44.entities.ChatMessage.filter({ conversation_id: body.convId });
+      const msgs = await base44.entities.ChatMessage.filter(
+        { conversation_id: body.convId },
+        'created_date' // Tri ascendant: plus ancien en haut
+      );
       return new Response(JSON.stringify({ data: msgs }), { headers });
     }
 

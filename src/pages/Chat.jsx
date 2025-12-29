@@ -44,12 +44,14 @@ export default function Chat() {
     retry: 1
   });
 
-  // 3. Messages
+  // 3. Messages (triés par ordre chronologique)
   const { data: messages = [] } = useQuery({
     queryKey: ['messages', selectedConv?.id],
     queryFn: async () => {
       const r = await base44.functions.invoke('chatService', { action: 'messages', convId: selectedConv.id });
-      return Array.isArray(r.data) ? r.data : (r.data?.data || []);
+      const msgs = Array.isArray(r.data) ? r.data : (r.data?.data || []);
+      // Assurer le tri chronologique (plus ancien en haut)
+      return msgs.sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
     },
     enabled: !!selectedConv?.id,
     refetchInterval: 5000
