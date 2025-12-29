@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
 import { getHaitiTime } from '@/components/utils/dateFormat';
+import SquarePaymentForm from '@/components/payment/SquarePaymentForm';
 
 function calculateDeliveryFee(clientCommune, shopCommune) {
   const hour = getHaitiTime().getHours();
@@ -41,6 +42,8 @@ export default function Cart() {
   const [confirmCode, setConfirmCode] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [redirectingToMoncash, setRedirectingToMoncash] = useState(false);
+  const [squareToken, setSquareToken] = useState(null);
+  const [processingSquare, setProcessingSquare] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -103,6 +106,97 @@ export default function Cart() {
       }
       
       const totalAmount = subtotal + totalDeliveryFee;
+      
+      // Si Square, traiter le paiement par carte
+      if (paymentMethod === 'card') {
+        if (!squareToken) {
+          throw new Error('Token de paiement manquant');
+        }
+
+        try {
+          // Créer commandes d'abord
+          const createdOrders = [];
+          for (const shopId of shopIds) {
+            const shopItems = itemsByShop[shopId];
+            const shopSubtotal = shopItems.reduce((sum, item) => {
+              const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+              return sum + itemTotal;
+            }, 0);
+            const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
+            const orderNum = 'RP' + Date.now().toString().slice(-6) + '-' + shopId.slice(-4);
+            const code = generateConfirmationCode();
+
+            const order = await base44.entities.Order.create({
+              order_number: orderNum,
+              client_id: user.id,
+              client_name: user.full_name,
+              client_phone: user.phone,
+              client_address: user.address || '',
+              client_region: user.region,
+              shop_id: shopId,
+              shop_name: shopItems[0].shop_name,
+              shop_region: shopItems[0].shop_region,
+              items: shopItems.map(item => ({
+                product_id: item.product_id,
+                name: item.product_name,
+                quantity: item.quantity,
+                unit_price: item.unit_price + (item.total_customization_price || 0),
+                total: (item.unit_price + (item.total_customization_price || 0)) * item.quantity,
+                customization: item.customization
+              })),
+              subtotal: shopSubtotal,
+              delivery_fee: shopDeliveryFee,
+              total: shopSubtotal + shopDeliveryFee,
+              payment_method: 'card',
+              status: 'pending',
+              payment_status: 'pending',
+              confirmation_code: code
+            });
+
+            createdOrders.push({ orderId: order.id, orderNum, code });
+          }
+
+          // Traiter le paiement Square
+          const paymentResponse = await base44.functions.invoke('squarePayment', {
+            sourceId: squareToken,
+            amount: totalAmount,
+            orderId: createdOrders[0].orderNum
+          });
+
+          if (!paymentResponse.data.success) {
+            throw new Error('Paiement refusé');
+          }
+
+          // Mettre à jour statut paiement des commandes
+          for (const order of createdOrders) {
+            await base44.entities.Order.update(order.orderId, {
+              payment_status: 'paid'
+            });
+
+            // Envoyer notifications
+            await base44.functions.invoke('sendOrderNotification', {
+              orderId: order.orderId,
+              status: 'pending'
+            }).catch(err => console.error('Notification error:', err));
+
+            await base44.functions.invoke('sendWhatsAppOrderNotification', {
+              orderId: order.orderId
+            }).catch(err => console.error('WhatsApp error:', err));
+          }
+
+          // Vider le panier
+          await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+
+          return { 
+            orderNum: createdOrders[0].orderNum, 
+            code: createdOrders[0].code,
+            allOrders: createdOrders 
+          };
+        } catch (error) {
+          console.error('Square payment error:', error);
+          throw new Error(error.message || 'Erreur lors du paiement par carte');
+        }
+      }
       
       // Si MonCash, initier le paiement
       if (paymentMethod === 'moncash') {
@@ -547,7 +641,7 @@ export default function Cart() {
                     <RadioGroupItem value="card" id="card" />
                     <Label htmlFor="card" className="flex items-center gap-3 cursor-pointer flex-1">
                       <CreditCard className="w-5 h-5 text-blue-600" />
-                      <span>Carte de débit/crédit</span>
+                      <span>Carte de débit/crédit (Square)</span>
                     </Label>
                   </div>
                   <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-slate-50">
@@ -573,6 +667,21 @@ export default function Cart() {
                 <p className="text-slate-600">{user.address || 'Non définie'}</p>
                 <p className="text-slate-500 text-sm">{user.region}</p>
               </div>
+
+              {/* Square Payment Form */}
+              {paymentMethod === 'card' && (
+                <SquarePaymentForm 
+                  amount={total}
+                  onSuccess={(token) => {
+                    setSquareToken(token);
+                    toast.success('Carte validée');
+                  }}
+                  onError={(error) => {
+                    setSquareToken(null);
+                    toast.error(error);
+                  }}
+                />
+              )}
 
               {/* Special Instructions */}
               <div className="bg-white rounded-xl p-4">
@@ -662,7 +771,7 @@ export default function Cart() {
                 <Button 
                   className="flex-1 bg-orange-500 hover:bg-orange-600"
                   onClick={() => createOrderMutation.mutate()}
-                  disabled={createOrderMutation.isPending || redirectingToMoncash}
+                  disabled={createOrderMutation.isPending || redirectingToMoncash || (paymentMethod === 'card' && !squareToken)}
                 >
                   {redirectingToMoncash ? 'Redirection MonCash...' : createOrderMutation.isPending ? 'Traitement...' : 'Confirmer'}
                 </Button>
