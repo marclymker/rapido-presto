@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
+  // Gestion du CORS pour autoriser les appels depuis le navigateur
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT",
@@ -51,8 +52,7 @@ Deno.serve(async (req) => {
         sender_name: user.full_name || 'Client',
         content: initial_message,
         type: 'text',
-        is_read: false,
-        timestamp: new Date().toISOString() // Ajout du timestamp
+        is_read: false
       });
 
       return new Response(JSON.stringify(conversation), { headers });
@@ -69,36 +69,22 @@ Deno.serve(async (req) => {
     // --- LOGIQUE MESSAGES ---
     if (action === 'messages') {
       const msgs = await base44.entities.ChatMessage.filter({ conversation_id: body.convId });
-      
-      // TRIER les messages par date croissante (plus ancien en premier)
-      const sortedMessages = msgs.sort((a, b) => {
-        // Utiliser created_at ou timestamp s'ils existent
-        const dateA = a.created_at || a.timestamp || a.id;
-        const dateB = b.created_at || b.timestamp || b.id;
-        return new Date(dateA).getTime() - new Date(dateB).getTime();
-      });
-      
-      return new Response(JSON.stringify({ data: sortedMessages }), { headers });
+      return new Response(JSON.stringify({ data: msgs }), { headers });
     }
 
     // --- LOGIQUE ENVOI ---
     if (action === 'send') {
-      const messageData = {
+      const message = await base44.entities.ChatMessage.create({
         conversation_id: body.conversation_id,
         sender_id: user.id,
         sender_name: user.full_name || 'Utilisateur',
         content: body.content,
-        type: 'text',
-        timestamp: new Date().toISOString() // Ajout du timestamp
-      };
-      
-      const message = await base44.entities.ChatMessage.create(messageData);
-      
+        type: 'text'
+      });
       await base44.asServiceRole.entities.Conversation.update(body.conversation_id, {
         last_message: body.content,
         last_message_date: new Date().toISOString()
       });
-      
       return new Response(JSON.stringify({ data: message }), { headers });
     }
 
