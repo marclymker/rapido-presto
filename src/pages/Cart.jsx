@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Banknote, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Banknote, Clock, AlertTriangle, Copy, Check, Info } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,51 @@ function generateConfirmationCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
+// Fonction pour calculer les frais Natcash selon le tableau des frais de retrait
+function calculateNatcashFee(amount) {
+  // Tableau des frais de retrait Natcash
+  const feeRanges = [
+    { min: 20, max: 99, fee: 5.50 },
+    { min: 100, max: 249, fee: 11.50 },
+    { min: 250, max: 499, fee: 13.50 },
+    { min: 500, max: 999, fee: 21.00 },
+    { min: 1000, max: 1999, fee: 41.00 },
+    { min: 2000, max: 3999, fee: 68.00 },
+    { min: 4000, max: 7999, fee: 97.00 },
+    { min: 8000, max: 11999, fee: 125.00 },
+    { min: 12000, max: 19999, fee: 165.00 },
+    { min: 20000, max: 40000, fee: 274.00 }
+  ];
+
+  // Trouver la tranche correspondante
+  for (const range of feeRanges) {
+    if (amount >= range.min && amount <= range.max) {
+      return range.fee;
+    }
+  }
+
+  // Si le montant dépasse 40,000 HTG, appliquer une règle proportionnelle
+  // (on utilise le taux de la dernière tranche comme base)
+  if (amount > 40000) {
+    // Pour les montants > 40,000, on applique la même logique que la dernière tranche
+    // ou on peut calculer proportionnellement
+    return 274.00 + Math.floor((amount - 40000) / 20000) * 100; // estimation
+  }
+
+  // Si le montant est inférieur à 20 HTG (cas improbable pour une commande)
+  return 0;
+}
+
+// Fonction pour calculer le montant total à transférer (montant de commande + frais Natcash)
+function calculateNatcashTotal(orderAmount) {
+  const fee = calculateNatcashFee(orderAmount);
+  return {
+    orderAmount: orderAmount,
+    natcashFee: fee,
+    transferAmount: orderAmount + fee
+  };
+}
+
 export default function Cart() {
   const [user, setUser] = useState(null);
   const [step, setStep] = useState('cart'); // cart, checkout, confirmed
@@ -44,6 +89,13 @@ export default function Cart() {
   const [redirectingToMoncash, setRedirectingToMoncash] = useState(false);
   const [squareToken, setSquareToken] = useState(null);
   const [processingSquare, setProcessingSquare] = useState(false);
+  
+  // État pour Natcash
+  const [natcashTransactionCode, setNatcashTransactionCode] = useState('');
+  const [copiedAccount, setCopiedAccount] = useState(false);
+  const [copiedAmount, setCopiedAmount] = useState(false);
+  const [natcashInfo, setNatcashInfo] = useState(null);
+  
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -63,8 +115,39 @@ export default function Cart() {
     refetchIntervalInBackground: true
   });
 
-  // Note: Les prix dans le panier incluent déjà la marge de 10%
-  // car ils sont ajoutés avec getClientPrice() lors de l'ajout au panier
+  // Calculer les frais Natcash quand le total change et que Natcash est sélectionné
+  useEffect(() => {
+    if (paymentMethod === 'natcash' && cartItems.length > 0) {
+      // Calculer le total de la commande
+      const itemsByShop = cartItems.reduce((acc, item) => {
+        if (!acc[item.shop_id]) {
+          acc[item.shop_id] = [];
+        }
+        acc[item.shop_id].push(item);
+        return acc;
+      }, {});
+
+      const subtotal = cartItems.reduce((sum, item) => {
+        const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+        return sum + itemTotal;
+      }, 0);
+      
+      let deliveryFee = 0;
+      Object.keys(itemsByShop).forEach(shopId => {
+        const shopRegion = itemsByShop[shopId][0].shop_region;
+        deliveryFee += calculateDeliveryFee(user?.region || '', shopRegion);
+      });
+      
+      const pendingBalance = user?.pending_balance || 0;
+      const total = subtotal + deliveryFee + pendingBalance;
+      
+      // Calculer les frais Natcash
+      const natcashData = calculateNatcashTotal(total);
+      setNatcashInfo(natcashData);
+    } else {
+      setNatcashInfo(null);
+    }
+  }, [paymentMethod, cartItems, user]);
 
   const updateQuantityMutation = useMutation({
     mutationFn: ({ id, quantity }) => {
@@ -80,6 +163,20 @@ export default function Cart() {
     mutationFn: (id) => base44.entities.CartItem.delete(id),
     onSuccess: () => queryClient.invalidateQueries(['cart'])
   });
+
+  // Fonction pour copier le texte
+  const copyToClipboard = (text, type) => {
+    navigator.clipboard.writeText(text).then(() => {
+      if (type === 'account') {
+        setCopiedAccount(true);
+        setTimeout(() => setCopiedAccount(false), 2000);
+      } else if (type === 'amount') {
+        setCopiedAmount(true);
+        setTimeout(() => setCopiedAmount(false), 2000);
+      }
+      toast.success('Copié dans le presse-papier');
+    });
+  };
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
@@ -105,7 +202,7 @@ export default function Cart() {
         totalDeliveryFee += calculateDeliveryFee(user.region, shopRegion);
       }
       
-      const totalAmount = subtotal + totalDeliveryFee;
+      const totalAmount = subtotal + totalDeliveryFee + (user?.pending_balance || 0);
       
       // Si Square, traiter le paiement par carte
       if (paymentMethod === 'card') {
@@ -267,10 +364,8 @@ export default function Cart() {
           // Vider le panier
           await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
 
-          // NOTE: Les notifications seront envoyées APRÈS la confirmation du paiement dans PaymentCallback
           console.log('Redirection vers MonCash:', paymentData.paymentUrl);
 
-          // Retourner les données pour redirection
           return { 
             orderNum, 
             codes: createdOrders.map(o => o.code), 
@@ -284,7 +379,85 @@ export default function Cart() {
         }
       }
       
-      // Paiement autre que MonCash - créer une commande par boutique
+      // Paiement Natcash - créer commande en attente de validation
+      if (paymentMethod === 'natcash') {
+        // Valider que le code de transaction est fourni
+        if (!natcashTransactionCode.trim()) {
+          throw new Error('Veuillez saisir votre code de transaction Natcash');
+        }
+
+        // Calculer les frais Natcash pour le montant total
+        const natcashData = calculateNatcashTotal(totalAmount);
+
+        // Créer une commande par boutique
+        const createdOrders = [];
+        for (const shopId of shopIds) {
+          const shopItems = itemsByShop[shopId];
+          const shopSubtotal = shopItems.reduce((sum, item) => {
+            const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+            return sum + itemTotal;
+          }, 0);
+          const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
+          const orderNum = 'RP' + Date.now().toString().slice(-6) + '-' + shopId.slice(-4);
+          const code = generateConfirmationCode();
+
+          const order = await base44.entities.Order.create({
+            order_number: orderNum,
+            client_id: user.id,
+            client_name: user.full_name,
+            client_phone: user.phone,
+            client_address: user.address || '',
+            client_region: user.region,
+            shop_id: shopId,
+            shop_name: shopItems[0].shop_name,
+            shop_region: shopItems[0].shop_region,
+            items: shopItems.map(item => ({
+              product_id: item.product_id,
+              name: item.product_name,
+              quantity: item.quantity,
+              unit_price: item.unit_price + (item.total_customization_price || 0),
+              total: (item.unit_price + (item.total_customization_price || 0)) * item.quantity,
+              customization: item.customization
+            })),
+            subtotal: shopSubtotal,
+            delivery_fee: shopDeliveryFee,
+            total: shopSubtotal + shopDeliveryFee,
+            payment_method: 'natcash',
+            status: 'pending_validation', // Statut spécial pour Natcash
+            payment_status: 'pending',
+            confirmation_code: code,
+            natcash_transaction_code: natcashTransactionCode.trim(),
+            natcash_fee: natcashData.natcashFee,
+            natcash_transfer_amount: natcashData.transferAmount,
+            special_instructions: specialInstructions
+          });
+
+          createdOrders.push({ orderId: order.id, orderNum, code });
+
+          // Envoyer notifications IMMÉDIATEMENT pour informer le marchand
+          await base44.functions.invoke('sendOrderNotification', {
+            orderId: order.id,
+            status: 'pending_validation'
+          }).catch(err => console.error('Notification error:', err));
+
+          // Envoyer notification WhatsApp au marchand
+          await base44.functions.invoke('sendWhatsAppOrderNotification', {
+            orderId: order.id
+          }).catch(err => console.error('WhatsApp error:', err));
+        }
+
+        // Vider le panier
+        await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+        
+        return { 
+          orderNum: createdOrders[0].orderNum, 
+          code: createdOrders[0].code,
+          allOrders: createdOrders,
+          natcashData: natcashData
+        };
+      }
+      
+      // Paiement autre que MonCash/Natcash - créer une commande par boutique
       const createdOrders = [];
       for (const shopId of shopIds) {
         const shopItems = itemsByShop[shopId];
@@ -331,33 +504,10 @@ export default function Cart() {
           status: 'pending'
         }).catch(err => console.error('Notification error:', err));
 
-        // DEBUG: Vérifier les données avant d'envoyer WhatsApp
-        console.log('=== AVANT ENVOI WHATSAPP ===');
-        console.log('Order ID:', order.id);
-        console.log('Shop ID:', shopId);
-        console.log('Shop Name:', shopItems[0].shop_name);
-        
-        const debugResult = await base44.functions.invoke('debugWhatsApp', {
-          orderId: order.id
-        }).catch(err => {
-          console.error('Debug error:', err);
-          return null;
-        });
-        
-        if (debugResult) {
-          console.log('Debug result:', debugResult.data);
-        }
-
         // Envoyer notification WhatsApp au marchand
-        const whatsappResult = await base44.functions.invoke('sendWhatsAppOrderNotification', {
+        await base44.functions.invoke('sendWhatsAppOrderNotification', {
           orderId: order.id
-        }).catch(err => {
-          console.error('WhatsApp notification error:', err);
-          return { error: err.message };
-        });
-        
-        console.log('WhatsApp result:', whatsappResult);
-        console.log('=== FIN ENVOI WHATSAPP ===');
+        }).catch(err => console.error('WhatsApp error:', err));
       }
 
       // Clear cart
@@ -661,6 +811,130 @@ export default function Cart() {
                 </RadioGroup>
               </div>
 
+              {/* Natcash Instructions */}
+              {paymentMethod === 'natcash' && (
+                <div className="bg-white rounded-xl p-4 border-2 border-purple-200">
+                  <h3 className="font-semibold mb-3 text-purple-700">Instructions Natcash</h3>
+                  
+                  <div className="space-y-4">
+                    {/* Détails des frais */}
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <div className="flex items-start gap-2 mb-3">
+                        <Info className="w-5 h-5 text-purple-600 mt-0.5" />
+                        <div>
+                          <p className="text-sm text-purple-600">
+                            <strong>Frais Natcash:</strong> Les frais de retrait Natcash sont ajoutés au montant de votre commande selon le tableau officiel des frais.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="bg-white p-3 rounded border">
+                          <p className="text-xs text-slate-500">Montant de la commande</p>
+                          <p className="font-bold text-lg">{total} HTG</p>
+                        </div>
+                        
+                        {natcashInfo && (
+                          <>
+                            <div className="bg-white p-3 rounded border">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <p className="text-xs text-slate-500">Frais de retrait Natcash</p>
+                                  <p className="font-bold text-lg text-red-600">+{natcashInfo.natcashFee} HTG</p>
+                                </div>
+                                <div className="text-xs text-slate-400 text-right">
+                                  <p>Tranche: {natcashInfo.orderAmount >= 20 && natcashInfo.orderAmount <= 40000 ? 
+                                    `${natcashInfo.orderAmount} HTG` : '> 40,000 HTG'}</p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-white p-3 rounded border border-purple-300">
+                              <p className="text-xs text-slate-500">Montant total à transférer</p>
+                              <p className="font-bold text-2xl text-purple-700">{natcashInfo.transferAmount} HTG</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <p className="text-sm text-purple-600 mb-2">
+                        <strong>Étape 1:</strong> Faites un transfert Natcash vers notre compte marchand :
+                      </p>
+                      <div className="flex items-center justify-between bg-white p-3 rounded border">
+                        <div>
+                          <p className="text-xs text-slate-500">Compte Marchand</p>
+                          <p className="font-bold text-lg">4012-3456</p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => copyToClipboard('4012-3456', 'account')}
+                        >
+                          {copiedAccount ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <p className="text-sm text-purple-600 mb-2">
+                        <strong>Étape 2:</strong> Transférez le montant exact :
+                      </p>
+                      <div className="flex items-center justify-between bg-white p-3 rounded border">
+                        <div>
+                          <p className="text-xs text-slate-500">Montant à transférer</p>
+                          <p className="font-bold text-lg text-orange-600">
+                            {natcashInfo ? natcashInfo.transferAmount : total} HTG
+                          </p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => copyToClipboard(natcashInfo ? natcashInfo.transferAmount.toString() : total.toString(), 'amount')}
+                        >
+                          {copiedAmount ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <p className="text-sm text-purple-600 mb-2">
+                        <strong>Étape 3:</strong> Après le transfert, saisissez votre code de transaction :
+                      </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="natcash-code" className="text-purple-700">
+                          Code de transaction Natcash
+                        </Label>
+                        <Input
+                          id="natcash-code"
+                          placeholder="Ex: 123456 (reçu par SMS)"
+                          value={natcashTransactionCode}
+                          onChange={(e) => setNatcashTransactionCode(e.target.value)}
+                          className="border-purple-300 focus:border-purple-500"
+                          maxLength={20}
+                        />
+                        <p className="text-xs text-slate-400">
+                          Le code est envoyé par SMS après chaque transfert Natcash.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <p className="text-sm text-yellow-700">
+                        ⚠️ <strong>Important:</strong> 
+                        Votre commande sera mise en attente jusqu'à validation manuelle du transfert. 
+                        Vous recevrez une notification une fois validé.
+                        <br />
+                        <span className="text-xs mt-1 block">
+                          <strong>Note:</strong> Les frais Natcash (frais de retrait) sont calculés selon le tableau officiel Natcash et sont inclus dans le montant à transférer.
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Delivery Address */}
               <div className="bg-white rounded-xl p-4">
                 <h3 className="font-semibold mb-3">Adresse de livraison</h3>
@@ -753,9 +1027,25 @@ export default function Cart() {
                       <span>+{pendingBalance} HTG</span>
                     </div>
                   )}
-                  <div className="flex justify-between font-bold text-lg pt-2">
-                    <span>Total</span>
-                    <span className="text-orange-500">{total} HTG</span>
+                  
+                  {/* Affichage des frais Natcash si applicable */}
+                  {paymentMethod === 'natcash' && natcashInfo && (
+                    <div className="flex justify-between text-purple-600 font-medium">
+                      <span>Frais Natcash (retrait)</span>
+                      <span>+{natcashInfo.natcashFee} HTG</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
+                    <span>
+                      {paymentMethod === 'natcash' ? 'Total à transférer' : 'Total'}
+                    </span>
+                    <span className="text-orange-500">
+                      {paymentMethod === 'natcash' && natcashInfo ? 
+                        natcashInfo.transferAmount + ' HTG' : 
+                        total + ' HTG'
+                      }
+                    </span>
                   </div>
                 </div>
               </div>
@@ -771,9 +1061,16 @@ export default function Cart() {
                 <Button 
                   className="flex-1 bg-orange-500 hover:bg-orange-600"
                   onClick={() => createOrderMutation.mutate()}
-                  disabled={createOrderMutation.isPending || redirectingToMoncash || (paymentMethod === 'card' && !squareToken)}
+                  disabled={
+                    createOrderMutation.isPending || 
+                    redirectingToMoncash || 
+                    (paymentMethod === 'card' && !squareToken) ||
+                    (paymentMethod === 'natcash' && !natcashTransactionCode.trim())
+                  }
                 >
-                  {redirectingToMoncash ? 'Redirection MonCash...' : createOrderMutation.isPending ? 'Traitement...' : 'Confirmer'}
+                  {redirectingToMoncash ? 'Redirection MonCash...' : 
+                   paymentMethod === 'natcash' ? 'Soumettre le code' :
+                   createOrderMutation.isPending ? 'Traitement...' : 'Confirmer'}
                 </Button>
               </div>
             </motion.div>
@@ -801,6 +1098,22 @@ export default function Cart() {
                 <p className="text-4xl font-bold text-orange-600 tracking-widest">{confirmCode}</p>
                 <p className="text-xs text-orange-600 mt-2">Donnez ce code au livreur</p>
               </div>
+
+              {paymentMethod === 'natcash' && (
+                <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4 mb-6">
+                  <h3 className="font-semibold text-purple-700 mb-2">🎉 Paiement Natcash Soumis!</h3>
+                  <p className="text-sm text-purple-600 mb-3">
+                    Votre code de transaction a été enregistré. Notre équipe va vérifier manuellement votre transfert.
+                  </p>
+                  <div className="bg-white rounded-lg p-3 text-left">
+                    <p className="text-xs text-slate-500">Statut actuel</p>
+                    <p className="font-bold text-purple-700">⏳ En attente de validation</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Vous recevrez une notification lorsque le transfert sera vérifié.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <Link to={createPageUrl('Orders')} className="flex-1">
