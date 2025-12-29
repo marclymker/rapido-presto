@@ -1124,7 +1124,7 @@ function RecommendedSection({
                 <div className="flex items-center gap-3">
                   <div>
                     <h3 className="text-lg font-semibold text-slate-700">
-                      {rowIndex === 0 ? 'Makarios Bridal & Sélection' : 
+                      {rowIndex === 0 ? ' ' : 
                        rowIndex === 1 ? 'Tendances Mariage & Diverses' : 
                        'Sélection Spéciale 50/50'}
                     </h3>
