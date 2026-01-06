@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Bell, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-// Vérifie bien le chemin d'importation ici
 import { useBrowserNotifications } from './NotificationManager'; 
 
 export default function NotificationPermission() {
@@ -11,7 +10,7 @@ export default function NotificationPermission() {
 
   useEffect(() => {
     if ('Notification' in window) {
-      // Si l'utilisateur n'a pas encore répondu (default)
+      // On affiche le prompt après 3 secondes si la permission est encore par défaut
       if (Notification.permission === 'default') {
         const timer = setTimeout(() => setShowPrompt(true), 3000);
         return () => clearTimeout(timer);
@@ -22,13 +21,9 @@ export default function NotificationPermission() {
   const handleActivate = async () => {
     const granted = await requestPermission();
     if (granted) {
-      // Petit test immédiat
-      new Notification("✅ Notifications activées", {
-        body: "Vous recevrez les alertes ici dès qu'une commande arrive."
-      });
+      new Notification("✅ Notifications activées !");
       setShowPrompt(false);
     } else {
-      alert("Vous avez bloqué les notifications. Changez les paramètres de votre navigateur.");
       setShowPrompt(false);
     }
   };
@@ -40,31 +35,25 @@ export default function NotificationPermission() {
       <motion.div 
         initial={{ opacity: 0, y: 50 }} 
         animate={{ opacity: 1, y: 0 }} 
-        exit={{ opacity: 0, y: 50 }}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] w-[90%] max-w-sm"
+        className="fixed bottom-4 left-4 right-4 z-[9999] md:max-w-sm md:left-auto"
       >
-        <div className="bg-white rounded-2xl shadow-2xl p-5 border border-orange-100 flex flex-col gap-4">
-          <div className="flex items-start gap-4">
-            <div className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-200">
-              <Bell className="w-6 h-6 text-white" />
+        <div className="bg-white rounded-2xl shadow-2xl p-5 border-2 border-orange-500">
+          <div className="flex gap-4">
+            <div className="bg-orange-100 p-3 rounded-xl h-fit">
+              <Bell className="w-6 h-6 text-orange-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-slate-900 text-lg leading-tight">Activer les alertes ?</h3>
-              <p className="text-sm text-slate-500 mt-1">
-                Soyez prévenu par un son dès qu'une nouvelle commande est disponible.
+              <h3 className="font-bold text-slate-900">Notifications de commandes</h3>
+              <p className="text-sm text-slate-500 mb-4">
+                Activez les alertes sonores pour ne manquer aucune vente.
               </p>
+              <div className="flex gap-2">
+                <Button onClick={handleActivate} className="bg-orange-500 hover:bg-orange-600 flex-1 text-white font-bold">
+                  Activer
+                </Button>
+                <Button variant="ghost" onClick={() => setShowPrompt(false)}>Plus tard</Button>
+              </div>
             </div>
-            <button onClick={() => setShowPrompt(false)} className="text-slate-400">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={handleActivate} className="bg-orange-600 hover:bg-orange-700 text-white flex-1 font-bold h-11">
-              Activer maintenant
-            </Button>
-            <Button variant="ghost" onClick={() => setShowPrompt(false)} className="text-slate-500 h-11">
-              Plus tard
-            </Button>
           </div>
         </div>
       </motion.div>
