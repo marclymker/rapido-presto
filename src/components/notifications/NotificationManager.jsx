@@ -1,27 +1,25 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
-// Fonction pour le son
-const playNotificationSound = () => {
+const playSound = () => {
   const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-  audio.play().catch(() => console.log("Son bloqué: nécessite une interaction utilisateur préalable."));
+  audio.play().catch(() => console.log("Audio bloqué"));
 };
 
-// Export 1 : Gestion des permissions
+const vibratePhone = () => {
+  if ("vibrate" in navigator) {
+    navigator.vibrate([200, 100, 200]); // Vibration style Android
+  }
+};
+
 export function useBrowserNotifications() {
   const requestPermission = async () => {
-    if (!('Notification' in window)) {
-      console.warn("Ce navigateur ne supporte pas les notifications.");
-      return false;
-    }
-    const permission = await Notification.requestPermission();
-    return permission === 'granted';
+    if (!('Notification' in window)) return false;
+    return await Notification.requestPermission() === 'granted';
   };
-
   return { requestPermission };
 }
 
-// Export 2 : Surveillance des commandes
 export function useOrderNotifications({ enabled, onNewOrder }) {
   const previousCountRef = useRef(null);
 
@@ -30,32 +28,29 @@ export function useOrderNotifications({ enabled, onNewOrder }) {
 
     const currentCount = onNewOrder.length || 0;
     
-    // Initialisation silencieuse
     if (previousCountRef.current === null) {
       previousCountRef.current = currentCount;
       return;
     }
     
-    // Si nouvelles commandes détectées
     if (currentCount > previousCountRef.current) {
       const diff = currentCount - previousCountRef.current;
       
-      playNotificationSound();
-
-      // 1. Notification Système (Navigateur)
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("🔔 Nouvelle commande !", {
-          body: `Vous avez ${diff} nouvelle(s) commande(s) en attente.`,
-          icon: '/favicon.ico',
-          vibrate: [200, 100, 200]
-        });
-      }
-
-      // 2. Toast UI (Dans l'app)
-      toast.success(`Nouvelle commande !`, {
-        description: `Quantité : ${diff}`,
-        duration: 8000,
+      // ACTIONS IMMEDIATES (Fonctionnent dans l'APK)
+      playSound();
+      vibratePhone();
+      
+      // TOAST (UI Interne - Fonctionne toujours)
+      toast.error(`NOUVELLE COMMANDE (${diff})`, {
+        description: "Une nouvelle activité a été détectée !",
+        duration: 10000,
+        position: 'top-center',
       });
+
+      // NOTIFICATION SYSTEME (Si l'APK le permet)
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("🔔 Commande reçue !", { body: `Nouveau message disponible` });
+      }
     }
     
     previousCountRef.current = currentCount;
