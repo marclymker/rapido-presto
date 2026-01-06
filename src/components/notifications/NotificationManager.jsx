@@ -1,11 +1,27 @@
+import { useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 
-// Fonction pour jouer un son de notification
+// Fonction pour le son
 const playNotificationSound = () => {
   const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-  audio.play().catch(err => console.log("Audio play blocked by browser"));
+  audio.play().catch(() => console.log("Son bloqué: nécessite une interaction utilisateur préalable."));
 };
 
+// Export 1 : Gestion des permissions
+export function useBrowserNotifications() {
+  const requestPermission = async () => {
+    if (!('Notification' in window)) {
+      console.warn("Ce navigateur ne supporte pas les notifications.");
+      return false;
+    }
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  };
+
+  return { requestPermission };
+}
+
+// Export 2 : Surveillance des commandes
 export function useOrderNotifications({ enabled, onNewOrder }) {
   const previousCountRef = useRef(null);
 
@@ -14,39 +30,31 @@ export function useOrderNotifications({ enabled, onNewOrder }) {
 
     const currentCount = onNewOrder.length || 0;
     
-    // Initialisation : on mémorise le compte actuel au chargement
+    // Initialisation silencieuse
     if (previousCountRef.current === null) {
       previousCountRef.current = currentCount;
       return;
     }
     
-    // Détection d'une augmentation
+    // Si nouvelles commandes détectées
     if (currentCount > previousCountRef.current) {
       const diff = currentCount - previousCountRef.current;
-      const title = "🔔 Nouvelle commande !";
-      const message = diff > 1 ? `Vous avez ${diff} nouvelles commandes.` : "Une nouvelle commande est arrivée.";
-
-      // 1. Jouer le son
+      
       playNotificationSound();
 
-      // 2. Notification système (Navigateur/Android)
+      // 1. Notification Système (Navigateur)
       if ("Notification" in window && Notification.permission === "granted") {
-        try {
-          new Notification(title, {
-            body: message,
-            icon: '/favicon.ico',
-            tag: 'new-order', // Evite les doublons
-            requireInteraction: true // La notification reste jusqu'à lecture
-          });
-        } catch (e) {
-          console.error("Erreur notification native:", e);
-        }
+        new Notification("🔔 Nouvelle commande !", {
+          body: `Vous avez ${diff} nouvelle(s) commande(s) en attente.`,
+          icon: '/favicon.ico',
+          vibrate: [200, 100, 200]
+        });
       }
 
-      // 3. Notification visuelle dans l'app (Toast)
-      toast.success(title, {
-        description: message,
-        duration: 10000,
+      // 2. Toast UI (Dans l'app)
+      toast.success(`Nouvelle commande !`, {
+        description: `Quantité : ${diff}`,
+        duration: 8000,
       });
     }
     
