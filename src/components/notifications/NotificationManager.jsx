@@ -1,58 +1,71 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 
-const playSound = () => {
-  const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-  audio.play().catch(() => console.log("Audio bloqué"));
-};
+// --- LOGIQUE SONORE ---
+export function useNotificationSound() {
+  const playSound = useCallback(() => {
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    audio.play().catch(() => console.log("Son bloqué : nécessite une interaction utilisateur."));
+  }, []);
 
-const vibratePhone = () => {
-  if ("vibrate" in navigator) {
-    navigator.vibrate([200, 100, 200]); // Vibration style Android
-  }
-};
+  return { playSound };
+}
 
+// --- LOGIQUE PERMISSIONS ---
 export function useBrowserNotifications() {
   const requestPermission = async () => {
     if (!('Notification' in window)) return false;
-    return await Notification.requestPermission() === 'granted';
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
   };
+
   return { requestPermission };
 }
 
+// --- LOGIQUE SURVEILLANCE DES COMMANDES ---
 export function useOrderNotifications({ enabled, onNewOrder }) {
   const previousCountRef = useRef(null);
+  const { playSound } = useNotificationSound();
 
   useEffect(() => {
     if (!enabled || !onNewOrder) return;
 
     const currentCount = onNewOrder.length || 0;
     
+    // Premier chargement : on initialise sans notifier
     if (previousCountRef.current === null) {
       previousCountRef.current = currentCount;
       return;
     }
     
+    // Si le nombre de commandes a augmenté
     if (currentCount > previousCountRef.current) {
       const diff = currentCount - previousCountRef.current;
       
-      // ACTIONS IMMEDIATES (Fonctionnent dans l'APK)
+      // 1. Déclencher le son (Marche dans l'APK si l'app est ouverte)
       playSound();
-      vibratePhone();
-      
-      // TOAST (UI Interne - Fonctionne toujours)
-      toast.error(`NOUVELLE COMMANDE (${diff})`, {
-        description: "Une nouvelle activité a été détectée !",
+
+      // 2. Faire vibrer le téléphone (Très utile pour l'APK Android)
+      if ("vibrate" in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
+
+      // 3. Afficher un Toast visuel interne (Infaillible dans l'APK)
+      toast.success(`🔔 NOUVELLE COMMANDE !`, {
+        description: `Vous avez reçu ${diff} nouvelle(s) commande(s).`,
         duration: 10000,
         position: 'top-center',
       });
 
-      // NOTIFICATION SYSTEME (Si l'APK le permet)
+      // 4. Notification Système (Ne marchera que si l'APK autorise les WebView Notifications)
       if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("🔔 Commande reçue !", { body: `Nouveau message disponible` });
+        new Notification("Nouvelle Commande", {
+          body: `Vous avez ${diff} nouvelles commandes en attente.`,
+          icon: '/favicon.ico'
+        });
       }
     }
     
     previousCountRef.current = currentCount;
-  }, [enabled, onNewOrder]);
+  }, [enabled, onNewOrder, playSound]);
 }
