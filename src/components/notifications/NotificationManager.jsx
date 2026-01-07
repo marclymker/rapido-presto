@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
-export function useNotificationManager(user) {
+export function useBrowserNotifications(user) {
   const audioRef = useRef(null);
 
   // Précharger l'audio au montage du composant
