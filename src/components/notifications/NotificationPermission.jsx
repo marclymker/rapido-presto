@@ -7,7 +7,7 @@ export default function NotificationPermission() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    // Vérifier si l'utilisateur a déjà fait un choix
+    // On vérifie si l'utilisateur a déjà fait un choix
     const choice = localStorage.getItem('rapido-notif-choice');
     if (!choice) {
       const timer = setTimeout(() => setShow(true), 3000);
@@ -18,12 +18,12 @@ export default function NotificationPermission() {
   const handleAction = async (granted) => {
     if (granted) {
       localStorage.setItem('rapido-notif-choice', 'granted');
-      // Demande de permission native simplifiée
+      // On demande la permission native au navigateur/APK
       if ("Notification" in window) {
         try {
           await Notification.requestPermission();
         } catch (e) {
-          console.error("Erreur permission native");
+          console.log("Permission bloquée par le système");
         }
       }
     } else {
@@ -43,23 +43,23 @@ export default function NotificationPermission() {
         className="fixed bottom-0 left-0 right-0 z-[9999] p-4 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]"
       >
         <div className="max-w-md mx-auto flex items-center gap-4">
-          <div className="bg-orange-500 p-3 rounded-2xl shrink-0">
-            <Bell className="text-white w-6 h-6" />
+          <div className="bg-orange-500 p-3 rounded-2xl shrink-0 text-white">
+            <Bell className="w-6 h-6" />
           </div>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-bold text-slate-900 leading-tight">Activer les alertes ?</p>
-            <p className="text-[11px] text-slate-500 mt-1">Ne manquez aucune commande Rapido.</p>
+          <div className="flex-1 text-left text-slate-900">
+            <p className="text-sm font-bold leading-tight text-slate-900">Activer les alertes ?</p>
+            <p className="text-[11px] text-slate-500 mt-1">Recevez un son dès qu'une commande arrive.</p>
           </div>
           <div className="flex flex-col gap-1">
             <Button 
               onClick={() => handleAction(true)} 
-              className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-9 px-4 font-bold shadow-none"
+              className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-9 px-4 font-bold border-none"
             >
               Activer
             </Button>
             <button 
               onClick={() => handleAction(false)}
-              className="text-[10px] text-slate-400 py-1 font-medium"
+              className="text-[10px] text-slate-400 py-1 font-medium bg-transparent border-none"
             >
               Plus tard
             </button>
