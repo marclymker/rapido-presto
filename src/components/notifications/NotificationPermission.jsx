@@ -1,62 +1,79 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Bell, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useBrowserNotifications } from './NotificationManager'; 
+import { toast } from 'sonner';
 
 export default function NotificationPermission() {
-  const [showPrompt, setShowPrompt] = useState(false);
-  const { requestPermission } = useBrowserNotifications();
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if ('Notification' in window) {
-      // On affiche le prompt après 3 secondes si la permission est encore par défaut
-      if (Notification.permission === 'default') {
-        const timer = setTimeout(() => setShowPrompt(true), 3000);
-        return () => clearTimeout(timer);
-      }
+    // 1. Vérifier si l'utilisateur a déjà fait un choix dans le passé
+    const choice = localStorage.getItem('rapido-notif-choice');
+    
+    if (!choice) {
+      // Afficher après 2 secondes si aucun choix n'est mémorisé
+      const timer = setTimeout(() => setShow(true), 2000);
+      return () => clearTimeout(timer);
     }
   }, []);
 
-  const handleActivate = async () => {
-    const granted = await requestPermission();
+  const handleAction = async (granted) => {
     if (granted) {
-      new Notification("✅ Notifications activées !");
-      setShowPrompt(false);
+      // Essayer de demander la permission système (navigateur/APK)
+      if ("Notification" in window) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          toast.success("Alertes activées avec succès !");
+        }
+      }
+      // Enregistrer le choix "Accepté"
+      localStorage.setItem('rapido-notif-choice', 'granted');
     } else {
-      setShowPrompt(false);
+      // Enregistrer le choix "Plus tard" pour ne pas harceler l'utilisateur
+      localStorage.setItem('rapido-notif-choice', 'later');
     }
+    
+    // Fermer la popup immédiatement
+    setShow(false);
   };
-
-  if (!showPrompt) return null;
 
   return (
     <AnimatePresence>
-      <motion.div 
-        initial={{ opacity: 0, y: 50 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        className="fixed bottom-4 left-4 right-4 z-[9999] md:max-w-sm md:left-auto"
-      >
-        <div className="bg-white rounded-2xl shadow-2xl p-5 border-2 border-orange-500">
-          <div className="flex gap-4">
-            <div className="bg-orange-100 p-3 rounded-xl h-fit">
-              <Bell className="w-6 h-6 text-orange-600" />
+      {show && (
+        <motion.div 
+          initial={{ y: 100, opacity: 0 }} 
+          animate={{ y: 0, opacity: 1 }} 
+          exit={{ y: 100, opacity: 0 }}
+          className="fixed bottom-0 left-0 right-0 z-[9999] p-4 bg-white border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]"
+        >
+          <div className="max-w-md mx-auto flex items-center gap-4">
+            <div className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-200 shrink-0">
+              <Bell className="text-white w-6 h-6 animate-ring" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-slate-900">Notifications de commandes</h3>
-              <p className="text-sm text-slate-500 mb-4">
-                Activez les alertes sonores pour ne manquer aucune vente.
+              <p className="text-sm font-bold text-slate-900 leading-tight">Activer les alertes ?</p>
+              <p className="text-[11px] text-slate-500 leading-tight mt-1">
+                Recevez un son dès qu'une commande arrive.
               </p>
-              <div className="flex gap-2">
-                <Button onClick={handleActivate} className="bg-orange-500 hover:bg-orange-600 flex-1 text-white font-bold">
-                  Activer
-                </Button>
-                <Button variant="ghost" onClick={() => setShowPrompt(false)}>Plus tard</Button>
-              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <Button 
+                onClick={() => handleAction(true)} 
+                className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-9 px-4 font-bold"
+              >
+                Activer
+              </Button>
+              <button 
+                onClick={() => handleAction(false)}
+                className="text-[10px] text-slate-400 font-medium py-1"
+              >
+                Plus tard
+              </button>
             </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }
