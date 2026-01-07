@@ -119,3 +119,4 @@ export function useBrowserNotifications(user) {
 // Exports alternatifs pour compatibilité Base44
 export const useNotificationSound = useBrowserNotifications;
 export const useNotificationManager = useBrowserNotifications;
+export const useOrderNotifications = useBrowserNotifications;
