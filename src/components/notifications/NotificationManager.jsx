@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
+// Export avec plusieurs noms pour compatibilité
 export function useBrowserNotifications(user) {
   const audioRef = useRef(null);
 
@@ -114,3 +115,7 @@ export function useBrowserNotifications(user) {
     };
   }, [user, playAlert]);
 }
+
+// Exports alternatifs pour compatibilité Base44
+export const useNotificationSound = useBrowserNotifications;
+export const useNotificationManager = useBrowserNotifications;
