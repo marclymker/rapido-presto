@@ -7,7 +7,7 @@ export default function NotificationPermission() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    // On vérifie si l'utilisateur a déjà cliqué sur "Activer" ou "Plus tard"
+    // Vérifier si l'utilisateur a déjà fait un choix
     const choice = localStorage.getItem('rapido-notif-choice');
     if (!choice) {
       const timer = setTimeout(() => setShow(true), 3000);
@@ -17,19 +17,16 @@ export default function NotificationPermission() {
 
   const handleAction = async (granted) => {
     if (granted) {
-      // On enregistre le choix pour ne plus afficher la popup
       localStorage.setItem('rapido-notif-choice', 'granted');
-      
-      // On demande la permission au navigateur/APK pour le son/notifications
+      // Demande de permission native simplifiée
       if ("Notification" in window) {
         try {
           await Notification.requestPermission();
         } catch (e) {
-          console.log("Erreur de permission native");
+          console.error("Erreur permission native");
         }
       }
     } else {
-      // On enregistre "later" pour ne plus l'embêter pendant cette session
       localStorage.setItem('rapido-notif-choice', 'later');
     }
     setShow(false);
@@ -56,7 +53,7 @@ export default function NotificationPermission() {
           <div className="flex flex-col gap-1">
             <Button 
               onClick={() => handleAction(true)} 
-              className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-9 px-4 font-bold"
+              className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-9 px-4 font-bold shadow-none"
             >
               Activer
             </Button>
