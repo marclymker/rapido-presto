@@ -1,16 +1,16 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
-// Export avec plusieurs noms pour compatibilité
 export function useBrowserNotifications(user) {
   const audioRef = useRef(null);
+  const wsRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
 
-  // Précharger l'audio au montage du composant
+  // Précharger l'audio
   useEffect(() => {
     audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    audioRef.current.load(); // Précharge le fichier
+    audioRef.current.load();
     
-    // Débloquer l'audio avec un clic utilisateur (workaround navigateurs)
     const unlockAudio = () => {
       audioRef.current.play().then(() => {
         audioRef.current.pause();
@@ -30,14 +30,14 @@ export function useBrowserNotifications(user) {
   }, []);
   
   const playAlert = useCallback((data) => {
-    const orderInfo = `Commande #${data.orderNumber || ''} - ${data.total || ''} HTG`;
+    const orderInfo = `Commande #${data.orderNumber || data.order_number || ''} - ${data.total || ''} HTG`;
     
-    // 1. Vibration pour mobile
+    // 1. Vibration
     if ("vibrate" in navigator) {
       navigator.vibrate([500, 200, 500]);
     }
 
-    // 2. Son d'alerte
+    // 2. Son
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(err => {
@@ -45,23 +45,22 @@ export function useBrowserNotifications(user) {
       });
     }
 
-    // 3. Notification système native (popup + son système)
+    // 3. Notification native
     if ("Notification" in window && Notification.permission === "granted") {
       try {
         const notification = new Notification("💰 NOUVELLE COMMANDE !", {
           body: orderInfo,
-          icon: '/logo.png', // Ajoute ton logo ici
-          badge: '/badge.png', // Badge pour Android
-          tag: `order-${data.orderId}`, // Évite les doublons
-          requireInteraction: true, // Reste affichée jusqu'au clic
+          icon: '/logo.png',
+          badge: '/badge.png',
+          tag: `order-${data.orderId || data.id}`,
+          requireInteraction: true,
           vibrate: [500, 200, 500],
-          // Son système (selon le navigateur/OS)
           silent: false
         });
 
         notification.onclick = () => {
           window.focus();
-          window.location.href = `/entreprise/orders/${data.orderId}`;
+          window.location.href = `/entreprise/orders/${data.orderId || data.id}`;
           notification.close();
         };
       } catch (err) {
@@ -69,54 +68,89 @@ export function useBrowserNotifications(user) {
       }
     }
 
-    // 4. Toast (fallback si pas de permission)
+    // 4. Toast
     toast.error("💰 NOUVELLE COMMANDE !", {
       description: orderInfo,
       duration: Infinity,
       action: {
         label: "OUVRIR",
-        onClick: () => window.location.href = `/entreprise/orders/${data.orderId}`
+        onClick: () => window.location.href = `/entreprise/orders/${data.orderId || data.id}`
       },
     });
   }, []);
 
-  useEffect(() => {
+  // Connexion WebSocket
+  const connectWebSocket = useCallback(() => {
     if (!user?.id) return;
 
-    // Chargement de Pusher via CDN
-    if (!window.Pusher) {
-      const script = document.createElement('script');
-      script.src = "https://js.pusher.com/8.2.0/pusher.min.js";
-      script.async = true;
-      script.onload = () => initPusher();
-      document.head.appendChild(script);
-    } else {
-      initPusher();
-    }
-
-    let pusherInstance = null;
-
-    function initPusher() {
-      pusherInstance = new window.Pusher('VOTRE_KEY', {
-        cluster: 'VOTRE_CLUSTER',
-        forceTLS: true
-      });
-
-      const channel = pusherInstance.subscribe(`user-${user.id}`);
+    // URL de ta fonction websocket Base44
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/functions/websocket?channel=orders&userId=${user.id}`;
+    
+    try {
+      wsRef.current = new WebSocket(wsUrl);
       
-      channel.bind('new-order', (data) => {
-        console.log("Commande reçue:", data);
-        playAlert(data);
-      });
+      wsRef.current.onopen = () => {
+        console.log('✅ WebSocket connecté');
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
+      };
+      
+      wsRef.current.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          console.log('📨 Message WebSocket reçu:', message);
+          
+          // Répondre au ping
+          if (message.type === 'ping') {
+            wsRef.current.send(JSON.stringify({ type: 'pong' }));
+            return;
+          }
+          
+          // Nouvelle commande
+          if (message.type === 'update' && message.entity === 'order' && message.action === 'new') {
+            console.log('🔔 Nouvelle commande détectée!');
+            playAlert(message.data || message);
+          }
+          
+        } catch (error) {
+          console.error('Erreur parsing WebSocket:', error);
+        }
+      };
+      
+      wsRef.current.onerror = (error) => {
+        console.error('❌ Erreur WebSocket:', error);
+      };
+      
+      wsRef.current.onclose = () => {
+        console.log('🔌 WebSocket déconnecté, reconnexion dans 5s...');
+        // Reconnexion automatique
+        reconnectTimeoutRef.current = setTimeout(connectWebSocket, 5000);
+      };
+      
+    } catch (error) {
+      console.error('Erreur création WebSocket:', error);
+      reconnectTimeoutRef.current = setTimeout(connectWebSocket, 5000);
     }
-
-    return () => {
-      if (pusherInstance) pusherInstance.disconnect();
-    };
   }, [user, playAlert]);
+
+  // Initialiser WebSocket
+  useEffect(() => {
+    connectWebSocket();
+    
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, [connectWebSocket]);
 }
 
-// Exports alternatifs pour compatibilité Base44
+// Exports alternatifs
 export const useNotificationSound = useBrowserNotifications;
 export const useNotificationManager = useBrowserNotifications;
 export const useOrderNotifications = useBrowserNotifications;
