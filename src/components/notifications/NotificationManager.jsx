@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 export function useNotificationManager(user) {
   
   const playAlert = useCallback((data) => {
-    // Vibration
+    // Vibration pour l'APK
     if ("vibrate" in navigator) {
       navigator.vibrate([500, 200, 500]);
     }
@@ -13,7 +13,7 @@ export function useNotificationManager(user) {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
     audio.play().catch(() => {});
 
-    // Toast
+    // Affichage du Toast bloquant
     toast.error("💰 NOUVELLE COMMANDE !", {
       description: `Commande #${data.orderNumber || ''} - ${data.total || ''} HTG`,
       duration: Infinity,
@@ -27,7 +27,7 @@ export function useNotificationManager(user) {
   useEffect(() => {
     if (!user?.id) return;
 
-    // Charger le script Pusher dynamiquement s'il n'est pas déjà là
+    // Chargement dynamique de Pusher (méthode CDN pour éviter l'erreur d'import)
     if (!window.Pusher) {
       const script = document.createElement('script');
       script.src = "https://js.pusher.com/8.2.0/pusher.min.js";
@@ -41,7 +41,7 @@ export function useNotificationManager(user) {
     let pusherInstance = null;
 
     function initPusher() {
-      // Utilisation de window.Pusher au lieu de l'import
+      // Remplace par tes vraies clés Pusher
       pusherInstance = new window.Pusher('TA_CLE_PUSHER', {
         cluster: 'eu',
         forceTLS: true
@@ -50,15 +50,12 @@ export function useNotificationManager(user) {
       const channel = pusherInstance.subscribe(`user-${user.id}`);
       
       channel.bind('new-order', (data) => {
-        console.log("Signal reçu !", data);
         playAlert(data);
       });
     }
 
     return () => {
-      if (pusherInstance) {
-        pusherInstance.disconnect();
-      }
+      if (pusherInstance) pusherInstance.disconnect();
     };
   }, [user, playAlert]);
 }
