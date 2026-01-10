@@ -16,7 +16,22 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
   const [aiLoading, setAiLoading] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [newTag, setNewTag] = useState('');
+
+  // Liste des sous-catégories pour Mariage
+  const marriageSubcategories = [
+    'Demoiselle d\'honneur',
+    'Annonceuse',
+    'Temoins',
+    'Robe de Mariee',
+    'Bague de Mariage',
+    'Accessoires',
+    'Carte & Programmation',
+    'Materiels Decor'
+  ];
+
+  // État initial du formulaire
+  const initialFormData = {
     name: '',
     price: '',
     promo_price: '',
@@ -45,20 +60,9 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         label_4: ''
       }
     }
-  });
-  const [newTag, setNewTag] = useState('');
+  };
 
-  // Liste des sous-catégories pour Mariage
-  const marriageSubcategories = [
-    'Demoiselle d\'honneur',
-    'Annonceuse',
-    'Temoins',
-    'Robe de Mariee',
-    'Bague de Mariage',
-    'Accessoires',
-    'Carte & Programmation',
-    'Materiels Decor'
-  ];
+  const [formData, setFormData] = useState(initialFormData);
 
   useEffect(() => {
     if (open && !product) {
@@ -66,36 +70,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
       setShowGuidelines(true);
       setShowForm(false);
       // Reset form for new product
-      setFormData({
-        name: '',
-        price: '',
-        promo_price: '',
-        description: '',
-        category: 'Fastfood',
-        subcategory: '',
-        stock_quantity: 0,
-        image_url: '',
-        additional_images: [],
-        taille_emballage: 'Moyen',
-        delivery_time: '30-45 minutes',
-        seo_tags: [],
-        is_available: true,
-        product_attributes: {
-          color: '',
-          size: '',
-          material: '',
-          gender: '',
-          age_group: '',
-          pattern: '',
-          custom_labels: {
-            label_0: '',
-            label_1: '',
-            label_2: '',
-            label_3: '',
-            label_4: ''
-          }
-        }
-      });
+      setFormData(initialFormData);
     } else if (open && product) {
       // Skip guidelines for editing and load product data
       setShowGuidelines(false);
@@ -189,10 +164,13 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       if (isAdditional) {
-        setFormData({ ...formData, additional_images: [...formData.additional_images, file_url] });
+        setFormData(prev => ({ 
+          ...prev, 
+          additional_images: [...prev.additional_images, file_url] 
+        }));
         toast.success('Image ajoutée');
       } else {
-        setFormData({ ...formData, image_url: file_url });
+        setFormData(prev => ({ ...prev, image_url: file_url }));
         toast.success('Image téléchargée');
       }
     } catch (error) {
@@ -228,13 +206,13 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         }
       });
 
-      setFormData({
-        ...formData,
-        description: result.description || formData.description,
-        category: result.category || formData.category,
-        subcategory: result.subcategory || formData.subcategory,
-        seo_tags: result.seo_tags || formData.seo_tags
-      });
+      setFormData(prev => ({
+        ...prev,
+        description: result.description || prev.description,
+        category: result.category || prev.category,
+        subcategory: result.subcategory || prev.subcategory,
+        seo_tags: result.seo_tags || prev.seo_tags
+      }));
       
       toast.success('✨ Informations générées avec AI');
     } catch (error) {
@@ -246,21 +224,31 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
 
   const addTag = () => {
     if (newTag.trim() && !formData.seo_tags.includes(newTag.trim())) {
-      setFormData({ ...formData, seo_tags: [...formData.seo_tags, newTag.trim()] });
+      setFormData(prev => ({ 
+        ...prev, 
+        seo_tags: [...prev.seo_tags, newTag.trim()] 
+      }));
       setNewTag('');
     }
   };
 
   const removeTag = (tag) => {
-    setFormData({ ...formData, seo_tags: formData.seo_tags.filter(t => t !== tag) });
+    setFormData(prev => ({ 
+      ...prev, 
+      seo_tags: prev.seo_tags.filter(t => t !== tag) 
+    }));
   };
 
   // Réinitialiser la sous-catégorie lorsque la catégorie change
   const handleCategoryChange = (value) => {
     if (value !== 'Mariage') {
-      setFormData({ ...formData, category: value, subcategory: '' });
+      setFormData(prev => ({ 
+        ...prev, 
+        category: value, 
+        subcategory: '' 
+      }));
     } else {
-      setFormData({ ...formData, category: value });
+      setFormData(prev => ({ ...prev, category: value }));
     }
   };
 
@@ -275,388 +263,383 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         onCancel={onClose}
       />
       
-      <Dialog open={showForm} onOpenChange={onClose}>
+      <Dialog open={showForm && open} onOpenChange={onClose}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{product ? 'Modifier l\'article' : 'Nouvel article'}</DialogTitle>
-          {aiLoading && (
-            <div className="flex items-center gap-2 text-purple-600 text-sm mt-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Génération automatique en cours...</span>
-            </div>
-          )}
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label>Nom de l'article <span className="text-red-500">*</span></Label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ex: Pizza Margherita"
-              required
-            />
-          </div>
-
-          <div>
-            <Label>Photo de l'article <span className="text-red-500">*</span></Label>
-            <input 
-              type="file" 
-              accept="image/*" 
-              onChange={(e) => handleImageUpload(e, false)} 
-              className="w-full border rounded-lg p-2"
-              required={!formData.image_url}
-            />
-            {formData.image_url && (
-              <div className="flex items-center gap-4 mt-2">
-                <img src={formData.image_url} alt="" className="h-32 w-32 object-cover rounded-lg border-2 border-blue-500" />
-                <Button
-                  type="button"
-                  onClick={handleGenerateWithAI}
-                  disabled={aiLoading || !formData.name}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                >
-                  {aiLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4 mr-2" />
-                  )}
-                  Magie AI
-                </Button>
+          <DialogHeader>
+            <DialogTitle>{product ? 'Modifier l\'article' : 'Nouvel article'}</DialogTitle>
+            {aiLoading && (
+              <div className="flex items-center gap-2 text-purple-600 text-sm mt-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Génération automatique en cours...</span>
               </div>
             )}
-          </div>
-
-          <div>
-            <Label>Description</Label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              placeholder="Sera générée automatiquement..."
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label>Prix (HTG) <span className="text-red-500">*</span></Label>
+              <Label>Nom de l'article <span className="text-red-500">*</span></Label>
               <Input
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || '' })}
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Ex: Pizza Margherita"
                 required
-                min="1"
               />
             </div>
+
             <div>
-              <Label>Prix promo (HTG)</Label>
-              <Input
-                type="number"
-                value={formData.promo_price}
-                onChange={(e) => setFormData({ ...formData, promo_price: parseFloat(e.target.value) || null })}
+              <Label>Photo de l'article <span className="text-red-500">*</span></Label>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => handleImageUpload(e, false)} 
+                className="w-full border rounded-lg p-2"
+                required={!formData.image_url}
+              />
+              {formData.image_url && (
+                <div className="flex items-center gap-4 mt-2">
+                  <img src={formData.image_url} alt="Prévisualisation" className="h-32 w-32 object-cover rounded-lg border-2 border-blue-500" />
+                  <Button
+                    type="button"
+                    onClick={handleGenerateWithAI}
+                    disabled={aiLoading || !formData.name}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  >
+                    {aiLoading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4 mr-2" />
+                    )}
+                    Magie AI
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label>Description</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+                placeholder="Sera générée automatiquement..."
               />
             </div>
-          </div>
 
-          <div>
-            <Label>Images supplémentaires</Label>
-            <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true)} className="w-full" />
-            {formData.additional_images.length > 0 && (
-              <div className="mt-2 flex gap-2 flex-wrap">
-                {formData.additional_images.map((img, idx) => (
-                  <div key={idx} className="relative">
-                    <img src={img} alt="" className="h-20 w-20 object-cover rounded-lg" />
-                    <button
-                      type="button"
-                      onClick={() => setFormData({
-                        ...formData,
-                        additional_images: formData.additional_images.filter((_, i) => i !== idx)
-                      })}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Type d'article</Label>
-              <Select value={formData.category} onValueChange={handleCategoryChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Fastfood">Fastfood</SelectItem>
-                  <SelectItem value="Restaurants">Restaurants</SelectItem>
-                  <SelectItem value="Boutique Fleurs">Boutique Fleurs</SelectItem>
-                  <SelectItem value="Pharmacie">Pharmacie</SelectItem>
-                  <SelectItem value="Mariage">Mariage</SelectItem>
-                  <SelectItem value="Epicerie">Épicerie</SelectItem>
-                  <SelectItem value="Café">Café</SelectItem>
-                  <SelectItem value="Pour Femme">Pour Femme</SelectItem>
-                  <SelectItem value="Electronics">Electronics</SelectItem>
-                  <SelectItem value="Pour homme">Pour homme</SelectItem>
-                  <SelectItem value="Maison">Maison</SelectItem>
-                  <SelectItem value="Bébé">Bébé</SelectItem>
-                  <SelectItem value="Outils">Outils</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-slate-500 mt-1">
-                Le type d'article peut être différent de votre catégorie boutique
-              </p>
-            </div>
-
-            {formData.category === 'Mariage' && (
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Sous-catégorie Mariage</Label>
-                <Select 
-                  value={formData.subcategory} 
-                  onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
-                >
+                <Label>Prix (HTG) <span className="text-red-500">*</span></Label>
+                <Input
+                  type="number"
+                  value={formData.price}
+                  onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || '' }))}
+                  required
+                  min="1"
+                />
+              </div>
+              <div>
+                <Label>Prix promo (HTG)</Label>
+                <Input
+                  type="number"
+                  value={formData.promo_price}
+                  onChange={(e) => setFormData(prev => ({ ...prev, promo_price: parseFloat(e.target.value) || null }))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>Images supplémentaires</Label>
+              <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true)} className="w-full" />
+              {formData.additional_images.length > 0 && (
+                <div className="mt-2 flex gap-2 flex-wrap">
+                  {formData.additional_images.map((img, idx) => (
+                    <div key={idx} className="relative">
+                      <img src={img} alt={`Supplémentaire ${idx + 1}`} className="h-20 w-20 object-cover rounded-lg" />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          additional_images: prev.additional_images.filter((_, i) => i !== idx)
+                        }))}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Type d'article</Label>
+                <Select value={formData.category} onValueChange={handleCategoryChange}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une sous-catégorie" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucune sous-catégorie</SelectItem>
-                    {marriageSubcategories.map((subcat) => (
-                      <SelectItem key={subcat} value={subcat}>
-                        {subcat}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="Fastfood">Fastfood</SelectItem>
+                    <SelectItem value="Restaurants">Restaurants</SelectItem>
+                    <SelectItem value="Boutique Fleurs">Boutique Fleurs</SelectItem>
+                    <SelectItem value="Pharmacie">Pharmacie</SelectItem>
+                    <SelectItem value="Mariage">Mariage</SelectItem>
+                    <SelectItem value="Epicerie">Épicerie</SelectItem>
+                    <SelectItem value="Café">Café</SelectItem>
+                    <SelectItem value="Pour Femme">Pour Femme</SelectItem>
+                    <SelectItem value="Electronics">Electronics</SelectItem>
+                    <SelectItem value="Pour homme">Pour homme</SelectItem>
+                    <SelectItem value="Maison">Maison</SelectItem>
+                    <SelectItem value="Bébé">Bébé</SelectItem>
+                    <SelectItem value="Outils">Outils</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-slate-500 mt-1">
-                  Spécifiez la sous-catégorie pour mieux classer votre article
+                  Le type d'article peut être différent de votre catégorie boutique
                 </p>
               </div>
-            )}
 
-            {formData.category !== 'Mariage' && (
-              <div>
-                <Label>Stock disponible</Label>
-                <Input
-                  type="number"
-                  value={formData.stock_quantity}
-                  onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Afficher le champ stock si on est dans Mariage et que le champ sous-catégorie prend sa place */}
-          {formData.category === 'Mariage' && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Stock disponible</Label>
-                <Input
-                  type="number"
-                  value={formData.stock_quantity}
-                  onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
-                />
-              </div>
-              <div></div> {/* Placeholder pour garder la grille */}
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Taille d'emballage</Label>
-              <Select value={formData.taille_emballage} onValueChange={(v) => setFormData({ ...formData, taille_emballage: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Petit">Petit</SelectItem>
-                  <SelectItem value="Moyen">Moyen</SelectItem>
-                  <SelectItem value="Grand">Grand</SelectItem>
-                  <SelectItem value="Lourd">Lourd</SelectItem>
-                  <SelectItem value="Encombrant">Encombrant</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Délai de livraison</Label>
-              <Select value={formData.delivery_time} onValueChange={(v) => setFormData({ ...formData, delivery_time: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="30-45 minutes">30-45 minutes</SelectItem>
-                  <SelectItem value="24 heures">24 heures</SelectItem>
-                  <SelectItem value="3-5 jours">3-5 jours</SelectItem>
-                  <SelectItem value="15 jours">15 jours</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div>
-            <Label>Tags SEO (pour recherche)</Label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                placeholder="Ex: pizza, italien, végétarien"
-              />
-              <Button type="button" onClick={addTag} variant="outline">
-                Ajouter
-              </Button>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {formData.seo_tags.map(tag => (
-                <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>
-                  {tag} <X className="w-3 h-3 ml-1" />
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Attributs produits pour catalogues Facebook/Google */}
-          <div className="border-t pt-4 mt-4">
-            <h3 className="font-semibold text-sm mb-3 text-slate-700">
-              📊 Attributs pour catalogues (Facebook/Google Shopping)
-            </h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Ces informations améliorent la visibilité de vos produits sur Facebook et Google Shopping
-            </p>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs">Couleur</Label>
-                <Input
-                  value={formData.product_attributes.color}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    product_attributes: { ...formData.product_attributes, color: e.target.value }
-                  })}
-                  placeholder="Ex: Rouge, Bleu, Noir"
-                />
-              </div>
-              
-              <div>
-                <Label className="text-xs">Taille</Label>
-                <Input
-                  value={formData.product_attributes.size}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    product_attributes: { ...formData.product_attributes, size: e.target.value }
-                  })}
-                  placeholder="Ex: S, M, L, XL"
-                />
-              </div>
-              
-              <div>
-                <Label className="text-xs">Matière</Label>
-                <Input
-                  value={formData.product_attributes.material}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    product_attributes: { ...formData.product_attributes, material: e.target.value }
-                  })}
-                  placeholder="Ex: Coton, Polyester"
-                />
-              </div>
-              
-              <div>
-                <Label className="text-xs">Genre</Label>
-                <Select 
-                  value={formData.product_attributes.gender} 
-                  onValueChange={(v) => setFormData({
-                    ...formData,
-                    product_attributes: { ...formData.product_attributes, gender: v }
-                  })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null}>Aucun</SelectItem>
-                    <SelectItem value="male">Homme</SelectItem>
-                    <SelectItem value="female">Femme</SelectItem>
-                    <SelectItem value="unisex">Unisexe</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label className="text-xs">Groupe d'âge</Label>
-                <Select 
-                  value={formData.product_attributes.age_group} 
-                  onValueChange={(v) => setFormData({
-                    ...formData,
-                    product_attributes: { ...formData.product_attributes, age_group: v }
-                  })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null}>Aucun</SelectItem>
-                    <SelectItem value="adult">Adulte</SelectItem>
-                    <SelectItem value="kids">Enfant</SelectItem>
-                    <SelectItem value="toddler">Tout-petit</SelectItem>
-                    <SelectItem value="infant">Bébé</SelectItem>
-                    <SelectItem value="newborn">Nouveau-né</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label className="text-xs">Motif</Label>
-                <Input
-                  value={formData.product_attributes.pattern}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    product_attributes: { ...formData.product_attributes, pattern: e.target.value }
-                  })}
-                  placeholder="Ex: Rayé, Uni, À pois"
-                />
-              </div>
-            </div>
-            
-            <div className="mt-4">
-              <Label className="text-xs mb-2 block">Labels personnalisés (pour filtrage dans vos publicités)</Label>
-              <div className="grid grid-cols-1 gap-2">
-                {[0, 1, 2, 3, 4].map(i => (
+              {formData.category === 'Mariage' ? (
+                <div>
+                  <Label>Sous-catégorie Mariage</Label>
+                  <Select 
+                    value={formData.subcategory} 
+                    onValueChange={(v) => setFormData(prev => ({ ...prev, subcategory: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une sous-catégorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Aucune sous-catégorie</SelectItem>
+                      {marriageSubcategories.map((subcat) => (
+                        <SelectItem key={subcat} value={subcat}>
+                          {subcat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Spécifiez la sous-catégorie pour mieux classer votre article
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <Label>Stock disponible</Label>
                   <Input
-                    key={i}
-                    value={formData.product_attributes.custom_labels[`label_${i}`]}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      product_attributes: {
-                        ...formData.product_attributes,
-                        custom_labels: {
-                          ...formData.product_attributes.custom_labels,
-                          [`label_${i}`]: e.target.value
-                        }
-                      }
-                    })}
-                    placeholder={`Label ${i + 1}: Ex: Bestseller, Nouveau, Promo`}
-                    className="text-sm"
+                    type="number"
+                    value={formData.stock_quantity}
+                    onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: parseInt(e.target.value) || 0 }))}
                   />
+                </div>
+              )}
+            </div>
+
+            {/* Afficher le champ stock si on est dans Mariage */}
+            {formData.category === 'Mariage' && (
+              <div>
+                <Label>Stock disponible</Label>
+                <Input
+                  type="number"
+                  value={formData.stock_quantity}
+                  onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Taille d'emballage</Label>
+                <Select value={formData.taille_emballage} onValueChange={(v) => setFormData(prev => ({ ...prev, taille_emballage: v }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Petit">Petit</SelectItem>
+                    <SelectItem value="Moyen">Moyen</SelectItem>
+                    <SelectItem value="Grand">Grand</SelectItem>
+                    <SelectItem value="Lourd">Lourd</SelectItem>
+                    <SelectItem value="Encombrant">Encombrant</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Délai de livraison</Label>
+                <Select value={formData.delivery_time} onValueChange={(v) => setFormData(prev => ({ ...prev, delivery_time: v }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30-45 minutes">30-45 minutes</SelectItem>
+                    <SelectItem value="24 heures">24 heures</SelectItem>
+                    <SelectItem value="3-5 jours">3-5 jours</SelectItem>
+                    <SelectItem value="15 jours">15 jours</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label>Tags SEO (pour recherche)</Label>
+              <div className="flex gap-2 mb-2">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  placeholder="Ex: pizza, italien, végétarien"
+                />
+                <Button type="button" onClick={addTag} variant="outline">
+                  Ajouter
+                </Button>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {formData.seo_tags.map(tag => (
+                  <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>
+                    {tag} <X className="w-3 h-3 ml-1" />
+                  </Badge>
                 ))}
               </div>
             </div>
-          </div>
 
-          <div className="flex gap-3">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              Annuler
-            </Button>
-            <Button type="submit" disabled={loading} className="flex-1 bg-blue-600">
-              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {product ? 'Mettre à jour' : 'Créer'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            {/* Attributs produits pour catalogues Facebook/Google */}
+            <div className="border-t pt-4 mt-4">
+              <h3 className="font-semibold text-sm mb-3 text-slate-700">
+                📊 Attributs pour catalogues (Facebook/Google Shopping)
+              </h3>
+              <p className="text-xs text-slate-500 mb-4">
+                Ces informations améliorent la visibilité de vos produits sur Facebook et Google Shopping
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs">Couleur</Label>
+                  <Input
+                    value={formData.product_attributes.color}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      product_attributes: { ...prev.product_attributes, color: e.target.value }
+                    }))}
+                    placeholder="Ex: Rouge, Bleu, Noir"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-xs">Taille</Label>
+                  <Input
+                    value={formData.product_attributes.size}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      product_attributes: { ...prev.product_attributes, size: e.target.value }
+                    }))}
+                    placeholder="Ex: S, M, L, XL"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-xs">Matière</Label>
+                  <Input
+                    value={formData.product_attributes.material}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      product_attributes: { ...prev.product_attributes, material: e.target.value }
+                    }))}
+                    placeholder="Ex: Coton, Polyester"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-xs">Genre</Label>
+                  <Select 
+                    value={formData.product_attributes.gender} 
+                    onValueChange={(v) => setFormData(prev => ({
+                      ...prev,
+                      product_attributes: { ...prev.product_attributes, gender: v }
+                    }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Aucun</SelectItem>
+                      <SelectItem value="male">Homme</SelectItem>
+                      <SelectItem value="female">Femme</SelectItem>
+                      <SelectItem value="unisex">Unisexe</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label className="text-xs">Groupe d'âge</Label>
+                  <Select 
+                    value={formData.product_attributes.age_group} 
+                    onValueChange={(v) => setFormData(prev => ({
+                      ...prev,
+                      product_attributes: { ...prev.product_attributes, age_group: v }
+                    }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Aucun</SelectItem>
+                      <SelectItem value="adult">Adulte</SelectItem>
+                      <SelectItem value="kids">Enfant</SelectItem>
+                      <SelectItem value="toddler">Tout-petit</SelectItem>
+                      <SelectItem value="infant">Bébé</SelectItem>
+                      <SelectItem value="newborn">Nouveau-né</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label className="text-xs">Motif</Label>
+                  <Input
+                    value={formData.product_attributes.pattern}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      product_attributes: { ...prev.product_attributes, pattern: e.target.value }
+                    }))}
+                    placeholder="Ex: Rayé, Uni, À pois"
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <Label className="text-xs mb-2 block">Labels personnalisés (pour filtrage dans vos publicités)</Label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[0, 1, 2, 3, 4].map(i => (
+                    <Input
+                      key={i}
+                      value={formData.product_attributes.custom_labels[`label_${i}`]}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        product_attributes: {
+                          ...prev.product_attributes,
+                          custom_labels: {
+                            ...prev.product_attributes.custom_labels,
+                            [`label_${i}`]: e.target.value
+                          }
+                        }
+                      }))}
+                      placeholder={`Label ${i + 1}: Ex: Bestseller, Nouveau, Promo`}
+                      className="text-sm"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+                Annuler
+              </Button>
+              <Button type="submit" disabled={loading} className="flex-1 bg-blue-600">
+                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {product ? 'Mettre à jour' : 'Créer'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
