@@ -22,6 +22,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
     promo_price: '',
     description: '',
     category: 'Fastfood',
+    subcategory: '',
     stock_quantity: 0,
     image_url: '',
     additional_images: [],
@@ -47,6 +48,18 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
   });
   const [newTag, setNewTag] = useState('');
 
+  // Liste des sous-catégories pour Mariage
+  const marriageSubcategories = [
+    'Demoiselle d\'honneur',
+    'Annonceuse',
+    'Temoins',
+    'Robe de Mariee',
+    'Bague de Mariage',
+    'Accessoires',
+    'Carte & Programmation',
+    'Materiels Decor'
+  ];
+
   useEffect(() => {
     if (open && !product) {
       // Show guidelines only for new products
@@ -59,6 +72,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         promo_price: '',
         description: '',
         category: 'Fastfood',
+        subcategory: '',
         stock_quantity: 0,
         image_url: '',
         additional_images: [],
@@ -92,6 +106,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         promo_price: product.promo_price || '',
         description: product.description || '',
         category: product.category || 'Fastfood',
+        subcategory: product.subcategory || '',
         stock_quantity: product.stock_quantity || 0,
         image_url: product.image_url || '',
         additional_images: product.additional_images || [],
@@ -140,6 +155,11 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
     if (!shopId) {
       toast.error('Erreur: Boutique non identifiée');
       return;
+    }
+    
+    // Si la catégorie est "Mariage" mais pas de sous-catégorie sélectionnée, avertissement
+    if (formData.category === 'Mariage' && !formData.subcategory) {
+      toast.warning('Pour la catégorie Mariage, une sous-catégorie est recommandée');
     }
     
     setLoading(true);
@@ -194,13 +214,15 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         prompt: `Analysez ce produit: "${formData.name}". Générez:
 1. Une description marketing attractive (2-3 phrases)
 2. Le type d'article (choix: Fastfood, Restaurants, Boutique Fleurs, Pharmacie, Mariage, Epicerie, Café, Pour Femme, Electronics, Pour homme, Maison, Bébé, Outils)
-3. 5 tags SEO pertinents en français`,
+3. 5 tags SEO pertinents en français
+4. Si le produit semble lié au mariage, suggérez une sous-catégorie parmi: ${marriageSubcategories.join(', ')}`,
         file_urls: [formData.image_url],
         response_json_schema: {
           type: "object",
           properties: {
             description: { type: "string" },
             category: { type: "string" },
+            subcategory: { type: "string" },
             seo_tags: { type: "array", items: { type: "string" } }
           }
         }
@@ -210,6 +232,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         ...formData,
         description: result.description || formData.description,
         category: result.category || formData.category,
+        subcategory: result.subcategory || formData.subcategory,
         seo_tags: result.seo_tags || formData.seo_tags
       });
       
@@ -230,6 +253,15 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
 
   const removeTag = (tag) => {
     setFormData({ ...formData, seo_tags: formData.seo_tags.filter(t => t !== tag) });
+  };
+
+  // Réinitialiser la sous-catégorie lorsque la catégorie change
+  const handleCategoryChange = (value) => {
+    if (value !== 'Mariage') {
+      setFormData({ ...formData, category: value, subcategory: '' });
+    } else {
+      setFormData({ ...formData, category: value });
+    }
   };
 
   return (
@@ -353,7 +385,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Type d'article</Label>
-              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+              <Select value={formData.category} onValueChange={handleCategoryChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -378,15 +410,57 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
               </p>
             </div>
 
-            <div>
-              <Label>Stock disponible</Label>
-              <Input
-                type="number"
-                value={formData.stock_quantity}
-                onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
-              />
-            </div>
+            {formData.category === 'Mariage' && (
+              <div>
+                <Label>Sous-catégorie Mariage</Label>
+                <Select 
+                  value={formData.subcategory} 
+                  onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une sous-catégorie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucune sous-catégorie</SelectItem>
+                    {marriageSubcategories.map((subcat) => (
+                      <SelectItem key={subcat} value={subcat}>
+                        {subcat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-500 mt-1">
+                  Spécifiez la sous-catégorie pour mieux classer votre article
+                </p>
+              </div>
+            )}
+
+            {formData.category !== 'Mariage' && (
+              <div>
+                <Label>Stock disponible</Label>
+                <Input
+                  type="number"
+                  value={formData.stock_quantity}
+                  onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+            )}
           </div>
+
+          {/* Afficher le champ stock si on est dans Mariage et que le champ sous-catégorie prend sa place */}
+          {formData.category === 'Mariage' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Stock disponible</Label>
+                <Input
+                  type="number"
+                  value={formData.stock_quantity}
+                  onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+              <div></div> {/* Placeholder pour garder la grille */}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
