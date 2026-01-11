@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { base44 } from '@/api/base44Client';
 import { toast } from "sonner";
-import { Loader2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import ProductGuidelinesModal from './ProductGuidelinesModal';
 
 export default function ProductFormModal({ product, shopId, open, onClose, onSuccess }) {
@@ -35,13 +35,13 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
     }
   });
 
-  // Synchronisation des données au chargement
+  // Gestion de l'ouverture et fermeture
   useEffect(() => {
     if (open) {
       if (product) {
-        // Mode MODIFICATION
-        setShowGuidelines(false);
+        // MODIFICATION : Pas de guidelines, on affiche direct le formulaire
         setShowForm(true);
+        setShowGuidelines(false);
         setFormData({
           ...product,
           category: product.category || 'Fastfood',
@@ -52,22 +52,23 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
           }
         });
       } else {
-        // Mode CRÉATION
+        // CRÉATION : On montre d'abord les guidelines
         setShowGuidelines(true);
         setShowForm(false);
-        setFormData({
-          name: '', price: '', promo_price: '', description: '',
-          category: 'Fastfood', subcategory: '', stock_quantity: 0,
-          image_url: '', additional_images: [], taille_emballage: 'Moyen',
-          delivery_time: '30-45 minutes', seo_tags: [], is_available: true,
-          product_attributes: {
-            color: '', size: '', material: '', gender: '', age_group: '', pattern: '',
-            custom_labels: { label_0: '', label_1: '', label_2: '', label_3: '', label_4: '' }
-          }
-        });
       }
+    } else {
+      // RESET COMPLET À LA FERMETURE
+      setShowForm(false);
+      setShowGuidelines(false);
     }
   }, [open, product]);
+
+  // Fonction pour tout fermer proprement (Bouton Annuler et Sortir)
+  const handleCloseAll = () => {
+    setShowForm(false);
+    setShowGuidelines(false);
+    onClose(); // Appelle la fonction de fermeture passée par le parent
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,20 +79,17 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
 
     setLoading(true);
     try {
-      // LOGIQUE DE CORRECTION : Vérification stricte de l'ID pour la mise à jour
       if (product && product.id) {
-        // On utilise l'ID du produit passé en props pour mettre à jour l'entité existante
         await base44.entities.Product.update(product.id, formData);
-        toast.success('Article mis à jour avec succès');
+        toast.success('Article mis à jour');
       } else {
-        // Si pas de produit/ID, on crée un nouvel article lié à la boutique
         await base44.entities.Product.create({ ...formData, shop_id: shopId });
-        toast.success('Nouvel article créé');
+        toast.success('Article créé');
       }
       onSuccess?.();
-      onClose();
+      handleCloseAll();
     } catch (error) {
-      toast.error('Erreur lors de l\'enregistrement : ' + error.message);
+      toast.error('Erreur : ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -118,17 +116,22 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
 
   return (
     <>
+      {/* Modal des consignes */}
       <ProductGuidelinesModal
         open={showGuidelines}
-        onConfirm={() => { setShowGuidelines(false); setShowForm(true); }}
-        onCancel={onClose}
+        onConfirm={() => {
+          setShowGuidelines(false);
+          setShowForm(true);
+        }}
+        onCancel={handleCloseAll} // Correction : Utilise handleCloseAll
       />
       
-      <Dialog open={showForm} onOpenChange={onClose}>
+      {/* Modal du Formulaire */}
+      <Dialog open={showForm} onOpenChange={handleCloseAll}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
-              {product ? `Modifier : ${product.name}` : 'Ajouter un nouvel article'}
+              {product ? `Modifier l'article` : 'Ajouter un article'}
             </DialogTitle>
           </DialogHeader>
           
@@ -136,11 +139,20 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nom de l'article <span className="text-red-500">*</span></Label>
-                <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required placeholder="Titre du produit" />
+                <Input 
+                  value={formData.name} 
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
+                  required 
+                />
               </div>
               <div className="space-y-2">
                 <Label>Photo principale <span className="text-red-500">*</span></Label>
-                <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, false)} className="w-full border rounded-md p-1.5 text-sm" />
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => handleImageUpload(e, false)} 
+                  className="w-full border rounded-md p-1.5 text-sm" 
+                />
               </div>
             </div>
 
@@ -157,7 +169,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl border">
               <div className="space-y-2">
-                <Label>Catégorie Principale</Label>
+                <Label>Catégorie</Label>
                 <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: '' })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -179,11 +191,11 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
               </div>
 
               {formData.category === 'Mariage' && (
-                <div className="space-y-2 animate-in fade-in duration-300">
-                  <Label className="text-orange-600 font-semibold">Sous-catégorie Mariage</Label>
+                <div className="space-y-2">
+                  <Label className="text-orange-600 font-bold">Sous-catégorie Mariage</Label>
                   <Select value={formData.subcategory} onValueChange={(v) => setFormData({ ...formData, subcategory: v })}>
-                    <SelectTrigger className="border-orange-200">
-                      <SelectValue placeholder="Sélectionner le type" />
+                    <SelectTrigger className="border-orange-300">
+                      <SelectValue placeholder="Choisir le type..." />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Demoiselle d'honneur">Demoiselle d'honneur</SelectItem>
@@ -202,32 +214,21 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
 
             <div className="space-y-2">
               <Label>Description</Label>
-              <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} placeholder="Détails du produit..." />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Taille d'emballage</Label>
-                <Select value={formData.taille_emballage} onValueChange={(v) => setFormData({ ...formData, taille_emballage: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Petit">Petit</SelectItem>
-                    <SelectItem value="Moyen">Moyen</SelectItem>
-                    <SelectItem value="Grand">Grand</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Stock disponible</Label>
-                <Input type="number" value={formData.stock_quantity} onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })} />
-              </div>
+              <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} />
             </div>
 
             <div className="flex gap-3 pt-6 border-t">
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1">Annuler</Button>
-              <Button type="submit" disabled={loading} className="flex-1 bg-orange-600 hover:bg-orange-700 text-white shadow-lg">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleCloseAll} // Correction : Ferme tout
+                className="flex-1"
+              >
+                Annuler
+              </Button>
+              <Button type="submit" disabled={loading} className="flex-1 bg-orange-600 hover:bg-orange-700">
                 {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {product ? 'Enregistrer les modifications' : 'Créer l\'article'}
+                {product ? 'Mettre à jour' : 'Enregistrer'}
               </Button>
             </div>
           </form>
