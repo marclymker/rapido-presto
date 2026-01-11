@@ -62,6 +62,11 @@ const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
 
   const guidelines = [
     {
+      icon: <Sparkles className="w-5 h-5 text-pink-500" />,
+      title: "Utilisez Magie AI",
+      description: "Sélectionnez Magie AI pour générer les description et tag SEO automatiquement."
+    },
+    {
       icon: <ImageIcon className="w-5 h-5 text-blue-500" />,
       title: "Photos de haute qualité",
       description: "Utilisez un éclairage naturel. Montrez le produit sous plusieurs angles. Évitez les photos floues ou trop sombres."
