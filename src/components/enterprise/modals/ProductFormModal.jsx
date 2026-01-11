@@ -22,6 +22,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
     promo_price: '',
     description: '',
     category: 'Fastfood',
+    subCategory: '',
     stock_quantity: 0,
     image_url: '',
     additional_images: [],
@@ -59,6 +60,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         promo_price: '',
         description: '',
         category: 'Fastfood',
+        subCategory: '',
         stock_quantity: 0,
         image_url: '',
         additional_images: [],
@@ -92,6 +94,7 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
         promo_price: product.promo_price || '',
         description: product.description || '',
         category: product.category || 'Fastfood',
+        subCategory: product.subCategory || '',
         stock_quantity: product.stock_quantity || 0,
         image_url: product.image_url || '',
         additional_images: product.additional_images || [],
@@ -232,6 +235,18 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
     setFormData({ ...formData, seo_tags: formData.seo_tags.filter(t => t !== tag) });
   };
 
+  // Sous-catégories pour "Mariage"
+  const weddingSubCategories = [
+    'Demoiselle d\'honneur',
+    'Annonceuse',
+    'Temoins',
+    'Robe de Mariee',
+    'Bague de Mariage',
+    'Accessoires',
+    'Carte & Programmation',
+    'Materiels Decor'
+  ];
+
   return (
     <>
       <ProductGuidelinesModal
@@ -353,7 +368,10 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Type d'article</Label>
-              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+              <Select 
+                value={formData.category} 
+                onValueChange={(v) => setFormData({ ...formData, category: v, subCategory: v === 'Mariage' ? formData.subCategory : '' })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -387,6 +405,28 @@ export default function ProductFormModal({ product, shopId, open, onClose, onSuc
               />
             </div>
           </div>
+
+          {/* Sous-catégorie pour Mariage */}
+          {formData.category === 'Mariage' && (
+            <div>
+              <Label>Sous-catégorie</Label>
+              <Select 
+                value={formData.subCategory} 
+                onValueChange={(v) => setFormData({ ...formData, subCategory: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une sous-catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {weddingSubCategories.map((subCat) => (
+                    <SelectItem key={subCat} value={subCat}>
+                      {subCat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
