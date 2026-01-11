@@ -21,7 +21,10 @@ import {
   Palette,
   Ruler,
   User,
-  ShoppingBag
+  ShoppingBag,
+  Type,
+  CheckCircle2,
+  ShieldCheck
 } from 'lucide-react';
 
 // --- MOCKS FOR PREVIEW ---
@@ -56,16 +59,67 @@ const base44 = {
 
 const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
   if (!open) return null;
+
+  const guidelines = [
+    {
+      icon: <ImageIcon className="w-5 h-5 text-blue-500" />,
+      title: "Photos de haute qualité",
+      description: "Utilisez un éclairage naturel. Montrez le produit sous plusieurs angles. Évitez les photos floues ou trop sombres."
+    },
+    {
+      icon: <Type className="w-5 h-5 text-purple-500" />,
+      title: "Titre et Description clairs",
+      description: "Indiquez la marque, le modèle et l'état. Mentionnez tout défaut éventuel pour éviter les retours."
+    },
+    {
+      icon: <Tag className="w-5 h-5 text-green-500" />,
+      title: "Prix juste et transparent",
+      description: "Fixez un prix compétitif par rapport au marché. Pas de frais cachés."
+    },
+    {
+      icon: <ShieldCheck className="w-5 h-5 text-orange-500" />,
+      title: "Articles autorisés uniquement",
+      description: "Assurez-vous que votre produit respecte nos conditions de vente (pas de contrefaçons)."
+    }
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onCancel}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Consignes de publication</DialogTitle></DialogHeader>
-        <div className="py-4 text-slate-600">
-           Ceci est une simulation des consignes. Cliquez sur "J'ai compris" pour continuer.
+      <DialogContent className="max-w-md p-0 overflow-hidden bg-white rounded-xl border-0 shadow-2xl">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+          <div className="relative z-10">
+            <div className="mx-auto bg-white/20 w-12 h-12 rounded-full flex items-center justify-center mb-3 backdrop-blur-sm shadow-inner">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-white">Avant de publier</DialogTitle>
+            <p className="text-blue-100 text-sm mt-1 font-light">
+              Suivez ces quelques règles pour vendre plus rapidement et éviter les refus.
+            </p>
+          </div>
         </div>
-        <div className="flex justify-end gap-2">
-           <Button variant="outline" onClick={onCancel}>Annuler</Button>
-           <Button onClick={onConfirm}>J'ai compris</Button>
+
+        <div className="p-6 space-y-5">
+          {guidelines.map((item, index) => (
+            <div key={index} className="flex gap-4 items-start group">
+              <div className="mt-0.5 bg-slate-50 p-2.5 rounded-xl shrink-0 group-hover:bg-blue-50 transition-colors border border-slate-100 group-hover:border-blue-100">
+                {item.icon}
+              </div>
+              <div>
+                <h4 className="font-semibold text-slate-800 text-sm mb-0.5">{item.title}</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">{item.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="p-4 bg-slate-50 border-t flex gap-3">
+           <Button variant="ghost" onClick={onCancel} className="flex-1 text-slate-500 hover:text-slate-700 hover:bg-slate-200">
+             Annuler
+           </Button>
+           <Button onClick={onConfirm} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 font-medium">
+             J'ai compris, continuer
+           </Button>
         </div>
       </DialogContent>
     </Dialog>
