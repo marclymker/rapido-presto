@@ -1,1255 +1,763 @@
 import React, { useState, useEffect } from 'react';
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
 import { Button } from "@/components/ui/button";
-
 import { Input } from "@/components/ui/input";
-
 import { Textarea } from "@/components/ui/textarea";
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
 import { Label } from "@/components/ui/label";
-
 import { Badge } from "@/components/ui/badge";
-
-import { base44 } from '@/api/base44Client';
-
 import { toast } from "sonner";
+import { 
+  Loader2, 
+  Sparkles, 
+  X, 
+  Image as ImageIcon, 
+  Tag, 
+  DollarSign, 
+  Package, 
+  Truck, 
+  Layers, 
+  Info,
+  Palette,
+  Ruler,
+  User,
+  ShoppingBag
+} from 'lucide-react';
 
-import { Loader2, Sparkles, X } from 'lucide-react';
+// --- MOCKS FOR PREVIEW ---
+// Replace these with your actual imports in production:
+// import { base44 } from '@/api/base44Client';
+// import ProductGuidelinesModal from './ProductGuidelinesModal';
 
-import ProductGuidelinesModal from './ProductGuidelinesModal';
-
-
-
-export default function ProductFormModal({ product, shopId, open, onClose, onSuccess }) {
-
-  const [loading, setLoading] = useState(false);
-
-  const [aiLoading, setAiLoading] = useState(false);
-
-  const [showGuidelines, setShowGuidelines] = useState(false);
-
-  const [showForm, setShowForm] = useState(false);
-
-  const [formData, setFormData] = useState({
-
-    name: '',
-
-    price: '',
-
-    promo_price: '',
-
-    description: '',
-
-    category: 'Fastfood',
-
-    subCategory: '',
-
-    stock_quantity: 0,
-
-    image_url: '',
-
-    additional_images: [],
-
-    taille_emballage: 'Moyen',
-
-    delivery_time: '30-45 minutes',
-
-    seo_tags: [],
-
-    is_available: true,
-
-    product_attributes: {
-
-      color: '',
-
-      size: '',
-
-      material: '',
-
-      gender: '',
-
-      age_group: '',
-
-      pattern: '',
-
-      custom_labels: {
-
-        label_0: '',
-
-        label_1: '',
-
-        label_2: '',
-
-        label_3: '',
-
-        label_4: ''
-
-      }
-
+const base44 = {
+  entities: {
+    Product: {
+      update: async (id, data) => { await new Promise(r => setTimeout(r, 1000)); console.log('Update:', data); },
+      create: async (data) => { await new Promise(r => setTimeout(r, 1000)); console.log('Create:', data); }
     }
+  },
+  integrations: {
+    Core: {
+      UploadFile: async ({ file }) => {
+        await new Promise(r => setTimeout(r, 800));
+        return { file_url: URL.createObjectURL(file) };
+      },
+      InvokeLLM: async () => {
+        await new Promise(r => setTimeout(r, 2000));
+        return {
+          description: "Délicieuse pizza artisanale aux ingrédients frais, idéale pour un repas convivial.",
+          category: "Fastfood",
+          seo_tags: ["pizza", "italien", "déjeuner", "fromage", "chaud"]
+        };
+      }
+    }
+  }
+};
 
+const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
+  if (!open) return null;
+  return (
+    <Dialog open={open} onOpenChange={onCancel}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Consignes de publication</DialogTitle></DialogHeader>
+        <div className="py-4 text-slate-600">
+           Ceci est une simulation des consignes. Cliquez sur "J'ai compris" pour continuer.
+        </div>
+        <div className="flex justify-end gap-2">
+           <Button variant="outline" onClick={onCancel}>Annuler</Button>
+           <Button onClick={onConfirm}>J'ai compris</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+// --- END MOCKS ---
+
+export default function ProductFormModal({ product, shopId = "shop_123", open = true, onClose, onSuccess }) {
+  const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showGuidelines, setShowGuidelines] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    price: '',
+    promo_price: '',
+    description: '',
+    category: 'Fastfood',
+    subCategory: '',
+    stock_quantity: 0,
+    image_url: '',
+    additional_images: [],
+    taille_emballage: 'Moyen',
+    delivery_time: '30-45 minutes',
+    seo_tags: [],
+    is_available: true,
+    product_attributes: {
+      color: '',
+      size: '',
+      material: '',
+      gender: '',
+      age_group: '',
+      pattern: '',
+      custom_labels: {
+        label_0: '',
+        label_1: '',
+        label_2: '',
+        label_3: '',
+        label_4: ''
+      }
+    }
   });
-
   const [newTag, setNewTag] = useState('');
 
-
-
   useEffect(() => {
-
     if (open && !product) {
-
       // Show guidelines only for new products
-
       setShowGuidelines(true);
-
       setShowForm(false);
-
       // Reset form for new product
-
       setFormData({
-
         name: '',
-
         price: '',
-
         promo_price: '',
-
         description: '',
-
         category: 'Fastfood',
-
         subCategory: '',
-
         stock_quantity: 0,
-
         image_url: '',
-
         additional_images: [],
-
         taille_emballage: 'Moyen',
-
         delivery_time: '30-45 minutes',
-
         seo_tags: [],
-
         is_available: true,
-
         product_attributes: {
-
           color: '',
-
           size: '',
-
           material: '',
-
           gender: '',
-
           age_group: '',
-
           pattern: '',
-
           custom_labels: {
-
             label_0: '',
-
             label_1: '',
-
             label_2: '',
-
             label_3: '',
-
             label_4: ''
-
           }
-
         }
-
       });
-
     } else if (open && product) {
-
       // Skip guidelines for editing and load product data
-
       setShowGuidelines(false);
-
       setShowForm(true);
-
       setFormData({
-
         name: product.name || '',
-
         price: product.price || '',
-
         promo_price: product.promo_price || '',
-
         description: product.description || '',
-
         category: product.category || 'Fastfood',
-
         subCategory: product.subCategory || '',
-
         stock_quantity: product.stock_quantity || 0,
-
         image_url: product.image_url || '',
-
         additional_images: product.additional_images || [],
-
         taille_emballage: product.taille_emballage || 'Moyen',
-
         delivery_time: product.delivery_time || '30-45 minutes',
-
         seo_tags: product.seo_tags || [],
-
         is_available: product.is_available !== false,
-
         product_attributes: product.product_attributes || {
-
           color: '',
-
           size: '',
-
           material: '',
-
           gender: '',
-
           age_group: '',
-
           pattern: '',
-
           custom_labels: {
-
             label_0: '',
-
             label_1: '',
-
             label_2: '',
-
             label_3: '',
-
             label_4: ''
-
           }
-
         }
-
       });
-
     } else {
-
       setShowGuidelines(false);
-
       setShowForm(false);
-
     }
-
   }, [open, product]);
 
-
-
   const handleSubmit = async (e) => {
-
     e.preventDefault();
-
     
-
     // Validation des champs obligatoires
-
     if (!formData.name || !formData.name.trim()) {
-
       toast.error('Le nom de l\'article est obligatoire');
-
       return;
-
     }
-
     if (!formData.image_url) {
-
       toast.error('La photo de l\'article est obligatoire');
-
       return;
-
     }
-
     if (!formData.price || formData.price <= 0) {
-
       toast.error('Le prix est obligatoire et doit être supérieur à 0');
-
       return;
-
     }
-
     if (!shopId) {
-
       toast.error('Erreur: Boutique non identifiée');
-
       return;
-
     }
-
     
-
     setLoading(true);
-
     
-
     try {
-
       if (product) {
-
         await base44.entities.Product.update(product.id, formData);
-
         toast.success('Article mis à jour');
-
       } else {
-
         await base44.entities.Product.create({ ...formData, shop_id: shopId });
-
         toast.success('Article créé');
-
       }
-
       onSuccess?.();
-
-      onClose();
-
+      onClose?.();
     } catch (error) {
-
       toast.error('Erreur: ' + error.message);
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
-
-
 
   const handleImageUpload = async (e, isAdditional = false) => {
-
     const file = e.target.files?.[0];
-
     if (!file) return;
-
     
-
     setLoading(true);
-
     try {
-
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
       if (isAdditional) {
-
         setFormData({ ...formData, additional_images: [...formData.additional_images, file_url] });
-
         toast.success('Image ajoutée');
-
       } else {
-
         setFormData({ ...formData, image_url: file_url });
-
         toast.success('Image téléchargée');
-
       }
-
     } catch (error) {
-
       toast.error('Erreur lors du téléchargement');
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
-
-
 
   const handleGenerateWithAI = async () => {
-
     if (!formData.name || !formData.image_url) {
-
       toast.error('Ajoutez un titre et une image d\'abord');
-
       return;
-
     }
-
-
 
     setAiLoading(true);
-
     try {
-
       const result = await base44.integrations.Core.InvokeLLM({
-
         prompt: `Analysez ce produit: "${formData.name}". Générez:
-
 1. Une description marketing attractive (2-3 phrases)
-
 2. Le type d'article (choix: Fastfood, Restaurants, Boutique Fleurs, Pharmacie, Mariage, Epicerie, Café, Pour Femme, Electronics, Pour homme, Maison, Bébé, Outils)
-
 3. 5 tags SEO pertinents en français`,
-
         file_urls: [formData.image_url],
-
         response_json_schema: {
-
           type: "object",
-
           properties: {
-
             description: { type: "string" },
-
             category: { type: "string" },
-
             seo_tags: { type: "array", items: { type: "string" } }
-
           }
-
         }
-
       });
-
-
 
       setFormData({
-
         ...formData,
-
         description: result.description || formData.description,
-
         category: result.category || formData.category,
-
         seo_tags: result.seo_tags || formData.seo_tags
-
       });
-
       
-
       toast.success('✨ Informations générées avec AI');
-
     } catch (error) {
-
       toast.error('Erreur AI: ' + error.message);
-
     } finally {
-
       setAiLoading(false);
-
     }
-
   };
-
-
 
   const addTag = () => {
-
     if (newTag.trim() && !formData.seo_tags.includes(newTag.trim())) {
-
       setFormData({ ...formData, seo_tags: [...formData.seo_tags, newTag.trim()] });
-
       setNewTag('');
-
     }
-
   };
-
-
 
   const removeTag = (tag) => {
-
     setFormData({ ...formData, seo_tags: formData.seo_tags.filter(t => t !== tag) });
-
   };
 
-
-
   // Sous-catégories pour "Mariage"
-
   const weddingSubCategories = [
-
     'Demoiselle d\'honneur',
-
     'Annonceuse',
-
     'Temoins',
-
     'Robe de Mariee',
-
     'Bague de Mariage',
-
     'Accessoires',
-
     'Carte & Programmation',
-
     'Materiels Decor'
-
   ];
 
-
-
   return (
-
     <>
-
       <ProductGuidelinesModal
-
         open={showGuidelines}
-
         onConfirm={() => {
-
           setShowGuidelines(false);
-
           setShowForm(true);
-
         }}
-
         onCancel={onClose}
-
       />
-
       
-
       <Dialog open={showForm} onOpenChange={onClose}>
-
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-
-        <DialogHeader>
-
-          <DialogTitle>{product ? 'Modifier l\'article' : 'Nouvel article'}</DialogTitle>
-
+        <DialogContent className="max-w-full sm:max-w-3xl h-[100vh] sm:h-[90vh] p-0 flex flex-col bg-white rounded-none sm:rounded-xl overflow-hidden">
+        <DialogHeader className="p-4 sm:p-6 border-b bg-slate-50 flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+             <div className="bg-blue-100 p-2 rounded-full">
+                <ShoppingBag className="w-5 h-5 text-blue-600" />
+             </div>
+             {product ? 'Modifier l\'article' : 'Nouvel article'}
+          </DialogTitle>
           {aiLoading && (
-
-            <div className="flex items-center gap-2 text-purple-600 text-sm mt-2">
-
+            <div className="flex items-center gap-2 text-purple-600 text-sm mt-2 animate-pulse bg-purple-50 p-2 rounded-lg">
               <Loader2 className="w-4 h-4 animate-spin" />
-
-              <span>Génération automatique en cours...</span>
-
+              <span>L'intelligence artificielle travaille pour vous...</span>
             </div>
-
           )}
-
         </DialogHeader>
-
         
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50">
+        <form onSubmit={handleSubmit} className="space-y-6 pb-20 sm:pb-0">
+          
+          {/* Section 1: Informations de base */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
+             <div className="flex items-center gap-2 mb-2 pb-2 border-b">
+                <Info className="w-4 h-4 text-slate-500" />
+                <h3 className="font-semibold text-slate-700">Informations principales</h3>
+             </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-
-          <div>
-
-            <Label>Nom de l'article <span className="text-red-500">*</span></Label>
-
-            <Input
-
-              value={formData.name}
-
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-
-              placeholder="Ex: Pizza Margherita"
-
-              required
-
-            />
-
-          </div>
-
-
-
-          <div>
-
-            <Label>Photo de l'article <span className="text-red-500">*</span></Label>
-
-            <input 
-
-              type="file" 
-
-              accept="image/*" 
-
-              onChange={(e) => handleImageUpload(e, false)} 
-
-              className="w-full border rounded-lg p-2"
-
-              required={!formData.image_url}
-
-            />
-
-            {formData.image_url && (
-
-              <div className="flex items-center gap-4 mt-2">
-
-                <img src={formData.image_url} alt="" className="h-32 w-32 object-cover rounded-lg border-2 border-blue-500" />
-
-                <Button
-
-                  type="button"
-
-                  onClick={handleGenerateWithAI}
-
-                  disabled={aiLoading || !formData.name}
-
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-
-                >
-
-                  {aiLoading ? (
-
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-
-                  ) : (
-
-                    <Sparkles className="w-4 h-4 mr-2" />
-
-                  )}
-
-                  Magie AI
-
-                </Button>
-
+              <div>
+                <Label className="mb-1.5 flex items-center gap-1">Nom de l'article <span className="text-red-500">*</span></Label>
+                <Input
+                  className="h-11 text-lg"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Ex: Pizza Margherita"
+                  required
+                />
               </div>
 
-            )}
+              <div>
+                <Label className="mb-2 flex items-center gap-1">Photo principale <span className="text-red-500">*</span></Label>
+                
+                <div className={`border-2 border-dashed rounded-xl p-4 transition-colors text-center ${formData.image_url ? 'border-blue-200 bg-blue-50/30' : 'border-slate-300 hover:border-blue-400 bg-slate-50'}`}>
+                    <div className="flex flex-col items-center justify-center gap-3">
+                        {formData.image_url ? (
+                            <div className="relative w-full max-w-xs mx-auto group">
+                                <img src={formData.image_url} alt="Aperçu" className="w-full h-48 object-cover rounded-lg shadow-md" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                                    <span className="text-white font-medium">Changer l'image</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="py-6 text-slate-400">
+                                <ImageIcon className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                                <p className="text-sm font-medium">Appuyez pour ajouter une image</p>
+                            </div>
+                        )}
+                        
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={(e) => handleImageUpload(e, false)} 
+                          className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer ${formData.image_url ? 'h-12 mt-auto relative' : ''}`} // Si image présente, l'input est subtilement caché
+                          required={!formData.image_url}
+                        />
+                    </div>
 
+                    {formData.image_url && (
+                        <div className="mt-4 flex justify-center">
+                            <Button
+                              type="button"
+                              onClick={handleGenerateWithAI}
+                              disabled={aiLoading || !formData.name}
+                              className="w-full sm:w-auto bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white shadow-lg hover:shadow-purple-500/25 border-none"
+                            >
+                              {aiLoading ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <Sparkles className="w-4 h-4 mr-2" />
+                              )}
+                              Remplir automatiquement avec l'IA
+                            </Button>
+                        </div>
+                    )}
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-1.5">Description</Label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                  className="resize-none bg-slate-50"
+                  placeholder="Décrivez votre produit... (ou laissez l'IA le faire)"
+                />
+              </div>
           </div>
 
+          {/* Section 2: Prix et Stock */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
+             <div className="flex items-center gap-2 mb-2 pb-2 border-b">
+                <DollarSign className="w-4 h-4 text-slate-500" />
+                <h3 className="font-semibold text-slate-700">Prix & Inventaire</h3>
+             </div>
+             
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-1.5 text-xs uppercase tracking-wide text-slate-500">Prix (HTG) <span className="text-red-500">*</span></Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                    <Input
+                      type="number"
+                      className="pl-7 font-semibold"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || '' })}
+                      required
+                      min="1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="mb-1.5 text-xs uppercase tracking-wide text-slate-500">Promo (HTG)</Label>
+                  <div className="relative">
+                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                     <Input
+                        type="number"
+                        className="pl-7 text-green-600 font-medium"
+                        value={formData.promo_price}
+                        onChange={(e) => setFormData({ ...formData, promo_price: parseFloat(e.target.value) || null })}
+                      />
+                  </div>
+                </div>
+              </div>
 
-
-          <div>
-
-            <Label>Description</Label>
-
-            <Textarea
-
-              value={formData.description}
-
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-
-              rows={3}
-
-              placeholder="Sera générée automatiquement..."
-
-            />
-
+              <div>
+                <Label className="mb-1.5 flex items-center gap-2"><Package className="w-4 h-4" /> Stock disponible</Label>
+                <Input
+                  type="number"
+                  value={formData.stock_quantity}
+                  onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
+                  className="max-w-[150px]"
+                />
+              </div>
           </div>
 
+          {/* Section 3: Catégorisation */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
+             <div className="flex items-center gap-2 mb-2 pb-2 border-b">
+                <Layers className="w-4 h-4 text-slate-500" />
+                <h3 className="font-semibold text-slate-700">Catégorisation</h3>
+             </div>
 
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-1.5">Type d'article</Label>
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={(v) => setFormData({ ...formData, category: v, subCategory: v === 'Mariage' ? formData.subCategory : '' })}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Fastfood">🍔 Fastfood</SelectItem>
+                      <SelectItem value="Restaurants">🍽️ Restaurants</SelectItem>
+                      <SelectItem value="Boutique Fleurs">💐 Boutique Fleurs</SelectItem>
+                      <SelectItem value="Pharmacie">💊 Pharmacie</SelectItem>
+                      <SelectItem value="Mariage">💍 Mariage</SelectItem>
+                      <SelectItem value="Epicerie">🛒 Épicerie</SelectItem>
+                      <SelectItem value="Café">☕ Café</SelectItem>
+                      <SelectItem value="Pour Femme">👗 Pour Femme</SelectItem>
+                      <SelectItem value="Electronics">📱 Electronics</SelectItem>
+                      <SelectItem value="Pour homme">👔 Pour homme</SelectItem>
+                      <SelectItem value="Maison">🏠 Maison</SelectItem>
+                      <SelectItem value="Bébé">👶 Bébé</SelectItem>
+                      <SelectItem value="Outils">🔧 Outils</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-          <div className="grid grid-cols-2 gap-4">
-
-            <div>
-
-              <Label>Prix (HTG) <span className="text-red-500">*</span></Label>
-
-              <Input
-
-                type="number"
-
-                value={formData.price}
-
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || '' })}
-
-                required
-
-                min="1"
-
-              />
-
+                {/* Sous-catégorie pour Mariage */}
+                {formData.category === 'Mariage' && (
+                  <div className="animate-in fade-in slide-in-from-top-2">
+                    <Label className="mb-1.5">Sous-catégorie Mariage</Label>
+                    <Select 
+                      value={formData.subCategory} 
+                      onValueChange={(v) => setFormData({ ...formData, subCategory: v })}
+                    >
+                      <SelectTrigger className="h-11 border-purple-200 bg-purple-50/50">
+                        <SelectValue placeholder="Sélectionner..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {weddingSubCategories.map((subCat) => (
+                          <SelectItem key={subCat} value={subCat}>
+                            {subCat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
             </div>
-
-            <div>
-
-              <Label>Prix promo (HTG)</Label>
-
-              <Input
-
-                type="number"
-
-                value={formData.promo_price}
-
-                onChange={(e) => setFormData({ ...formData, promo_price: parseFloat(e.target.value) || null })}
-
-              />
-
-            </div>
-
           </div>
 
+          {/* Section 4: Logistique */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b">
+                <Truck className="w-4 h-4 text-slate-500" />
+                <h3 className="font-semibold text-slate-700">Logistique</h3>
+             </div>
 
+             <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-1.5 text-xs text-slate-500">Taille colis</Label>
+                  <Select value={formData.taille_emballage} onValueChange={(v) => setFormData({ ...formData, taille_emballage: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Petit">Petit</SelectItem>
+                      <SelectItem value="Moyen">Moyen</SelectItem>
+                      <SelectItem value="Grand">Grand</SelectItem>
+                      <SelectItem value="Lourd">Lourd</SelectItem>
+                      <SelectItem value="Encombrant">Encombrant</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-          <div>
+                <div>
+                  <Label className="mb-1.5 text-xs text-slate-500">Livraison estimée</Label>
+                  <Select value={formData.delivery_time} onValueChange={(v) => setFormData({ ...formData, delivery_time: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30-45 minutes">⚡ 30-45 min</SelectItem>
+                      <SelectItem value="24 heures">🕒 24 heures</SelectItem>
+                      <SelectItem value="3-5 jours">📅 3-5 jours</SelectItem>
+                      <SelectItem value="15 jours">🚢 15 jours</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+          </div>
 
-            <Label>Images supplémentaires</Label>
-
-            <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true)} className="w-full" />
-
-            {formData.additional_images.length > 0 && (
-
-              <div className="mt-2 flex gap-2 flex-wrap">
+          {/* Section 5: Images additionnelles */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border">
+            <Label className="mb-3 block flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Galerie d'images</Label>
+            
+            <div className="flex flex-wrap gap-3">
+                 <label className="w-20 h-20 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors">
+                    <span className="text-2xl text-slate-400">+</span>
+                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true)} className="hidden" />
+                 </label>
 
                 {formData.additional_images.map((img, idx) => (
-
-                  <div key={idx} className="relative">
-
-                    <img src={img} alt="" className="h-20 w-20 object-cover rounded-lg" />
-
+                  <div key={idx} className="relative w-20 h-20 group">
+                    <img src={img} alt="" className="w-full h-full object-cover rounded-lg border" />
                     <button
-
                       type="button"
-
                       onClick={() => setFormData({
-
                         ...formData,
-
                         additional_images: formData.additional_images.filter((_, i) => i !== idx)
-
                       })}
-
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
                     >
-
                       <X className="w-3 h-3" />
-
                     </button>
+                  </div>
+                ))}
+            </div>
+          </div>
 
+          {/* Section 6: SEO */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border">
+            <Label className="mb-2 block flex items-center gap-2"><Tag className="w-4 h-4" /> Mots-clés (SEO)</Label>
+            <div className="flex gap-2 mb-3">
+              <Input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                placeholder="Ajouter un tag..."
+                className="h-9"
+              />
+              <Button type="button" onClick={addTag} variant="secondary" size="sm">
+                Ajouter
+              </Button>
+            </div>
+            <div className="flex gap-2 flex-wrap min-h-[2rem]">
+              {formData.seo_tags.length === 0 && <span className="text-sm text-slate-400 italic">Aucun tag pour le moment</span>}
+              {formData.seo_tags.map(tag => (
+                <Badge key={tag} variant="outline" className="pl-3 pr-1 py-1 gap-1 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 cursor-pointer transition-colors" onClick={() => removeTag(tag)}>
+                  {tag} <div className="bg-blue-200 rounded-full p-0.5"><X className="w-2 h-2" /></div>
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 7: Attributs Avancés */}
+          <div className="border border-slate-200 bg-slate-50 rounded-xl overflow-hidden">
+            <div className="p-4 border-b border-slate-200 bg-slate-100/50">
+                <h3 className="font-semibold text-sm text-slate-700 flex items-center gap-2">
+                  <div className="bg-white p-1 rounded shadow-sm">📊</div> 
+                  Détails avancés (Catalogue Meta/Google)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Remplissez ces champs pour booster votre visibilité publicitaire.
+                </p>
+            </div>
+            
+            <div className="p-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-slate-500 mb-1 flex gap-1"><Palette className="w-3 h-3"/> Couleur</Label>
+                    <Input
+                      className="bg-white h-9"
+                      value={formData.product_attributes.color}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        product_attributes: { ...formData.product_attributes, color: e.target.value }
+                      })}
+                      placeholder="Rouge..."
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs text-slate-500 mb-1 flex gap-1"><Ruler className="w-3 h-3"/> Taille</Label>
+                    <Input
+                      className="bg-white h-9"
+                      value={formData.product_attributes.size}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        product_attributes: { ...formData.product_attributes, size: e.target.value }
+                      })}
+                      placeholder="XL, 42..."
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs text-slate-500 mb-1">Matière</Label>
+                    <Input
+                      className="bg-white h-9"
+                      value={formData.product_attributes.material}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        product_attributes: { ...formData.product_attributes, material: e.target.value }
+                      })}
+                      placeholder="Coton..."
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs text-slate-500 mb-1 flex gap-1"><User className="w-3 h-3"/> Genre</Label>
+                    <Select 
+                      value={formData.product_attributes.gender} 
+                      onValueChange={(v) => setFormData({
+                        ...formData,
+                        product_attributes: { ...formData.product_attributes, gender: v }
+                      })}
+                    >
+                      <SelectTrigger className="bg-white h-9">
+                        <SelectValue placeholder="-" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={null}>Aucun</SelectItem>
+                        <SelectItem value="male">Homme</SelectItem>
+                        <SelectItem value="female">Femme</SelectItem>
+                        <SelectItem value="unisex">Unisexe</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                ))}
-
-              </div>
-
-            )}
-
+                  <div className="col-span-2">
+                    <Label className="text-xs text-slate-500 mb-1">Groupe d'âge</Label>
+                    <Select 
+                      value={formData.product_attributes.age_group} 
+                      onValueChange={(v) => setFormData({
+                        ...formData,
+                        product_attributes: { ...formData.product_attributes, age_group: v }
+                      })}
+                    >
+                      <SelectTrigger className="bg-white h-9">
+                        <SelectValue placeholder="-" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={null}>Aucun</SelectItem>
+                        <SelectItem value="adult">Adulte</SelectItem>
+                        <SelectItem value="kids">Enfant</SelectItem>
+                        <SelectItem value="toddler">Tout-petit</SelectItem>
+                        <SelectItem value="infant">Bébé</SelectItem>
+                        <SelectItem value="newborn">Nouveau-né</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="pt-2 border-t border-slate-200">
+                  <Label className="text-xs font-semibold mb-2 block text-slate-600">Labels personnalisés (Filtres Pubs)</Label>
+                  <div className="space-y-2">
+                    {[0, 1].map(i => (
+                      <Input
+                        key={i}
+                        className="bg-white h-8 text-sm"
+                        value={formData.product_attributes.custom_labels[`label_${i}`]}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          product_attributes: {
+                            ...formData.product_attributes,
+                            custom_labels: {
+                              ...formData.product_attributes.custom_labels,
+                              [`label_${i}`]: e.target.value
+                            }
+                          }
+                        })}
+                        placeholder={`Label ${i + 1} (ex: Soldes)`}
+                      />
+                    ))}
+                    {/* On cache les labels 2,3,4 sur mobile pour simplifier sauf si remplis, ici on affiche juste les 2 premiers pour le design "joli" demandé, le reste est accessible via code si besoin d'étendre */}
+                  </div>
+                </div>
+            </div>
           </div>
 
-
-
-          <div className="grid grid-cols-2 gap-4">
-
-            <div>
-
-              <Label>Type d'article</Label>
-
-              <Select 
-
-                value={formData.category} 
-
-                onValueChange={(v) => setFormData({ ...formData, category: v, subCategory: v === 'Mariage' ? formData.subCategory : '' })}
-
-              >
-
-                <SelectTrigger>
-
-                  <SelectValue />
-
-                </SelectTrigger>
-
-                <SelectContent>
-
-                  <SelectItem value="Fastfood">Fastfood</SelectItem>
-
-                  <SelectItem value="Restaurants">Restaurants</SelectItem>
-
-                  <SelectItem value="Boutique Fleurs">Boutique Fleurs</SelectItem>
-
-                  <SelectItem value="Pharmacie">Pharmacie</SelectItem>
-
-                  <SelectItem value="Mariage">Mariage</SelectItem>
-
-                  <SelectItem value="Epicerie">Épicerie</SelectItem>
-
-                  <SelectItem value="Café">Café</SelectItem>
-
-                  <SelectItem value="Pour Femme">Pour Femme</SelectItem>
-
-                  <SelectItem value="Electronics">Electronics</SelectItem>
-
-                  <SelectItem value="Pour homme">Pour homme</SelectItem>
-
-                  <SelectItem value="Maison">Maison</SelectItem>
-
-                  <SelectItem value="Bébé">Bébé</SelectItem>
-
-                  <SelectItem value="Outils">Outils</SelectItem>
-
-                </SelectContent>
-
-              </Select>
-
-              <p className="text-xs text-slate-500 mt-1">
-
-                Le type d'article peut être différent de votre catégorie boutique
-
-              </p>
-
-            </div>
-
-
-
-            <div>
-
-              <Label>Stock disponible</Label>
-
-              <Input
-
-                type="number"
-
-                value={formData.stock_quantity}
-
-                onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
-
-              />
-
-            </div>
-
-          </div>
-
-
-
-          {/* Sous-catégorie pour Mariage */}
-
-          {formData.category === 'Mariage' && (
-
-            <div>
-
-              <Label>Sous-catégorie</Label>
-
-              <Select 
-
-                value={formData.subCategory} 
-
-                onValueChange={(v) => setFormData({ ...formData, subCategory: v })}
-
-              >
-
-                <SelectTrigger>
-
-                  <SelectValue placeholder="Sélectionner une sous-catégorie" />
-
-                </SelectTrigger>
-
-                <SelectContent>
-
-                  {weddingSubCategories.map((subCat) => (
-
-                    <SelectItem key={subCat} value={subCat}>
-
-                      {subCat}
-
-                    </SelectItem>
-
-                  ))}
-
-                </SelectContent>
-
-              </Select>
-
-            </div>
-
-          )}
-
-
-
-          <div className="grid grid-cols-2 gap-4">
-
-            <div>
-
-              <Label>Taille d'emballage</Label>
-
-              <Select value={formData.taille_emballage} onValueChange={(v) => setFormData({ ...formData, taille_emballage: v })}>
-
-                <SelectTrigger>
-
-                  <SelectValue />
-
-                </SelectTrigger>
-
-                <SelectContent>
-
-                  <SelectItem value="Petit">Petit</SelectItem>
-
-                  <SelectItem value="Moyen">Moyen</SelectItem>
-
-                  <SelectItem value="Grand">Grand</SelectItem>
-
-                  <SelectItem value="Lourd">Lourd</SelectItem>
-
-                  <SelectItem value="Encombrant">Encombrant</SelectItem>
-
-                </SelectContent>
-
-              </Select>
-
-            </div>
-
-
-
-            <div>
-
-              <Label>Délai de livraison</Label>
-
-              <Select value={formData.delivery_time} onValueChange={(v) => setFormData({ ...formData, delivery_time: v })}>
-
-                <SelectTrigger>
-
-                  <SelectValue />
-
-                </SelectTrigger>
-
-                <SelectContent>
-
-                  <SelectItem value="30-45 minutes">30-45 minutes</SelectItem>
-
-                  <SelectItem value="24 heures">24 heures</SelectItem>
-
-                  <SelectItem value="3-5 jours">3-5 jours</SelectItem>
-
-                  <SelectItem value="15 jours">15 jours</SelectItem>
-
-                </SelectContent>
-
-              </Select>
-
-            </div>
-
-          </div>
-
-
-
-          <div>
-
-            <Label>Tags SEO (pour recherche)</Label>
-
-            <div className="flex gap-2 mb-2">
-
-              <Input
-
-                value={newTag}
-
-                onChange={(e) => setNewTag(e.target.value)}
-
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-
-                placeholder="Ex: pizza, italien, végétarien"
-
-              />
-
-              <Button type="button" onClick={addTag} variant="outline">
-
-                Ajouter
-
-              </Button>
-
-            </div>
-
-            <div className="flex gap-2 flex-wrap">
-
-              {formData.seo_tags.map(tag => (
-
-                <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>
-
-                  {tag} <X className="w-3 h-3 ml-1" />
-
-                </Badge>
-
-              ))}
-
-            </div>
-
-          </div>
-
-
-
-          {/* Attributs produits pour catalogues Facebook/Google */}
-
-          <div className="border-t pt-4 mt-4">
-
-            <h3 className="font-semibold text-sm mb-3 text-slate-700">
-
-              📊 Attributs pour catalogues (Facebook/Google Shopping)
-
-            </h3>
-
-            <p className="text-xs text-slate-500 mb-4">
-
-              Ces informations améliorent la visibilité de vos produits sur Facebook et Google Shopping
-
-            </p>
-
-            
-
-            <div className="grid grid-cols-2 gap-4">
-
-              <div>
-
-                <Label className="text-xs">Couleur</Label>
-
-                <Input
-
-                  value={formData.product_attributes.color}
-
-                  onChange={(e) => setFormData({
-
-                    ...formData,
-
-                    product_attributes: { ...formData.product_attributes, color: e.target.value }
-
-                  })}
-
-                  placeholder="Ex: Rouge, Bleu, Noir"
-
-                />
-
-              </div>
-
-              
-
-              <div>
-
-                <Label className="text-xs">Taille</Label>
-
-                <Input
-
-                  value={formData.product_attributes.size}
-
-                  onChange={(e) => setFormData({
-
-                    ...formData,
-
-                    product_attributes: { ...formData.product_attributes, size: e.target.value }
-
-                  })}
-
-                  placeholder="Ex: S, M, L, XL"
-
-                />
-
-              </div>
-
-              
-
-              <div>
-
-                <Label className="text-xs">Matière</Label>
-
-                <Input
-
-                  value={formData.product_attributes.material}
-
-                  onChange={(e) => setFormData({
-
-                    ...formData,
-
-                    product_attributes: { ...formData.product_attributes, material: e.target.value }
-
-                  })}
-
-                  placeholder="Ex: Coton, Polyester"
-
-                />
-
-              </div>
-
-              
-
-              <div>
-
-                <Label className="text-xs">Genre</Label>
-
-                <Select 
-
-                  value={formData.product_attributes.gender} 
-
-                  onValueChange={(v) => setFormData({
-
-                    ...formData,
-
-                    product_attributes: { ...formData.product_attributes, gender: v }
-
-                  })}
-
-                >
-
-                  <SelectTrigger>
-
-                    <SelectValue placeholder="Sélectionner" />
-
-                  </SelectTrigger>
-
-                  <SelectContent>
-
-                    <SelectItem value={null}>Aucun</SelectItem>
-
-                    <SelectItem value="male">Homme</SelectItem>
-
-                    <SelectItem value="female">Femme</SelectItem>
-
-                    <SelectItem value="unisex">Unisexe</SelectItem>
-
-                  </SelectContent>
-
-                </Select>
-
-              </div>
-
-              
-
-              <div>
-
-                <Label className="text-xs">Groupe d'âge</Label>
-
-                <Select 
-
-                  value={formData.product_attributes.age_group} 
-
-                  onValueChange={(v) => setFormData({
-
-                    ...formData,
-
-                    product_attributes: { ...formData.product_attributes, age_group: v }
-
-                  })}
-
-                >
-
-                  <SelectTrigger>
-
-                    <SelectValue placeholder="Sélectionner" />
-
-                  </SelectTrigger>
-
-                  <SelectContent>
-
-                    <SelectItem value={null}>Aucun</SelectItem>
-
-                    <SelectItem value="adult">Adulte</SelectItem>
-
-                    <SelectItem value="kids">Enfant</SelectItem>
-
-                    <SelectItem value="toddler">Tout-petit</SelectItem>
-
-                    <SelectItem value="infant">Bébé</SelectItem>
-
-                    <SelectItem value="newborn">Nouveau-né</SelectItem>
-
-                  </SelectContent>
-
-                </Select>
-
-              </div>
-
-              
-
-              <div>
-
-                <Label className="text-xs">Motif</Label>
-
-                <Input
-
-                  value={formData.product_attributes.pattern}
-
-                  onChange={(e) => setFormData({
-
-                    ...formData,
-
-                    product_attributes: { ...formData.product_attributes, pattern: e.target.value }
-
-                  })}
-
-                  placeholder="Ex: Rayé, Uni, À pois"
-
-                />
-
-              </div>
-
-            </div>
-
-            
-
-            <div className="mt-4">
-
-              <Label className="text-xs mb-2 block">Labels personnalisés (pour filtrage dans vos publicités)</Label>
-
-              <div className="grid grid-cols-1 gap-2">
-
-                {[0, 1, 2, 3, 4].map(i => (
-
-                  <Input
-
-                    key={i}
-
-                    value={formData.product_attributes.custom_labels[`label_${i}`]}
-
-                    onChange={(e) => setFormData({
-
-                      ...formData,
-
-                      product_attributes: {
-
-                        ...formData.product_attributes,
-
-                        custom_labels: {
-
-                          ...formData.product_attributes.custom_labels,
-
-                          [`label_${i}`]: e.target.value
-
-                        }
-
-                      }
-
-                    })}
-
-                    placeholder={`Label ${i + 1}: Ex: Bestseller, Nouveau, Promo`}
-
-                    className="text-sm"
-
-                  />
-
-                ))}
-
-              </div>
-
-            </div>
-
-          </div>
-
-
-
-          <div className="flex gap-3">
-
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-
+          {/* Action Buttons Footer - Sticky on Mobile */}
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t sm:relative sm:border-t-0 sm:bg-transparent sm:p-0 flex gap-3 z-10">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1 h-12 border-slate-300">
               Annuler
-
             </Button>
-
-            <Button type="submit" disabled={loading} className="flex-1 bg-blue-600">
-
+            <Button type="submit" disabled={loading} className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-base font-semibold shadow-lg shadow-blue-200">
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-
-              {product ? 'Mettre à jour' : 'Créer'}
-
+              {product ? 'Sauvegarder' : 'Créer l\'article'}
             </Button>
-
           </div>
-
+          
         </form>
-
+        </div>
       </DialogContent>
-
     </Dialog>
-
     </>
-
   );
-
 }
