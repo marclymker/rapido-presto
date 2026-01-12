@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Search, ShoppingCart, ArrowLeft, Menu, MapPin, Star, ChevronRight } from 'lucide-react';
+import { Search, ShoppingCart, ArrowLeft, Menu, MapPin, Star, ChevronRight, X, Clock } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,9 +30,26 @@ import FlashBanner from '@/components/home/FlashBanner';
 import FlowersBanner from '@/components/home/FlowersBanner';
 import GiftBanner from '@/components/home/GiftBanner';
 
+// --- CONFIGURATION DES SOUS-CATÉGORIES MARIAGE ---
+const WEDDING_STRUCTURE = [
+  {
+    title: "Robe de Mariage",
+    subtypes: ["Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe Civil"]
+  },
+  { title: "Demoiselle d'honneur" },
+  { title: "Annonceuse" },
+  { title: "Témoins" },
+  { title: "Bague de Mariage" },
+  { title: "Bague" },
+  { title: "Accessoires" },
+  { title: "Carte et programmation" },
+  { title: "Matériels Décor" }
+];
+
 export default function Home() {
   const [user, setUser] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Tout');
+  const [selectedSubCategory, setSelectedSubCategory] = useState(null); 
   const [selectedShop, setSelectedShop] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -41,10 +58,12 @@ export default function Home() {
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
+  
+  // NOUVEAU STATE : Rappel Panier
+  const [showCartReminder, setShowCartReminder] = useState(false);
+  
   const queryClient = useQueryClient();
   
-  // --- CONFIGURATION CATÉGORIES (Modifiée) ---
-  // Suppression de: Fastfood, Pharmacie, Cafe, Restaurant, Epicerie
   const articleTypes = [
     { id: 'Pour Femme', name: 'Mode Femme', icon: '👗' },
     { id: 'Boutique Fleurs', name: 'Fleurs', icon: '💐' },
@@ -73,6 +92,7 @@ export default function Home() {
 
     const handleCategorySelect = (e) => {
       setSelectedCategory(e.detail);
+      setSelectedSubCategory(null);
       setSelectedShop(null);
       setGooglePlaces([]);
     };
@@ -132,7 +152,7 @@ export default function Home() {
     refetchInterval: 60000
   });
 
-  // Filtrage pour la vue "Tout"
+  // Filtrage principal
   const filteredProductsByType = React.useMemo(() => {
     if (selectedCategory === 'Tout') return allProducts;
     return allProducts.filter(p => p.category === selectedCategory && p.is_available !== false);
@@ -144,7 +164,6 @@ export default function Home() {
     return shops.filter(s => shopIds.has(s.id));
   }, [shops, filteredProductsByType, selectedCategory]);
 
-  // Produits de la boutique sélectionnée
   const { data: products = [] } = useQuery({
     queryKey: ['products', selectedShop?.id, selectedCategory],
     queryFn: () => {
@@ -160,26 +179,48 @@ export default function Home() {
     refetchInterval: 60000
   });
 
-  // --- NOUVELLE LOGIQUE : GROUPER PAR BOUTIQUE POUR UNE CATÉGORIE ---
   const productsByShopInCategory = React.useMemo(() => {
-    if (selectedCategory === 'Tout' || selectedShop) return [];
+    if (selectedCategory === 'Tout' || selectedShop || selectedCategory === 'Mariage') return [];
 
     return shopsWithProducts.map(shop => {
-      // Filtrer les produits de cette boutique qui correspondent à la catégorie
       const shopProducts = allProducts.filter(p => 
         p.shop_id === shop.id && 
         p.category === selectedCategory && 
         p.is_available !== false
       );
-      
-      return {
-        shop,
-        products: shopProducts
-      };
-    }).filter(group => group.products.length > 0); // Garder uniquement si produits dispo
+      return { shop, products: shopProducts };
+    }).filter(group => group.products.length > 0);
   }, [selectedCategory, selectedShop, shopsWithProducts, allProducts]);
 
-  // Google Places (Seulement si pertinent pour les catégories restantes)
+  // Logique filtrage Mariage
+  const weddingProductsBySubCategory = React.useMemo(() => {
+    if (selectedCategory !== 'Mariage') return {};
+    const weddingProducts = allProducts.filter(p => p.category === 'Mariage' && p.is_available !== false);
+    const grouped = {};
+
+    const classifyProduct = (product) => {
+      const textToSearch = `${product.name} ${product.subcategory || ''} ${product.description || ''}`.toLowerCase();
+      for (const group of WEDDING_STRUCTURE) {
+        if (group.subtypes) {
+          for (const subtype of group.subtypes) {
+            if (textToSearch.includes(subtype.toLowerCase())) return subtype;
+          }
+        }
+        if (textToSearch.includes(group.title.toLowerCase())) return group.title;
+      }
+      return 'Autre';
+    };
+
+    weddingProducts.forEach(product => {
+      const sub = classifyProduct(product);
+      if (!grouped[sub]) grouped[sub] = [];
+      grouped[sub].push(product);
+    });
+
+    return grouped;
+  }, [allProducts, selectedCategory]);
+
+  // Google Places
   const fetchGooglePlaces = async (categoryType) => {
     if (!userLocation) {
       toast.error('Activez la géolocalisation');
@@ -208,12 +249,32 @@ export default function Home() {
     enabled: !!user?.id
   });
 
+  // --- NOUVELLE LOGIQUE : REMINDER PANIER ---
+  useEffect(() => {
+    // 1. Vérification à la reconnexion / montage du composant
+    if (cartItems.length > 0) {
+        // Petit délai pour ne pas agresser l'utilisateur dès la milliseconde de chargement
+        const timer = setTimeout(() => setShowCartReminder(true), 2000);
+        return () => clearTimeout(timer);
+    }
+  }, [cartItems.length]); // Se déclenche si le nombre d'items change
+
+  useEffect(() => {
+    // 2. Intervalle de 60 minutes
+    const interval = setInterval(() => {
+        if (cartItems.length > 0) {
+            setShowCartReminder(true);
+            // Son de notification optionnel ou toast système
+        }
+    }, 60 * 60 * 1000); // 60 minutes
+
+    return () => clearInterval(interval);
+  }, [cartItems]);
+
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity = 1 }) => {
       const existing = cartItems.find(item => item.product_id === product.id);
       const clientPrice = getClientPrice(product);
-      
-      // On s'assure d'avoir l'info de la boutique
       const productShop = shops.find(s => s.id === product.shop_id);
       
       if (existing) {
@@ -237,6 +298,7 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
       toast.success('Ajouté au panier');
+      setShowCartReminder(false); // On cache le rappel si l'utilisateur interagit
     }
   });
 
@@ -280,6 +342,8 @@ export default function Home() {
                   onClick={() => {
                     if (selectedShop) {
                       setSelectedShop(null);
+                    } else if (selectedSubCategory) {
+                      setSelectedSubCategory(null);
                     } else {
                       setSelectedCategory('Tout');
                       setGooglePlaces([]);
@@ -345,7 +409,11 @@ export default function Home() {
                     <div className="text-xs font-bold md:text-sm flex items-center">Compte</div>
                 </div>
 
-                <Link to={createPageUrl('Cart')} className="relative flex items-end cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm">
+                {/* --- CORRECTION ICI : BOUTON PANIER AVEC REDIRECTION EXPLICITE --- */}
+                <div 
+                    className="relative flex items-end cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm"
+                    onClick={() => window.location.href = createPageUrl('Cart')}
+                >
                     <div className="relative">
                         <ShoppingCart className="w-7 h-7 md:w-8 md:h-8" />
                         <span 
@@ -356,11 +424,10 @@ export default function Home() {
                         </span>
                     </div>
                     <span className="hidden md:block font-bold text-sm ml-1 mb-1">Panier</span>
-                </Link>
+                </div>
             </div>
         </div>
 
-        {/* Menu Catégories (Sous-header) */}
         <nav className="text-white text-sm px-4 py-2 flex items-center gap-4 overflow-x-auto no-scrollbar whitespace-nowrap" style={{ backgroundColor: theme.lightBlue }}>
             <div className="flex items-center font-bold gap-1 cursor-pointer hover:text-white/80" onClick={() => setSelectedCategory('Tout')}>
                 <Menu className="w-5 h-5" />
@@ -372,6 +439,7 @@ export default function Home() {
                     onClick={() => {
                         if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                         setSelectedCategory(type.id);
+                        setSelectedSubCategory(null);
                         setSelectedShop(null);
                         setGooglePlaces([]);
                     }}
@@ -449,7 +517,7 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* Grille Catégories (Sans Food/Pharma) */}
+            {/* Grille Catégories */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {articleTypes.map((type) => (
                 <div 
@@ -458,6 +526,7 @@ export default function Home() {
                     onClick={() => {
                         if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                         setSelectedCategory(type.id);
+                        setSelectedSubCategory(null);
                         setSelectedShop(null);
                         setGooglePlaces([]);
                     }}
@@ -469,43 +538,7 @@ export default function Home() {
             </div>
 
             <SmallStories onCategorySelect={(c) => setSelectedCategory(c)} />
-
-            {user?.profiles?.entreprise?.is_active && (
-                <div className="bg-white p-4 border rounded-lg flex items-center justify-between shadow-sm border-l-4 border-l-orange-500">
-                    <div>
-                      <h3 className="font-bold text-lg">Espace Vendeur</h3>
-                      <p className="text-sm text-gray-600">Gérez votre boutique</p>
-                    </div>
-                    <Button 
-                        onClick={() => setShowAddProductModal(true)}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-black border border-yellow-500 shadow-sm"
-                    >
-                        Vendre
-                    </Button>
-                </div>
-            )}
-
             <CreditBanner />
-
-            {/* Deal du Jour */}
-            <div className="bg-white p-4 border border-gray-200 rounded-sm">
-                 <div className="flex items-center gap-2 mb-2">
-                    <h2 className="text-xl font-bold">Offre du jour</h2>
-                    <span className="text-xs text-blue-600 hover:underline cursor-pointer">Voir tout</span>
-                 </div>
-                 <div className="flex flex-col md:flex-row gap-6">
-                    <div className="md:w-1/3 bg-gray-100 rounded-lg p-6 flex flex-col items-center justify-center text-center">
-                        <Badge className="bg-red-600 text-white mb-2">-45%</Badge>
-                        <h3 className="text-2xl font-black text-slate-800 mb-1">Mariage & Events</h3>
-                        <Button className="w-full mt-4 bg-yellow-400 text-black">Voir l'offre</Button>
-                    </div>
-                    <div className="flex-1 grid grid-cols-3 gap-4">
-                        <div className="border p-4 text-center bg-gray-50"><span className="text-2xl">🚚</span><p className="text-xs font-bold mt-1">Rapide</p></div>
-                        <div className="border p-4 text-center bg-gray-50"><span className="text-2xl">🔒</span><p className="text-xs font-bold mt-1">Sécurisé</p></div>
-                        <div className="border p-4 text-center bg-gray-50"><span className="text-2xl">⭐</span><p className="text-xs font-bold mt-1">Top Qualité</p></div>
-                    </div>
-                 </div>
-            </div>
 
             {/* Meilleures Ventes */}
             <div className="bg-white p-4 relative rounded-sm">
@@ -514,8 +547,6 @@ export default function Home() {
                 {allProducts.filter(p => p.is_available !== false && p.image_url).slice(0, 5).map((product, idx) => {
                   const shop = shops.find(s => s.id === product.shop_id);
                   const price = getClientPrice(product);
-                  const isMakarios = shop?.company_name?.toLowerCase().includes('makarios');
-
                   return (
                     <div 
                       key={product.id}
@@ -532,17 +563,12 @@ export default function Home() {
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm text-[#007185] group-hover:text-[#C7511F] hover:underline leading-snug line-clamp-2 h-9 overflow-hidden">{product.name}</p>
-                        <div className="flex items-center gap-1">
-                             <div className="flex text-orange-400 text-xs"><Star className="w-3 h-3 fill-current"/><Star className="w-3 h-3 fill-current"/><Star className="w-3 h-3 fill-current"/><Star className="w-3 h-3 fill-current"/><Star className="w-3 h-3 fill-current opacity-50"/></div>
-                             <span className="text-xs text-blue-600">104</span>
-                        </div>
                         <div className="flex items-start mt-1 font-medium">
                             <span className="text-xs relative top-0.5">$</span>
                             <span className="text-lg leading-none">{Math.floor(price)}</span>
                             <span className="text-xs relative top-0.5">{(price % 1).toFixed(2).substring(2)}</span>
                             <span className="text-gray-500 text-xs self-center ml-1">HTG</span>
                         </div>
-                        {isMakarios && <span className="text-[10px] text-gray-500 block">Sponsorisé</span>}
                         <Button 
                             className="w-full mt-2 h-7 text-xs bg-[#FFD814] hover:bg-[#F7CA00] text-black border border-[#FCD200] rounded-full"
                             onClick={(e) => {
@@ -570,18 +596,56 @@ export default function Home() {
             />
           </div>
 
-        /* --- CAS 3: NAVIGATION PAR CATÉGORIE (CLASSIFIÉ PAR BOUTIQUE) --- */
+        /* --- CAS 3: NAVIGATION PAR CATÉGORIE --- */
         ) : (
           <div className="flex flex-col md:flex-row gap-4 mt-4">
             
-            {/* SIDEBAR NAVIGATION RAPIDE */}
+            {/* SIDEBAR NAVIGATION */}
             <aside className="hidden md:block w-64 flex-shrink-0 bg-white p-4 h-fit border-r border-gray-200 sticky top-20 rounded-sm">
                <div className="mb-4">
-                    <h3 className="font-bold text-lg mb-2 text-orange-500">{selectedCategory}</h3>
+                    <h3 className="font-bold text-lg mb-4 text-orange-500">{selectedCategory}</h3>
                     
-                    {!selectedShop && (
+                    {/* SI CATÉGORIE = MARIAGE */}
+                    {selectedCategory === 'Mariage' && (
+                        <div className="space-y-1">
+                            <h4 className="font-bold text-sm mb-2 text-slate-800">Départements</h4>
+                            <div 
+                                className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${!selectedSubCategory ? 'font-bold bg-gray-50 text-orange-600' : ''}`}
+                                onClick={() => setSelectedSubCategory(null)}
+                            >
+                                Tout voir
+                            </div>
+                            {WEDDING_STRUCTURE.map((group, idx) => (
+                                <div key={idx}>
+                                    {group.subtypes ? (
+                                        <div className="mb-2">
+                                            <p className="font-bold text-sm text-gray-700 px-2 mt-2">{group.title}</p>
+                                            {group.subtypes.map((sub) => (
+                                                <div 
+                                                    key={sub}
+                                                    className={`cursor-pointer text-sm p-2 pl-4 rounded hover:bg-gray-100 ${selectedSubCategory === sub ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
+                                                    onClick={() => setSelectedSubCategory(sub)}
+                                                >
+                                                    {sub}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div 
+                                            className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${selectedSubCategory === group.title ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
+                                            onClick={() => setSelectedSubCategory(group.title)}
+                                        >
+                                            {group.title}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* SI AUTRE CATÉGORIE */}
+                    {selectedCategory !== 'Mariage' && !selectedShop && (
                         <>
-                            <p className="text-xs text-gray-500 mb-4">{productsByShopInCategory.length} vendeurs trouvés</p>
                             <h4 className="font-bold text-sm mb-2">Vendeurs</h4>
                             <div className="space-y-1 max-h-[60vh] overflow-y-auto custom-scrollbar">
                                 {productsByShopInCategory.map(({ shop }) => (
@@ -602,11 +666,7 @@ export default function Home() {
 
                     {selectedShop && (
                         <div className="mt-4">
-                            <Button 
-                                variant="outline" 
-                                className="w-full text-xs"
-                                onClick={() => setSelectedShop(null)}
-                            >
+                            <Button variant="outline" className="w-full text-xs" onClick={() => setSelectedShop(null)}>
                                 <ArrowLeft className="w-3 h-3 mr-2" /> Retour liste
                             </Button>
                         </div>
@@ -617,7 +677,7 @@ export default function Home() {
             {/* CONTENU PRINCIPAL */}
             <main className="flex-1 min-w-0">
                
-               {/* 3.1: UNE BOUTIQUE SÉLECTIONNÉE */}
+               {/* 3.1: VUE DÉTAIL BOUTIQUE */}
                {selectedShop ? (
                    <div className="bg-white p-4 rounded-lg shadow-sm min-h-[500px]">
                         <div className="flex items-center gap-4 mb-6 border-b pb-4">
@@ -633,114 +693,148 @@ export default function Home() {
                             </div>
                         </div>
                         
-                        {selectedShop.is_google_place ? (
-                            <div className="text-center py-12 bg-gray-50 rounded-lg">
-                                <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                                <h3 className="text-lg font-bold">Commerce listé sur Maps</h3>
-                                <p className="text-gray-500">Produits non disponibles à la commande.</p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {products.map(product => (
-                                    <ProductCard
-                                        key={product.id}
-                                        product={product}
-                                        shop={selectedShop}
-                                        onAdd={handleAddToCart}
-                                        onClick={() => setSelectedProduct(product)}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {products.map(product => (
+                                <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                    shop={selectedShop}
+                                    onAdd={handleAddToCart}
+                                    onClick={() => setSelectedProduct(product)}
+                                />
+                            ))}
+                        </div>
                    </div>
                ) : (
-                   /* 3.2: LISTE DE TOUTES LES BOUTIQUES DE LA CATÉGORIE */
+                   /* 3.2: VUE LISTE CATÉGORIE */
                    <div className="space-y-6">
                         <div className="bg-white p-4 rounded shadow-sm">
                             <h2 className="text-xl font-bold text-slate-800">
-                                Boutique : {selectedCategory}
+                                {selectedSubCategory ? selectedSubCategory : selectedCategory}
                             </h2>
                         </div>
 
-                        {productsByShopInCategory.length > 0 ? (
-                            productsByShopInCategory.map(({ shop, products }) => (
-                                <div 
-                                    id={`shop-section-${shop.id}`}
-                                    key={shop.id} 
-                                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-                                >
-                                    {/* Header Boutique */}
-                                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
-                                        <div 
-                                            className="flex items-center gap-3 cursor-pointer group"
-                                            onClick={() => setSelectedShop(shop)}
-                                        >
-                                            <div className="w-12 h-12 rounded-full border border-gray-200 overflow-hidden">
-                                                {shop.company_logo_url ? (
-                                                    <img src={shop.company_logo_url} className="w-full h-full object-cover" alt="" />
-                                                ) : (
-                                                    <div className="bg-slate-100 w-full h-full flex items-center justify-center font-bold">{shop.company_name[0]}</div>
-                                                )}
+                        {selectedCategory === 'Mariage' ? (
+                            <div className="space-y-8">
+                                {selectedSubCategory ? (
+                                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {weddingProductsBySubCategory[selectedSubCategory]?.length > 0 ? (
+                                                weddingProductsBySubCategory[selectedSubCategory].map(product => {
+                                                    const shop = shops.find(s => s.id === product.shop_id);
+                                                    return (
+                                                        <ProductCard
+                                                            key={product.id}
+                                                            product={product}
+                                                            shop={shop}
+                                                            onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
+                                                            onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
+                                                        />
+                                                    );
+                                                })
+                                            ) : (
+                                                <div className="col-span-full text-center py-10 text-gray-500">Aucun produit trouvé dans cette section.</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    Object.entries(weddingProductsBySubCategory).map(([subCat, items]) => (
+                                        <div key={subCat} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                                            <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                                                <h3 className="font-bold text-lg text-slate-900">{subCat}</h3>
+                                                <Button 
+                                                    variant="link" 
+                                                    className="text-xs text-[#007185]"
+                                                    onClick={() => setSelectedSubCategory(subCat)}
+                                                >
+                                                    Voir plus
+                                                </Button>
                                             </div>
-                                            <div>
-                                                <h3 className="font-bold text-lg text-slate-900 group-hover:text-orange-600">
-                                                    {shop.company_name}
-                                                </h3>
-                                                <div className="flex text-xs text-gray-500 gap-2">
-                                                    <span>Livraison standard</span>
-                                                    <span>•</span>
-                                                    <span className="text-green-600">En stock</span>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                                {items.slice(0, 5).map(product => {
+                                                    const shop = shops.find(s => s.id === product.shop_id);
+                                                    return (
+                                                        <ProductCard
+                                                            key={product.id}
+                                                            product={product}
+                                                            shop={shop}
+                                                            onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
+                                                            onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
+                                                        />
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        ) : (
+                            productsByShopInCategory.length > 0 ? (
+                                productsByShopInCategory.map(({ shop, products }) => (
+                                    <div 
+                                        id={`shop-section-${shop.id}`}
+                                        key={shop.id} 
+                                        className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+                                    >
+                                        <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+                                            <div 
+                                                className="flex items-center gap-3 cursor-pointer group"
+                                                onClick={() => setSelectedShop(shop)}
+                                            >
+                                                <div className="w-12 h-12 rounded-full border border-gray-200 overflow-hidden">
+                                                    {shop.company_logo_url ? (
+                                                        <img src={shop.company_logo_url} className="w-full h-full object-cover" alt="" />
+                                                    ) : (
+                                                        <div className="bg-slate-100 w-full h-full flex items-center justify-center font-bold">{shop.company_name[0]}</div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-orange-600">
+                                                        {shop.company_name}
+                                                    </h3>
+                                                    <div className="flex text-xs text-gray-500 gap-2">
+                                                        <span>Livraison standard</span>
+                                                        <span>•</span>
+                                                        <span className="text-green-600">En stock</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <Button 
-                                            size="sm"
-                                            className="hidden md:flex bg-white border border-gray-300 text-black hover:bg-gray-50"
-                                            onClick={() => setSelectedShop(shop)}
-                                        >
-                                            Visiter la boutique
-                                        </Button>
-                                    </div>
-
-                                    {/* Aperçu Produits (Max 4) */}
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {products.slice(0, 4).map(product => (
-                                            <div key={product.id}>
-                                                <ProductCard
-                                                    product={product}
-                                                    shop={shop}
-                                                    onAdd={(p) => {
-                                                        setSelectedShop(shop); 
-                                                        handleAddToCart(p);
-                                                    }}
-                                                    onClick={() => {
-                                                        setSelectedShop(shop);
-                                                        setSelectedProduct(product);
-                                                    }}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                    
-                                    {products.length > 4 && (
-                                        <div className="mt-4 text-center">
-                                            <button 
+                                            <Button 
+                                                size="sm"
+                                                className="hidden md:flex bg-white border border-gray-300 text-black hover:bg-gray-50"
                                                 onClick={() => setSelectedShop(shop)}
-                                                className="text-sm text-[#007185] hover:text-[#C7511F] hover:underline font-medium"
                                             >
-                                                Voir les {products.length - 4} autres produits de {shop.company_name}
-                                            </button>
+                                                Visiter la boutique
+                                            </Button>
                                         </div>
-                                    )}
+
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {products.slice(0, 4).map(product => (
+                                                <div key={product.id}>
+                                                    <ProductCard
+                                                        product={product}
+                                                        shop={shop}
+                                                        onAdd={(p) => {
+                                                            setSelectedShop(shop); 
+                                                            handleAddToCart(p);
+                                                        }}
+                                                        onClick={() => {
+                                                            setSelectedShop(shop);
+                                                            setSelectedProduct(product);
+                                                        }}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-20 bg-white rounded-lg shadow-sm">
+                                    <div className="text-4xl mb-4">📦</div>
+                                    <h3 className="text-lg font-bold text-gray-800">Aucun produit disponible</h3>
+                                    <Button className="mt-4 bg-orange-400" onClick={() => setSelectedCategory('Tout')}>Retour</Button>
                                 </div>
-                            ))
-                        ) : (
-                            <div className="text-center py-20 bg-white rounded-lg shadow-sm">
-                                <div className="text-4xl mb-4">📦</div>
-                                <h3 className="text-lg font-bold text-gray-800">Aucun produit disponible</h3>
-                                <p className="text-gray-500 text-sm mt-2">Aucune boutique ne propose d'articles dans "{selectedCategory}" actuellement.</p>
-                                <Button className="mt-4 bg-orange-400" onClick={() => setSelectedCategory('Tout')}>Retour</Button>
-                            </div>
+                            )
                         )}
                    </div>
                )}
@@ -749,22 +843,56 @@ export default function Home() {
         )}
       </main>
 
-      {/* Panier Flottant Mobile */}
+      {/* --- CORRECTION : PANIER FLOTTANT MOBILE AVEC REDIRECTION EXPLICITE --- */}
       {user && cartCount > 0 && (
-        <div className="fixed bottom-4 right-4 z-40 animate-bounce-subtle">
-           <Link to={createPageUrl('Cart')}>
-                <div className="bg-white border-2 border-orange-500 rounded-full p-3 shadow-2xl flex items-center gap-2 hover:scale-105 transition-transform">
-                    <div className="relative">
-                        <ShoppingCart className="w-6 h-6 text-gray-800" />
-                        <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                            {cartCount}
-                        </span>
-                    </div>
-                    <span className="font-bold text-sm text-gray-900 pr-2">
-                         {cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0).toFixed(0)} G
+        <div 
+            className="fixed bottom-4 right-4 z-40 animate-bounce-subtle cursor-pointer"
+            onClick={() => window.location.href = createPageUrl('Cart')}
+        >
+            <div className="bg-white border-2 border-orange-500 rounded-full p-3 shadow-2xl flex items-center gap-2 hover:scale-105 transition-transform">
+                <div className="relative">
+                    <ShoppingCart className="w-6 h-6 text-gray-800" />
+                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                        {cartCount}
                     </span>
                 </div>
-           </Link>
+                <span className="font-bold text-sm text-gray-900 pr-2">
+                     {cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0).toFixed(0)} G
+                </span>
+            </div>
+        </div>
+      )}
+
+      {/* --- NOUVEAU : BANNIÈRE FLOTTANTE DE RAPPEL PANIER --- */}
+      {showCartReminder && cartCount > 0 && (
+        <div className="fixed top-32 right-4 z-50 animate-in slide-in-from-right duration-500 max-w-sm w-full md:w-80">
+            <div className="bg-white border-l-4 border-orange-500 shadow-2xl rounded-lg p-4 relative">
+                <button 
+                    onClick={() => setShowCartReminder(false)} 
+                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                >
+                    <X className="w-4 h-4" />
+                </button>
+                
+                <div className="flex items-start gap-3">
+                    <div className="bg-orange-100 p-2 rounded-full">
+                        <Clock className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-gray-900">N'oubliez pas vos achats !</h4>
+                        <p className="text-sm text-gray-600 mt-1">
+                            Il vous reste <span className="font-bold">{cartCount} article{cartCount > 1 ? 's' : ''}</span> dans votre panier.
+                        </p>
+                    </div>
+                </div>
+                
+                <Button 
+                    className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold"
+                    onClick={() => window.location.href = createPageUrl('Cart')}
+                >
+                    Finaliser ma commande
+                </Button>
+            </div>
         </div>
       )}
 
