@@ -33,35 +33,60 @@ export function useBrowserNotifications(user) {
   
   // 2. Fonction d'alerte visuelle et sonore
   const playAlert = useCallback((data) => {
-    const orderInfo = `Commande #${data.orderNumber || data.order_number || ''} - ${data.total || ''} HTG`;
+    // 1. Extraire les données de façon sécurisée (Backend utilise camelCase pour orderId)
+    const orderId = data.orderId || data.id;
+    const orderNum = data.orderNumber || data.order_number || 'Inconnu';
+    const total = data.total || '0';
+    const orderInfo = `Commande #${orderNum} - ${total} HTG`;
     
-    if ("vibrate" in navigator) navigator.vibrate([500, 200, 500]);
+    console.log("🔔 Exécution de playAlert pour:", orderInfo);
 
+    // 2. VIBRATION (Important pour Android)
+    if ("vibrate" in navigator) {
+      navigator.vibrate([500, 200, 500, 200, 500]); 
+    }
+
+    // 3. LE SON (On force le reset avant de jouer)
     if (audioRef.current) {
+      audioRef.current.pause(); // Stop si déjà en cours
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(err => console.log("Audio bloqué:", err));
+      audioRef.current.volume = 1.0;
+      
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => console.error("Audio bloqué par Android/Browser:", err));
+      }
     }
 
+    // 4. NOTIFICATION NATIVE (Android a besoin de ça pour faire du bruit en arrière-plan)
     if ("Notification" in window && Notification.permission === "granted") {
-      const notification = new Notification("💰 NOUVELLE COMMANDE !", {
-        body: orderInfo,
-        icon: '/logo.png',
-        tag: `order-${data.orderId || data.id}`,
-        requireInteraction: true,
-      });
-      notification.onclick = () => {
-        window.focus();
-        window.location.href = `/entreprise/orders/${data.orderId || data.id}`;
-        notification.close();
-      };
+      try {
+        const notification = new Notification("💰 NOUVELLE COMMANDE !", {
+          body: orderInfo,
+          icon: '/logo.png',
+          tag: `order-${orderId}`,
+          requireInteraction: true,
+          vibrate: [500, 200, 500],
+          silent: false 
+        });
+
+        notification.onclick = () => {
+          window.focus();
+          window.location.href = `/entreprise/orders/${orderId}`;
+          notification.close();
+        };
+      } catch (err) {
+        console.error("Erreur notification native:", err);
+      }
     }
 
+    // 5. TOAST (Visuel dans l'application)
     toast.error("💰 NOUVELLE COMMANDE !", {
       description: orderInfo,
       duration: Infinity,
       action: {
         label: "OUVRIR",
-        onClick: () => window.location.href = `/entreprise/orders/${data.orderId || data.id}`
+        onClick: () => window.location.href = `/entreprise/orders/${orderId}`
       },
     });
   }, []);
