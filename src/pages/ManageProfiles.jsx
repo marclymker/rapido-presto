@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, User, Building2, Bike, Plus, Check, Clock, AlertCircle, Upload } from 'lucide-react';
+import { ArrowLeft, User, Building2, Bike, Plus, Check, Clock, AlertCircle, Upload, Briefcase } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +56,13 @@ export default function ManageProfiles() {
       description: 'Effectuer des livraisons',
       color: 'green',
       requiresValidation: true
+    },
+    agent: {
+      icon: Briefcase,
+      label: 'Agent de Vente',
+      description: 'Vendre pour Makarios Bridal',
+      color: 'purple',
+      requiresValidation: false
     }
   };
 
@@ -123,6 +130,20 @@ export default function ManageProfiles() {
         
         await base44.auth.updateMe({ profiles });
         toast.success('Profil entreprise activé!');
+        window.location.reload();
+        
+      } else if (selectedProfile === 'agent') {
+        profiles.agent = {
+          is_active: true,
+          validation_status: 'approved',
+          created_at: new Date().toISOString(),
+          last_used: new Date().toISOString(),
+          phone: user.phone || '',
+          address: user.address || ''
+        };
+        
+        await base44.auth.updateMe({ profiles });
+        toast.success('Profil Agent de Vente activé!');
         window.location.reload();
         
       } else if (selectedProfile === 'livreur') {
@@ -352,6 +373,29 @@ export default function ManageProfiles() {
               </>
             )}
             
+            {selectedProfile === 'agent' && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <Briefcase className="w-6 h-6 text-purple-600" />
+                  <h3 className="font-semibold text-purple-900">Agent de Vente Makarios Bridal</h3>
+                </div>
+                <p className="text-sm text-purple-800">
+                  En activant ce profil, vous pourrez vendre les produits Makarios Bridal et gagner 10% de commission sur chaque vente.
+                </p>
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-purple-700 flex items-center gap-2">
+                    <Check className="w-4 h-4" /> Accès au catalogue complet
+                  </p>
+                  <p className="text-xs text-purple-700 flex items-center gap-2">
+                    <Check className="w-4 h-4" /> Gestion de vos clients
+                  </p>
+                  <p className="text-xs text-purple-700 flex items-center gap-2">
+                    <Check className="w-4 h-4" /> Suivi des commissions
+                  </p>
+                </div>
+              </div>
+            )}
+
             {selectedProfile === 'livreur' && (
               <>
                 <div>
