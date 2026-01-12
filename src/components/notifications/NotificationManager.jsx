@@ -116,3 +116,5 @@ export function useBrowserNotifications(user) {
 }
 
 export const useOrderNotifications = useBrowserNotifications;
+export const useNotificationSound = useBrowserNotifications;
+export const useNotificationManager = useBrowserNotifications;
