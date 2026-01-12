@@ -39,19 +39,20 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   const fetchSimilarProducts = async () => {
     setLoadingSimilar(true);
     try {
-      const response = await base44.functions.invoke('productService', {
-        action: 'getSimilar',
+      const response = await base44.functions.invoke('getSimilarProducts', {
         product_id: product.id,
-        category_id: product.category_id,
-        limit: 4
+        category: product.category,
+        limit: 6
       });
       
-      if (response?.data) {
+      if (response?.data?.data) {
+        setSimilarItems(response.data.data);
+      } else if (response?.data) {
         setSimilarItems(response.data);
       }
     } catch (error) {
-      console.error("Erreur lors du chargement des produits similaires:", error);
-      toast.error("Erreur lors du chargement des articles similaires");
+      console.error("Erreur chargement similaires:", error);
+      // Silencieux - pas de toast pour ne pas perturber l'UX
     } finally {
       setLoadingSimilar(false);
     }
@@ -200,9 +201,10 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   };
 
   const handleSimilarProductClick = (similarProduct) => {
-    onClose();
-    // Ici vous pouvez ajouter un callback pour ouvrir le nouveau produit
-    // Par exemple: onSimilarProductClick(similarProduct);
+    // Réinitialiser et ouvrir le nouveau produit
+    setSimilarItems([]);
+    setQuantity(1);
+    window.location.href = `/?product=${similarProduct.id}`;
   };
 
   return (

@@ -939,10 +939,7 @@ export default function Home() {
                   onClose={() => setSelectedProduct(null)}
                   onAddToCart={handleAddToCart}
                   user={user}
-                  onShopClick={(shop) => {
-                    setSelectedShop(shop);
-                    setSelectedProduct(null);
-                  }}
+                  similarProducts={[]}
                 />
 
       {/* Profile Completion Modal */}
