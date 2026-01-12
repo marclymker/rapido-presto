@@ -21,6 +21,7 @@ import AgentDashboard from './pages/AgentDashboard';
 import AgentClients from './pages/AgentClients';
 import AgentCommissions from './pages/AgentCommissions';
 import AgentAccount from './pages/AgentAccount';
+import AdminDashboard from './pages/AdminDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -48,6 +49,7 @@ export const PAGES = {
     "AgentClients": AgentClients,
     "AgentCommissions": AgentCommissions,
     "AgentAccount": AgentAccount,
+    "AdminDashboard": AdminDashboard,
 }
 
 export const pagesConfig = {

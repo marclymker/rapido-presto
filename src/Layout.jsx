@@ -86,6 +86,7 @@ export default function Layout({ children, currentPageName }) {
     // Admin navigation
     if (user?.role === 'admin') {
       return [
+        { icon: Home, label: 'Dashboard', page: 'AdminDashboard' },
         { icon: Store, label: 'Boutiques', page: 'AdminShops' },
         { icon: Package, label: 'Articles', page: 'AdminProducts' },
         { icon: User, label: 'Compte', page: 'Account' },

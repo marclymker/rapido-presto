@@ -79,6 +79,25 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
         return;
       }
       
+      // For agent and entreprise profiles, allow activation directly
+      if (targetProfile === 'agent' && !targetProfileData.is_active) {
+        // Auto-activate agent profile
+        await base44.auth.updateMe({
+          profiles: {
+            ...user.profiles,
+            agent: {
+              is_active: true,
+              validation_status: 'approved',
+              created_at: new Date().toISOString(),
+              last_used: new Date().toISOString(),
+              phone: user.phone || '',
+              address: user.address || ''
+            }
+          }
+        });
+        toast.success('Profil Agent de Vente activé');
+      }
+      
       // Check for active deliveries if switching from livreur
       if (currentProfile === 'livreur') {
         const activeDeliveries = await base44.entities.Order.filter({
