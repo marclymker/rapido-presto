@@ -3,11 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { 
-  ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, 
-  Banknote, Clock, AlertTriangle, Copy, Check, Info, 
-  Search, ShoppingCart, Star, ShieldCheck, ChevronRight 
-} from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Banknote, Clock, AlertTriangle, Copy, Check, Info, Star, ShoppingBag } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -18,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getHaitiTime } from '@/components/utils/dateFormat';
 import SquarePaymentForm from '@/components/payment/SquarePaymentForm';
 
-// --- LOGIQUE DES FRAIS ---
+// --- LOGIQUE DES FRAIS (GARDÉE INTACTE) ---
 function calculateDeliveryFee(clientCommune, shopCommune) {
   const hour = getHaitiTime().getHours();
   const sameCommune = clientCommune === shopCommune;
@@ -97,14 +93,14 @@ export default function Cart() {
     enabled: !!user?.id
   });
 
-  // Simulation d'articles similaires (Style Amazon "Frequently bought together")
-  const { data: suggestedItems = [] } = useQuery({
-    queryKey: ['suggestions'],
+  // --- NOUVEAU: ARTICLES SIMILAIRES ---
+  const { data: similarProducts = [] } = useQuery({
+    queryKey: ['similar-products'],
     queryFn: () => base44.entities.Product.filter({}, { limit: 4 }),
     enabled: !!user?.id
   });
 
-  // --- CALCULS DU PANIER ---
+  // --- CALCULS DU PANIER (MODIFIÉS POUR OPTION 2 TEMPS) ---
   const subtotal = cartItems.reduce((sum, item) => sum + (item.unit_price + (item.total_customization_price || 0)) * item.quantity, 0);
   const itemsByShop = cartItems.reduce((acc, item) => {
     if (!acc[item.shop_id]) acc[item.shop_id] = [];
@@ -118,7 +114,7 @@ export default function Cart() {
   });
   
   const baseTotal = subtotal + deliveryFee + (user?.pending_balance || 0);
-  
+
   // Logique Paiement en 2 temps
   const isTwoSteps = paymentMethod === 'TWO_STEPS';
   const amountToPayNow = isTwoSteps ? (baseTotal / 2) : baseTotal;
@@ -136,22 +132,6 @@ export default function Cart() {
       toast.success('Copié !');
     });
   };
-
-  const addItemMutation = useMutation({
-    mutationFn: (product) => base44.entities.CartItem.create({
-      user_id: user.id,
-      product_id: product.id,
-      product_name: product.name,
-      unit_price: product.price,
-      quantity: 1,
-      shop_id: product.shop_id,
-      shop_name: product.shop_name
-    }),
-    onSuccess: () => {
-        queryClient.invalidateQueries(['cart']);
-        toast.success("Ajouté au panier");
-    }
-  });
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
@@ -194,8 +174,8 @@ export default function Cart() {
             unit_price: item.unit_price + (item.total_customization_price || 0)
           })),
           total: baseTotal,
-          amount_paid: amountToPayNow,
-          pending_balance: balanceToPayLater,
+          amount_paid: amountToPayNow, // Enregistre ce qui est payé maintenant
+          remaining_balance: balanceToPayLater, // Enregistre la balance
           payment_method: paymentMethod,
           status: (paymentMethod === 'moncash' || paymentMethod === 'natcash') ? 'pending_validation' : 'pending',
           payment_status: isTwoSteps ? 'partially_paid' : (paymentMethod === 'CASH' ? 'pending' : 'paid'),
@@ -205,13 +185,6 @@ export default function Cart() {
         });
       }
 
-      // Si balance, on met à jour le profil user (optionnel selon votre backend)
-      if (balanceToPayLater > 0) {
-          await base44.entities.User.update(user.id, {
-              pending_balance: (user.pending_balance || 0) + balanceToPayLater
-          });
-      }
-
       await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
       return { orderNum: firstOrderNum, code: generateConfirmationCode() };
     },
@@ -219,273 +192,159 @@ export default function Cart() {
       setOrderNumber(data.orderNum);
       setConfirmCode(data.code);
       setStep('confirmed');
-    },
-    onError: (err) => toast.error(err.message)
+    }
   });
 
   return (
-    <div className="min-h-screen bg-[#eaeded]">
-      {/* Header Amazon Style */}
-      <header className="bg-[#232f3e] text-white p-3 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" className="text-white hover:bg-slate-700 p-1" onClick={() => navigate(-1)}>
-              <ArrowLeft />
+    <div className="min-h-screen bg-[#f3f3f3]"> {/* Style gris Amazon/Shein */}
+      {/* HEADER STYLE AMAZON */}
+      <header className="bg-[#131921] text-white p-4 sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" className="text-white" onClick={() => step === 'checkout' ? setStep('cart') : navigate(-1)}>
+              <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-xl font-bold tracking-tight">Rapid<span className="text-orange-400">Panye</span></h1>
+            <h1 className="text-xl font-bold italic">RapidPanye</h1>
           </div>
-          <div className="flex-1 max-w-xl hidden md:flex relative">
-            <Input className="w-full bg-white text-black" placeholder="Rechercher un produit..." />
-            <div className="absolute right-0 bg-orange-400 h-full px-3 flex items-center rounded-r-md cursor-pointer">
-              <Search className="text-black w-5 h-5" />
-            </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm font-bold">
-            <div className="relative">
-                <ShoppingCart />
-                <span className="absolute -top-2 -right-2 bg-orange-500 text-black text-xs rounded-full w-5 h-5 flex items-center justify-center">{cartItems.length}</span>
-            </div>
+          <div className="flex items-center gap-2 text-sm font-medium">
+             {step === 'cart' ? 'Panier' : 'Paiement sécurisé'}
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto p-4 md:py-8">
+      <main className="max-w-4xl mx-auto p-4 md:py-8">
         <AnimatePresence mode="wait">
           {step === 'cart' && (
-            <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* Colonne Gauche: Articles */}
-              <div className="lg:col-span-2 space-y-4">
-                <div className="bg-white p-6 shadow-sm border-b">
-                   <h2 className="text-2xl font-semibold mb-4">Votre panier</h2>
-                   {cartItems.length === 0 ? (
-                       <div className="text-center py-10">
-                           <p className="text-slate-500 mb-4">Votre panier est vide</p>
-                           <Link to={createPageUrl('Home')}><Button className="bg-orange-400 text-black">Continuer mes achats</Button></Link>
-                       </div>
-                   ) : (
-                    <div className="divide-y">
-                        {cartItems.map(item => (
-                            <div key={item.id} className="py-4 flex gap-4">
-                                <div className="w-24 h-24 bg-slate-100 rounded flex-shrink-0" />
-                                <div className="flex-1">
-                                    <div className="flex justify-between items-start">
-                                        <h3 className="font-bold text-lg hover:text-orange-600 cursor-pointer">{item.product_name}</h3>
-                                        <p className="font-bold text-xl">{item.unit_price} HTG</p>
-                                    </div>
-                                    <p className="text-green-600 text-sm font-medium">En stock</p>
-                                    <div className="flex items-center gap-4 mt-3">
-                                        <div className="flex items-center border rounded-lg bg-slate-50">
-                                            <button className="px-3 py-1 border-r hover:bg-slate-100"><Minus className="w-4 h-4" /></button>
-                                            <span className="px-4 font-bold">{item.quantity}</span>
-                                            <button className="px-3 py-1 border-l hover:bg-slate-100"><Plus className="w-4 h-4" /></button>
-                                        </div>
-                                        <button 
-                                            onClick={() => base44.entities.CartItem.delete(item.id)}
-                                            className="text-xs text-blue-600 hover:underline border-l pl-4"
-                                        >
-                                            Supprimer
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+            <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+              <div className="bg-white p-6 rounded shadow-sm border">
+                <h2 className="text-2xl font-bold mb-4">Votre panier</h2>
+                <div className="space-y-4">
+                  {cartItems.map(item => (
+                    <div key={item.id} className="flex gap-4 border-b pb-4">
+                      <div className="w-20 h-20 bg-slate-100 rounded" />
+                      <div className="flex-1">
+                        <div className="flex justify-between">
+                          <p className="font-bold text-lg">{item.product_name}</p>
+                          <p className="font-bold">{item.unit_price} HTG</p>
+                        </div>
+                        <p className="text-sm text-green-600 font-bold">En stock</p>
+                        <div className="mt-2 flex items-center gap-4">
+                           <div className="flex items-center border rounded bg-slate-50">
+                              <button className="px-2 py-1"><Minus size={14}/></button>
+                              <span className="px-3 text-sm">{item.quantity}</span>
+                              <button className="px-2 py-1"><Plus size={14}/></button>
+                           </div>
+                           <button onClick={() => base44.entities.CartItem.delete(item.id)} className="text-xs text-blue-600 hover:underline">Supprimer</button>
+                        </div>
+                      </div>
                     </div>
-                   )}
-                </div>
-
-                {/* Section Suggestion "Amazon Style" */}
-                <div className="bg-white p-6 shadow-sm">
-                    <h3 className="font-bold text-lg mb-4">Articles souvent achetés ensemble</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {suggestedItems.map(prod => (
-                            <div key={prod.id} className="group cursor-pointer">
-                                <div className="aspect-square bg-slate-50 rounded mb-2 overflow-hidden border">
-                                    <img src={prod.image_url} alt="" className="object-cover w-full h-full group-hover:scale-105 transition" />
-                                </div>
-                                <p className="text-sm font-medium line-clamp-1">{prod.name}</p>
-                                <div className="flex text-orange-400 mt-1"><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /></div>
-                                <p className="text-red-700 font-bold mt-1">{prod.price} HTG</p>
-                                <Button 
-                                    size="sm" 
-                                    className="w-full mt-2 bg-yellow-400 hover:bg-yellow-500 text-black text-xs"
-                                    onClick={() => addItemMutation.mutate(prod)}
-                                >
-                                    Ajouter
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Colonne Droite: Résumé */}
-              <div className="space-y-4">
-                <div className="bg-white p-6 shadow-sm border sticky top-20">
-                    <div className="flex items-center gap-2 text-green-700 text-sm mb-4">
-                        <ShieldCheck className="w-5 h-5" />
-                        <span>Votre commande est éligible à la livraison rapide.</span>
-                    </div>
-                    <div className="text-xl mb-4">
-                        Sous-total ({cartItems.length} articles): <span className="font-bold">{subtotal} HTG</span>
-                    </div>
-                    <Button 
-                        disabled={cartItems.length === 0}
-                        className="w-full bg-[#ffd814] hover:bg-[#f7ca00] text-black border border-[#fcd200] rounded-full h-10 font-medium"
-                        onClick={() => setStep('checkout')}
-                    >
-                        Passer la commande
-                    </Button>
-                </div>
+              {/* NOUVEAU: SECTION PRODUITS SIMILAIRES STYLE SHEIN */}
+              <div className="bg-white p-6 rounded shadow-sm border">
+                 <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><ShoppingBag size={18} className="text-orange-500"/> Autres articles similaires</h3>
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {similarProducts.map(prod => (
+                      <div key={prod.id} className="border rounded p-2 hover:shadow-md transition">
+                        <div className="aspect-square bg-slate-50 rounded mb-2" />
+                        <p className="text-sm font-medium line-clamp-1">{prod.name}</p>
+                        <p className="font-bold text-orange-600 text-sm">{prod.price} HTG</p>
+                        <Button size="sm" variant="outline" className="w-full mt-2 h-7 text-xs border-orange-400 text-orange-600 hover:bg-orange-50">Ajouter</Button>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+
+              <div className="bg-white p-6 rounded shadow-sm border space-y-3">
+                <div className="flex justify-between text-lg font-medium"><span>Sous-total:</span><span>{subtotal} HTG</span></div>
+                <div className="flex justify-between font-bold text-2xl border-t pt-3"><span>Total:</span><span className="text-[#B12704]">{baseTotal} HTG</span></div>
+                <Button className="w-full bg-[#FFD814] hover:bg-[#F7CA00] text-black h-12 rounded-lg font-bold shadow-sm" onClick={() => setStep('checkout')}>Passer au paiement</Button>
               </div>
             </motion.div>
           )}
 
           {step === 'checkout' && (
-            <motion.div key="checkout" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-4">
-                
-                {/* Section Paiement */}
-                <div className="bg-white p-6 shadow-sm border">
-                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                        <span className="bg-slate-800 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
-                        Mode de paiement
-                    </h3>
-                    
-                    <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
-                        <div className={`p-4 rounded-lg border-2 transition-all ${paymentMethod === 'TWO_STEPS' ? 'border-orange-500 bg-orange-50' : 'border-slate-100'}`}>
-                            <div className="flex items-center space-x-3">
-                                <RadioGroupItem value="TWO_STEPS" id="two-steps" />
-                                <Label htmlFor="two-steps" className="flex-1 cursor-pointer">
-                                    <div className="flex justify-between items-center">
-                                        <span className="font-bold text-lg">Paiement en 2 temps (50/50)</span>
-                                        <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded">POPULAIRE</span>
-                                    </div>
-                                    <p className="text-sm text-slate-600 mt-1">Payez {amountToPayNow} HTG maintenant, et le reste ({balanceToPayLater} HTG) à la livraison.</p>
-                                </Label>
-                            </div>
+            <motion.div key="checkout" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 pb-20">
+              <div className="bg-white p-6 rounded shadow-sm border">
+                <h3 className="font-bold text-xl mb-6">Sélectionnez un mode de paiement</h3>
+                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
+                  {/* OPTION PAIEMENT EN 2 TEMPS */}
+                  <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all ${paymentMethod === 'TWO_STEPS' ? 'border-orange-500 bg-orange-50' : 'border-slate-100'}`}>
+                    <RadioGroupItem value="TWO_STEPS" id="two_steps" />
+                    <Label htmlFor="two_steps" className="flex-1 cursor-pointer">
+                        <div className="flex justify-between items-center">
+                            <span className="font-bold text-lg">Payer en 2 fois (50% / 50%)</span>
+                            <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded font-black italic">PROMO</span>
                         </div>
+                        <p className="text-xs text-slate-500">Payez la moitié aujourd'hui, le reste à la livraison.</p>
+                    </Label>
+                  </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-slate-50">
-                                <RadioGroupItem value="CASH" />
-                                <div className="flex flex-col">
-                                    <span className="font-bold flex items-center gap-2"><Banknote size={16}/> Cash</span>
-                                    <span className="text-xs text-slate-500">Payer le total à la livraison</span>
-                                </div>
-                            </Label>
-
-                            <Label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-slate-50">
-                                <RadioGroupItem value="card" />
-                                <div className="flex flex-col">
-                                    <span className="font-bold flex items-center gap-2"><CreditCard size={16}/> Carte</span>
-                                    <span className="text-xs text-slate-500">Visa, Mastercard, Square</span>
-                                </div>
-                            </Label>
-
-                            <Label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-slate-50">
-                                <RadioGroupItem value="moncash" />
-                                <div className="flex flex-col">
-                                    <span className="font-bold flex items-center gap-2 text-orange-600"><Wallet size={16}/> Moncash</span>
-                                    <span className="text-xs text-slate-500">Paiement mobile instantané</span>
-                                </div>
-                            </Label>
-                        </div>
-                    </RadioGroup>
-
-                    {paymentMethod === 'card' && (
-                        <div className="mt-6 border-t pt-6">
-                            <SquarePaymentForm amount={amountToPayNow} onSuccess={setSquareToken} onError={(err) => toast.error(err)} />
-                        </div>
-                    )}
-
-                    {(paymentMethod === 'moncash' || paymentMethod === 'natcash') && (
-                        <div className="mt-6 p-4 bg-slate-50 rounded-xl border-dashed border-2">
-                             <div className="flex justify-between mb-4">
-                                <div>
-                                    <p className="text-xs text-slate-500 uppercase font-bold">À transférer maintenant</p>
-                                    <p className="text-2xl font-black text-orange-600">{finalAmountToPay} HTG</p>
-                                </div>
-                                <Button size="sm" variant="outline" onClick={() => copyToClipboard(finalAmountToPay.toString(), 'amount')}>Copier</Button>
-                             </div>
-                             <Input 
-                                placeholder="Code de transaction SMS" 
-                                className="bg-white" 
-                                value={transactionCode} 
-                                onChange={(e) => setTransactionCode(e.target.value)} 
-                             />
-                        </div>
-                    )}
-                </div>
+                  <div className="flex items-center space-x-3 p-4 rounded-lg border border-slate-100">
+                    <RadioGroupItem value="CASH" id="cash" />
+                    <Label htmlFor="cash" className="flex-1 flex items-center gap-3 cursor-pointer"><Banknote className="text-green-600" />Cash à la livraison</Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-4 rounded-lg border border-slate-100">
+                    <RadioGroupItem value="card" id="card" />
+                    <Label htmlFor="card" className="flex-1 flex items-center gap-3 cursor-pointer"><CreditCard className="text-blue-600" />Carte de Crédit</Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-4 rounded-lg border border-slate-100">
+                    <RadioGroupItem value="moncash" id="moncash" />
+                    <Label htmlFor="moncash" className="flex-1 flex items-center gap-3 cursor-pointer"><Wallet className="text-orange-500" />Moncash</Label>
+                  </div>
+                </RadioGroup>
               </div>
 
-              {/* Résumé de commande fixe style Amazon */}
-              <div className="lg:col-span-1">
-                <div className="bg-white p-6 shadow-sm border rounded-lg space-y-4">
-                    <Button 
-                        className="w-full bg-[#ffd814] hover:bg-[#f7ca00] text-black font-bold h-12 rounded-lg"
-                        onClick={() => createOrderMutation.mutate()}
-                        disabled={createOrderMutation.isPending}
-                    >
-                        {createOrderMutation.isPending ? "Traitement..." : "Confirmer et payer"}
-                    </Button>
-                    <p className="text-[11px] text-center text-slate-500">
-                        En passant votre commande, vous acceptez les conditions générales de vente de RapidPanye.
-                    </p>
-                    
-                    <div className="border-t pt-4 space-y-2">
-                        <h4 className="font-bold text-sm">Récapitulatif de la commande</h4>
-                        <div className="flex justify-between text-sm"><span>Articles:</span><span>{subtotal} HTG</span></div>
-                        <div className="flex justify-between text-sm"><span>Livraison:</span><span>{deliveryFee} HTG</span></div>
-                        {isTwoSteps && (
-                            <div className="flex justify-between text-sm text-blue-600"><span>Paiement différé:</span><span>-{balanceToPayLater} HTG</span></div>
-                        )}
-                        <div className="flex justify-between text-lg font-bold text-red-700 border-t pt-2">
-                            <span>Total TTC:</span>
-                            <span>{finalAmountToPay} HTG</span>
+              {/* RECAPITULATIF DYNAMIQUE */}
+              <div className="bg-slate-900 text-white p-6 rounded shadow-lg">
+                  <p className="text-sm opacity-70">Montant à régler immédiatement :</p>
+                  <p className="text-3xl font-black">{finalAmountToPay} HTG</p>
+                  {isTwoSteps && (
+                      <div className="mt-4 pt-4 border-t border-white/20">
+                          <p className="text-xs flex items-center gap-2 font-medium"><Clock size={14}/> Balance de {balanceToPayLater} HTG à payer à la livraison.</p>
+                      </div>
+                  )}
+              </div>
+
+              {paymentMethod === 'card' && (
+                <SquarePaymentForm amount={amountToPayNow} onSuccess={setSquareToken} onError={(err) => toast.error(err)} />
+              )}
+
+              {(paymentMethod === 'moncash' || paymentMethod === 'natcash') && (
+                <div className={`p-5 rounded-xl border-2 bg-white`}>
+                  <h3 className="font-bold mb-4 flex items-center gap-2"><Info className="w-5 h-5" />Instructions de transfert</h3>
+                  <div className="space-y-4">
+                    <div className="bg-slate-50 p-4 rounded border flex justify-between items-center">
+                        <div>
+                            <p className="text-[10px] uppercase font-bold text-slate-400">Compte {paymentMethod}</p>
+                            <p className="font-bold text-lg">{ACCOUNTS[paymentMethod].number}</p>
                         </div>
+                        <Button size="sm" variant="ghost" onClick={() => copyToClipboard(ACCOUNTS[paymentMethod].number, 'account')}><Copy className="w-4 h-4" /></Button>
                     </div>
+                    <Input placeholder="Code de transaction SMS" value={transactionCode} onChange={(e) => setTransactionCode(e.target.value)} />
+                  </div>
                 </div>
-              </div>
+              )}
+
+              <Button className="w-full h-14 bg-[#FFD814] hover:bg-[#F7CA00] text-black font-bold text-lg rounded-lg shadow-md" onClick={() => createOrderMutation.mutate()} disabled={createOrderMutation.isPending}>
+                {createOrderMutation.isPending ? "Validation..." : "Confirmer la commande"}
+              </Button>
             </motion.div>
           )}
 
           {step === 'confirmed' && (
-            <motion.div key="confirmed" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="max-w-md mx-auto text-center py-20">
-              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Check className="text-green-600 w-12 h-12" />
-              </div>
-              <h2 className="text-3xl font-black mb-2 text-slate-900">Merci !</h2>
-              <p className="text-slate-600 mb-8">Votre commande <span className="font-bold">#{orderNumber}</span> a été enregistrée avec succès.</p>
-              
-              <div className="bg-white p-8 rounded-2xl shadow-xl border-2 border-slate-100 mb-8">
-                <p className="text-sm text-slate-500 uppercase tracking-widest mb-2 font-bold">Code de récupération</p>
-                <p className="text-6xl font-black tracking-tighter text-slate-900">{confirmCode}</p>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <Link to={createPageUrl('Home')} className="w-full">
-                    <Button className="w-full bg-slate-900 h-12">Continuer mes achats</Button>
-                </Link>
-                <Button variant="outline" className="h-12 border-2">Suivre mon colis</Button>
-              </div>
+            <motion.div key="confirmed" initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="text-center py-20 bg-white rounded shadow-sm border">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"><Check className="text-green-600 w-10 h-10" /></div>
+              <h2 className="text-2xl font-black mb-6">Commande réussie !</h2>
+              <p className="text-slate-500 mb-6">Code de récupération :</p>
+              <div className="bg-[#131921] text-white p-8 rounded-xl max-w-xs mx-auto mb-8"><p className="text-5xl font-black tracking-widest">{confirmCode}</p></div>
+              <Link to={createPageUrl('Home')}><Button className="px-10">Retour à la boutique</Button></Link>
             </motion.div>
           )}
         </AnimatePresence>
       </main>
-
-      {/* Footer minimal style Amazon */}
-      <footer className="mt-20 bg-[#232f3e] text-slate-300 py-10 px-4">
-          <div className="max-w-6xl mx-auto text-center border-t border-slate-700 pt-10">
-              <h2 className="text-xl font-bold text-white mb-4">RapidPanye</h2>
-              <div className="flex justify-center gap-6 text-sm">
-                  <span className="hover:underline cursor-pointer">Conditions d'utilisation</span>
-                  <span className="hover:underline cursor-pointer">Avis de confidentialité</span>
-                  <span className="hover:underline cursor-pointer">Aide</span>
-              </div>
-              <p className="text-xs mt-8">© 2024-2025, RapidPanye.com, Inc. ou ses filiales</p>
-          </div>
-      </footer>
     </div>
   );
 }
