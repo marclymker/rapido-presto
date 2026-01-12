@@ -30,7 +30,7 @@ function generateConfirmationCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-// Frais Moncash basés sur le tableau officiel (Retrait/Transfert)
+// Frais Moncash selon votre tableau (Retrait/Transfert)
 function calculateMoncashFee(amount) {
   if (amount <= 10) return 0;
   if (amount <= 100) return 5;
@@ -66,7 +66,6 @@ function calculateNatcashFee(amount) {
   return amount > 40000 ? 274.00 + Math.floor((amount - 40000) / 20000) * 100 : 0;
 }
 
-// Comptes Marchands Mis à jour
 const ACCOUNTS = {
   moncash: { number: "50948690366", name: "Marc lymker JEAN" },
   natcash: { number: "3527-0511", name: "Rebecca Christa Rigaud" }
@@ -96,9 +95,8 @@ export default function Cart() {
     enabled: !!user?.id
   });
 
-  // --- LOGIQUE DE CALCUL DU TOTAL ---
+  // --- CALCULS DU PANIER ---
   const subtotal = cartItems.reduce((sum, item) => sum + (item.unit_price + (item.total_customization_price || 0)) * item.quantity, 0);
-  
   const itemsByShop = cartItems.reduce((acc, item) => {
     if (!acc[item.shop_id]) acc[item.shop_id] = [];
     acc[item.shop_id].push(item);
@@ -126,11 +124,24 @@ export default function Cart() {
   const createOrderMutation = useMutation({
     mutationFn: async () => {
       if ((paymentMethod === 'moncash' || paymentMethod === 'natcash') && !transactionCode.trim()) {
-        throw new Error('Le code de transaction est obligatoire');
+        throw new Error('Code de transaction requis');
+      }
+      if (paymentMethod === 'card' && !squareToken) {
+        throw new Error('Veuillez valider votre carte');
       }
 
       const shopIds = Object.keys(itemsByShop);
       const firstOrderNum = 'RP' + Date.now().toString().slice(-6);
+
+      // Si paiement par carte (Square), on traite le paiement d'abord
+      if (paymentMethod === 'card') {
+        const paymentResponse = await base44.functions.invoke('squarePayment', {
+          sourceId: squareToken,
+          amount: baseTotal,
+          orderId: firstOrderNum
+        });
+        if (!paymentResponse.data.success) throw new Error('Paiement par carte refusé');
+      }
 
       for (const shopId of shopIds) {
         const shopItems = itemsByShop[shopId];
@@ -151,13 +162,12 @@ export default function Cart() {
             quantity: item.quantity,
             unit_price: item.unit_price + (item.total_customization_price || 0)
           })),
-          total: finalAmountToPay,
+          total: paymentMethod === 'card' || paymentMethod === 'CASH' ? baseTotal : finalAmountToPay,
           payment_method: paymentMethod,
           status: (paymentMethod === 'moncash' || paymentMethod === 'natcash') ? 'pending_validation' : 'pending',
-          payment_status: paymentMethod === 'CASH' ? 'pending' : 'paid',
+          payment_status: (paymentMethod === 'CASH' || paymentMethod === 'moncash' || paymentMethod === 'natcash') ? 'pending' : 'paid',
           confirmation_code: code,
           external_transaction_code: transactionCode.trim(),
-          transfer_fee: transferFee,
           special_instructions: specialInstructions
         });
       }
@@ -179,7 +189,7 @@ export default function Cart() {
           <Button variant="ghost" size="icon" onClick={() => step === 'checkout' ? setStep('cart') : navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-lg font-semibold">{step === 'cart' ? 'Panier' : 'Vérification'}</h1>
+          <h1 className="text-lg font-semibold">{step === 'cart' ? 'Mon Panier' : 'Paiement'}</h1>
         </div>
       </header>
 
@@ -187,27 +197,20 @@ export default function Cart() {
         <AnimatePresence mode="wait">
           {step === 'cart' && (
             <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              {/* Contenu du panier ici (similaire au code précédent) */}
               <div className="space-y-3 mb-6">
                 {cartItems.map(item => (
-                  <div key={item.id} className="bg-white p-4 rounded-xl flex justify-between shadow-sm">
-                    <div>
-                      <p className="font-bold">{item.product_name}</p>
-                      <p className="text-sm text-slate-500">{item.quantity} x {item.unit_price} HTG</p>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => base44.entities.CartItem.delete(item.id)}>
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                    </Button>
-                  </div>
+                   <div key={item.id} className="bg-white p-4 rounded-xl flex justify-between shadow-sm">
+                   <div><p className="font-bold">{item.product_name}</p><p className="text-sm text-slate-500">{item.quantity} x {item.unit_price} HTG</p></div>
+                   <Button variant="ghost" size="icon" onClick={() => base44.entities.CartItem.delete(item.id)}><Trash2 className="w-4 h-4 text-red-400" /></Button>
+                 </div>
                 ))}
               </div>
               <div className="bg-white p-4 rounded-xl shadow-sm border space-y-2">
                 <div className="flex justify-between"><span>Sous-total</span><span>{subtotal} HTG</span></div>
-                <div className="flex justify-between"><span>Livraison</span><span>{deliveryFee} HTG</span></div>
-                <div className="flex justify-between font-bold text-xl border-t pt-2 mt-2">
-                  <span>Total</span><span className="text-orange-600">{baseTotal} HTG</span>
-                </div>
+                <div className="flex justify-between font-bold text-xl border-t pt-2 mt-2"><span>Total</span><span className="text-orange-600">{baseTotal} HTG</span></div>
               </div>
-              <Button className="w-full mt-6 bg-orange-500 h-12 text-lg" onClick={() => setStep('checkout')}>Continuer</Button>
+              <Button className="w-full mt-6 bg-orange-500 h-12" onClick={() => setStep('checkout')}>Passer au paiement</Button>
             </motion.div>
           )}
 
@@ -216,87 +219,70 @@ export default function Cart() {
               <div className="bg-white p-4 rounded-xl shadow-sm">
                 <h3 className="font-bold mb-4">Méthode de paiement</h3>
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
-                  {['CASH', 'moncash', 'natcash'].map(m => (
-                    <div key={m} className="flex items-center space-x-3 p-3 rounded-lg border">
-                      <RadioGroupItem value={m} id={m} />
-                      <Label htmlFor={m} className="flex-1 flex items-center gap-3 cursor-pointer capitalize">
-                        <Wallet className={`w-5 h-5 ${m === 'moncash' ? 'text-orange-500' : 'text-purple-500'}`} />
-                        {m === 'CASH' ? 'Cash à la livraison' : m}
-                      </Label>
-                    </div>
-                  ))}
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border">
+                    <RadioGroupItem value="CASH" id="cash" />
+                    <Label htmlFor="cash" className="flex-1 flex items-center gap-3 cursor-pointer"><Banknote className="text-green-600" />Cash à la livraison</Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border">
+                    <RadioGroupItem value="card" id="card" />
+                    <Label htmlFor="card" className="flex-1 flex items-center gap-3 cursor-pointer"><CreditCard className="text-blue-600" />Carte Crédit / Débit</Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border">
+                    <RadioGroupItem value="moncash" id="moncash" />
+                    <Label htmlFor="moncash" className="flex-1 flex items-center gap-3 cursor-pointer"><Wallet className="text-orange-500" />Moncash</Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border">
+                    <RadioGroupItem value="natcash" id="natcash" />
+                    <Label htmlFor="natcash" className="flex-1 flex items-center gap-3 cursor-pointer"><Wallet className="text-purple-500" />Natcash</Label>
+                  </div>
                 </RadioGroup>
               </div>
 
+              {/* Formulaire Square si Carte sélectionnée */}
+              {paymentMethod === 'card' && (
+                <SquarePaymentForm amount={baseTotal} onSuccess={setSquareToken} onError={(err) => toast.error(err)} />
+              )}
+
+              {/* Instructions Moncash/Natcash */}
               {(paymentMethod === 'moncash' || paymentMethod === 'natcash') && (
                 <div className={`p-5 rounded-2xl border-2 ${paymentMethod === 'moncash' ? 'border-orange-200 bg-orange-50/30' : 'border-purple-200 bg-purple-50/30'}`}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Info className="w-5 h-5" />
-                    <h3 className="font-bold">Instructions de transfert {paymentMethod}</h3>
-                  </div>
-
+                  <h3 className="font-bold mb-4 flex items-center gap-2"><Info className="w-5 h-5" />Instructions {paymentMethod}</h3>
                   <div className="space-y-4">
-                    <div className="bg-white p-4 rounded-xl border shadow-sm">
-                      <p className="text-xs text-slate-500 mb-1">Montant exact à transférer (Frais inclus)</p>
+                    <div className="bg-white p-4 rounded-xl border">
+                      <p className="text-xs text-slate-500">Montant total à transférer (Frais de retrait inclus)</p>
                       <div className="flex justify-between items-center">
-                        <span className="text-2xl font-black text-slate-800">{finalAmountToPay} HTG</span>
+                        <span className="text-2xl font-black">{finalAmountToPay} HTG</span>
                         <Button size="sm" variant="outline" onClick={() => copyToClipboard(finalAmountToPay.toString(), 'amount')}>
                           {copiedState.amount ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                         </Button>
                       </div>
-                      <p className="text-[10px] text-red-500 mt-1">Dont {transferFee} HTG de frais de retrait {paymentMethod}</p>
                     </div>
-
-                    <div className="bg-white p-4 rounded-xl border shadow-sm">
-                      <p className="text-xs text-slate-500 mb-1">Compte {paymentMethod.toUpperCase()}</p>
+                    <div className="bg-white p-4 rounded-xl border">
+                      <p className="text-xs text-slate-500">Compte Marchand</p>
                       <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-bold text-lg text-blue-700">{ACCOUNTS[paymentMethod].number}</p>
-                          <p className="text-sm font-medium">{ACCOUNTS[paymentMethod].name}</p>
-                        </div>
+                        <div><p className="font-bold text-lg">{ACCOUNTS[paymentMethod].number}</p><p className="text-sm">{ACCOUNTS[paymentMethod].name}</p></div>
                         <Button size="icon" variant="outline" onClick={() => copyToClipboard(ACCOUNTS[paymentMethod].number, 'account')}>
                           {copiedState.account ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                         </Button>
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-bold">Saisissez le code de transaction reçu par SMS :</Label>
-                      <Input 
-                        placeholder="Ex: 84930221" 
-                        value={transactionCode}
-                        onChange={(e) => setTransactionCode(e.target.value)}
-                        className="h-12 border-slate-300 focus:ring-2 focus:ring-orange-500"
-                      />
-                    </div>
+                    <Input placeholder="Entrez le code de transaction reçu par SMS" value={transactionCode} onChange={(e) => setTransactionCode(e.target.value)} />
                   </div>
                 </div>
               )}
 
-              <Button 
-                className="w-full h-14 bg-orange-600 text-lg font-bold shadow-lg" 
-                onClick={() => createOrderMutation.mutate()}
-                disabled={createOrderMutation.isPending}
-              >
-                {createOrderMutation.isPending ? "Traitement..." : "Confirmer mon paiement"}
+              <Button className="w-full h-14 bg-orange-600 font-bold" onClick={() => createOrderMutation.mutate()} disabled={createOrderMutation.isPending}>
+                {createOrderMutation.isPending ? "Traitement..." : "Confirmer la commande"}
               </Button>
             </motion.div>
           )}
 
           {step === 'confirmed' && (
-            <motion.div key="confirmed" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-10">
-              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Check className="w-12 h-12 text-green-600" />
-              </div>
-              <h2 className="text-3xl font-black mb-2">Félicitations !</h2>
-              <p className="text-slate-500 mb-8">Votre commande est en cours de vérification.</p>
-              
-              <div className="bg-slate-900 text-white p-8 rounded-3xl mb-8">
-                <p className="text-xs uppercase tracking-widest opacity-60 mb-2">Code de retrait livreur</p>
-                <p className="text-6xl font-black tracking-tighter">{confirmCode}</p>
-              </div>
-
-              <Link to={createPageUrl('Home')}><Button variant="outline" className="w-full h-12">Retourner au magasin</Button></Link>
+            <motion.div key="confirmed" initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="text-center py-10">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"><Check className="text-green-600 w-10 h-10" /></div>
+              <h2 className="text-2xl font-black mb-6">Commande confirmée !</h2>
+              <div className="bg-slate-900 text-white p-8 rounded-3xl mb-8"><p className="text-5xl font-black tracking-tighter">{confirmCode}</p></div>
+              <Link to={createPageUrl('Home')}><Button className="w-full">Retour au magasin</Button></Link>
             </motion.div>
           )}
         </AnimatePresence>
