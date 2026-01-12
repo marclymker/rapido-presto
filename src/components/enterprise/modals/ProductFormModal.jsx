@@ -3,7 +3,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue, 
+  SelectGroup, // Ajouté pour le correctif
+  SelectLabel  // Ajouté pour le correctif
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -247,7 +255,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+     
     // Validation des champs obligatoires
     if (!formData.name || !formData.name.trim()) {
       toast.error('Le nom de l\'article est obligatoire');
@@ -265,9 +273,9 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
       toast.error('Erreur: Boutique non identifiée');
       return;
     }
-    
+     
     setLoading(true);
-    
+     
     try {
       if (product) {
         await base44.entities.Product.update(product.id, formData);
@@ -288,7 +296,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
   const handleImageUpload = async (e, isAdditional = false) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+     
     setLoading(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -336,7 +344,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         category: result.category || formData.category,
         seo_tags: result.seo_tags || formData.seo_tags
       });
-      
+       
       toast.success('✨ Informations générées avec AI');
     } catch (error) {
       toast.error('Erreur AI: ' + error.message);
@@ -356,16 +364,22 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     setFormData({ ...formData, seo_tags: formData.seo_tags.filter(t => t !== tag) });
   };
 
-  // Sous-catégories pour "Mariage"
-  const weddingSubCategories = [
+  // --- CORRECTION ET AJOUT DES SOUS-CATEGORIES MARIAGE ---
+  const weddingGeneralCategories = [
     'Demoiselle d\'honneur',
     'Annonceuse',
     'Temoins',
-    'Robe de Mariee',
     'Bague de Mariage',
     'Accessoires',
     'Carte & Programmation',
     'Materiels Decor'
+  ];
+
+  const weddingDressCategories = [
+    'Robe Sirene',
+    'Robe Catalina',
+    'Robe Ponpon (Princesse)',
+    'Robe Civil'
   ];
 
   return (
@@ -378,15 +392,15 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         }}
         onCancel={onClose}
       />
-      
+       
       <Dialog open={showForm} onOpenChange={onClose}>
         <DialogContent className="max-w-full sm:max-w-3xl h-[100vh] sm:h-[90vh] p-0 flex flex-col bg-white rounded-none sm:rounded-xl overflow-hidden">
         <DialogHeader className="p-4 sm:p-6 border-b bg-slate-50 flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-xl">
-             <div className="bg-blue-100 p-2 rounded-full">
-                <ShoppingBag className="w-5 h-5 text-blue-600" />
-             </div>
-             {product ? 'Modifier l\'article' : 'Nouvel article'}
+              <div className="bg-blue-100 p-2 rounded-full">
+                 <ShoppingBag className="w-5 h-5 text-blue-600" />
+              </div>
+              {product ? 'Modifier l\'article' : 'Nouvel article'}
           </DialogTitle>
           {aiLoading && (
             <div className="flex items-center gap-2 text-purple-600 text-sm mt-2 animate-pulse bg-purple-50 p-2 rounded-lg">
@@ -398,13 +412,13 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50">
         <form onSubmit={handleSubmit} className="space-y-6 pb-20 sm:pb-0">
-          
+           
           {/* Section 1: Informations de base */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
-             <div className="flex items-center gap-2 mb-2 pb-2 border-b">
-                <Info className="w-4 h-4 text-slate-500" />
-                <h3 className="font-semibold text-slate-700">Informations principales</h3>
-             </div>
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b">
+                 <Info className="w-4 h-4 text-slate-500" />
+                 <h3 className="font-semibold text-slate-700">Informations principales</h3>
+              </div>
 
               <div>
                 <Label className="mb-1.5 flex items-center gap-1">Nom de l'article <span className="text-red-500">*</span></Label>
@@ -479,11 +493,11 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
 
           {/* Section 2: Prix et Stock */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
-             <div className="flex items-center gap-2 mb-2 pb-2 border-b">
-                <DollarSign className="w-4 h-4 text-slate-500" />
-                <h3 className="font-semibold text-slate-700">Prix & Inventaire</h3>
-             </div>
-             
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b">
+                 <DollarSign className="w-4 h-4 text-slate-500" />
+                 <h3 className="font-semibold text-slate-700">Prix & Inventaire</h3>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="mb-1.5 text-xs uppercase tracking-wide text-slate-500">Prix (HTG) <span className="text-red-500">*</span></Label>
@@ -502,8 +516,8 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
                 <div>
                   <Label className="mb-1.5 text-xs uppercase tracking-wide text-slate-500">Promo (HTG)</Label>
                   <div className="relative">
-                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                     <Input
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                      <Input
                         type="number"
                         className="pl-7 text-green-600 font-medium"
                         value={formData.promo_price}
@@ -526,12 +540,12 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
 
           {/* Section 3: Catégorisation */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
-             <div className="flex items-center gap-2 mb-2 pb-2 border-b">
-                <Layers className="w-4 h-4 text-slate-500" />
-                <h3 className="font-semibold text-slate-700">Catégorisation</h3>
-             </div>
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b">
+                 <Layers className="w-4 h-4 text-slate-500" />
+                 <h3 className="font-semibold text-slate-700">Catégorisation</h3>
+              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="mb-1.5">Type d'article</Label>
                   <Select 
@@ -559,7 +573,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
                   </Select>
                 </div>
 
-                {/* Sous-catégorie pour Mariage */}
+                {/* Sous-catégorie pour Mariage - MODIFIÉ POUR SUPPORTER LES TYPES DE ROBES */}
                 {formData.category === 'Mariage' && (
                   <div className="animate-in fade-in slide-in-from-top-2">
                     <Label className="mb-1.5">Sous-catégorie Mariage</Label>
@@ -571,11 +585,28 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
                         <SelectValue placeholder="Sélectionner..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {weddingSubCategories.map((subCat) => (
-                          <SelectItem key={subCat} value={subCat}>
-                            {subCat}
-                          </SelectItem>
-                        ))}
+                        {/* Groupe : Robes de mariée */}
+                        <SelectGroup>
+                            <SelectLabel className="text-purple-600 font-bold bg-purple-50">Types de Robes (Mariée)</SelectLabel>
+                            {weddingDressCategories.map((dress) => (
+                                <SelectItem key={dress} value={dress}>
+                                    👗 {dress}
+                                </SelectItem>
+                            ))}
+                        </SelectGroup>
+                        
+                        {/* Séparateur visuel */}
+                        <div className="h-px bg-slate-100 my-1" />
+
+                        {/* Groupe : Autres */}
+                        <SelectGroup>
+                            <SelectLabel className="text-slate-500 font-bold">Autres Catégories</SelectLabel>
+                            {weddingGeneralCategories.map((subCat) => (
+                              <SelectItem key={subCat} value={subCat}>
+                                {subCat}
+                              </SelectItem>
+                            ))}
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                   </div>
@@ -588,9 +619,9 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
               <div className="flex items-center gap-2 mb-2 pb-2 border-b">
                 <Truck className="w-4 h-4 text-slate-500" />
                 <h3 className="font-semibold text-slate-700">Logistique</h3>
-             </div>
+              </div>
 
-             <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="mb-1.5 text-xs text-slate-500">Taille colis</Label>
                   <Select value={formData.taille_emballage} onValueChange={(v) => setFormData({ ...formData, taille_emballage: v })}>
@@ -627,7 +658,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
           {/* Section 5: Images additionnelles */}
           <div className="bg-white p-4 rounded-xl shadow-sm border">
             <Label className="mb-3 block flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Galerie d'images</Label>
-            
+             
             <div className="flex flex-wrap gap-3">
                  <label className="w-20 h-20 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors">
                     <span className="text-2xl text-slate-400">+</span>
@@ -688,7 +719,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
                   Remplissez ces champs pour booster votre visibilité publicitaire.
                 </p>
             </div>
-            
+             
             <div className="p-4 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -812,7 +843,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
               {product ? 'Sauvegarder' : 'Créer l\'article'}
             </Button>
           </div>
-          
+           
         </form>
         </div>
       </DialogContent>
