@@ -102,8 +102,13 @@ export default function Cart() {
 
   // Fonction d'appel des articles de la même catégorie
   const { data: similarProducts = [] } = useQuery({
-    queryKey: ['similar', cartItems[0]?.category_id],
-    queryFn: () => base44.entities.Product.filter({ category_id: cartItems[0]?.category_id, _limit: 4 }),
+    queryKey: ['similar', cartItems[0]?.product_id],
+    queryFn: async () => {
+      if (!cartItems[0]?.product_id) return [];
+      const firstProduct = await base44.entities.Product.filter({ id: cartItems[0].product_id }, { limit: 1 });
+      if (!firstProduct[0]?.category) return [];
+      return base44.entities.Product.filter({ category: firstProduct[0].category }, { limit: 4 });
+    },
     enabled: cartItems.length > 0
   });
 
@@ -134,6 +139,19 @@ export default function Cart() {
       toast.success('Copié !');
     });
   };
+
+  const updateQuantityMutation = useMutation({
+    mutationFn: ({ id, quantity }) => {
+      if (quantity <= 0) return base44.entities.CartItem.delete(id);
+      return base44.entities.CartItem.update(id, { quantity });
+    },
+    onSuccess: () => queryClient.invalidateQueries(['cart'])
+  });
+
+  const deleteItemMutation = useMutation({
+    mutationFn: (id) => base44.entities.CartItem.delete(id),
+    onSuccess: () => queryClient.invalidateQueries(['cart'])
+  });
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
@@ -222,14 +240,14 @@ export default function Cart() {
                     <div className="flex-1 flex flex-col justify-between">
                       <div className="flex justify-between items-start">
                         <p className="font-medium text-sm leading-tight">{item.product_name}</p>
-                        <button onClick={() => base44.entities.CartItem.delete(item.id)}><Trash2 className="w-4 h-4 text-gray-300" /></button>
+                        <button onClick={() => deleteItemMutation.mutate(item.id)}><Trash2 className="w-4 h-4 text-gray-300" /></button>
                       </div>
                       <div className="flex justify-between items-end">
                         <p className="font-bold text-sm">{item.unit_price} HTG</p>
                         <div className="flex items-center border border-black">
-                          <button className="px-2 py-1"><Minus className="w-3 h-3"/></button>
+                          <button className="px-2 py-1" onClick={() => updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity - 1 })}><Minus className="w-3 h-3"/></button>
                           <span className="px-2 text-xs">{item.quantity}</span>
-                          <button className="px-2 py-1"><Plus className="w-3 h-3"/></button>
+                          <button className="px-2 py-1" onClick={() => updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity + 1 })}><Plus className="w-3 h-3"/></button>
                         </div>
                       </div>
                     </div>
