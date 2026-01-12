@@ -21,6 +21,7 @@ import { getClientPrice } from '@/components/utils/priceCalculation';
 import ProfileCompletionModal from '@/components/modals/ProfileCompletionModal';
 import SEO from '@/components/SEO';
 import SmallStories from '@/components/home/SmallStories';
+import { useAuth } from '@/components/auth/useAuth';
 import CreditBanner from '@/components/home/CreditBanner';
 import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
@@ -47,7 +48,7 @@ const WEDDING_STRUCTURE = [
 ];
 
 export default function Home() {
-  const [user, setUser] = useState(null);
+  const { user, isLoading: authLoading } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('Tout');
   const [selectedSubCategory, setSelectedSubCategory] = useState(null); 
   const [selectedShop, setSelectedShop] = useState(null);
@@ -88,8 +89,6 @@ export default function Home() {
   });
 
   useEffect(() => {
-    base44.auth.me().then(u => setUser(u)).catch(() => setUser(null));
-
     const handleCategorySelect = (e) => {
       setSelectedCategory(e.detail);
       setSelectedSubCategory(null);

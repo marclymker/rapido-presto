@@ -14,24 +14,18 @@ import ReactPixel from 'react-facebook-pixel';
 import SmartBottomNav from '@/components/navigation/SmartBottomNav';
 import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
 import WelcomeModal from '@/components/modals/WelcomeModal';
+import { useAuth } from '@/components/auth/useAuth';
 
 export default function Layout({ children, currentPageName }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, isLoading: loading } = useAuth();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   useEffect(() => {
-    base44.auth.me()
-      .then(u => {
-        setUser(u);
-        setLoading(false);
-        // Show welcome modal if user has no profile set up
-        if (u && !u.current_profile && currentPageName !== 'ProfileSetup') {
-          setShowWelcomeModal(true);
-        }
-      })
-      .catch(() => setLoading(false));
-  }, [currentPageName]);
+    // Show welcome modal if user has no profile set up
+    if (user && !user.current_profile && currentPageName !== 'ProfileSetup') {
+      setShowWelcomeModal(true);
+    }
+  }, [user, currentPageName]);
 
   // Initialize Meta Pixel
   useEffect(() => {

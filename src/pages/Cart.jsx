@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
 import { getHaitiTime } from '@/components/utils/dateFormat';
 import SquarePaymentForm from '@/components/payment/SquarePaymentForm';
+import { useAuth } from '@/components/auth/useAuth';
 
 // --- LOGIQUE DES FRAIS (GARDÉE ENTIÈRE) ---
 function calculateDeliveryFee(clientCommune, shopCommune) {
@@ -70,7 +71,7 @@ const ACCOUNTS = {
 };
 
 export default function Cart() {
-  const [user, setUser] = useState(null);
+  const { user, isLoading: authLoading } = useAuth();
   const [step, setStep] = useState('cart'); 
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [paymentPlan, setPaymentPlan] = useState('full'); // 'full' ou 'split'
@@ -88,11 +89,16 @@ export default function Cart() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    base44.auth.me().then(u => {
-      setUser(u);
-      setTempAddress(u.address || '');
-    }).catch(() => navigate(createPageUrl('Home')));
-  }, []);
+    if (!authLoading && !user) {
+      navigate(createPageUrl('Home'));
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (user?.address) {
+      setTempAddress(user.address);
+    }
+  }, [user]);
 
   const { data: cartItems = [], isLoading } = useQuery({
     queryKey: ['cart', user?.id],
