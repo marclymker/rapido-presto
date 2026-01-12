@@ -19,7 +19,7 @@ import {
   Layers, 
   Info,
   Palette,
-  Ruler,
+  Ruler, 
   User,
   ShoppingBag,
   Type,
@@ -363,6 +363,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     'Temoins',
     'Robe de Mariee',
     'Bague de Mariage',
+    'Bague', // <--- AJOUTÉ ICI
     'Accessoires',
     'Carte & Programmation',
     'Materiels Decor'
