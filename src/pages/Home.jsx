@@ -502,21 +502,95 @@ export default function Home() {
             {/* Credit Banner */}
             <CreditBanner />
 
-            {/* Bannière Promo */}
+            {/* Deal of the Day - Amazon Style */}
             <div className="px-4 mb-6">
-              <div className="relative rounded-3xl overflow-hidden h-48 shadow-lg">
-                <img 
-                  src="https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=800" 
-                  className="w-full h-full object-cover" 
-                  alt="Promo"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent p-6 flex flex-col justify-center">
-                  <span className="bg-white text-orange-600 font-bold px-3 py-1 rounded-full w-fit text-sm mb-2">
-                    🎉 Offre limitée
-                  </span>
-                  <h2 className="text-white text-4xl font-black">50% OFF</h2>
-                  <p className="text-white font-bold text-lg">Restaurants partenaires</p>
+              <div className="bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl p-5 shadow-xl">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+                    <span className="text-white text-xs font-bold">⚡ DEAL DU JOUR</span>
+                  </div>
+                  <span className="text-white/80 text-xs">Se termine dans 4h 23m</span>
                 </div>
+                <h2 className="text-white text-3xl font-black mb-1">Jusqu'à 60% OFF</h2>
+                <p className="text-white/90 font-medium">Sélection spéciale restaurants</p>
+              </div>
+            </div>
+
+            {/* Trust Badges - Alibaba Style */}
+            <div className="px-4 mb-6 grid grid-cols-3 gap-3">
+              <div className="bg-white rounded-xl p-3 border border-slate-100 text-center">
+                <div className="text-2xl mb-1">🚚</div>
+                <p className="text-[10px] font-bold text-slate-700">Livraison</p>
+                <p className="text-[9px] text-slate-500">Express</p>
+              </div>
+              <div className="bg-white rounded-xl p-3 border border-slate-100 text-center">
+                <div className="text-2xl mb-1">🔒</div>
+                <p className="text-[10px] font-bold text-slate-700">Paiement</p>
+                <p className="text-[9px] text-slate-500">Sécurisé</p>
+              </div>
+              <div className="bg-white rounded-xl p-3 border border-slate-100 text-center">
+                <div className="text-2xl mb-1">⭐</div>
+                <p className="text-[10px] font-bold text-slate-700">Service</p>
+                <p className="text-[9px] text-slate-500">Premium</p>
+              </div>
+            </div>
+
+            {/* Top Sellers - Amazon Style Section */}
+            <div className="px-4 mb-8">
+              <div className="flex items-baseline gap-2 mb-4 pb-2 border-b-2 border-orange-500">
+                <h2 className="text-lg font-black text-slate-900">🔥 Meilleures Ventes</h2>
+                <span className="text-xs text-slate-500">Mis à jour toutes les heures</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {allProducts.filter(p => p.is_available !== false && p.image_url).slice(0, 4).map((product, idx) => {
+                  const shop = shops.find(s => s.id === product.shop_id);
+                  return (
+                    <div 
+                      key={product.id}
+                      onClick={() => {
+                        if (!user) {
+                          base44.auth.redirectToLogin(window.location.pathname);
+                          return;
+                        }
+                        if (shop) setSelectedShop(shop);
+                        setSelectedProduct(product);
+                      }}
+                      className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                    >
+                      <div className="relative">
+                        <div className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full z-10">
+                          #{idx + 1}
+                        </div>
+                        <div className="aspect-square bg-slate-50">
+                          <img src={product.image_url} className="w-full h-full object-cover" alt={product.name} />
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-slate-700 font-medium line-clamp-2 h-8 mb-2">{product.name}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-black text-orange-600">{getClientPrice(product)} HTG</span>
+                          <Button 
+                            size="sm"
+                            className="h-7 bg-orange-500 hover:bg-orange-600 text-white text-[10px] px-3"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!user) {
+                                base44.auth.redirectToLogin(window.location.pathname);
+                                return;
+                              }
+                              if (shop) {
+                                setSelectedShop(shop);
+                                handleAddToCart(product);
+                              }
+                            }}
+                          >
+                            Ajouter
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -895,7 +969,7 @@ export default function Home() {
       );
       }
 
-// Composant séparé pour la section "RECOMMANDE POUR VOUS" - SIMPLIFIÉ
+// Section Recommandé - Style Amazon avec titres et scroll horizontal
 function RecommendedSection({ 
   allProducts, 
   shops, 
@@ -1057,26 +1131,34 @@ function RecommendedSection({
     return null;
   }
 
+  const rowTitles = [
+    "Inspiré de vos achats récents",
+    "Tendances du moment",
+    "Sélection exclusive"
+  ];
+
   return (
     <div className="px-4 mt-8 mb-12">
-      {/* Conteneur principal pour les 3 rangées */}
       <div className="space-y-8">
         {productRows.map((rowProducts, rowIndex) => {
+          if (rowProducts.length === 0) return null;
+          
           return (
-            <div 
-              key={rowIndex} 
-              className="relative group"
-              onMouseEnter={() => handleMouseEnter(rowIndex)}
-              onMouseLeave={() => handleMouseLeave(rowIndex)}
-            >
+            <div key={rowIndex} className="relative">
+              {/* Titre de section - Style Amazon */}
+              <div className="flex items-baseline justify-between mb-3 pb-2 border-b border-slate-200">
+                <h3 className="text-base font-black text-slate-900">{rowTitles[rowIndex]}</h3>
+                <button className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline">
+                  Voir tout
+                </button>
+              </div>
+              
               {/* Rangée de produits avec défilement horizontal */}
               <div className="relative overflow-hidden">
                 <div 
                   ref={rowContainers[rowIndex]}
-                  className="flex overflow-x-auto pb-4 gap-3 scroll-smooth"
+                  className="flex overflow-x-auto pb-4 gap-3 scroll-smooth no-scrollbar"
                   style={{ 
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: '#cbd5e1 #f1f5f9',
                     WebkitOverflowScrolling: 'touch'
                   }}
                 >
@@ -1089,7 +1171,7 @@ function RecommendedSection({
                     return (
                       <div 
                         key={`${product.id}-${productIndex}`}
-                        className="flex-shrink-0 w-[170px] snap-start transition-all duration-300 hover:scale-[1.02]"
+                        className="flex-shrink-0 w-[155px] snap-start"
                         onClick={() => {
                           if (!user) {
                             base44.auth.redirectToLogin(window.location.pathname);
@@ -1099,70 +1181,54 @@ function RecommendedSection({
                           setSelectedProduct(product);
                         }}
                       >
-                        <div className={`relative overflow-hidden rounded-xl border-2 ${
-                          isMakarios ? 'border-purple-200 shadow-sm hover:shadow-md' : 'border-slate-200 shadow-sm hover:shadow-md'
-                        } ${isMakarios ? 'bg-gradient-to-b from-purple-50 to-white' : 'bg-white'}`}>
-                          
-                          {/* Image */}
-                          <div className="h-32 overflow-hidden bg-slate-100">
+                        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-xl hover:border-orange-300 transition-all cursor-pointer group">
+                          {/* Image Container */}
+                          <div className="relative h-40 overflow-hidden bg-slate-50">
                             {product.image_url ? (
                               <img 
                                 src={product.image_url} 
                                 alt={product.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                loading="lazy"
                               />
                             ) : (
-                              <div className={`w-full h-full flex items-center justify-center ${
-                                isMakarios ? 'bg-gradient-to-br from-purple-100 to-pink-100' : 'bg-slate-200'
-                              }`}>
-                                <span className={`text-4xl ${
-                                  isMakarios ? 'text-purple-300' : 'text-slate-400'
-                                }`}>
-                                  {isMakarios ? '👰' : '🛍️'}
-                                </span>
+                              <div className="w-full h-full flex items-center justify-center bg-slate-100">
+                                <span className="text-3xl text-slate-300">🛍️</span>
+                              </div>
+                            )}
+                            
+                            {/* Sponsored Badge pour Makarios */}
+                            {isMakarios && (
+                              <div className="absolute top-2 left-2 bg-purple-600 text-white text-[8px] font-bold px-2 py-0.5 rounded">
+                                SPONSORISÉ
                               </div>
                             )}
                           </div>
                           
                           {/* Contenu */}
-                          <div className="p-2">
-                            <div className="mb-1">
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                                isMakarios
-                                  ? 'text-purple-700 bg-purple-100'
-                                  : 'text-slate-500 bg-slate-100'
-                              }`}>
-                                {shop?.company_name?.substring(0, 15) || 'Boutique'}
-                              </span>
-                            </div>
-                            <h4 className="text-sm font-medium text-slate-800 line-clamp-2 h-8 mb-1">
-                              {product.name?.substring(0, 40)}
+                          <div className="p-2.5 space-y-1.5">
+                            <h4 className="text-xs font-medium text-slate-800 line-clamp-2 h-8 leading-tight group-hover:text-orange-600">
+                              {product.name}
                             </h4>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-bold text-orange-600">
-                                {getClientPrice(product)} HTG
+                            
+                            <div className="flex items-center gap-1">
+                              <div className="flex text-yellow-400">
+                                {[...Array(5)].map((_, i) => (
+                                  <span key={i} className="text-[10px]">★</span>
+                                ))}
+                              </div>
+                              <span className="text-[9px] text-slate-500">(234)</span>
+                            </div>
+                            
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-base font-black text-slate-900">
+                                {getClientPrice(product).toLocaleString()}
                               </span>
-                              <Button
-                                size="sm"
-                                className={`h-7 text-xs ${
-                                  isMakarios
-                                    ? 'bg-purple-100 text-purple-600 hover:bg-purple-200'
-                                    : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
-                                }`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (!user) {
-                                    base44.auth.redirectToLogin(window.location.pathname);
-                                    return;
-                                  }
-                                  if (shop) {
-                                    setSelectedShop(shop);
-                                    handleAddToCart(product);
-                                  }
-                                }}
-                              >
-                                Ajouter
-                              </Button>
+                              <span className="text-[9px] text-slate-500">HTG</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-1 text-[9px] text-green-700 font-medium">
+                              <span>✓</span> Livraison Express
                             </div>
                           </div>
                         </div>
@@ -1172,25 +1238,21 @@ function RecommendedSection({
                 </div>
               </div>
 
-              {/* Boutons de navigation manuelle seulement */}
-              <div className="flex justify-center gap-4 mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
+              {/* Navigation simplifiée */}
+              <div className="flex justify-end gap-2 mt-2">
+                <button
                   onClick={() => handleManualScroll(rowIndex, 'prev')}
+                  className="text-blue-600 hover:text-blue-700 text-xs font-medium hover:underline"
                 >
-                  ◀ Précédent
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
+                  ← Précédent
+                </button>
+                <span className="text-slate-300 text-xs">|</span>
+                <button
                   onClick={() => handleManualScroll(rowIndex, 'next')}
+                  className="text-blue-600 hover:text-blue-700 text-xs font-medium hover:underline"
                 >
-                  Suivant ▶
-                </Button>
+                  Suivant →
+                </button>
               </div>
             </div>
           );
