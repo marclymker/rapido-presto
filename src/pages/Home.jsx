@@ -3,22 +3,24 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Search, ShoppingCart, ArrowLeft, Menu, MapPin, Star, ChevronRight, X, Clock } from 'lucide-react';
+import { Search, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 
-// Composants internes
 import ShopCard from '@/components/ui/ShopCard';
 import GooglePlaceCard from '@/components/ui/GooglePlaceCard';
 import ProductCard from '@/components/ui/ProductCard';
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
 import StoreMapView from '@/components/maps/StoreMapView';
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
+import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import ProfileCompletionModal from '@/components/modals/ProfileCompletionModal';
+import ProductRecommendations from '@/components/recommendations/ProductRecommendations';
 import SEO from '@/components/SEO';
 import SmallStories from '@/components/home/SmallStories';
 import CreditBanner from '@/components/home/CreditBanner';
@@ -30,51 +32,24 @@ import FlashBanner from '@/components/home/FlashBanner';
 import FlowersBanner from '@/components/home/FlowersBanner';
 import GiftBanner from '@/components/home/GiftBanner';
 
-// --- CONFIGURATION DES SOUS-CATÉGORIES MARIAGE ---
-const WEDDING_STRUCTURE = [
-  {
-    title: "Robe de Mariage",
-    subtypes: ["Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe Civil"]
-  },
-  { title: "Demoiselle d'honneur" },
-  { title: "Annonceuse" },
-  { title: "Témoins" },
-  { title: "Bague de Mariage" },
-  { title: "Bague" },
-  { title: "Accessoires" },
-  { title: "Carte et programmation" },
-  { title: "Matériels Décor" }
-];
-
 export default function Home() {
   const [user, setUser] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Tout');
-  const [selectedSubCategory, setSelectedSubCategory] = useState(null); 
   const [selectedShop, setSelectedShop] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showSearchBar, setShowSearchBar] = useState(false);
   const [googlePlaces, setGooglePlaces] = useState([]);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
-  
-  // NOUVEAU STATE : Rappel Panier
-  const [showCartReminder, setShowCartReminder] = useState(false);
-  
   const queryClient = useQueryClient();
+
+  // État pour la rotation de la section "Meilleures Ventes"
+  const [topSellers, setTopSellers] = useState([]);
   
-  const articleTypes = [
-    { id: 'Pour Femme', name: 'Mode Femme', icon: '👗' },
-    { id: 'Boutique Fleurs', name: 'Fleurs', icon: '💐' },
-    { id: 'Mariage', name: 'Mariage', icon: '💍' },
-    { id: 'Pour homme', name: 'Mode Homme', icon: '👔' },
-    { id: 'Bébé', name: 'Bébé', icon: '👶' },
-    { id: 'Maison', name: 'Maison & Déco', icon: '🏠' }
-  ];
-
-  // --- LOGIQUE MÉTIER ---
-
+  // Auto-refresh des données
   useAutoRefresh({ 
     queryKey: ['shops'], 
     refetchInterval: 60000,
@@ -88,11 +63,14 @@ export default function Home() {
   });
 
   useEffect(() => {
-    base44.auth.me().then(u => setUser(u)).catch(() => setUser(null));
+    base44.auth.me().then(u => {
+      setUser(u);
+    }).catch(() => {
+      setUser(null);
+    });
 
     const handleCategorySelect = (e) => {
       setSelectedCategory(e.detail);
-      setSelectedSubCategory(null);
       setSelectedShop(null);
       setGooglePlaces([]);
     };
@@ -107,14 +85,12 @@ export default function Home() {
     if (navigator.geolocation) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
+          setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
         },
         (error) => console.log('Géolocalisation refusée:', error),
         { enableHighAccuracy: true }
       );
+
       return () => {
         navigator.geolocation.clearWatch(watchId);
         window.removeEventListener('selectCategory', handleCategorySelect);
@@ -128,23 +104,14 @@ export default function Home() {
     };
   }, []);
 
-  const handleProfileComplete = (profileType) => {
-    setShowProfileModal(false);
-    const redirectPages = {
-      client: 'Home',
-      entreprise: 'EnterpriseDashboard',
-      livreur: 'Home'
-    };
-    window.location.href = createPageUrl(redirectPages[profileType]);
-  };
-
-  // Queries
+  // Fetch all shops
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
     refetchInterval: 60000
   });
 
+  // Fetch all products
   const { data: allProducts = [] } = useQuery({
     queryKey: ['all-products'],
     queryFn: () => base44.entities.Product.list(),
@@ -152,7 +119,34 @@ export default function Home() {
     refetchInterval: 60000
   });
 
-  // Filtrage principal
+  // LOGIQUE : MEILLEURE VENTE (Rotation 30s)
+  useEffect(() => {
+    const updateTopSellers = () => {
+      if (allProducts.length > 0 && shops.length > 0) {
+        // Trier les boutiques par popularité (simulée ici par index ou visits si dispo)
+        const activeShops = shops.slice(0, 15); 
+        const shuffledShops = [...activeShops].sort(() => 0.5 - Math.random()).slice(0, 6);
+        
+        const newSelection = shuffledShops.map(shop => {
+          const shopProducts = allProducts.filter(p => p.shop_id === shop.id && p.is_available !== false);
+          return shopProducts[Math.floor(Math.random() * shopProducts.length)];
+        }).filter(Boolean);
+        
+        setTopSellers(newSelection);
+      }
+    };
+
+    updateTopSellers();
+    const interval = setInterval(updateTopSellers, 30000); // 30 secondes
+    return () => clearInterval(interval);
+  }, [allProducts, shops]);
+
+  const handleProfileComplete = (profileType) => {
+    setShowProfileModal(false);
+    const redirectPages = { client: 'Home', entreprise: 'EnterpriseDashboard', livreur: 'Home' };
+    window.location.href = createPageUrl(redirectPages[profileType]);
+  };
+
   const filteredProductsByType = React.useMemo(() => {
     if (selectedCategory === 'Tout') return allProducts;
     return allProducts.filter(p => p.category === selectedCategory && p.is_available !== false);
@@ -167,120 +161,24 @@ export default function Home() {
   const { data: products = [] } = useQuery({
     queryKey: ['products', selectedShop?.id, selectedCategory],
     queryFn: () => {
-      if (selectedCategory === 'Tout') {
-        return base44.entities.Product.filter({ shop_id: selectedShop?.id });
-      }
-      return base44.entities.Product.filter({ 
-        shop_id: selectedShop?.id,
-        category: selectedCategory
-      });
+      if (selectedCategory === 'Tout') return base44.entities.Product.filter({ shop_id: selectedShop?.id });
+      return base44.entities.Product.filter({ shop_id: selectedShop?.id, category: selectedCategory });
     },
-    enabled: !!selectedShop && !selectedShop.is_google_place,
-    refetchInterval: 60000
+    enabled: !!selectedShop && !selectedShop.is_google_place
   });
 
-  const productsByShopInCategory = React.useMemo(() => {
-    if (selectedCategory === 'Tout' || selectedShop || selectedCategory === 'Mariage') return [];
-
-    return shopsWithProducts.map(shop => {
-      const shopProducts = allProducts.filter(p => 
-        p.shop_id === shop.id && 
-        p.category === selectedCategory && 
-        p.is_available !== false
-      );
-      return { shop, products: shopProducts };
-    }).filter(group => group.products.length > 0);
-  }, [selectedCategory, selectedShop, shopsWithProducts, allProducts]);
-
-  // Logique filtrage Mariage
-  const weddingProductsBySubCategory = React.useMemo(() => {
-    if (selectedCategory !== 'Mariage') return {};
-    const weddingProducts = allProducts.filter(p => p.category === 'Mariage' && p.is_available !== false);
-    const grouped = {};
-
-    const classifyProduct = (product) => {
-      const textToSearch = `${product.name} ${product.subcategory || ''} ${product.description || ''}`.toLowerCase();
-      for (const group of WEDDING_STRUCTURE) {
-        if (group.subtypes) {
-          for (const subtype of group.subtypes) {
-            if (textToSearch.includes(subtype.toLowerCase())) return subtype;
-          }
-        }
-        if (textToSearch.includes(group.title.toLowerCase())) return group.title;
-      }
-      return 'Autre';
-    };
-
-    weddingProducts.forEach(product => {
-      const sub = classifyProduct(product);
-      if (!grouped[sub]) grouped[sub] = [];
-      grouped[sub].push(product);
-    });
-
-    return grouped;
-  }, [allProducts, selectedCategory]);
-
-  // Google Places
-  const fetchGooglePlaces = async (categoryType) => {
-    if (!userLocation) {
-      toast.error('Activez la géolocalisation');
-      return;
-    }
-    setLoadingPlaces(true);
-    try {
-      const response = await base44.functions.invoke('getNearbyPlaces', {
-        lat: userLocation.lat,
-        lng: userLocation.lng,
-        type: categoryType,
-        radius: 3000
-      });
-      setGooglePlaces(response.data.places || []);
-    } catch (error) {
-      setGooglePlaces([]);
-    } finally {
-      setLoadingPlaces(false);
-    }
-  };
-
-  // Panier
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
     queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id
   });
 
-  // --- NOUVELLE LOGIQUE : REMINDER PANIER ---
-  useEffect(() => {
-    // 1. Vérification à la reconnexion / montage du composant
-    if (cartItems.length > 0) {
-        // Petit délai pour ne pas agresser l'utilisateur dès la milliseconde de chargement
-        const timer = setTimeout(() => setShowCartReminder(true), 2000);
-        return () => clearTimeout(timer);
-    }
-  }, [cartItems.length]); // Se déclenche si le nombre d'items change
-
-  useEffect(() => {
-    // 2. Intervalle de 60 minutes
-    const interval = setInterval(() => {
-        if (cartItems.length > 0) {
-            setShowCartReminder(true);
-            // Son de notification optionnel ou toast système
-        }
-    }, 60 * 60 * 1000); // 60 minutes
-
-    return () => clearInterval(interval);
-  }, [cartItems]);
-
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity = 1 }) => {
       const existing = cartItems.find(item => item.product_id === product.id);
       const clientPrice = getClientPrice(product);
-      const productShop = shops.find(s => s.id === product.shop_id);
-      
       if (existing) {
-        return base44.entities.CartItem.update(existing.id, {
-          quantity: existing.quantity + quantity
-        });
+        return base44.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
       } else {
         return base44.entities.CartItem.create({
           user_id: user.id,
@@ -289,16 +187,15 @@ export default function Home() {
           product_image: product.image_url,
           quantity: quantity,
           unit_price: clientPrice,
-          shop_id: productShop?.id || selectedShop?.id,
-          shop_name: productShop?.company_name || selectedShop?.company_name,
-          shop_region: productShop?.region || selectedShop?.region
+          shop_id: selectedShop.id,
+          shop_name: selectedShop.company_name,
+          shop_region: selectedShop.region
         });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
-      toast.success('Ajouté au panier');
-      setShowCartReminder(false); // On cache le rappel si l'utilisateur interagit
+      toast.success('Article ajouté au panier');
     }
   });
 
@@ -308,677 +205,217 @@ export default function Home() {
     addToCartMutation.mutate({ product, quantity });
   };
 
-  const filteredProducts = products.filter(p => 
-    p.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Thème
-  const theme = {
-    darkBlue: '#232F3E',
-    lightBlue: '#37475A',
-    amazonOrange: '#FF9900',
-    linkBlue: '#007185',
-    bgGray: '#EAEDED'
-  };
+  // LOGIQUE : CATÉGORIES HORIZONTALES (Filtrées)
+  const articleTypes = [
+    { id: 'Fastfood', name: 'Fastfood', icon: '🍔', bgColor: 'bg-orange-50', textColor: 'text-orange-800' },
+    { id: 'Pour Femme', name: 'Mode Femme', icon: '👗', bgColor: 'bg-purple-50', textColor: 'text-purple-800' },
+    { id: 'Boutique Fleurs', name: 'Fleurs', icon: '💐', bgColor: 'bg-pink-50', textColor: 'text-pink-800' },
+    { id: 'Mariage', name: 'Mariage', icon: '💍', bgColor: 'bg-rose-50', textColor: 'text-rose-800' },
+    { id: 'Pour homme', name: 'Mode Homme', icon: '👔', bgColor: 'bg-blue-50', textColor: 'text-blue-800' },
+    { id: 'Bébé', name: 'Bébé', icon: '👶', bgColor: 'bg-yellow-50', textColor: 'text-yellow-800' }
+  ];
 
   return (
-    <div className="min-h-screen pb-20 font-sans" style={{ backgroundColor: theme.bgGray }}>
+    <div className="min-h-screen bg-white pb-20">
       <Helmet>
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
       </Helmet>
       
-      {/* HEADER FIXE */}
-      <header className="sticky top-0 z-50 flex flex-col shadow-md">
-        <div className="text-white px-4 py-2 flex items-center gap-4" style={{ backgroundColor: theme.darkBlue }}>
-            <div className="flex-shrink-0 flex items-center">
-               {selectedShop || selectedCategory !== 'Tout' ? (
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="text-white hover:bg-white/10"
-                  onClick={() => {
-                    if (selectedShop) {
-                      setSelectedShop(null);
-                    } else if (selectedSubCategory) {
-                      setSelectedSubCategory(null);
-                    } else {
-                      setSelectedCategory('Tout');
-                      setGooglePlaces([]);
-                    }
-                  }}
-                >
-                  <ArrowLeft className="w-6 h-6" />
-                </Button>
-              ) : (
-                <div className="flex flex-col leading-tight cursor-pointer" onClick={() => window.location.reload()}>
-                    <span className="text-xl font-bold tracking-tight">Rapido</span>
-                    <span className="text-sm text-orange-400 -mt-1 ml-4">Presto</span>
-                </div>
-              )}
-            </div>
-
-            {/* Barre de Recherche */}
-            <div className="flex-1 max-w-3xl mx-auto hidden md:flex h-10 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-orange-500">
-                <div className="bg-gray-100 text-gray-600 px-3 flex items-center text-xs border-r border-gray-300 cursor-pointer hover:bg-gray-200">
-                    {selectedCategory === 'Tout' ? 'Tout' : selectedCategory}
-                </div>
-                <input 
-                    type="text" 
-                    placeholder="Rechercher..." 
-                    className="flex-1 px-4 text-black outline-none"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button className="px-5 hover:bg-orange-600 transition-colors" style={{ backgroundColor: theme.amazonOrange }}>
-                    <Search className="w-5 h-5 text-gray-900" />
-                </button>
-            </div>
-
-            {/* Version Mobile Search */}
-            <div className="flex-1 md:hidden">
-                 <div className="flex items-center bg-white rounded-md px-2 py-1.5">
-                    <Search className="text-gray-500 w-4 h-4 mr-2" />
-                    <input 
-                      type="text" 
-                      placeholder="Rechercher..." 
-                      className="bg-transparent outline-none w-full text-black text-sm"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                 </div>
-            </div>
-
-            {/* Compte & Panier */}
-            <div className="flex items-center gap-1 md:gap-4 flex-shrink-0">
-                <div className="hidden lg:flex items-end flex-col text-xs leading-none cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm">
-                    <span className="text-gray-300 text-[10px]">Livrer à</span>
-                    <div className="flex items-center font-bold">
-                        <MapPin className="w-3 h-3 mr-1" />
-                        {userLocation ? 'Ma Position' : 'Haïti'}
-                    </div>
-                </div>
-
-                <div 
-                    className="cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm"
-                    onClick={() => !user && base44.auth.redirectToLogin(window.location.pathname)}
-                >
-                    <div className="text-[10px] text-gray-300">Bonjour, {user ? user.first_name : 'Identifiez-vous'}</div>
-                    <div className="text-xs font-bold md:text-sm flex items-center">Compte</div>
-                </div>
-
-                {/* --- CORRECTION ICI : BOUTON PANIER AVEC REDIRECTION EXPLICITE --- */}
-                <div 
-                    className="relative flex items-end cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm"
-                    onClick={() => window.location.href = createPageUrl('Cart')}
-                >
-                    <div className="relative">
-                        <ShoppingCart className="w-7 h-7 md:w-8 md:h-8" />
-                        <span 
-                            className="absolute -top-1 -right-1 md:top-0 md:right-0 w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-gray-900"
-                            style={{ backgroundColor: theme.amazonOrange }}
-                        >
-                            {cartCount}
-                        </span>
-                    </div>
-                    <span className="hidden md:block font-bold text-sm ml-1 mb-1">Panier</span>
-                </div>
-            </div>
-        </div>
-
-        <nav className="text-white text-sm px-4 py-2 flex items-center gap-4 overflow-x-auto no-scrollbar whitespace-nowrap" style={{ backgroundColor: theme.lightBlue }}>
-            <div className="flex items-center font-bold gap-1 cursor-pointer hover:text-white/80" onClick={() => setSelectedCategory('Tout')}>
-                <Menu className="w-5 h-5" />
-                <span>Toutes</span>
-            </div>
-            {articleTypes.map((type) => (
-                <button 
-                    key={type.id}
-                    onClick={() => {
-                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                        setSelectedCategory(type.id);
-                        setSelectedSubCategory(null);
-                        setSelectedShop(null);
-                        setGooglePlaces([]);
-                    }}
-                    className={`hover:outline outline-1 outline-white px-2 py-1 rounded-sm transition-colors ${selectedCategory === type.id ? 'font-bold underline text-orange-400' : ''}`}
-                >
-                    {type.name}
-                </button>
-            ))}
-        </nav>
-      </header>
+      <RecruitmentBanner />
+      <FloatingMerchantBanner user={user} />
+      <MerchantProfileAlert user={user} />
       
-      {/* Bannières Globales */}
-      <div className="max-w-[1500px] mx-auto">
-        <RecruitmentBanner />
-        <FloatingMerchantBanner user={user} />
-        <MerchantProfileAlert user={user} />
-      </div>
-
       <SEO 
-        title={selectedShop ? selectedShop.company_name : "Rapido Presto - Shopping en ligne"}
-        description="La meilleure plateforme e-commerce en Haïti."
-        image={selectedShop?.company_logo_url}
-        url={typeof window !== 'undefined' ? window.location.href : undefined}
+        title={selectedShop ? selectedShop.company_name : "Commandez et faites-vous livrer rapidement"}
+        description="Rapido Presto - Livraison rapide en Haïti."
       />
 
-      <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-32">
-        
-        {/* --- CAS 1: RECHERCHE ACTIVE --- */}
-        {searchQuery.trim() ? (
-          <div className="bg-white p-4 rounded shadow-sm">
-            <h2 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
-              Résultats pour "{searchQuery}"
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {allProducts
-                .filter(p => p.is_available !== false && p.name?.toLowerCase().includes(searchQuery.toLowerCase()))
-                .map(product => {
-                  const shop = shops.find(s => s.id === product.shop_id);
-                  return (
-                    <div className="hover:scale-[1.01] transition-transform" key={product.id}>
-                        <ProductCard
-                          product={product}
-                          shop={shop}
-                          onAdd={(p) => {
-                            if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                            if (shop) { setSelectedShop(shop); handleAddToCart(p); }
-                          }}
-                          onClick={() => {
-                            if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                            const shop = shops.find(s => s.id === product.shop_id);
-                            if (shop) setSelectedShop(shop);
-                            setSelectedProduct(product);
-                          }}
-                        />
-                    </div>
-                  );
-                })}
-            </div>
-             {allProducts.filter(p => p.is_available !== false && p.name?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
-                <div className="text-center py-12 text-slate-500">
-                    <p>Aucun article trouvé.</p>
-                </div>
-             )}
+      {/* Header */}
+      <div className="sticky top-0 bg-white z-50 shadow-sm p-4">
+        <div className="flex items-center justify-between mb-3">
+          {selectedShop || selectedCategory !== 'Tout' ? (
+            <Button variant="ghost" size="icon" onClick={() => { setSelectedShop(null); setSelectedCategory('Tout'); }}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          ) : (
+            <h1 className="text-xl font-bold text-orange-500">Rapido Presto</h1>
+          )}
+          <div className="flex items-center gap-2">
+            {user ? (
+              <Link to={createPageUrl('Cart')}>
+                <Button variant="ghost" size="icon" className="relative">
+                  <ShoppingCart className="w-5 h-5" />
+                  {cartCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 bg-orange-500 text-white text-xs">{cartCount}</Badge>}
+                </Button>
+              </Link>
+            ) : (
+              <Button size="sm" onClick={() => base44.auth.redirectToLogin(window.location.pathname)} className="bg-orange-500 hover:bg-orange-600">Se connecter</Button>
+            )}
           </div>
+        </div>
+        <div className="flex items-center bg-slate-100 rounded-full px-4 py-3">
+          <Search className="text-slate-400 mr-2 w-5 h-5" />
+          <input 
+            type="text" 
+            placeholder='Rechercher "pizza"...' 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="bg-transparent outline-none w-full text-slate-700"
+          />
+        </div>
+      </div>
 
-        /* --- CAS 2: PAGE D'ACCUEIL (Dashboard) --- */
-        ) : selectedCategory === 'Tout' && !selectedShop ? (
-          <div className="space-y-6">
-            
-            <div className="grid gap-4">
-                <FlashBanner />
-                <div className="hidden md:grid grid-cols-2 gap-4">
-                    <FlowersBanner />
-                    <GiftBanner />
-                </div>
-            </div>
+      <main className="pb-32">
+        {selectedCategory === 'Tout' && !selectedShop && !searchQuery ? (
+          <div>
+            <FlashBanner />
+            <FlowersBanner />
+            <GiftBanner />
 
-            {/* Grille Catégories */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {/* Catégories Horizontales (SANS Pharmacie, Resto, etc) */}
+            <div className="grid grid-cols-2 gap-3 p-4">
               {articleTypes.map((type) => (
-                <div 
-                    key={type.id} 
-                    className="bg-white p-4 cursor-pointer hover:shadow-lg transition-shadow flex flex-col justify-between h-36 rounded-md border border-gray-100"
-                    onClick={() => {
-                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                        setSelectedCategory(type.id);
-                        setSelectedSubCategory(null);
-                        setSelectedShop(null);
-                        setGooglePlaces([]);
-                    }}
+                <button
+                  key={type.id}
+                  onClick={() => { setSelectedCategory(type.id); }}
+                  className={`${type.bgColor} rounded-3xl p-4 flex flex-col items-center transition-transform hover:scale-105`}
                 >
-                   <h3 className="font-bold text-base text-slate-900 leading-tight mb-2">{type.name}</h3>
-                   <div className="flex-1 flex items-center justify-center text-4xl">{type.icon}</div>
-                </div>
+                  <div className="text-4xl mb-1">{type.icon}</div>
+                  <span className={`${type.textColor} font-bold text-base`}>{type.name}</span>
+                </button>
               ))}
             </div>
 
-            <SmallStories onCategorySelect={(c) => setSelectedCategory(c)} />
+            <SmallStories onCategorySelect={setSelectedCategory} />
             <CreditBanner />
 
-            {/* Meilleures Ventes */}
-            <div className="bg-white p-4 relative rounded-sm">
-                <h2 className="text-xl font-bold mb-4">Meilleures Ventes</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-0 border-t border-l border-gray-200">
-                {allProducts.filter(p => p.is_available !== false && p.image_url).slice(0, 5).map((product, idx) => {
-                  const shop = shops.find(s => s.id === product.shop_id);
-                  const price = getClientPrice(product);
-                  return (
-                    <div 
-                      key={product.id}
-                      onClick={() => {
-                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                        if (shop) setSelectedShop(shop);
-                        setSelectedProduct(product);
-                      }}
-                      className="bg-white p-4 border-r border-b border-gray-200 hover:shadow-xl hover:z-10 relative cursor-pointer group transition-all"
-                    >
-                      <div className="absolute top-0 left-0 bg-[#C45500] text-white text-xs px-2 py-1 z-20 font-bold rounded-br-md">#{idx + 1}</div>
-                      <div className="relative h-40 mb-3 overflow-hidden">
-                        <img src={product.image_url} className="w-full h-full object-contain group-hover:scale-105 transition-transform" alt={product.name} />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-[#007185] group-hover:text-[#C7511F] hover:underline leading-snug line-clamp-2 h-9 overflow-hidden">{product.name}</p>
-                        <div className="flex items-start mt-1 font-medium">
-                            <span className="text-xs relative top-0.5">$</span>
-                            <span className="text-lg leading-none">{Math.floor(price)}</span>
-                            <span className="text-xs relative top-0.5">{(price % 1).toFixed(2).substring(2)}</span>
-                            <span className="text-gray-500 text-xs self-center ml-1">HTG</span>
-                        </div>
-                        <Button 
-                            className="w-full mt-2 h-7 text-xs bg-[#FFD814] hover:bg-[#F7CA00] text-black border border-[#FCD200] rounded-full"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                              if (shop) { setSelectedShop(shop); handleAddToCart(product); }
-                            }}
-                        >
-                            Ajouter
-                        </Button>
-                      </div>
+            {/* SECTION MEILLEURES VENTES (Rotation 30s - 6 articles) */}
+            <div className="px-4 mb-8">
+              <div className="flex items-baseline gap-2 mb-4 pb-2 border-b-2 border-orange-500">
+                <h2 className="text-lg font-black text-slate-900">🔥 Meilleures Ventes</h2>
+                <span className="text-xs text-slate-500">Actualisé en temps réel</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {topSellers.map((product, idx) => (
+                  <div 
+                    key={product.id + idx}
+                    onClick={() => { setSelectedProduct(product); setSelectedShop(shops.find(s => s.id === product.shop_id)); }}
+                    className="bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer"
+                  >
+                    <div className="aspect-square bg-slate-50 relative">
+                      <img src={product.image_url} className="w-full h-full object-cover" alt={product.name} />
                     </div>
-                  );
-                })}
+                    <div className="p-3">
+                      <p className="text-xs font-medium line-clamp-1">{product.name}</p>
+                      <p className="text-sm font-black text-orange-600">{getClientPrice(product)} HTG</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <RecommendedSection 
-              allProducts={allProducts} 
-              shops={shops}
-              user={user}
-              setSelectedShop={setSelectedShop}
-              setSelectedProduct={setSelectedProduct}
-              getClientPrice={getClientPrice}
-            />
+            {/* SECTION HISTORIQUE ET CLIENTS ONT ACHETÉ */}
+            <div className="px-4 mb-8">
+              <h2 className="text-lg font-bold mb-4">Inspiré de votre historique</h2>
+              <ProductRecommendations type="history" allProducts={allProducts} shops={shops} />
+            </div>
+
+            <div className="px-4 mb-8">
+              <h2 className="text-lg font-bold mb-4">Les clients ont aussi acheté</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {allProducts.sort(() => 0.5 - Math.random()).slice(0, 4).map(product => (
+                  <ProductCard key={product.id} product={product} shop={shops.find(s => s.id === product.shop_id)} onAdd={handleAddToCart} />
+                ))}
+              </div>
+            </div>
+
+            {/* SECTION RECOMMANDÉ POUR VOUS (3 LIGNES SPÉCIFIQUES) */}
+            <div className="px-4 mt-8">
+              <h2 className="text-xl font-black text-slate-900 mb-4 pb-2 border-b-2 border-orange-500">Recommandé pour vous</h2>
+              
+              {/* Ligne 1: MAKARIOS BRIDAL */}
+              <div className="mb-6">
+                <h3 className="text-sm font-bold text-slate-500 mb-2 uppercase">Collection Makarios Bridal</h3>
+                <div className="flex overflow-x-auto gap-4 pb-2 no-scrollbar">
+                  {allProducts.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toUpperCase().includes('MAKARIOS')).map(p => (
+                    <div key={p.id} className="min-w-[140px] w-[140px]"><ProductCard product={p} shop={shops.find(s => s.id === p.shop_id)} onAdd={handleAddToCart} /></div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ligne 2: FLEURS (Aléatoire) */}
+              <div className="mb-6">
+                <h3 className="text-sm font-bold text-slate-500 mb-2 uppercase">Nos plus belles fleurs</h3>
+                <div className="flex overflow-x-auto gap-4 pb-2 no-scrollbar">
+                  {allProducts.filter(p => p.category === 'Boutique Fleurs').sort(() => 0.5 - Math.random()).map(p => (
+                    <div key={p.id} className="min-w-[140px] w-[140px]"><ProductCard product={p} shop={shops.find(s => s.id === p.shop_id)} onAdd={handleAddToCart} /></div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ligne 3: AUTRES BOUTIQUES (Sauf Makarios et Fleurs) */}
+              <div className="mb-6">
+                <h3 className="text-sm font-bold text-slate-500 mb-2 uppercase">Découvertes</h3>
+                <div className="flex overflow-x-auto gap-4 pb-2 no-scrollbar">
+                  {allProducts.filter(p => {
+                    const s = shops.find(sh => sh.id === p.shop_id);
+                    return !s?.company_name?.toUpperCase().includes('MAKARIOS') && p.category !== 'Boutique Fleurs';
+                  }).sort(() => 0.5 - Math.random()).slice(0, 10).map(p => (
+                    <div key={p.id} className="min-w-[140px] w-[140px]"><ProductCard product={p} shop={shops.find(s => s.id === p.shop_id)} onAdd={handleAddToCart} /></div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-
-        /* --- CAS 3: NAVIGATION PAR CATÉGORIE --- */
         ) : (
-          <div className="flex flex-col md:flex-row gap-4 mt-4">
-            
-            {/* SIDEBAR NAVIGATION */}
-            <aside className="hidden md:block w-64 flex-shrink-0 bg-white p-4 h-fit border-r border-gray-200 sticky top-20 rounded-sm">
-               <div className="mb-4">
-                    <h3 className="font-bold text-lg mb-4 text-orange-500">{selectedCategory}</h3>
-                    
-                    {/* SI CATÉGORIE = MARIAGE */}
-                    {selectedCategory === 'Mariage' && (
-                        <div className="space-y-1">
-                            <h4 className="font-bold text-sm mb-2 text-slate-800">Départements</h4>
-                            <div 
-                                className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${!selectedSubCategory ? 'font-bold bg-gray-50 text-orange-600' : ''}`}
-                                onClick={() => setSelectedSubCategory(null)}
-                            >
-                                Tout voir
-                            </div>
-                            {WEDDING_STRUCTURE.map((group, idx) => (
-                                <div key={idx}>
-                                    {group.subtypes ? (
-                                        <div className="mb-2">
-                                            <p className="font-bold text-sm text-gray-700 px-2 mt-2">{group.title}</p>
-                                            {group.subtypes.map((sub) => (
-                                                <div 
-                                                    key={sub}
-                                                    className={`cursor-pointer text-sm p-2 pl-4 rounded hover:bg-gray-100 ${selectedSubCategory === sub ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
-                                                    onClick={() => setSelectedSubCategory(sub)}
-                                                >
-                                                    {sub}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div 
-                                            className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${selectedSubCategory === group.title ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
-                                            onClick={() => setSelectedSubCategory(group.title)}
-                                        >
-                                            {group.title}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* SI AUTRE CATÉGORIE */}
-                    {selectedCategory !== 'Mariage' && !selectedShop && (
-                        <>
-                            <h4 className="font-bold text-sm mb-2">Vendeurs</h4>
-                            <div className="space-y-1 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                                {productsByShopInCategory.map(({ shop }) => (
-                                    <div 
-                                        key={shop.id}
-                                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded text-sm"
-                                        onClick={() => {
-                                            document.getElementById(`shop-section-${shop.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                        }}
-                                    >
-                                        <ChevronRight className="w-3 h-3 text-gray-400" />
-                                        <span className="truncate">{shop.company_name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    )}
-
-                    {selectedShop && (
-                        <div className="mt-4">
-                            <Button variant="outline" className="w-full text-xs" onClick={() => setSelectedShop(null)}>
-                                <ArrowLeft className="w-3 h-3 mr-2" /> Retour liste
-                            </Button>
-                        </div>
-                    )}
-               </div>
+          /* VUE CATÉGORIE FILTRÉE AVEC BOUTONS VERTICAUX RÉDUITS */
+          <div className="flex h-[calc(100vh-140px)] overflow-hidden">
+            <aside className="w-[12%] min-w-[70px] border-r bg-slate-50 overflow-y-auto">
+              <div className="p-1">
+                {shopsWithProducts.map(shop => (
+                  <button
+                    key={shop.id}
+                    onClick={() => setSelectedShop(shop)}
+                    className="w-full flex flex-col items-center mb-3 p-1 rounded-lg hover:bg-white transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden border">
+                      {shop.company_logo_url ? <img src={shop.company_logo_url} className="w-full h-full object-cover" /> : <span className="text-xs">{shop.company_name?.charAt(0)}</span>}
+                    </div>
+                    <span className="text-[8px] text-center font-bold text-slate-600 truncate w-full px-1">{shop.company_name}</span>
+                  </button>
+                ))}
+              </div>
             </aside>
 
-            {/* CONTENU PRINCIPAL */}
-            <main className="flex-1 min-w-0">
-               
-               {/* 3.1: VUE DÉTAIL BOUTIQUE */}
-               {selectedShop ? (
-                   <div className="bg-white p-4 rounded-lg shadow-sm min-h-[500px]">
-                        <div className="flex items-center gap-4 mb-6 border-b pb-4">
-                            <div className="w-16 h-16 rounded-full border-2 border-orange-100 overflow-hidden">
-                                {selectedShop.company_logo_url ? 
-                                    <img src={selectedShop.company_logo_url} className="w-full h-full object-cover" alt="" /> : 
-                                    <div className="w-full h-full bg-orange-50 flex items-center justify-center text-2xl">🏪</div>
-                                }
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-black text-slate-800">{selectedShop.company_name}</h2>
-                                <p className="text-sm text-gray-500">{selectedShop.region || 'Haïti'}</p>
-                            </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {products.map(product => (
-                                <ProductCard
-                                    key={product.id}
-                                    product={product}
-                                    shop={selectedShop}
-                                    onAdd={handleAddToCart}
-                                    onClick={() => setSelectedProduct(product)}
-                                />
-                            ))}
-                        </div>
-                   </div>
-               ) : (
-                   /* 3.2: VUE LISTE CATÉGORIE */
-                   <div className="space-y-6">
-                        <div className="bg-white p-4 rounded shadow-sm">
-                            <h2 className="text-xl font-bold text-slate-800">
-                                {selectedSubCategory ? selectedSubCategory : selectedCategory}
-                            </h2>
-                        </div>
-
-                        {selectedCategory === 'Mariage' ? (
-                            <div className="space-y-8">
-                                {selectedSubCategory ? (
-                                    <div className="bg-white p-4 rounded-lg shadow-sm">
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            {weddingProductsBySubCategory[selectedSubCategory]?.length > 0 ? (
-                                                weddingProductsBySubCategory[selectedSubCategory].map(product => {
-                                                    const shop = shops.find(s => s.id === product.shop_id);
-                                                    return (
-                                                        <ProductCard
-                                                            key={product.id}
-                                                            product={product}
-                                                            shop={shop}
-                                                            onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
-                                                            onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
-                                                        />
-                                                    );
-                                                })
-                                            ) : (
-                                                <div className="col-span-full text-center py-10 text-gray-500">Aucun produit trouvé dans cette section.</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    Object.entries(weddingProductsBySubCategory).map(([subCat, items]) => (
-                                        <div key={subCat} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                                            <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
-                                                <h3 className="font-bold text-lg text-slate-900">{subCat}</h3>
-                                                <Button 
-                                                    variant="link" 
-                                                    className="text-xs text-[#007185]"
-                                                    onClick={() => setSelectedSubCategory(subCat)}
-                                                >
-                                                    Voir plus
-                                                </Button>
-                                            </div>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                                {items.slice(0, 5).map(product => {
-                                                    const shop = shops.find(s => s.id === product.shop_id);
-                                                    return (
-                                                        <ProductCard
-                                                            key={product.id}
-                                                            product={product}
-                                                            shop={shop}
-                                                            onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
-                                                            onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
-                                                        />
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        ) : (
-                            productsByShopInCategory.length > 0 ? (
-                                productsByShopInCategory.map(({ shop, products }) => (
-                                    <div 
-                                        id={`shop-section-${shop.id}`}
-                                        key={shop.id} 
-                                        className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-                                    >
-                                        <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
-                                            <div 
-                                                className="flex items-center gap-3 cursor-pointer group"
-                                                onClick={() => setSelectedShop(shop)}
-                                            >
-                                                <div className="w-12 h-12 rounded-full border border-gray-200 overflow-hidden">
-                                                    {shop.company_logo_url ? (
-                                                        <img src={shop.company_logo_url} className="w-full h-full object-cover" alt="" />
-                                                    ) : (
-                                                        <div className="bg-slate-100 w-full h-full flex items-center justify-center font-bold">{shop.company_name[0]}</div>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-orange-600">
-                                                        {shop.company_name}
-                                                    </h3>
-                                                    <div className="flex text-xs text-gray-500 gap-2">
-                                                        <span>Livraison standard</span>
-                                                        <span>•</span>
-                                                        <span className="text-green-600">En stock</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <Button 
-                                                size="sm"
-                                                className="hidden md:flex bg-white border border-gray-300 text-black hover:bg-gray-50"
-                                                onClick={() => setSelectedShop(shop)}
-                                            >
-                                                Visiter la boutique
-                                            </Button>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            {products.slice(0, 4).map(product => (
-                                                <div key={product.id}>
-                                                    <ProductCard
-                                                        product={product}
-                                                        shop={shop}
-                                                        onAdd={(p) => {
-                                                            setSelectedShop(shop); 
-                                                            handleAddToCart(p);
-                                                        }}
-                                                        onClick={() => {
-                                                            setSelectedShop(shop);
-                                                            setSelectedProduct(product);
-                                                        }}
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="text-center py-20 bg-white rounded-lg shadow-sm">
-                                    <div className="text-4xl mb-4">📦</div>
-                                    <h3 className="text-lg font-bold text-gray-800">Aucun produit disponible</h3>
-                                    <Button className="mt-4 bg-orange-400" onClick={() => setSelectedCategory('Tout')}>Retour</Button>
-                                </div>
-                            )
-                        )}
-                   </div>
-               )}
+            <main className="flex-1 overflow-y-auto p-4">
+              {selectedShop ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {products.map(p => <ProductCard key={p.id} product={p} shop={selectedShop} onAdd={handleAddToCart} />)}
+                </div>
+              ) : (
+                <div className="text-center py-20 text-slate-400">Sélectionnez une boutique à gauche</div>
+              )}
             </main>
           </div>
         )}
       </main>
 
-      {/* --- CORRECTION : PANIER FLOTTANT MOBILE AVEC REDIRECTION EXPLICITE --- */}
+      {/* Modals & Panier */}
       {user && cartCount > 0 && (
-        <div 
-            className="fixed bottom-4 right-4 z-40 animate-bounce-subtle cursor-pointer"
-            onClick={() => window.location.href = createPageUrl('Cart')}
-        >
-            <div className="bg-white border-2 border-orange-500 rounded-full p-3 shadow-2xl flex items-center gap-2 hover:scale-105 transition-transform">
-                <div className="relative">
-                    <ShoppingCart className="w-6 h-6 text-gray-800" />
-                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                        {cartCount}
-                    </span>
-                </div>
-                <span className="font-bold text-sm text-gray-900 pr-2">
-                     {cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0).toFixed(0)} G
-                </span>
-            </div>
-        </div>
-      )}
-
-      {/* --- NOUVEAU : BANNIÈRE FLOTTANTE DE RAPPEL PANIER --- */}
-      {showCartReminder && cartCount > 0 && (
-        <div className="fixed top-32 right-4 z-50 animate-in slide-in-from-right duration-500 max-w-sm w-full md:w-80">
-            <div className="bg-white border-l-4 border-orange-500 shadow-2xl rounded-lg p-4 relative">
-                <button 
-                    onClick={() => setShowCartReminder(false)} 
-                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-                >
-                    <X className="w-4 h-4" />
-                </button>
-                
-                <div className="flex items-start gap-3">
-                    <div className="bg-orange-100 p-2 rounded-full">
-                        <Clock className="w-6 h-6 text-orange-600" />
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-gray-900">N'oubliez pas vos achats !</h4>
-                        <p className="text-sm text-gray-600 mt-1">
-                            Il vous reste <span className="font-bold">{cartCount} article{cartCount > 1 ? 's' : ''}</span> dans votre panier.
-                        </p>
-                    </div>
-                </div>
-                
-                <Button 
-                    className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold"
-                    onClick={() => window.location.href = createPageUrl('Cart')}
-                >
-                    Finaliser ma commande
-                </Button>
-            </div>
-        </div>
-      )}
-
-      {/* Modals */}
-      <ProductDetailModal
-        product={selectedProduct}
-        shop={selectedProduct ? shops.find(s => s.id === selectedProduct.shop_id) : null}
-        open={!!selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
-        user={user}
-        similarProducts={[]}
-      />
-      <ProfileCompletionModal
-        user={user}
-        open={showProfileModal}
-        onComplete={handleProfileComplete}
-      />
-      {user?.profiles?.entreprise && (
-        <ProductFormModal
-          open={showAddProductModal}
-          onClose={() => setShowAddProductModal(false)}
-          onSubmit={() => {
-            queryClient.invalidateQueries(['products']);
-            queryClient.invalidateQueries(['all-products']);
-            setShowAddProductModal(false);
-          }}
-          shop={{ id: user.profiles.entreprise.shop_id }}
-        />
-      )}
-    </div>
-  );
-}
-
-// Carousel Recommandations
-function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice }) {
-  const [currentRowIndexes, setCurrentRowIndexes] = useState([0, 0, 0]);
-  const rowContainers = [useRef(null), useRef(null), useRef(null)];
-
-  const productRows = React.useMemo(() => {
-    const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
-    const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
-    const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
-    
-    const rows = [];
-    for (let i = 0; i < 3; i++) {
-        const selected = [...makariosProducts.slice(0, 8), ...otherProducts.slice(0, 8)].sort(() => Math.random() - 0.5);
-        rows.push(selected);
-    }
-    return rows;
-  }, [allProducts, shops]);
-
-  const handleScroll = (index, direction) => {
-      if(rowContainers[index].current) {
-          rowContainers[index].current.scrollBy({ left: direction === 'left' ? -300 : 300, behavior: 'smooth' });
-      }
-  };
-
-  if (!productRows[0]?.length) return null;
-  const rowTitles = ["Inspiré de votre historique", "Les clients ont aussi acheté", "Recommandé pour vous"];
-
-  return (
-    <div className="mt-8 space-y-8 bg-white p-4 border-t border-gray-200">
-      {productRows.map((rowProducts, rowIndex) => (
-          <div key={rowIndex} className="relative group/carousel">
-            <h3 className="text-xl font-bold text-slate-900 mb-2">{rowTitles[rowIndex]}</h3>
-            <button onClick={() => handleScroll(rowIndex, 'left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-r-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600" /></button>
-            <button onClick={() => handleScroll(rowIndex, 'right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-l-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600 rotate-180" /></button>
-
-            <div ref={rowContainers[rowIndex]} className="flex overflow-x-auto gap-4 pb-4 scroll-smooth no-scrollbar">
-              {rowProducts.map((product, idx) => {
-                const shop = shops.find(s => s.id === product.shop_id);
-                return (
-                  <div key={`${product.id}-${idx}`} className="flex-shrink-0 w-[180px] bg-white p-2 cursor-pointer hover:bg-gray-50" onClick={() => {
-                       if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                       if (shop) setSelectedShop(shop); setSelectedProduct(product);
-                    }}>
-                    <div className="h-40 bg-gray-50 mb-2 p-2"><img src={product.image_url} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" /></div>
-                    <div className="text-sm text-[#007185] hover:text-[#C7511F] line-clamp-2 h-10 mb-1">{product.name}</div>
-                    <div className="font-medium text-lg text-[#B12704]">${Math.floor(getClientPrice(product))}</div>
-                  </div>
-                );
-              })}
-            </div>
+        <div className="fixed bottom-20 left-4 right-4 bg-white rounded-2xl p-4 flex justify-between items-center z-40 shadow-2xl border-2 border-orange-200">
+          <div className="flex items-center gap-4">
+            <div className="relative border-2 p-2 rounded-lg"><ShoppingCart className="w-6 h-6 text-orange-500" /><span className="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">{cartCount}</span></div>
+            <p className="text-xl font-bold">{cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0)} HTG</p>
           </div>
-      ))}
+          <Link to={createPageUrl('Cart')}><Button className="bg-[#25D366] text-white px-6 rounded-full font-bold">Voir le panier</Button></Link>
+        </div>
+      )}
+
+      <ProductDetailModal product={selectedProduct} open={!!selectedProduct} onClose={() => setSelectedProduct(null)} onAddToCart={handleAddToCart} user={user} />
+      <ProfileCompletionModal user={user} open={showProfileModal} onComplete={handleProfileComplete} />
     </div>
   );
 }
