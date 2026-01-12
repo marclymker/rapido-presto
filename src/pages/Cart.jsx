@@ -259,7 +259,11 @@ export default function Cart() {
               {/* Résumé Fixe SHEIN */}
               <div className="border-t pt-4 space-y-3">
                 <div className="flex justify-between text-xs text-gray-500 uppercase"><span>Sous-total</span><span>{subtotal} HTG</span></div>
-                <div className="flex justify-between font-bold text-lg"><span>Total</span><span>{baseTotal} HTG</span></div>
+                <div className="flex justify-between text-xs text-gray-500 uppercase"><span>Livraison</span><span>{getDeliveryPrice()} HTG</span></div>
+                {(user?.pending_balance || 0) > 0 && (
+                  <div className="flex justify-between text-xs text-orange-600 uppercase"><span>Balance due</span><span>{user.pending_balance} HTG</span></div>
+                )}
+                <div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span>{baseTotal} HTG</span></div>
                 <Button className="w-full bg-black text-white rounded-none h-12 uppercase tracking-widest font-bold text-xs" onClick={() => setStep('checkout')}>Passer au paiement</Button>
               </div>
             </motion.div>
