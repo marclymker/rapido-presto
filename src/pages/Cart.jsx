@@ -13,15 +13,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getHaitiTime } from '@/components/utils/dateFormat';
 import SquarePaymentForm from '@/components/payment/SquarePaymentForm';
 
-// --- LOGIQUE DES FRAIS (Gardée intacte) ---
+// --- LOGIQUE DES FRAIS ---
 function calculateDeliveryFee(clientCommune, shopCommune) {
-  const hour = getHaitiTime().getHours();
   const sameCommune = clientCommune === shopCommune;
-  if (hour >= 8 && hour < 11) return sameCommune ? 300 : 500;
-  if (hour >= 12 && hour < 15) return sameCommune ? 400 : 750;
-  if (hour >= 16 && hour < 21) return sameCommune ? 300 : 500;
-  if (hour >= 21 && hour < 23) return sameCommune ? 500 : 750;
-  return sameCommune ? 400 : 600;
+  return sameCommune ? 300 : 500;
 }
 
 function generateConfirmationCode() {
@@ -130,6 +125,24 @@ export default function Cart() {
       toast.success('Copié !');
     });
   };
+
+  const addToCartMutation = useMutation({
+    mutationFn: (product) => base44.entities.CartItem.create({
+      user_id: user.id,
+      product_id: product.id,
+      product_name: product.name,
+      product_image: product.image_url,
+      unit_price: product.price,
+      quantity: 1,
+      shop_id: product.shop_id,
+      shop_name: product.shop_name,
+      shop_region: product.shop_region
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['cart']);
+      toast.success("Ajouté au panier");
+    }
+  });
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
@@ -370,6 +383,32 @@ export default function Cart() {
                     onChange={(e) => setTransactionCode(e.target.value)} 
                   />
                 </div>
+              )}
+
+              {/* Articles similaires avant confirmation */}
+              {similarProducts.length > 0 && (
+                <section className="space-y-4 mt-8">
+                  <h3 className="font-bold text-sm uppercase border-l-4 border-black pl-2">Ajoutez encore plus</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {similarProducts.map(prod => (
+                      <div key={prod.id} className="border p-2 space-y-2">
+                        <div className="aspect-[3/4] bg-gray-50 relative overflow-hidden">
+                           <img src={prod.image_url} className="w-full h-full object-cover" alt={prod.name} />
+                        </div>
+                        <p className="text-xs truncate">{prod.name}</p>
+                        <p className="text-xs font-bold">{prod.price} HTG</p>
+                        <Button 
+                          size="sm" 
+                          className="w-full bg-white border border-black text-black hover:bg-black hover:text-white rounded-none text-[10px] h-7"
+                          onClick={() => addToCartMutation.mutate(prod)}
+                          disabled={addToCartMutation.isPending}
+                        >
+                          Ajouter
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               )}
 
               <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t z-50">

@@ -1,7 +1,12 @@
 import Account from './pages/Account';
+import AdminDashboard from './pages/AdminDashboard';
 import AdminProducts from './pages/AdminProducts';
 import AdminShops from './pages/AdminShops';
 import AdminValidation from './pages/AdminValidation';
+import AgentAccount from './pages/AgentAccount';
+import AgentClients from './pages/AgentClients';
+import AgentCommissions from './pages/AgentCommissions';
+import AgentDashboard from './pages/AgentDashboard';
 import AllOrdersAdmin from './pages/AllOrdersAdmin';
 import Cart from './pages/Cart';
 import Chat from './pages/Chat';
@@ -17,19 +22,19 @@ import Pricing from './pages/Pricing';
 import Product from './pages/Product';
 import Products from './pages/Products';
 import ProfileSetup from './pages/ProfileSetup';
-import AgentDashboard from './pages/AgentDashboard';
-import AgentClients from './pages/AgentClients';
-import AgentCommissions from './pages/AgentCommissions';
-import AgentAccount from './pages/AgentAccount';
-import AdminDashboard from './pages/AdminDashboard';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Account": Account,
+    "AdminDashboard": AdminDashboard,
     "AdminProducts": AdminProducts,
     "AdminShops": AdminShops,
     "AdminValidation": AdminValidation,
+    "AgentAccount": AgentAccount,
+    "AgentClients": AgentClients,
+    "AgentCommissions": AgentCommissions,
+    "AgentDashboard": AgentDashboard,
     "AllOrdersAdmin": AllOrdersAdmin,
     "Cart": Cart,
     "Chat": Chat,
@@ -45,11 +50,6 @@ export const PAGES = {
     "Product": Product,
     "Products": Products,
     "ProfileSetup": ProfileSetup,
-    "AgentDashboard": AgentDashboard,
-    "AgentClients": AgentClients,
-    "AgentCommissions": AgentCommissions,
-    "AgentAccount": AgentAccount,
-    "AdminDashboard": AdminDashboard,
 }
 
 export const pagesConfig = {
