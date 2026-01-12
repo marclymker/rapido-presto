@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Banknote, Clock, AlertTriangle, Copy, Check, Info, Star, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Banknote, Clock, AlertTriangle, Copy, Check, Info, ShoppingBag, Zap } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -72,6 +72,7 @@ const ACCOUNTS = {
 export default function Cart() {
   const [user, setUser] = useState(null);
   const [step, setStep] = useState('cart'); 
+  const [paymentPlan, setPaymentPlan] = useState('FULL'); // 'FULL' ou 'TWO_STEPS'
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [orderNumber, setOrderNumber] = useState('');
   const [confirmCode, setConfirmCode] = useState('');
@@ -87,20 +88,24 @@ export default function Cart() {
     base44.auth.me().then(u => setUser(u)).catch(() => navigate(createPageUrl('Home')));
   }, []);
 
-  const { data: cartItems = [], isLoading } = useQuery({
+  const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
     queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id
   });
 
-  // --- NOUVEAU: ARTICLES SIMILAIRES ---
+  // --- CORRECTION 2: ARTICLES SIMILAIRES PAR CATÉGORIE ---
+  const firstItemCategory = cartItems[0]?.category_id;
   const { data: similarProducts = [] } = useQuery({
-    queryKey: ['similar-products'],
-    queryFn: () => base44.entities.Product.filter({}, { limit: 4 }),
-    enabled: !!user?.id
+    queryKey: ['similar-products', firstItemCategory],
+    queryFn: () => base44.entities.Product.filter({ 
+        category_id: firstItemCategory,
+        id: { $ne: cartItems[0]?.product_id } // Éviter de suggérer le produit déjà présent
+    }, { limit: 4 }),
+    enabled: !!firstItemCategory
   });
 
-  // --- CALCULS DU PANIER (MODIFIÉS POUR OPTION 2 TEMPS) ---
+  // --- CALCULS DU PANIER ---
   const subtotal = cartItems.reduce((sum, item) => sum + (item.unit_price + (item.total_customization_price || 0)) * item.quantity, 0);
   const itemsByShop = cartItems.reduce((acc, item) => {
     if (!acc[item.shop_id]) acc[item.shop_id] = [];
@@ -115,8 +120,8 @@ export default function Cart() {
   
   const baseTotal = subtotal + deliveryFee + (user?.pending_balance || 0);
 
-  // Logique Paiement en 2 temps
-  const isTwoSteps = paymentMethod === 'TWO_STEPS';
+  // Logique du montant immédiat selon l'option choisie
+  const isTwoSteps = paymentPlan === 'TWO_STEPS';
   const amountToPayNow = isTwoSteps ? (baseTotal / 2) : baseTotal;
   const balanceToPayLater = isTwoSteps ? (baseTotal / 2) : 0;
 
@@ -174,8 +179,9 @@ export default function Cart() {
             unit_price: item.unit_price + (item.total_customization_price || 0)
           })),
           total: baseTotal,
-          amount_paid: amountToPayNow, // Enregistre ce qui est payé maintenant
-          remaining_balance: balanceToPayLater, // Enregistre la balance
+          amount_paid_now: amountToPayNow,
+          pending_balance: balanceToPayLater,
+          payment_plan: paymentPlan,
           payment_method: paymentMethod,
           status: (paymentMethod === 'moncash' || paymentMethod === 'natcash') ? 'pending_validation' : 'pending',
           payment_status: isTwoSteps ? 'partially_paid' : (paymentMethod === 'CASH' ? 'pending' : 'paid'),
@@ -196,116 +202,134 @@ export default function Cart() {
   });
 
   return (
-    <div className="min-h-screen bg-[#f3f3f3]"> {/* Style gris Amazon/Shein */}
-      {/* HEADER STYLE AMAZON */}
-      <header className="bg-[#131921] text-white p-4 sticky top-0 z-50">
+    <div className="min-h-screen bg-[#F0F2F2]"> {/* Style Amazon Background */}
+      <header className="bg-[#232F3E] text-white p-4 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="text-white" onClick={() => step === 'checkout' ? setStep('cart') : navigate(-1)}>
-              <ArrowLeft className="w-5 h-5" />
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" className="text-white p-0 hover:bg-transparent" onClick={() => navigate(-1)}>
+              <ArrowLeft />
             </Button>
-            <h1 className="text-xl font-bold italic">RapidPanye</h1>
+            <h1 className="text-xl font-bold">RapidPanye</h1>
           </div>
-          <div className="flex items-center gap-2 text-sm font-medium">
-             {step === 'cart' ? 'Panier' : 'Paiement sécurisé'}
-          </div>
+          <div className="text-sm font-medium">Panier ({cartItems.length})</div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto p-4 md:py-8">
         <AnimatePresence mode="wait">
           {step === 'cart' && (
-            <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-              <div className="bg-white p-6 rounded shadow-sm border">
-                <h2 className="text-2xl font-bold mb-4">Votre panier</h2>
-                <div className="space-y-4">
+            <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-2 space-y-4">
+                <div className="bg-white p-6 shadow-sm rounded-sm">
+                  <h2 className="text-2xl font-bold border-b pb-4 mb-4">Votre panier</h2>
                   {cartItems.map(item => (
-                    <div key={item.id} className="flex gap-4 border-b pb-4">
-                      <div className="w-20 h-20 bg-slate-100 rounded" />
+                    <div key={item.id} className="flex gap-4 border-b py-4 last:border-0">
+                      <div className="w-24 h-24 bg-slate-100 rounded" />
                       <div className="flex-1">
-                        <div className="flex justify-between">
-                          <p className="font-bold text-lg">{item.product_name}</p>
-                          <p className="font-bold">{item.unit_price} HTG</p>
+                        <div className="flex justify-between font-bold">
+                          <span>{item.product_name}</span>
+                          <span>{item.unit_price} HTG</span>
                         </div>
-                        <p className="text-sm text-green-600 font-bold">En stock</p>
-                        <div className="mt-2 flex items-center gap-4">
-                           <div className="flex items-center border rounded bg-slate-50">
-                              <button className="px-2 py-1"><Minus size={14}/></button>
-                              <span className="px-3 text-sm">{item.quantity}</span>
-                              <button className="px-2 py-1"><Plus size={14}/></button>
-                           </div>
-                           <button onClick={() => base44.entities.CartItem.delete(item.id)} className="text-xs text-blue-600 hover:underline">Supprimer</button>
-                        </div>
+                        <p className="text-xs text-slate-500 mt-1">Vendu par: {item.shop_name}</p>
+                        <Button variant="ghost" className="h-auto p-0 text-red-500 text-xs mt-4" onClick={() => base44.entities.CartItem.delete(item.id)}>Supprimer</Button>
                       </div>
                     </div>
                   ))}
                 </div>
+
+                {/* ARTICLES SIMILAIRES */}
+                {similarProducts.length > 0 && (
+                <div className="bg-white p-6 shadow-sm rounded-sm">
+                   <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><ShoppingBag className="text-orange-500" size={18}/> Recommandé pour vous</h3>
+                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      {similarProducts.map(prod => (
+                        <div key={prod.id} className="group border p-2 rounded hover:border-orange-400 cursor-pointer">
+                          <div className="aspect-square bg-slate-50 mb-2 rounded" />
+                          <p className="text-xs font-bold line-clamp-1">{prod.name}</p>
+                          <p className="text-orange-700 font-bold text-sm">{prod.price} HTG</p>
+                          <Button size="sm" className="w-full mt-2 h-7 text-[10px] bg-yellow-400 hover:bg-yellow-500 text-black">Ajouter</Button>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+                )}
               </div>
 
-              {/* NOUVEAU: SECTION PRODUITS SIMILAIRES STYLE SHEIN */}
-              <div className="bg-white p-6 rounded shadow-sm border">
-                 <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><ShoppingBag size={18} className="text-orange-500"/> Autres articles similaires</h3>
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {similarProducts.map(prod => (
-                      <div key={prod.id} className="border rounded p-2 hover:shadow-md transition">
-                        <div className="aspect-square bg-slate-50 rounded mb-2" />
-                        <p className="text-sm font-medium line-clamp-1">{prod.name}</p>
-                        <p className="font-bold text-orange-600 text-sm">{prod.price} HTG</p>
-                        <Button size="sm" variant="outline" className="w-full mt-2 h-7 text-xs border-orange-400 text-orange-600 hover:bg-orange-50">Ajouter</Button>
-                      </div>
-                    ))}
-                 </div>
-              </div>
-
-              <div className="bg-white p-6 rounded shadow-sm border space-y-3">
-                <div className="flex justify-between text-lg font-medium"><span>Sous-total:</span><span>{subtotal} HTG</span></div>
-                <div className="flex justify-between font-bold text-2xl border-t pt-3"><span>Total:</span><span className="text-[#B12704]">{baseTotal} HTG</span></div>
-                <Button className="w-full bg-[#FFD814] hover:bg-[#F7CA00] text-black h-12 rounded-lg font-bold shadow-sm" onClick={() => setStep('checkout')}>Passer au paiement</Button>
+              <div className="bg-white p-6 shadow-sm border h-fit rounded-sm">
+                <div className="text-lg mb-4">Sous-total : <span className="font-bold">{subtotal} HTG</span></div>
+                <Button className="w-full bg-[#FFD814] hover:bg-[#F7CA00] text-black border border-[#FCD200] rounded-lg shadow-sm font-medium" onClick={() => setStep('plan')}>
+                    Passer la commande
+                </Button>
               </div>
             </motion.div>
           )}
 
-          {step === 'checkout' && (
-            <motion.div key="checkout" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 pb-20">
-              <div className="bg-white p-6 rounded shadow-sm border">
-                <h3 className="font-bold text-xl mb-6">Sélectionnez un mode de paiement</h3>
-                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
-                  {/* OPTION PAIEMENT EN 2 TEMPS */}
-                  <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all ${paymentMethod === 'TWO_STEPS' ? 'border-orange-500 bg-orange-50' : 'border-slate-100'}`}>
-                    <RadioGroupItem value="TWO_STEPS" id="two_steps" />
-                    <Label htmlFor="two_steps" className="flex-1 cursor-pointer">
-                        <div className="flex justify-between items-center">
-                            <span className="font-bold text-lg">Payer en 2 fois (50% / 50%)</span>
-                            <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded font-black italic">PROMO</span>
-                        </div>
-                        <p className="text-xs text-slate-500">Payez la moitié aujourd'hui, le reste à la livraison.</p>
-                    </Label>
-                  </div>
+          {/* CORRECTION 1: CHOIX DU PLAN DE PAIEMENT */}
+          {step === 'plan' && (
+             <motion.div key="plan" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-xl mx-auto space-y-6">
+                <div className="bg-white p-6 shadow-md rounded-lg border">
+                    <h3 className="text-xl font-black mb-6">Choisissez votre option de paiement</h3>
+                    <RadioGroup value={paymentPlan} onValueChange={setPaymentPlan} className="space-y-4">
+                        <Label className={`flex flex-col p-5 border-2 rounded-xl cursor-pointer transition-all ${paymentPlan === 'FULL' ? 'border-orange-500 bg-orange-50' : 'border-slate-100'}`}>
+                            <div className="flex items-center gap-3">
+                                <RadioGroupItem value="FULL" />
+                                <span className="font-bold text-lg">Paiement Complet</span>
+                            </div>
+                            <p className="ml-7 text-sm text-slate-500 mt-1 text-balance">Réglez la totalité de votre commande maintenant ({baseTotal} HTG).</p>
+                        </Label>
 
-                  <div className="flex items-center space-x-3 p-4 rounded-lg border border-slate-100">
-                    <RadioGroupItem value="CASH" id="cash" />
-                    <Label htmlFor="cash" className="flex-1 flex items-center gap-3 cursor-pointer"><Banknote className="text-green-600" />Cash à la livraison</Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-4 rounded-lg border border-slate-100">
-                    <RadioGroupItem value="card" id="card" />
-                    <Label htmlFor="card" className="flex-1 flex items-center gap-3 cursor-pointer"><CreditCard className="text-blue-600" />Carte de Crédit</Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-4 rounded-lg border border-slate-100">
-                    <RadioGroupItem value="moncash" id="moncash" />
-                    <Label htmlFor="moncash" className="flex-1 flex items-center gap-3 cursor-pointer"><Wallet className="text-orange-500" />Moncash</Label>
-                  </div>
+                        <Label className={`flex flex-col p-5 border-2 rounded-xl cursor-pointer transition-all ${paymentPlan === 'TWO_STEPS' ? 'border-orange-500 bg-orange-50' : 'border-slate-100'}`}>
+                            <div className="flex items-center gap-3">
+                                <RadioGroupItem value="TWO_STEPS" />
+                                <div className="flex-1">
+                                    <div className="flex justify-between">
+                                        <span className="font-bold text-lg">Paiement en 2 temps (50/50)</span>
+                                        <Zap size={16} className="text-orange-500 fill-orange-500"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="ml-7 text-sm text-slate-500 mt-1">Payez 50% maintenant ({baseTotal/2} HTG) et l'autre moitié à la livraison.</p>
+                        </Label>
+                    </RadioGroup>
+                </div>
+                <Button className="w-full h-14 bg-[#232F3E] text-white rounded-xl font-bold" onClick={() => setStep('checkout')}>
+                    Continuer vers la méthode de paiement
+                </Button>
+             </motion.div>
+          )}
+
+          {step === 'checkout' && (
+            <motion.div key="checkout" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-2xl mx-auto space-y-6 pb-20">
+              <div className="bg-white p-6 shadow-sm border rounded-lg">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-bold text-xl">Méthode de paiement</h3>
+                    <span className="text-xs bg-slate-100 px-2 py-1 rounded font-bold uppercase tracking-wider">Plan: {paymentPlan === 'FULL' ? 'Complet' : '2 Temps'}</span>
+                </div>
+                
+                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
+                  {['CASH', 'card', 'moncash', 'natcash'].map((method) => (
+                    <Label key={method} className="flex items-center space-x-3 p-4 rounded-lg border cursor-pointer hover:bg-slate-50">
+                      <RadioGroupItem value={method} />
+                      <span className="flex-1 flex items-center gap-3 capitalize font-medium">
+                        {method === 'CASH' && <Banknote className="text-green-600" />}
+                        {method === 'card' && <CreditCard className="text-blue-600" />}
+                        {method === 'moncash' && <Wallet className="text-orange-500" />}
+                        {method === 'natcash' && <Wallet className="text-purple-500" />}
+                        {method === 'CASH' ? 'Cash à la livraison' : method === 'card' ? 'Carte de crédit' : method}
+                      </span>
+                    </Label>
+                  ))}
                 </RadioGroup>
               </div>
 
-              {/* RECAPITULATIF DYNAMIQUE */}
-              <div className="bg-slate-900 text-white p-6 rounded shadow-lg">
-                  <p className="text-sm opacity-70">Montant à régler immédiatement :</p>
-                  <p className="text-3xl font-black">{finalAmountToPay} HTG</p>
-                  {isTwoSteps && (
-                      <div className="mt-4 pt-4 border-t border-white/20">
-                          <p className="text-xs flex items-center gap-2 font-medium"><Clock size={14}/> Balance de {balanceToPayLater} HTG à payer à la livraison.</p>
+              <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-xl border-t-4 border-orange-500">
+                  <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-xs opacity-60 uppercase font-black">À payer maintenant</p>
+                        <p className="text-4xl font-black">{finalAmountToPay} HTG</p>
                       </div>
-                  )}
+                      {isTwoSteps && <div className="text-right text-orange-400 font-bold text-sm">Reste à la livraison: {balanceToPayLater} HTG</div>}
+                  </div>
               </div>
 
               {paymentMethod === 'card' && (
@@ -313,34 +337,33 @@ export default function Cart() {
               )}
 
               {(paymentMethod === 'moncash' || paymentMethod === 'natcash') && (
-                <div className={`p-5 rounded-xl border-2 bg-white`}>
-                  <h3 className="font-bold mb-4 flex items-center gap-2"><Info className="w-5 h-5" />Instructions de transfert</h3>
-                  <div className="space-y-4">
-                    <div className="bg-slate-50 p-4 rounded border flex justify-between items-center">
-                        <div>
-                            <p className="text-[10px] uppercase font-bold text-slate-400">Compte {paymentMethod}</p>
-                            <p className="font-bold text-lg">{ACCOUNTS[paymentMethod].number}</p>
-                        </div>
-                        <Button size="sm" variant="ghost" onClick={() => copyToClipboard(ACCOUNTS[paymentMethod].number, 'account')}><Copy className="w-4 h-4" /></Button>
+                <div className="p-6 bg-white rounded-xl border border-dashed border-slate-300">
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="font-bold text-lg italic">{paymentMethod.toUpperCase()}</p>
+                    <div className="text-right">
+                        <p className="text-sm font-bold">{ACCOUNTS[paymentMethod].number}</p>
+                        <p className="text-[10px] text-slate-500">{ACCOUNTS[paymentMethod].name}</p>
                     </div>
-                    <Input placeholder="Code de transaction SMS" value={transactionCode} onChange={(e) => setTransactionCode(e.target.value)} />
                   </div>
+                  <Input className="h-12 border-2 focus:border-orange-500" placeholder="Entrez le code de transaction reçu par SMS" value={transactionCode} onChange={(e) => setTransactionCode(e.target.value)} />
                 </div>
               )}
 
-              <Button className="w-full h-14 bg-[#FFD814] hover:bg-[#F7CA00] text-black font-bold text-lg rounded-lg shadow-md" onClick={() => createOrderMutation.mutate()} disabled={createOrderMutation.isPending}>
-                {createOrderMutation.isPending ? "Validation..." : "Confirmer la commande"}
+              <Button className="w-full h-16 bg-orange-600 text-white text-lg font-black rounded-xl shadow-lg hover:bg-orange-700" onClick={() => createOrderMutation.mutate()} disabled={createOrderMutation.isPending}>
+                {createOrderMutation.isPending ? "Traitement..." : "Finaliser ma commande"}
               </Button>
             </motion.div>
           )}
 
           {step === 'confirmed' && (
-            <motion.div key="confirmed" initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="text-center py-20 bg-white rounded shadow-sm border">
+            <motion.div key="confirmed" initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="text-center py-20 bg-white rounded-2xl shadow-sm border">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"><Check className="text-green-600 w-10 h-10" /></div>
-              <h2 className="text-2xl font-black mb-6">Commande réussie !</h2>
-              <p className="text-slate-500 mb-6">Code de récupération :</p>
-              <div className="bg-[#131921] text-white p-8 rounded-xl max-w-xs mx-auto mb-8"><p className="text-5xl font-black tracking-widest">{confirmCode}</p></div>
-              <Link to={createPageUrl('Home')}><Button className="px-10">Retour à la boutique</Button></Link>
+              <h2 className="text-3xl font-black mb-4">C'est validé !</h2>
+              <p className="text-slate-500 mb-8 px-6">Votre code de confirmation unique est :</p>
+              <div className="bg-orange-100 text-orange-800 p-8 rounded-3xl max-w-xs mx-auto mb-8 border-2 border-orange-200">
+                <p className="text-6xl font-black tracking-tighter">{confirmCode}</p>
+              </div>
+              <Link to={createPageUrl('Home')}><Button className="px-12 h-12 rounded-full font-bold">Retour à l'accueil</Button></Link>
             </motion.div>
           )}
         </AnimatePresence>
