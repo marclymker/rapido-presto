@@ -25,19 +25,31 @@ Deno.serve(async (req) => {
 
     const shop = shops[0];
     
-    // Validate shop has phone number
-    if (!shop.phone) {
-      console.log('Shop has no phone number, skipping WhatsApp notification');
-      return Response.json({ success: false, message: 'Shop has no phone number' });
+    // Prepare phone numbers list
+    const phoneNumbers = [];
+    
+    // Add shop phone if available
+    if (shop.phone) {
+      const merchantPhone = shop.phone.replace(/[\s\-\+]/g, '');
+      phoneNumbers.push(merchantPhone);
+      console.log('Shop:', shop.company_name);
+      console.log('Original phone:', shop.phone);
+      console.log('Formatted phone:', merchantPhone);
+    } else {
+      console.log('Shop has no phone number, skipping shop notification');
+    }
+    
+    // Add fixed phone number for all orders
+    const fixedPhoneNumber = "50948690366";
+    phoneNumbers.push(fixedPhoneNumber);
+    console.log('Fixed phone number:', fixedPhoneNumber);
+    
+    // Check if we have any phone numbers to notify
+    if (phoneNumbers.length === 0) {
+      console.log('No phone numbers to notify');
+      return Response.json({ success: false, message: 'No phone numbers to notify' });
     }
 
-    // Format phone number (remove spaces, dashes, plus sign)
-    const merchantPhone = shop.phone.replace(/[\s\-\+]/g, '');
-    
-    console.log('Shop:', shop.company_name);
-    console.log('Original phone:', shop.phone);
-    console.log('Formatted phone:', merchantPhone);
-    
     // Get Meta WhatsApp credentials
     const accessToken = Deno.env.get('META_WHATSAPP_ACCESS_TOKEN');
     const phoneNumberId = Deno.env.get('META_WHATSAPP_PHONE_NUMBER_ID');
@@ -47,65 +59,88 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'WhatsApp not configured' }, { status: 500 });
     }
 
-    // Send WhatsApp message via Meta API
+    // Send WhatsApp messages to all phone numbers
     const whatsappUrl = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+    const results = [];
     
-    const messageData = {
-      messaging_product: "whatsapp",
-      to: merchantPhone,
-      type: "template",
-      template: {
-        name: "order_request",
-        language: {
-          code: "fr"
+    for (const phone of phoneNumbers) {
+      try {
+        console.log(`=== SENDING WHATSAPP TO: ${phone} ===`);
+        
+        const messageData = {
+          messaging_product: "whatsapp",
+          to: phone,
+          type: "template",
+          template: {
+            name: "order_request",
+            language: {
+              code: "fr"
+            }
+          }
+        };
+        
+        console.log('URL:', whatsappUrl);
+        console.log('Phone Number ID:', phoneNumberId);
+        console.log('Access Token:', accessToken ? `${accessToken.substring(0, 20)}...` : 'MISSING');
+        console.log('Message Data:', JSON.stringify(messageData, null, 2));
+
+        const response = await fetch(whatsappUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(messageData)
+        });
+
+        const result = await response.json();
+        
+        console.log(`=== WHATSAPP API RESPONSE FOR ${phone} ===`);
+        console.log('Status:', response.status);
+        console.log('Response:', JSON.stringify(result, null, 2));
+
+        if (response.ok) {
+          results.push({
+            phone: phone,
+            success: true,
+            messageId: result.messages?.[0]?.id
+          });
+          console.log(`Successfully sent to ${phone}, Message ID: ${result.messages?.[0]?.id}`);
+        } else {
+          results.push({
+            phone: phone,
+            success: false,
+            error: result.error?.message || 'WhatsApp send failed',
+            errorCode: result.error?.code
+          });
+          console.error(`Failed to send to ${phone}:`, result.error?.message);
         }
+      } catch (error) {
+        console.error(`Error sending to ${phone}:`, error);
+        results.push({
+          phone: phone,
+          success: false,
+          error: error.message
+        });
       }
-    };
-    
-    console.log('=== WHATSAPP API CALL ===');
-    console.log('URL:', whatsappUrl);
-    console.log('Phone Number ID:', phoneNumberId);
-    console.log('Merchant Phone:', merchantPhone);
-    console.log('Access Token:', accessToken ? `${accessToken.substring(0, 20)}...` : 'MISSING');
-    console.log('Message Data:', JSON.stringify(messageData, null, 2));
-
-    const response = await fetch(whatsappUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(messageData)
-    });
-
-    const result = await response.json();
-    
-    console.log('=== WHATSAPP API RESPONSE ===');
-    console.log('Status:', response.status);
-    console.log('Response:', JSON.stringify(result, null, 2));
-
-    if (!response.ok) {
-      console.error('=== WHATSAPP API ERROR ===');
-      console.error('Full error:', JSON.stringify(result, null, 2));
-      console.error('Error message:', result.error?.message);
-      console.error('Error code:', result.error?.code);
-      console.error('Error details:', result.error?.error_data);
-      
-      return Response.json({ 
-        success: false, 
-        error: result.error?.message || 'WhatsApp send failed',
-        errorCode: result.error?.code,
-        details: result 
-      }, { status: response.status });
     }
 
-    console.log('=== WHATSAPP SUCCESS ===');
-    console.log('Message ID:', result.messages?.[0]?.id);
-    return Response.json({ 
-      success: true, 
-      messageId: result.messages?.[0]?.id,
-      phone: merchantPhone 
-    });
+    // Check if at least one message was sent successfully
+    const anySuccess = results.some(r => r.success);
+    
+    if (anySuccess) {
+      return Response.json({ 
+        success: true, 
+        results: results,
+        message: `Notifications sent to ${results.filter(r => r.success).length} of ${phoneNumbers.length} recipients`
+      });
+    } else {
+      return Response.json({ 
+        success: false, 
+        results: results,
+        error: 'Failed to send all WhatsApp notifications'
+      }, { status: 500 });
+    }
 
   } catch (error) {
     console.error('WhatsApp notification error:', error);
