@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { User, Building2, Bike, MapPin, Phone, Upload, ChevronRight } from 'lucide-react';
+import { User, Building2, Bike, MapPin, Phone, Upload, ChevronRight, Briefcase } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,6 +68,9 @@ export default function ProfileSetup() {
       case 'livreur':
         navigate(createPageUrl('DriverDashboard'));
         break;
+      case 'agent':
+        navigate(createPageUrl('AgentDashboard'));
+        break;
       default:
         navigate(createPageUrl('Home'));
     }
@@ -93,7 +96,8 @@ export default function ProfileSetup() {
       const profiles = {
         client: { is_active: false, created_at: null },
         entreprise: { is_active: false, created_at: null },
-        livreur: { is_active: false, status: 'pending', created_at: null }
+        livreur: { is_active: false, status: 'pending', created_at: null },
+        agent: { is_active: false, validation_status: 'pending', created_at: null }
       };
 
       // Activate selected profile
@@ -102,6 +106,15 @@ export default function ProfileSetup() {
           is_active: true,
           created_at: now,
           last_used: now
+        };
+      } else if (formData.user_type === 'agent') {
+        profiles.agent = {
+          is_active: true,
+          validation_status: 'approved',
+          created_at: now,
+          last_used: now,
+          phone: formData.phone,
+          address: formData.address
         };
       } else if (formData.user_type === 'entreprise') {
         // Create Shop entity for enterprise
@@ -275,6 +288,25 @@ export default function ProfileSetup() {
                   <div>
                     <p className="font-medium">Livreur</p>
                     <p className="text-sm text-slate-500">Effectuer des livraisons</p>
+                  </div>
+                </label>
+
+                <label 
+                  className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    formData.user_type === 'agent' 
+                      ? 'border-orange-500 bg-orange-50' 
+                      : 'border-slate-200 hover:border-orange-200'
+                  }`}
+                >
+                  <RadioGroupItem value="agent" className="sr-only" />
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                    formData.user_type === 'agent' ? 'bg-orange-500' : 'bg-slate-100'
+                  }`}>
+                    <Briefcase className={`w-6 h-6 ${formData.user_type === 'agent' ? 'text-white' : 'text-slate-500'}`} />
+                  </div>
+                  <div>
+                    <p className="font-medium">Agent de Vente</p>
+                    <p className="text-sm text-slate-500">Vendre pour Makarios Bridal</p>
                   </div>
                 </label>
               </RadioGroup>

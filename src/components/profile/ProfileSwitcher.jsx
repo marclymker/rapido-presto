@@ -32,6 +32,12 @@ const profileConfig = {
     label: 'Livreur',
     color: 'text-green-600',
     bgColor: 'bg-green-100'
+  },
+  agent: {
+    icon: User,
+    label: 'Agent de Vente',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100'
   }
 };
 
@@ -96,7 +102,8 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
       const redirectPages = {
         client: 'Home',
         entreprise: 'EnterpriseDashboard',
-        livreur: 'DriverDashboard'
+        livreur: 'DriverDashboard',
+        agent: 'AgentDashboard'
       };
       
       toast.success(`Profil changé vers ${profileConfig[targetProfile].label}`);

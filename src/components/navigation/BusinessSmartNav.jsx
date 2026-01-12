@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Package, Store, Bike, TrendingUp } from 'lucide-react';
+import { Home, Package, Store, Bike, TrendingUp, User } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 
 export default function BusinessSmartNav({ activeTab, setActiveTab, userRole, pendingCount = 0 }) {
@@ -12,6 +12,11 @@ export default function BusinessSmartNav({ activeTab, setActiveTab, userRole, pe
     { id: 'products', label: 'Articles', icon: Store, page: 'EnterpriseDashboard' },
     { id: 'stats', label: 'Stats', icon: TrendingUp, page: 'EnterpriseDashboard' },
     { id: 'home', label: 'Catalogue', icon: Home, external: true }
+  ] : userRole === 'agent' ? [
+    { id: 'dashboard', label: 'Dashboard', icon: Home, page: 'AgentDashboard' },
+    { id: 'clients', label: 'Clients', icon: Package, page: 'AgentClients' },
+    { id: 'commissions', label: 'Commissions', icon: TrendingUp, page: 'AgentCommissions' },
+    { id: 'account', label: 'Compte', icon: User, page: 'AgentAccount' }
   ] : [
     { id: 'available', label: 'Disponibles', icon: Package, page: 'DriverDashboard' },
     { id: 'active', label: 'En cours', icon: Bike, page: 'DriverDashboard' },
