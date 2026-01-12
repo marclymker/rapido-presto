@@ -17,6 +17,10 @@ import Pricing from './pages/Pricing';
 import Product from './pages/Product';
 import Products from './pages/Products';
 import ProfileSetup from './pages/ProfileSetup';
+import AgentDashboard from './pages/AgentDashboard';
+import AgentClients from './pages/AgentClients';
+import AgentCommissions from './pages/AgentCommissions';
+import AgentAccount from './pages/AgentAccount';
 import __Layout from './Layout.jsx';
 
 
@@ -40,6 +44,10 @@ export const PAGES = {
     "Product": Product,
     "Products": Products,
     "ProfileSetup": ProfileSetup,
+    "AgentDashboard": AgentDashboard,
+    "AgentClients": AgentClients,
+    "AgentCommissions": AgentCommissions,
+    "AgentAccount": AgentAccount,
 }
 
 export const pagesConfig = {

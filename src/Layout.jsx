@@ -107,6 +107,8 @@ export default function Layout({ children, currentPageName }) {
           { icon: Bike, label: 'Dashboard', page: 'DriverDashboard' },
           { icon: User, label: 'Compte', page: 'DriverAccount' },
         ];
+      case 'agent':
+        return [];
       default:
         return [];
     }
@@ -190,8 +192,8 @@ export default function Layout({ children, currentPageName }) {
         />
       )}
 
-      {/* Business Smart Navigation - Entreprise & Livreur */}
-      {user && !noNavPages.includes(currentPageName) && (user.current_profile === 'entreprise' || user.current_profile === 'livreur') && currentPageName === 'Home' && (
+      {/* Business Smart Navigation - Entreprise, Livreur & Agent */}
+      {user && !noNavPages.includes(currentPageName) && (user.current_profile === 'entreprise' || user.current_profile === 'livreur' || user.current_profile === 'agent') && currentPageName === 'Home' && (
         <BusinessSmartNav 
           userRole={user.current_profile}
         />
