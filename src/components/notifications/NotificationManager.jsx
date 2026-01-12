@@ -1,10 +1,12 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import Pusher from 'pusher-js'; // S'assurer que le package est installé ou chargé via CDN
+import Pusher from 'pusher-js';
+import { base44 } from '@/api/base44Client';
 
 export function useBrowserNotifications(user) {
   const audioRef = useRef(null);
   const pusherRef = useRef(null);
+  const [pusherConfig, setPusherConfig] = useState(null);
 
   // 1. Précharger l'audio (Inchangé)
   useEffect(() => {
@@ -64,14 +66,19 @@ export function useBrowserNotifications(user) {
     });
   }, []);
 
-  // 3. Connexion à Pusher
+  // 3. Récupérer la config Pusher
   useEffect(() => {
-    if (!user?.id) return;
+    base44.functions.invoke('getPusherConfig')
+      .then(res => setPusherConfig(res.data))
+      .catch(err => console.error('Erreur config Pusher:', err));
+  }, []);
 
-    // Initialisation Pusher (Remplace les clés si nécessaire)
-    // Les clés publiques sont sécurisées dans le frontend
-    pusherRef.current = new Pusher('TA_PUSHER_KEY', {
-      cluster: 'us2',
+  // 4. Connexion à Pusher
+  useEffect(() => {
+    if (!user?.id || !pusherConfig?.key) return;
+
+    pusherRef.current = new Pusher(pusherConfig.key, {
+      cluster: pusherConfig.cluster,
       forceTLS: true
     });
 
@@ -105,7 +112,7 @@ export function useBrowserNotifications(user) {
         pusherRef.current.disconnect();
       }
     };
-  }, [user?.id, playAlert]);
+  }, [user?.id, pusherConfig, playAlert]);
 }
 
 export const useOrderNotifications = useBrowserNotifications;
