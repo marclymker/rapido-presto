@@ -202,9 +202,9 @@ className="h-3 opacity-80 grayscale group-hover:grayscale-0 transition-all"
 
 
 
-{/* Zone Chat (Affichée uniquement si nécessaire) */}
+{/* Zone Chat (Affichée uniquement si nécessaire) - TEMPORAIREMENT DÉSACTIVÉ */}
 
-<AnimatePresence>
+{/* <AnimatePresence>
 
 {shop && showChatButton && (
 
@@ -226,7 +226,7 @@ className="absolute inset-x-0 bottom-0 p-2 bg-white/95 backdrop-blur-sm sm:block
 
 )}
 
-</AnimatePresence>
+</AnimatePresence> */}
 
 </div>
 
