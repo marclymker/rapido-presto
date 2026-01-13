@@ -144,17 +144,12 @@ export default function Home() {
     refetchInterval: 60000
   });
 
-  const { data: rawProducts = [] } = useQuery({
+  const { data: allProducts = [] } = useQuery({
     queryKey: ['all-products'],
     queryFn: () => base44.entities.Product.list(),
     enabled: !selectedShop,
     refetchInterval: 60000
   });
-
-  const allProducts = React.useMemo(() => 
-    rawProducts.filter(p => p.image_url), 
-    [rawProducts]
-  );
 
   // Filtrage principal
   const filteredProductsByType = React.useMemo(() => {
@@ -168,7 +163,7 @@ export default function Home() {
     return shops.filter(s => shopIds.has(s.id));
   }, [shops, filteredProductsByType, selectedCategory]);
 
-  const { data: rawShopProducts = [] } = useQuery({
+  const { data: products = [] } = useQuery({
     queryKey: ['products', selectedShop?.id, selectedCategory],
     queryFn: () => {
       if (selectedCategory === 'Tout') {
@@ -182,11 +177,6 @@ export default function Home() {
     enabled: !!selectedShop && !selectedShop.is_google_place,
     refetchInterval: 60000
   });
-
-  const products = React.useMemo(() => 
-    rawShopProducts.filter(p => p.image_url), 
-    [rawShopProducts]
-  );
 
   const productsByShopInCategory = React.useMemo(() => {
     if (selectedCategory === 'Tout' || selectedShop || selectedCategory === 'Mariage') return [];
@@ -308,7 +298,7 @@ export default function Home() {
 
   // --- LOGIQUE MODIFIÉE POUR MEILLEURES VENTES ---
   const bestSellers = React.useMemo(() => {
-    const productsWithPhotos = allProducts.filter(p => p.is_available !== false);
+    const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
     const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     
@@ -894,7 +884,7 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
   const rowContainers = [useRef(null), useRef(null), useRef(null)];
 
   const productRows = React.useMemo(() => {
-    const productsWithPhotos = allProducts.filter(p => p.is_available !== false);
+    const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
     const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     
