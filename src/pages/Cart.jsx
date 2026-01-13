@@ -277,7 +277,7 @@ export default function Cart() {
                         <button onClick={() => deleteItemMutation.mutate(item.id)}><Trash2 className="w-4 h-4 text-gray-300" /></button>
                       </div>
                       <div className="flex justify-between items-end">
-                        <p className="font-bold text-sm">{item.unit_price} HTG</p>
+                        <p className="font-bold text-sm">{item.unit_price.toLocaleString()} HTG</p>
                         <div className="flex items-center border border-black">
                           <button className="px-2 py-1" onClick={() => updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity - 1 })}><Minus className="w-3 h-3"/></button>
                           <span className="px-2 text-xs">{item.quantity}</span>
@@ -301,7 +301,7 @@ export default function Cart() {
                            <div className="absolute bottom-2 right-2 bg-white p-1 rounded-full shadow"><ShoppingBag className="w-3 h-3"/></div>
                         </div>
                         <p className="text-[10px] truncate">{prod.name}</p>
-                        <p className="text-xs font-bold">{prod.price} HTG</p>
+                        <p className="text-xs font-bold">{prod.price.toLocaleString()} HTG</p>
                       </div>
                     ))}
                   </div>
@@ -310,12 +310,12 @@ export default function Cart() {
 
               {/* Résumé Fixe SHEIN */}
               <div className="border-t pt-4 space-y-3">
-                <div className="flex justify-between text-xs text-gray-500 uppercase"><span>Sous-total</span><span>{subtotal} HTG</span></div>
-                <div className="flex justify-between text-xs text-gray-500 uppercase"><span>Livraison</span><span>{getDeliveryPrice()} HTG</span></div>
+                <div className="flex justify-between text-xs text-gray-500 uppercase"><span>Sous-total</span><span>{subtotal.toLocaleString()} HTG</span></div>
+                <div className="flex justify-between text-xs text-gray-500 uppercase"><span>Livraison</span><span>{getDeliveryPrice().toLocaleString()} HTG</span></div>
                 {(user?.pending_balance || 0) > 0 && (
-                  <div className="flex justify-between text-xs text-orange-600 uppercase"><span>Balance due</span><span>{user.pending_balance} HTG</span></div>
+                  <div className="flex justify-between text-xs text-orange-600 uppercase"><span>Balance due</span><span>{user.pending_balance.toLocaleString()} HTG</span></div>
                 )}
-                <div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span>{baseTotal} HTG</span></div>
+                <div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span>{baseTotal.toLocaleString()} HTG</span></div>
                 <Button className="w-full bg-black text-white rounded-none h-12 uppercase tracking-widest font-bold text-xs" onClick={() => setStep('checkout')}>Passer au paiement</Button>
               </div>
             </motion.div>
@@ -376,7 +376,7 @@ export default function Cart() {
                 {paymentPlan === 'split' && (
                   <div className="p-3 bg-red-50 border-l-2 border-red-500 text-[10px] uppercase font-bold text-red-600 flex justify-between">
                     <span>Balance à la livraison :</span>
-                    <span>{baseTotal / 2} HTG</span>
+                    <span>{(baseTotal / 2).toLocaleString()} HTG</span>
                   </div>
                 )}
               </section>
@@ -403,7 +403,7 @@ export default function Cart() {
 
               {(paymentMethod === 'moncash' || paymentMethod === 'natcash') && (
                 <div className="p-4 bg-zinc-50 border space-y-4">
-                  <div className="flex justify-between items-center border-b pb-2"><span className="text-[10px] uppercase font-bold text-gray-400">Total à payer</span><span className="text-xl font-black">{finalAmountToPay} HTG</span></div>
+                  <div className="flex justify-between items-center border-b pb-2"><span className="text-[10px] uppercase font-bold text-gray-400">Total à payer</span><span className="text-xl font-black">{finalAmountToPay.toLocaleString()} HTG</span></div>
                   <div className="flex justify-between items-center"><span className="text-xs font-bold tracking-widest">{ACCOUNTS[paymentMethod].number}</span><Button variant="ghost" size="sm" onClick={() => copyToClipboard(ACCOUNTS[paymentMethod].number, 'account')}><Copy className="w-4 h-4"/></Button></div>
                   <Input placeholder="CODE SMS DE TRANSACTION" className="rounded-none border-black h-12 uppercase text-xs" value={transactionCode} onChange={(e) => setTransactionCode(e.target.value)} />
                 </div>
@@ -411,7 +411,7 @@ export default function Cart() {
 
               <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t">
                 <Button className="w-full h-14 bg-black text-white rounded-none uppercase font-bold tracking-tighter" onClick={() => createOrderMutation.mutate()} disabled={createOrderMutation.isPending}>
-                  {createOrderMutation.isPending ? "Traitement..." : `Payer ${finalAmountToPay} HTG`}
+                  {createOrderMutation.isPending ? "Traitement..." : `Payer ${finalAmountToPay.toLocaleString()} HTG`}
                 </Button>
               </div>
             </motion.div>

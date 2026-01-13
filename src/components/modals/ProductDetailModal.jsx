@@ -251,10 +251,10 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             <div className="space-y-1">
               <h2 className="text-xl font-black text-slate-900 leading-tight">{product.name}</h2>
               <div className="flex items-center gap-3">
-                <span className="text-2xl font-black text-orange-500">{price} HTG</span>
+                <span className="text-2xl font-black text-orange-500">{price.toLocaleString()} HTG</span>
                 {product.promo_price && (
                   <span className="text-sm text-slate-400 line-through font-medium">
-                    {applyClientMargin(product.price)} HTG
+                    {applyClientMargin(product.price).toLocaleString()} HTG
                   </span>
                 )}
               </div>
@@ -305,7 +305,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                         </div>
                         <h5 className="text-xs font-bold text-slate-800 truncate mb-1">{similarProduct.name}</h5>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-black text-orange-500">{similarPrice} HTG</span>
+                          <span className="text-sm font-black text-orange-500">{similarPrice.toLocaleString()} HTG</span>
                           <ChevronRight size={14} className="text-slate-400" />
                         </div>
                       </button>

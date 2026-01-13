@@ -540,9 +540,8 @@ export default function Home() {
                       <div className="space-y-1">
                         <p className="text-sm text-[#007185] group-hover:text-[#C7511F] hover:underline leading-snug line-clamp-2 h-9 overflow-hidden">{product.name}</p>
                         <div className="flex items-start mt-1 font-medium">
-                            <span className="text-xs relative top-0.5">$</span>
                             <span className="text-lg leading-none">{Math.floor(price)}</span>
-                            <span className="text-xs relative top-0.5">{(price % 1).toFixed(2).substring(2)}</span>
+                            <span className="text-xs relative top-0.5">.{(price % 1).toFixed(2).substring(2)}</span>
                             <span className="text-gray-500 text-xs self-center ml-1">HTG</span>
                         </div>
                         <Button 
@@ -930,7 +929,7 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
                     }}>
                     <div className="h-40 bg-gray-50 mb-2 p-2"><img src={product.image_url} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" /></div>
                     <div className="text-sm text-[#007185] hover:text-[#C7511F] line-clamp-2 h-10 mb-1">{product.name}</div>
-                    <div className="font-medium text-lg text-[#B12704]">${Math.floor(getClientPrice(product))}</div>
+                    <div className="font-medium text-lg text-[#B12704]">{Math.floor(getClientPrice(product))} HTG</div>
                   </div>
                 );
               })}
