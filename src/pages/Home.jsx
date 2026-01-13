@@ -57,7 +57,7 @@ export default function Home() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [googlePlaces, setGooglePlaces] = useState([]);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
-  const [userLocation, setUserLocation] = useState(null);
+  const [userLocation, setSelectedLocation] = useState(null);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   
   // NOUVEAU STATE : Rappel Panier
@@ -106,7 +106,7 @@ export default function Home() {
     if (navigator.geolocation) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
-          setUserLocation({
+          setSelectedLocation({
             lat: position.coords.latitude,
             lng: position.coords.longitude
           });
@@ -219,28 +219,6 @@ export default function Home() {
     return grouped;
   }, [allProducts, selectedCategory]);
 
-  // Google Places
-  const fetchGooglePlaces = async (categoryType) => {
-    if (!userLocation) {
-      toast.error('Activez la géolocalisation');
-      return;
-    }
-    setLoadingPlaces(true);
-    try {
-      const response = await base44.functions.invoke('getNearbyPlaces', {
-        lat: userLocation.lat,
-        lng: userLocation.lng,
-        type: categoryType,
-        radius: 3000
-      });
-      setGooglePlaces(response.data.places || []);
-    } catch (error) {
-      setGooglePlaces([]);
-    } finally {
-      setLoadingPlaces(false);
-    }
-  };
-
   // Panier
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
@@ -318,6 +296,24 @@ export default function Home() {
     bgGray: '#EAEDED'
   };
 
+  // --- LOGIQUE MODIFIÉE POUR MEILLEURES VENTES ---
+  const bestSellers = React.useMemo(() => {
+    const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
+    const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
+    const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
+    
+    const TOTAL_BESTSELLERS = 5;
+    const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3)); // Au moins 1 ou 30%
+    const OTHERS_COUNT = TOTAL_BESTSELLERS - MAKARIOS_COUNT;
+
+    const selected = [
+        ...makariosProducts.sort(() => Math.random() - 0.5).slice(0, MAKARIOS_COUNT),
+        ...otherProducts.sort(() => Math.random() - 0.5).slice(0, OTHERS_COUNT)
+    ];
+
+    return selected.sort(() => Math.random() - 0.5);
+  }, [allProducts, shops]);
+
   return (
     <div className="min-h-screen pb-20 font-sans" style={{ backgroundColor: theme.bgGray }}>
       <Helmet>
@@ -325,7 +321,6 @@ export default function Home() {
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
       </Helmet>
       
-      {/* HEADER FIXE */}
       <header className="sticky top-0 z-50 flex flex-col shadow-md">
         <div className="text-white px-4 py-2 flex items-center gap-4" style={{ backgroundColor: theme.darkBlue }}>
             <div className="flex-shrink-0 flex items-center">
@@ -355,7 +350,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* Barre de Recherche */}
             <div className="flex-1 max-w-3xl mx-auto hidden md:flex h-10 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-orange-500">
                 <div className="bg-gray-100 text-gray-600 px-3 flex items-center text-xs border-r border-gray-300 cursor-pointer hover:bg-gray-200">
                     {selectedCategory === 'Tout' ? 'Tout' : selectedCategory}
@@ -372,7 +366,6 @@ export default function Home() {
                 </button>
             </div>
 
-            {/* Version Mobile Search */}
             <div className="flex-1 md:hidden">
                  <div className="flex items-center bg-white rounded-md px-2 py-1.5">
                     <Search className="text-gray-500 w-4 h-4 mr-2" />
@@ -391,7 +384,7 @@ export default function Home() {
                     <span className="text-gray-300 text-[10px]">Livrer à</span>
                     <div className="flex items-center font-bold">
                         <MapPin className="w-3 h-3 mr-1" />
-                        {userLocation ? 'Ma Position' : 'Haïti'}
+                        Location
                     </div>
                 </div>
 
@@ -523,11 +516,11 @@ export default function Home() {
             <SmallStories onCategorySelect={(c) => setSelectedCategory(c)} />
             <CreditBanner />
 
-            {/* Meilleures Ventes */}
+            {/* MEILLEURES VENTES (LOGIQUE MODIFIÉE) */}
             <div className="bg-white p-4 relative rounded-sm">
                 <h2 className="text-xl font-bold mb-4">Meilleures Ventes</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-0 border-t border-l border-gray-200">
-                {allProducts.filter(p => p.is_available !== false && p.image_url).slice(0, 5).map((product, idx) => {
+                {bestSellers.map((product, idx) => {
                   const shop = shops.find(s => s.id === product.shop_id);
                   const price = getClientPrice(product);
                   return (
@@ -882,59 +875,30 @@ export default function Home() {
         open={showProfileModal}
         onComplete={handleProfileComplete}
       />
-      {user?.profiles?.entreprise && (
-        <ProductFormModal
-          open={showAddProductModal}
-          onClose={() => setShowAddProductModal(false)}
-          onSubmit={() => {
-            queryClient.invalidateQueries(['products']);
-            queryClient.invalidateQueries(['all-products']);
-            setShowAddProductModal(false);
-          }}
-          shop={{ id: user.profiles.entreprise.shop_id }}
-        />
-      )}
     </div>
   );
 }
 
-// --- COMPOSANT MODIFIÉ : 30% MAKARIOS + ALÉATOIRE ---
+// Carousel Recommandations (AVEC LOGIQUE 30% MAKARIOS)
 function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice }) {
   const rowContainers = [useRef(null), useRef(null), useRef(null)];
 
   const productRows = React.useMemo(() => {
-    // 1. Filtrer tous les articles avec photo de profil
     const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
+    const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
+    const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     
-    // 2. Isoler les articles de MAKARIOS BRIDAL
-    const makariosProducts = productsWithPhotos.filter(p => {
-      const shop = shops.find(s => s.id === p.shop_id);
-      return shop?.company_name?.toLowerCase().includes('makarios');
-    });
-
-    // 3. Isoler les autres articles
-    const otherProducts = productsWithPhotos.filter(p => {
-      const shop = shops.find(s => s.id === p.shop_id);
-      return !shop?.company_name?.toLowerCase().includes('makarios');
-    });
-    
-    const rows = [];
-    const ITEMS_PER_ROW = 15; // Nombre d'articles par ligne de carrousel
-    const MAKARIOS_COUNT = Math.floor(ITEMS_PER_ROW * 0.30); // 30% de Makarios
+    const ITEMS_PER_ROW = 16;
+    const MAKARIOS_COUNT = Math.floor(ITEMS_PER_ROW * 0.3);
     const OTHERS_COUNT = ITEMS_PER_ROW - MAKARIOS_COUNT;
 
+    const rows = [];
     for (let i = 0; i < 3; i++) {
-        // Mélanger les deux listes de manière aléatoire à chaque ligne
-        const shuffledMakarios = [...makariosProducts].sort(() => Math.random() - 0.5);
-        const shuffledOthers = [...otherProducts].sort(() => Math.random() - 0.5);
-
-        // Assembler la ligne
-        const row = [
-          ...shuffledMakarios.slice(0, MAKARIOS_COUNT),
-          ...shuffledOthers.slice(0, OTHERS_COUNT)
-        ].sort(() => Math.random() - 0.5); // Re-mélanger l'assemblage final
-
-        rows.push(row);
+        const selected = [
+          ...makariosProducts.sort(() => Math.random() - 0.5).slice(0, MAKARIOS_COUNT),
+          ...otherProducts.sort(() => Math.random() - 0.5).slice(0, OTHERS_COUNT)
+        ].sort(() => Math.random() - 0.5);
+        rows.push(selected);
     }
     return rows;
   }, [allProducts, shops]);
@@ -953,20 +917,8 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
       {productRows.map((rowProducts, rowIndex) => (
           <div key={rowIndex} className="relative group/carousel">
             <h3 className="text-xl font-bold text-slate-900 mb-2">{rowTitles[rowIndex]}</h3>
-            
-            <button 
-                onClick={() => handleScroll(rowIndex, 'left')} 
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-r-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"
-            >
-                <ArrowLeft className="w-6 h-6 text-gray-600" />
-            </button>
-            
-            <button 
-                onClick={() => handleScroll(rowIndex, 'right')} 
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-l-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"
-            >
-                <ArrowLeft className="w-6 h-6 text-gray-600 rotate-180" />
-            </button>
+            <button onClick={() => handleScroll(rowIndex, 'left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-r-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600" /></button>
+            <button onClick={() => handleScroll(rowIndex, 'right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-l-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600 rotate-180" /></button>
 
             <div ref={rowContainers[rowIndex]} className="flex overflow-x-auto gap-4 pb-4 scroll-smooth no-scrollbar">
               {rowProducts.map((product, idx) => {
@@ -976,14 +928,9 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                        if (shop) setSelectedShop(shop); setSelectedProduct(product);
                     }}>
-                    <div className="h-40 bg-gray-50 mb-2 p-2">
-                        <img src={product.image_url} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" />
-                    </div>
+                    <div className="h-40 bg-gray-50 mb-2 p-2"><img src={product.image_url} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" /></div>
                     <div className="text-sm text-[#007185] hover:text-[#C7511F] line-clamp-2 h-10 mb-1">{product.name}</div>
                     <div className="font-medium text-lg text-[#B12704]">${Math.floor(getClientPrice(product))}</div>
-                    {shop?.company_name?.toLowerCase().includes('makarios') && (
-                        <div className="text-[10px] text-orange-600 font-bold uppercase mt-1">Sponsorisé</div>
-                    )}
                   </div>
                 );
               })}
