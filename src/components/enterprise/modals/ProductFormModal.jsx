@@ -116,6 +116,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
   const [aiLoading, setAiLoading] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [aiGenerated, setAiGenerated] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -153,6 +154,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
       // Show guidelines only for new products
       setShowGuidelines(true);
       setShowForm(false);
+      setAiGenerated(false);
       // Reset form for new product
       setFormData({
         name: '',
@@ -188,6 +190,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
       // Skip guidelines for editing and load product data
       setShowGuidelines(false);
       setShowForm(true);
+      setAiGenerated(true); // Don't auto-generate for existing products
       setFormData({
         name: product.name || '',
         price: product.price || '',
@@ -221,8 +224,16 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     } else {
       setShowGuidelines(false);
       setShowForm(false);
+      setAiGenerated(false);
     }
   }, [open, product]);
+
+  // Auto-trigger AI when title and image are filled
+  useEffect(() => {
+    if (formData.name && formData.image_url && !aiGenerated && !aiLoading && showForm) {
+      handleGenerateWithAI();
+    }
+  }, [formData.name, formData.image_url, aiGenerated, aiLoading, showForm]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -325,10 +336,12 @@ Répondez au format JSON strict.`,
         subCategory: result.category === 'Mariage' ? (result.subcategory || formData.subCategory) : formData.subCategory,
         seo_tags: result.seo_tags || formData.seo_tags
       });
-       
+      
+      setAiGenerated(true);
       toast.success('✨ Description, catégorie et tags générés par IA');
     } catch (error) {
       toast.error('Erreur IA: ' + error.message);
+      setAiGenerated(true); // Mark as attempted even on error
     } finally {
       setAiLoading(false);
     }
