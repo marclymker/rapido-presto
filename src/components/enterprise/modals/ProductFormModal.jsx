@@ -35,35 +35,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
-// --- MOCKS FOR PREVIEW ---
-// Replace these with your actual imports in production:
-// import { base44 } from '@/api/base44Client';
-// import ProductGuidelinesModal from './ProductGuidelinesModal';
-
-const base44 = {
-  entities: {
-    Product: {
-      update: async (id, data) => { await new Promise(r => setTimeout(r, 1000)); console.log('Update:', data); },
-      create: async (data) => { await new Promise(r => setTimeout(r, 1000)); console.log('Create:', data); }
-    }
-  },
-  integrations: {
-    Core: {
-      UploadFile: async ({ file }) => {
-        await new Promise(r => setTimeout(r, 800));
-        return { file_url: URL.createObjectURL(file) };
-      },
-      InvokeLLM: async () => {
-        await new Promise(r => setTimeout(r, 2000));
-        return {
-          description: "Délicieuse pizza artisanale aux ingrédients frais, idéale pour un repas convivial.",
-          category: "Fastfood",
-          seo_tags: ["pizza", "italien", "déjeuner", "fromage", "chaud"]
-        };
-      }
-    }
-  }
-};
+import { base44 } from '@/api/base44Client';
 
 const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
   if (!open) return null;
@@ -72,7 +44,7 @@ const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
     {
       icon: <Sparkles className="w-5 h-5 text-pink-500" />,
       title: "Utilisez Magie AI",
-      description: "Sélectionnez Magie AI pour générer les description et tag SEO automatiquement."
+      description: "Sélectionnez Magie AI pour générer automatiquement la description, catégorie, sous-catégorie et tags SEO."
     },
     {
       icon: <ImageIcon className="w-5 h-5 text-blue-500" />,
@@ -138,7 +110,6 @@ const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
     </Dialog>
   );
 };
-// --- END MOCKS ---
 
 export default function ProductFormModal({ product, shopId = "shop_123", open = true, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -323,18 +294,27 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     setAiLoading(true);
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analysez ce produit: "${formData.name}". Générez:
-1. Une description marketing attractive (2-3 phrases)
-2. Le type d'article (choix: Fastfood, Restaurants, Boutique Fleurs, Pharmacie, Mariage, Epicerie, Café, Pour Femme, Electronics, Pour homme, Maison, Bébé, Outils)
-3. 5 tags SEO pertinents en français`,
+        prompt: `Analysez ce produit à partir du titre "${formData.name}" et de l'image fournie.
+
+Générez en français:
+1. Une description marketing attractive et détaillée (2-3 phrases)
+2. La catégorie exacte parmi: Fastfood, Restaurants, Boutique Fleurs, Pharmacie, Mariage, Epicerie, Café, Pour Femme, Electronics, Pour homme, Maison, Bébé, Outils, Bijoux
+3. Si catégorie = "Mariage", déterminez aussi la sous-catégorie parmi:
+   - Pour les robes de mariée: "Robe Sirene", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe Civil"
+   - Pour autres articles mariage: "Demoiselle d'honneur", "Annonceuse", "Temoins", "Bague de Mariage", "Accessoires", "Carte & Programmation", "Materiels Decor"
+4. 5-7 tags SEO pertinents en français (mots-clés de recherche)
+
+Répondez au format JSON strict.`,
         file_urls: [formData.image_url],
         response_json_schema: {
           type: "object",
           properties: {
             description: { type: "string" },
             category: { type: "string" },
+            subcategory: { type: "string" },
             seo_tags: { type: "array", items: { type: "string" } }
-          }
+          },
+          required: ["description", "category", "seo_tags"]
         }
       });
 
@@ -342,12 +322,13 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         ...formData,
         description: result.description || formData.description,
         category: result.category || formData.category,
+        subCategory: result.category === 'Mariage' ? (result.subcategory || formData.subCategory) : formData.subCategory,
         seo_tags: result.seo_tags || formData.seo_tags
       });
        
-      toast.success('✨ Informations générées avec AI');
+      toast.success('✨ Description, catégorie et tags générés par IA');
     } catch (error) {
-      toast.error('Erreur AI: ' + error.message);
+      toast.error('Erreur IA: ' + error.message);
     } finally {
       setAiLoading(false);
     }
