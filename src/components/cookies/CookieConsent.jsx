@@ -67,44 +67,43 @@ export default function CookieConsent({ onAccept, onReject }) {
   return (
     <>
       {/* Bannière de consentement */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-orange-500 shadow-2xl p-4 md:p-6 animate-in slide-in-from-bottom duration-500">
+      <div className="fixed bottom-20 md:bottom-0 left-0 right-0 z-[100] bg-white border-t-2 border-orange-500 shadow-2xl p-3 animate-in slide-in-from-bottom duration-500">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-            <div className="flex items-start gap-3 flex-1">
-              <Cookie className="w-8 h-8 text-orange-500 flex-shrink-0 mt-1" />
+          <div className="flex flex-col md:flex-row items-center gap-3">
+            <div className="flex items-center gap-2 flex-1">
+              <Cookie className="w-5 h-5 text-orange-500 flex-shrink-0" />
               <div>
-                <h3 className="font-bold text-lg mb-1">🍪 Cookies & Confidentialité</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Nous utilisons des cookies pour améliorer votre expérience, analyser le trafic et personnaliser les publicités. 
-                  En cliquant sur "Tout accepter", vous acceptez notre utilisation des cookies.
+                <h3 className="font-bold text-xs mb-0.5">🍪 Cookies</h3>
+                <p className="text-[10px] text-gray-600 leading-tight">
+                  Nous utilisons des cookies pour améliorer votre expérience.
                 </p>
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <div className="flex gap-2 w-full md:w-auto">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowSettings(true)}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 text-[10px] h-8 px-2"
               >
-                <Settings className="w-4 h-4 mr-2" />
-                Personnaliser
+                <Settings className="w-3 h-3 mr-1" />
+                Paramètres
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleRejectAll}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 text-[10px] h-8 px-2"
               >
-                Refuser tout
+                Refuser
               </Button>
               <Button
                 size="sm"
                 onClick={handleAcceptAll}
-                className="bg-orange-500 hover:bg-orange-600 text-white"
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs h-9 px-6 shadow-lg"
               >
-                Tout accepter
+                Accepter
               </Button>
             </div>
           </div>
