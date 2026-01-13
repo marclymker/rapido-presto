@@ -15,10 +15,12 @@ import SmartBottomNav from '@/components/navigation/SmartBottomNav';
 import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
 import WelcomeModal from '@/components/modals/WelcomeModal';
 import { useAuth } from '@/components/auth/useAuth';
+import CookieConsent from '@/components/cookies/CookieConsent';
 
 export default function Layout({ children, currentPageName }) {
   const { user, isLoading: loading } = useAuth();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [cookiesAccepted, setCookiesAccepted] = useState(false);
 
   useEffect(() => {
     // Show welcome modal if user has no profile set up
@@ -27,16 +29,41 @@ export default function Layout({ children, currentPageName }) {
     }
   }, [user, currentPageName]);
 
-  // Initialize Meta Pixel
   useEffect(() => {
-    ReactPixel.init('1346505637253912');
-    ReactPixel.pageView();
+    // Check if cookies already accepted
+    const consent = localStorage.getItem('cookie_consent');
+    if (consent) {
+      const preferences = JSON.parse(consent);
+      if (preferences.marketing || preferences.analytics) {
+        setCookiesAccepted(true);
+        initializeTracking(preferences);
+      }
+    }
   }, []);
 
-  // Track page views on route changes
+  const initializeTracking = (preferences) => {
+    // Initialize Meta Pixel if marketing cookies accepted
+    if (preferences.marketing) {
+      ReactPixel.init('1346505637253912');
+      ReactPixel.pageView();
+    }
+  };
+
+  // Track page views on route changes (only if cookies accepted)
   useEffect(() => {
-    ReactPixel.pageView();
-  }, [currentPageName]);
+    if (cookiesAccepted) {
+      ReactPixel.pageView();
+    }
+  }, [currentPageName, cookiesAccepted]);
+
+  const handleCookieAccept = (preferences) => {
+    setCookiesAccepted(true);
+    initializeTracking(preferences);
+  };
+
+  const handleCookieReject = () => {
+    setCookiesAccepted(false);
+  };
 
   // Pages that don't need navigation
   const noNavPages = ['ProfileSetup', 'ManageProfiles', 'AdminValidation'];
@@ -118,45 +145,57 @@ export default function Layout({ children, currentPageName }) {
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
         <meta name="google-site-verification" content="INa9gqcSulkml5JtloQvw_k9lVR-AKcxha0eRYbvqoI" />
 
-        {/* Google Tag Manager */}
-        <script>{`
-          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-K7P54H9T');
-        `}</script>
+        {cookiesAccepted && (
+          <>
+            {/* Google Tag Manager - Only if analytics cookies accepted */}
+            <script>{`
+              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer','GTM-K7P54H9T');
+            `}</script>
 
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
 
-        {/* Meta Pixel Code */}
-        <script>{`
-          !function(f,b,e,v,n,t,s)
-          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-          n.queue=[];t=b.createElement(e);t.async=!0;
-          t.src=v;s=b.getElementsByTagName(e)[0];
-          s.parentNode.insertBefore(t,s)}(window, document,'script',
-          'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '1346505637253912');
-          fbq('track', 'PageView');
-        `}</script>
-        <noscript>{`
-          <img height="1" width="1" style="display:none"
-          src="https://www.facebook.com/tr?id=1346505637253912&ev=PageView&noscript=1" />
-        `}</noscript>
-      </Helmet>
+            {/* Meta Pixel Code - Only if marketing cookies accepted */}
+            <script>{`
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              'https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init', '1346505637253912');
+              fbq('track', 'PageView');
+            `}</script>
+            <noscript>{`
+              <img height="1" width="1" style="display:none"
+              src="https://www.facebook.com/tr?id=1346505637253912&ev=PageView&noscript=1" />
+            `}</noscript>
+          </>
+        )}
+        </Helmet>
 
-      {/* Google Tag Manager (noscript) */}
-      <noscript>
-        <iframe 
-          src="https://www.googletagmanager.com/ns.html?id=GTM-K7P54H9T"
-          height="0" 
-          width="0" 
-          style={{display: 'none', visibility: 'hidden'}}
-        />
-      </noscript>
+      {/* Google Tag Manager (noscript) - Only if cookies accepted */}
+      {cookiesAccepted && (
+        <noscript>
+          <iframe 
+            src="https://www.googletagmanager.com/ns.html?id=GTM-K7P54H9T"
+            height="0" 
+            width="0" 
+            style={{display: 'none', visibility: 'hidden'}}
+          />
+        </noscript>
+      )}
+
+      {/* Cookie Consent Banner */}
+      <CookieConsent 
+        onAccept={handleCookieAccept}
+        onReject={handleCookieReject}
+      />
 
       <div className="min-h-screen bg-slate-50 pb-20">
         <Toaster position="top-center" />
