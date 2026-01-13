@@ -250,22 +250,18 @@ export default function Home() {
 
   // --- NOUVELLE LOGIQUE : REMINDER PANIER ---
   useEffect(() => {
-    // 1. Vérification à la reconnexion / montage du composant
     if (cartItems.length > 0) {
-        // Petit délai pour ne pas agresser l'utilisateur dès la milliseconde de chargement
         const timer = setTimeout(() => setShowCartReminder(true), 2000);
         return () => clearTimeout(timer);
     }
-  }, [cartItems.length]); // Se déclenche si le nombre d'items change
+  }, [cartItems.length]);
 
   useEffect(() => {
-    // 2. Intervalle de 60 minutes
     const interval = setInterval(() => {
         if (cartItems.length > 0) {
             setShowCartReminder(true);
-            // Son de notification optionnel ou toast système
         }
-    }, 60 * 60 * 1000); // 60 minutes
+    }, 60 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, [cartItems]);
@@ -297,7 +293,7 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
       toast.success('Ajouté au panier');
-      setShowCartReminder(false); // On cache le rappel si l'utilisateur interagit
+      setShowCartReminder(false);
     }
   });
 
@@ -390,7 +386,6 @@ export default function Home() {
                  </div>
             </div>
 
-            {/* Compte & Panier */}
             <div className="flex items-center gap-1 md:gap-4 flex-shrink-0">
                 <div className="hidden lg:flex items-end flex-col text-xs leading-none cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm">
                     <span className="text-gray-300 text-[10px]">Livrer à</span>
@@ -408,7 +403,6 @@ export default function Home() {
                     <div className="text-xs font-bold md:text-sm flex items-center">Compte</div>
                 </div>
 
-                {/* --- CORRECTION ICI : BOUTON PANIER AVEC REDIRECTION EXPLICITE --- */}
                 <div 
                     className="relative flex items-end cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm"
                     onClick={() => window.location.href = createPageUrl('Cart')}
@@ -450,7 +444,6 @@ export default function Home() {
         </nav>
       </header>
       
-      {/* Bannières Globales */}
       <div className="max-w-[1500px] mx-auto">
         <RecruitmentBanner />
         <FloatingMerchantBanner user={user} />
@@ -466,7 +459,6 @@ export default function Home() {
 
       <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-32">
         
-        {/* --- CAS 1: RECHERCHE ACTIVE --- */}
         {searchQuery.trim() ? (
           <div className="bg-white p-4 rounded shadow-sm">
             <h2 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
@@ -497,14 +489,7 @@ export default function Home() {
                   );
                 })}
             </div>
-             {allProducts.filter(p => p.is_available !== false && p.name?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
-                <div className="text-center py-12 text-slate-500">
-                    <p>Aucun article trouvé.</p>
-                </div>
-             )}
           </div>
-
-        /* --- CAS 2: PAGE D'ACCUEIL (Dashboard) --- */
         ) : selectedCategory === 'Tout' && !selectedShop ? (
           <div className="space-y-6">
             
@@ -516,7 +501,6 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* Grille Catégories */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {articleTypes.map((type) => (
                 <div 
@@ -594,17 +578,13 @@ export default function Home() {
               getClientPrice={getClientPrice}
             />
           </div>
-
-        /* --- CAS 3: NAVIGATION PAR CATÉGORIE --- */
         ) : (
           <div className="flex flex-col md:flex-row gap-4 mt-4">
             
-            {/* SIDEBAR NAVIGATION */}
             <aside className="hidden md:block w-64 flex-shrink-0 bg-white p-4 h-fit border-r border-gray-200 sticky top-20 rounded-sm">
                <div className="mb-4">
                     <h3 className="font-bold text-lg mb-4 text-orange-500">{selectedCategory}</h3>
                     
-                    {/* SI CATÉGORIE = MARIAGE */}
                     {selectedCategory === 'Mariage' && (
                         <div className="space-y-1">
                             <h4 className="font-bold text-sm mb-2 text-slate-800">Départements</h4>
@@ -642,7 +622,6 @@ export default function Home() {
                         </div>
                     )}
 
-                    {/* SI AUTRE CATÉGORIE */}
                     {selectedCategory !== 'Mariage' && !selectedShop && (
                         <>
                             <h4 className="font-bold text-sm mb-2">Vendeurs</h4>
@@ -673,10 +652,7 @@ export default function Home() {
                </div>
             </aside>
 
-            {/* CONTENU PRINCIPAL */}
             <main className="flex-1 min-w-0">
-               
-               {/* 3.1: VUE DÉTAIL BOUTIQUE */}
                {selectedShop ? (
                    <div className="bg-white p-4 rounded-lg shadow-sm min-h-[500px]">
                         <div className="flex items-center gap-4 mb-6 border-b pb-4">
@@ -705,7 +681,6 @@ export default function Home() {
                         </div>
                    </div>
                ) : (
-                   /* 3.2: VUE LISTE CATÉGORIE */
                    <div className="space-y-6">
                         <div className="bg-white p-4 rounded shadow-sm">
                             <h2 className="text-xl font-bold text-slate-800">
@@ -842,7 +817,6 @@ export default function Home() {
         )}
       </main>
 
-      {/* --- CORRECTION : PANIER FLOTTANT MOBILE AVEC REDIRECTION EXPLICITE --- */}
       {user && cartCount > 0 && (
         <div 
             className="fixed bottom-4 right-4 z-40 animate-bounce-subtle cursor-pointer"
@@ -862,7 +836,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- NOUVEAU : BANNIÈRE FLOTTANTE DE RAPPEL PANIER --- */}
       {showCartReminder && cartCount > 0 && (
         <div className="fixed top-32 right-4 z-50 animate-in slide-in-from-right duration-500 max-w-sm w-full md:w-80">
             <div className="bg-white border-l-4 border-orange-500 shadow-2xl rounded-lg p-4 relative">
@@ -895,7 +868,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Modals */}
       <ProductDetailModal
         product={selectedProduct}
         shop={selectedProduct ? shops.find(s => s.id === selectedProduct.shop_id) : null}
@@ -926,20 +898,43 @@ export default function Home() {
   );
 }
 
-// Carousel Recommandations
+// --- COMPOSANT MODIFIÉ : 30% MAKARIOS + ALÉATOIRE ---
 function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice }) {
-  const [currentRowIndexes, setCurrentRowIndexes] = useState([0, 0, 0]);
   const rowContainers = [useRef(null), useRef(null), useRef(null)];
 
   const productRows = React.useMemo(() => {
+    // 1. Filtrer tous les articles avec photo de profil
     const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
-    const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
-    const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
+    
+    // 2. Isoler les articles de MAKARIOS BRIDAL
+    const makariosProducts = productsWithPhotos.filter(p => {
+      const shop = shops.find(s => s.id === p.shop_id);
+      return shop?.company_name?.toLowerCase().includes('makarios');
+    });
+
+    // 3. Isoler les autres articles
+    const otherProducts = productsWithPhotos.filter(p => {
+      const shop = shops.find(s => s.id === p.shop_id);
+      return !shop?.company_name?.toLowerCase().includes('makarios');
+    });
     
     const rows = [];
+    const ITEMS_PER_ROW = 15; // Nombre d'articles par ligne de carrousel
+    const MAKARIOS_COUNT = Math.floor(ITEMS_PER_ROW * 0.30); // 30% de Makarios
+    const OTHERS_COUNT = ITEMS_PER_ROW - MAKARIOS_COUNT;
+
     for (let i = 0; i < 3; i++) {
-        const selected = [...makariosProducts.slice(0, 8), ...otherProducts.slice(0, 8)].sort(() => Math.random() - 0.5);
-        rows.push(selected);
+        // Mélanger les deux listes de manière aléatoire à chaque ligne
+        const shuffledMakarios = [...makariosProducts].sort(() => Math.random() - 0.5);
+        const shuffledOthers = [...otherProducts].sort(() => Math.random() - 0.5);
+
+        // Assembler la ligne
+        const row = [
+          ...shuffledMakarios.slice(0, MAKARIOS_COUNT),
+          ...shuffledOthers.slice(0, OTHERS_COUNT)
+        ].sort(() => Math.random() - 0.5); // Re-mélanger l'assemblage final
+
+        rows.push(row);
     }
     return rows;
   }, [allProducts, shops]);
@@ -958,8 +953,20 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
       {productRows.map((rowProducts, rowIndex) => (
           <div key={rowIndex} className="relative group/carousel">
             <h3 className="text-xl font-bold text-slate-900 mb-2">{rowTitles[rowIndex]}</h3>
-            <button onClick={() => handleScroll(rowIndex, 'left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-r-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600" /></button>
-            <button onClick={() => handleScroll(rowIndex, 'right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-l-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600 rotate-180" /></button>
+            
+            <button 
+                onClick={() => handleScroll(rowIndex, 'left')} 
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-r-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"
+            >
+                <ArrowLeft className="w-6 h-6 text-gray-600" />
+            </button>
+            
+            <button 
+                onClick={() => handleScroll(rowIndex, 'right')} 
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-l-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"
+            >
+                <ArrowLeft className="w-6 h-6 text-gray-600 rotate-180" />
+            </button>
 
             <div ref={rowContainers[rowIndex]} className="flex overflow-x-auto gap-4 pb-4 scroll-smooth no-scrollbar">
               {rowProducts.map((product, idx) => {
@@ -969,9 +976,14 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                        if (shop) setSelectedShop(shop); setSelectedProduct(product);
                     }}>
-                    <div className="h-40 bg-gray-50 mb-2 p-2"><img src={product.image_url} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" /></div>
+                    <div className="h-40 bg-gray-50 mb-2 p-2">
+                        <img src={product.image_url} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" />
+                    </div>
                     <div className="text-sm text-[#007185] hover:text-[#C7511F] line-clamp-2 h-10 mb-1">{product.name}</div>
                     <div className="font-medium text-lg text-[#B12704]">${Math.floor(getClientPrice(product))}</div>
+                    {shop?.company_name?.toLowerCase().includes('makarios') && (
+                        <div className="text-[10px] text-orange-600 font-bold uppercase mt-1">Sponsorisé</div>
+                    )}
                   </div>
                 );
               })}
