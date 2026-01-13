@@ -15,6 +15,31 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
     setLoading(true);
     try {
       await base44.entities.Order.update(order.id, { status: newStatus });
+      
+      // Send email notification to client
+      try {
+        const { data: shops } = await base44.entities.Shop.filter({ id: order.shop_id });
+        const shop = shops?.[0];
+        await base44.functions.invoke('sendOrderEmail', {
+          type: 'status_update',
+          orderData: {
+            order_number: order.order_number,
+            status: newStatus,
+            total: order.total
+          },
+          shopData: {
+            company_name: shop?.company_name || order.shop_name
+          },
+          clientData: {
+            name: order.client_name,
+            email: order.client_email,
+            phone: order.client_phone
+          }
+        });
+      } catch (emailError) {
+        console.log('Email notification failed:', emailError);
+      }
+      
       toast.success('Commande mise à jour');
       onSuccess?.();
       if (newStatus !== 'ready') {
@@ -30,19 +55,38 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
   const handleDeliveryChoice = async (deliveryType) => {
     setLoading(true);
     try {
-      if (deliveryType === 'merchant_delivery') {
-        await base44.entities.Order.update(order.id, { 
-          delivery_type: 'merchant_delivery',
-          status: 'in_delivery'
+      const newStatus = deliveryType === 'merchant_delivery' ? 'in_delivery' : 'searching_driver';
+      
+      await base44.entities.Order.update(order.id, { 
+        delivery_type: deliveryType,
+        status: newStatus
+      });
+
+      // Send email notification to client
+      try {
+        const { data: shops } = await base44.entities.Shop.filter({ id: order.shop_id });
+        const shop = shops?.[0];
+        await base44.functions.invoke('sendOrderEmail', {
+          type: 'status_update',
+          orderData: {
+            order_number: order.order_number,
+            status: newStatus,
+            total: order.total
+          },
+          shopData: {
+            company_name: shop?.company_name || order.shop_name
+          },
+          clientData: {
+            name: order.client_name,
+            email: order.client_email,
+            phone: order.client_phone
+          }
         });
-        toast.success('Vous êtes en charge de la livraison');
-      } else {
-        await base44.entities.Order.update(order.id, { 
-          delivery_type: 'platform_delivery',
-          status: 'searching_driver'
-        });
-        toast.success('Recherche d\'un livreur en cours...');
+      } catch (emailError) {
+        console.log('Email notification failed:', emailError);
       }
+      
+      toast.success(deliveryType === 'merchant_delivery' ? 'Vous êtes en charge de la livraison' : 'Recherche d\'un livreur en cours...');
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -68,6 +112,31 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
       await base44.entities.Order.update(order.id, { 
         status: 'delivered'
       });
+
+      // Send email notification to client
+      try {
+        const { data: shops } = await base44.entities.Shop.filter({ id: order.shop_id });
+        const shop = shops?.[0];
+        await base44.functions.invoke('sendOrderEmail', {
+          type: 'status_update',
+          orderData: {
+            order_number: order.order_number,
+            status: 'delivered',
+            total: order.total
+          },
+          shopData: {
+            company_name: shop?.company_name || order.shop_name
+          },
+          clientData: {
+            name: order.client_name,
+            email: order.client_email,
+            phone: order.client_phone
+          }
+        });
+      } catch (emailError) {
+        console.log('Email notification failed:', emailError);
+      }
+      
       toast.success('✅ Livraison terminée !');
       onSuccess?.();
       onClose();

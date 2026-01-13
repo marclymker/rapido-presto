@@ -184,7 +184,7 @@ export default function Cart() {
         const shopItems = cartItems.filter(item => item.shop_id === shopId);
         const code = generateConfirmationCode();
 
-        await base44.entities.Order.create({
+        const orderResponse = await base44.entities.Order.create({
           order_number: `${firstOrderNum}-${shopId.slice(-4)}`,
           client_id: user.id,
           client_name: user.full_name,
@@ -208,6 +208,34 @@ export default function Cart() {
           external_transaction_code: transactionCode.trim(),
           special_instructions: specialInstructions
         });
+
+        // Send email notification to vendor
+        try {
+          const { data: shops } = await base44.entities.Shop.filter({ id: shopId });
+          const shop = shops?.[0];
+          if (shop?.email) {
+            await base44.functions.invoke('sendOrderEmail', {
+              type: 'new_order',
+              orderData: {
+                order_number: orderResponse.order_number,
+                total: orderResponse.total,
+                items: orderResponse.items
+              },
+              shopData: {
+                company_name: shop.company_name,
+                email: shop.email
+              },
+              clientData: {
+                name: user.full_name,
+                phone: user.phone,
+                address: tempAddress,
+                email: user.email
+              }
+            });
+          }
+        } catch (emailError) {
+          console.log('Email notification failed:', emailError);
+        }
       }
 
       await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
