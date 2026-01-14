@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
         phone = phone.replace(/[\s\-()]/g, '');
         
         // Check if already in international format
-        if (phone.startsWith('+509')) {
+        if (phone.startsWith('509') && phone.length === 11) {
           continue; // Already converted
         }
         
@@ -41,11 +41,11 @@ Deno.serve(async (req) => {
           phone = phone.substring(1);
         }
         
-        // Add +509 prefix
-        const whatsappNumber = `+509${phone}`;
+        // Add 509 prefix (without +)
+        const whatsappNumber = `509${phone}`;
         
-        // Validate format (should be +509 followed by 8 digits)
-        if (!/^\+509\d{8}$/.test(whatsappNumber)) {
+        // Validate format (should be 509 followed by 8 digits)
+        if (!/^509\d{8}$/.test(whatsappNumber)) {
           errors.push({ shop_id: shop.id, phone: shop.phone, reason: 'Invalid format' });
           continue;
         }
