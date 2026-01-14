@@ -1,22 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 import { Plus, MessageCircle, Clock } from 'lucide-react';
 
-import { motion, AnimatePresence } from 'framer-motion';
-
-import { Button } from "@/components/ui/button";
-
 import { applyClientMargin } from '@/components/utils/priceCalculation';
-
-import { base44 } from '@/api/base44Client';
-
-import ChatButton from '@/components/chat/ChatButton';
 
 
 
 export default function ProductCard({ product, onAdd, onClick, shop }) {
-
-const [showChatButton, setShowChatButton] = useState(false);
 
 const hasPromo = product.promo_price && product.promo_price < product.price;
 
@@ -37,10 +27,6 @@ return (
 id={`product-card-${product.id}`}
 
 className="group relative bg-white rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full border border-slate-100 overflow-hidden"
-
-onMouseEnter={() => setShowChatButton(true)}
-
-onMouseLeave={() => setShowChatButton(false)}
 
 >
 
@@ -201,32 +187,6 @@ className="h-3 opacity-80 grayscale group-hover:grayscale-0 transition-all"
 </div>
 
 
-
-{/* Zone Chat (Affichée uniquement si nécessaire) - TEMPORAIREMENT DÉSACTIVÉ */}
-
-{/* <AnimatePresence>
-
-{shop && showChatButton && (
-
-<motion.div
-
-initial={{ opacity: 0, y: 10 }}
-
-animate={{ opacity: 1, y: 0 }}
-
-exit={{ opacity: 0, y: 5 }}
-
-className="absolute inset-x-0 bottom-0 p-2 bg-white/95 backdrop-blur-sm sm:block hidden border-t border-slate-100 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]"
-
->
-
-<ChatButton product={product} shop={shop} />
-
-</motion.div>
-
-)}
-
-</AnimatePresence> */}
 
 </div>
 
