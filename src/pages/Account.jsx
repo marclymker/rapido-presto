@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, User, Mail, MapPin, Phone, CreditCard, Plus, Trash2, LogOut, Wallet, Lock, AlertCircle, Banknote, Store } from 'lucide-react';
+import { ArrowLeft, User, Mail, MapPin, Phone, CreditCard, Plus, Trash2, LogOut, Wallet, Lock, AlertCircle, Banknote, Store, Shield } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,7 @@ export default function Account() {
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [newPayment, setNewPayment] = useState({ type: 'card', details: '' });
   const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
+  const [convertingWhatsApp, setConvertingWhatsApp] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -94,6 +95,18 @@ export default function Account() {
 
   const handleLogout = () => {
     base44.auth.logout();
+  };
+
+  const handleConvertWhatsApp = async () => {
+    setConvertingWhatsApp(true);
+    try {
+      const response = await base44.functions.invoke('convertMerchantsToWhatsApp');
+      toast.success(`${response.data.converted} numéros convertis avec succès`);
+    } catch (error) {
+      toast.error('Erreur lors de la conversion');
+    } finally {
+      setConvertingWhatsApp(false);
+    }
   };
 
   if (loading) {
@@ -311,6 +324,32 @@ export default function Account() {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Admin Tools */}
+        {user?.role === 'admin' && (
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-4">
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <Shield className="w-5 h-5 text-purple-600" />
+              <span>Outils Admin</span>
+            </h3>
+            
+            <div className="space-y-3">
+              <div className="bg-white rounded-lg p-3">
+                <h4 className="text-sm font-medium mb-2">Conversion WhatsApp</h4>
+                <p className="text-xs text-slate-600 mb-3">
+                  Convertit tous les numéros de téléphone des marchands au format WhatsApp international (+509...)
+                </p>
+                <Button 
+                  onClick={handleConvertWhatsApp}
+                  disabled={convertingWhatsApp}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                >
+                  {convertingWhatsApp ? 'Conversion en cours...' : 'Convertir tous les numéros'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Payment Methods */}
         <div className="bg-white rounded-xl p-4">
