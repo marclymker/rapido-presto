@@ -318,17 +318,11 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
         </div>
 
         <div className="p-4 bg-white border-t border-slate-100 space-y-3 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
-          <div className="flex gap-2">
-            <Button onClick={handleContactVendor} disabled={isChatLoading} variant="outline" className="flex-1 py-6 border-slate-200 rounded-2xl">
-              {isChatLoading ? <Loader2 className="animate-spin" /> : <MessageSquare size={18} className="mr-2 text-orange-500" />}
-              Chat
+          {shop?.company_category === "Mariage" && (
+            <Button onClick={() => window.open('https://wa.me/c/50948690366', '_blank')} className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl mb-3">
+              WhatsApp
             </Button>
-            {shop?.company_category === "Mariage" && (
-              <Button onClick={() => window.open('https://wa.me/c/50948690366', '_blank')} className="flex-1 py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl">
-                WhatsApp
-              </Button>
-            )}
-          </div>
+          )}
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-slate-100 rounded-xl p-1">
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus size={14} /></Button>
