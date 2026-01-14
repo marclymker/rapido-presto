@@ -64,6 +64,18 @@ export default function Home() {
   const [showCartReminder, setShowCartReminder] = useState(false);
   
   const queryClient = useQueryClient();
+
+  // Auto-generate slugs on mount
+  useEffect(() => {
+    const generateSlugs = async () => {
+      try {
+        await base44.functions.invoke('autoGenerateSlugs');
+      } catch (error) {
+        console.log('Slug generation:', error);
+      }
+    };
+    generateSlugs();
+  }, []);
   
   const articleTypes = [
     { id: 'Pour Femme', name: 'Mode Femme', icon: '👗' },
@@ -474,8 +486,12 @@ export default function Home() {
                           onClick={() => {
                             if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                             const shop = shops.find(s => s.id === product.shop_id);
-                            if (shop) setSelectedShop(shop);
-                            setSelectedProduct(product);
+                            if (shop?.slug && product.slug) {
+                              window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                            } else if (shop) {
+                              setSelectedShop(shop);
+                              setSelectedProduct(product);
+                            }
                           }}
                         />
                     </div>
@@ -528,8 +544,12 @@ export default function Home() {
                       key={product.id}
                       onClick={() => {
                         if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                        if (shop) setSelectedShop(shop);
-                        setSelectedProduct(product);
+                        if (shop?.slug && product.slug) {
+                          window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                        } else if (shop) {
+                          setSelectedShop(shop);
+                          setSelectedProduct(product);
+                        }
                       }}
                       className="bg-white p-4 border-r border-b border-gray-200 hover:shadow-xl hover:z-10 relative cursor-pointer group transition-all"
                     >
@@ -785,8 +805,12 @@ export default function Home() {
                                                             handleAddToCart(p);
                                                         }}
                                                         onClick={() => {
-                                                            setSelectedShop(shop);
-                                                            setSelectedProduct(product);
+                                                            if (shop?.slug && product.slug) {
+                                                              window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                                                            } else {
+                                                              setSelectedShop(shop);
+                                                              setSelectedProduct(product);
+                                                            }
                                                         }}
                                                     />
                                                 </div>
@@ -925,7 +949,12 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
                 return (
                   <div key={`${product.id}-${idx}`} className="flex-shrink-0 w-[180px] bg-white p-2 cursor-pointer hover:bg-gray-50" onClick={() => {
                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                       if (shop) setSelectedShop(shop); setSelectedProduct(product);
+                       if (shop?.slug && product.slug) {
+                         window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                       } else if (shop) {
+                         setSelectedShop(shop);
+                         setSelectedProduct(product);
+                       }
                     }}>
                     <div className="h-40 bg-gray-50 mb-2 p-2"><img src={product.image_url} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" /></div>
                     <div className="text-sm text-[#007185] hover:text-[#C7511F] line-clamp-2 h-10 mb-1">{product.name}</div>
