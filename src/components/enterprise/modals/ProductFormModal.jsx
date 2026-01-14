@@ -259,11 +259,22 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     setLoading(true);
      
     try {
+      // Generate slug from product name
+      const slug = formData.name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 60);
+
+      const dataWithSlug = { ...formData, slug: slug || undefined };
+
       if (product) {
-        await base44.entities.Product.update(product.id, formData);
+        await base44.entities.Product.update(product.id, dataWithSlug);
         toast.success('Article mis à jour');
       } else {
-        await base44.entities.Product.create({ ...formData, shop_id: shopId });
+        await base44.entities.Product.create({ ...dataWithSlug, shop_id: shopId });
         toast.success('Article créé');
       }
       onSuccess?.();
