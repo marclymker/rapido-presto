@@ -892,6 +892,11 @@ export default function Home() {
         onAddToCart={handleAddToCart}
         user={user}
         similarProducts={[]}
+        onProductChange={(newProduct) => {
+          const newShop = shops.find(s => s.id === newProduct.shop_id);
+          if (newShop) setSelectedShop(newShop);
+          setSelectedProduct(newProduct);
+        }}
       />
       <ProfileCompletionModal
         user={user}

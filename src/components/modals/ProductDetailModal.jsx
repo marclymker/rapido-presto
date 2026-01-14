@@ -10,7 +10,7 @@ import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [] }) {
+export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [loadingSimilar, setLoadingSimilar] = useState(false);
@@ -192,9 +192,11 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   };
 
   const handleSimilarProductClick = (similarProduct) => {
-    setSimilarItems([]);
-    setQuantity(1);
-    window.location.href = `/?product=${similarProduct.id}`;
+    if (onProductChange) {
+      setSimilarItems([]);
+      setQuantity(1);
+      onProductChange(similarProduct);
+    }
   };
 
   return (
