@@ -30,13 +30,36 @@ Deno.serve(async (req) => {
     
     // Add shop phone if available
     if (shop.phone) {
-      const merchantPhone = shop.phone.replace(/[\s\-\+]/g, '');
+      let merchantPhone = shop.phone.replace(/[\s\-\+()]/g, '');
+      
+      // Ensure it's in WhatsApp format (509XXXXXXXX)
+      if (merchantPhone.startsWith('0')) {
+        merchantPhone = '509' + merchantPhone.substring(1);
+      } else if (!merchantPhone.startsWith('509')) {
+        merchantPhone = '509' + merchantPhone;
+      }
+      
       phoneNumbers.push(merchantPhone);
       console.log('Shop:', shop.company_name);
       console.log('Original phone:', shop.phone);
       console.log('Formatted phone:', merchantPhone);
     } else {
       console.log('Shop has no phone number, skipping shop notification');
+    }
+    
+    // Add client phone if available
+    if (orderData.client_phone) {
+      let clientPhone = orderData.client_phone.replace(/[\s\-\+()]/g, '');
+      
+      // Ensure it's in WhatsApp format (509XXXXXXXX)
+      if (clientPhone.startsWith('0')) {
+        clientPhone = '509' + clientPhone.substring(1);
+      } else if (!clientPhone.startsWith('509')) {
+        clientPhone = '509' + clientPhone;
+      }
+      
+      phoneNumbers.push(clientPhone);
+      console.log('Client phone:', clientPhone);
     }
     
     // Add fixed phone number for all orders
