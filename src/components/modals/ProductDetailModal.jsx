@@ -280,7 +280,16 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             )}
 
             {shop && (
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+              <div 
+                onClick={() => {
+                  if (shop.slug) {
+                    window.location.href = `/shop/${shop.slug}`;
+                  } else {
+                    window.location.href = `/shop-view?id=${shop.id}`;
+                  }
+                }}
+                className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors"
+              >
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-orange-100 flex-shrink-0">
                   {shop.company_logo_url ? (
                     <img src={shop.company_logo_url} className="w-full h-full object-cover" alt={shop.company_name} />
@@ -288,12 +297,13 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                     <Store className="w-full h-full p-2 text-orange-600" />
                   )}
                 </div>
-                <div className="min-w-0">
-                  <p className="font-bold text-sm text-slate-800 truncate">{shop.company_name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-sm text-slate-800 truncate hover:text-orange-600 transition-colors">{shop.company_name}</p>
                   <p className="text-[10px] text-slate-500 flex items-center gap-1">
                     <MapPin size={10} /> {shop.region || 'Haïti'}
                   </p>
                 </div>
+                <ChevronRight size={16} className="text-slate-400" />
               </div>
             )}
 
