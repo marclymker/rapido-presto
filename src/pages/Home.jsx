@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Search, ShoppingCart, ArrowLeft, Menu, MapPin, Star, ChevronRight, X, Clock } from 'lucide-react';
+import { Search, ShoppingCart, ArrowLeft, Menu, MapPin, Star, ChevronRight, X, Clock, Zap, MessageSquare } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,12 +60,10 @@ export default function Home() {
   const [userLocation, setSelectedLocation] = useState(null);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   
-  // NOUVEAU STATE : Rappel Panier
   const [showCartReminder, setShowCartReminder] = useState(false);
   
   const queryClient = useQueryClient();
 
-  // Auto-generate slugs on mount
   useEffect(() => {
     const generateSlugs = async () => {
       try {
@@ -85,8 +83,6 @@ export default function Home() {
     { id: 'Bébé', name: 'Bébé', icon: '👶' },
     { id: 'Maison', name: 'Maison & Déco', icon: '🏠' }
   ];
-
-  // --- LOGIQUE MÉTIER ---
 
   useAutoRefresh({ 
     queryKey: ['shops'], 
@@ -149,7 +145,6 @@ export default function Home() {
     window.location.href = createPageUrl(redirectPages[profileType]);
   };
 
-  // Queries
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
@@ -163,7 +158,6 @@ export default function Home() {
     refetchInterval: 60000
   });
 
-  // Filtrage principal
   const filteredProductsByType = React.useMemo(() => {
     if (selectedCategory === 'Tout') return allProducts;
     return allProducts.filter(p => p.category === selectedCategory && p.is_available !== false);
@@ -203,7 +197,6 @@ export default function Home() {
     }).filter(group => group.products.length > 0);
   }, [selectedCategory, selectedShop, shopsWithProducts, allProducts]);
 
-  // Logique filtrage Mariage
   const weddingProductsBySubCategory = React.useMemo(() => {
     if (selectedCategory !== 'Mariage') return {};
     const weddingProducts = allProducts.filter(p => p.category === 'Mariage' && p.is_available !== false);
@@ -231,14 +224,12 @@ export default function Home() {
     return grouped;
   }, [allProducts, selectedCategory]);
 
-  // Panier
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
     queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id
   });
 
-  // --- NOUVELLE LOGIQUE : REMINDER PANIER ---
   useEffect(() => {
     if (cartItems.length > 0) {
         const timer = setTimeout(() => setShowCartReminder(true), 2000);
@@ -299,7 +290,6 @@ export default function Home() {
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Thème
   const theme = {
     darkBlue: '#232F3E',
     lightBlue: '#37475A',
@@ -308,14 +298,13 @@ export default function Home() {
     bgGray: '#EAEDED'
   };
 
-  // --- LOGIQUE MODIFIÉE POUR MEILLEURES VENTES ---
   const bestSellers = React.useMemo(() => {
     const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
     const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     
     const TOTAL_BESTSELLERS = 5;
-    const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3)); // Au moins 1 ou 30%
+    const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3));
     const OTHERS_COUNT = TOTAL_BESTSELLERS - MAKARIOS_COUNT;
 
     const selected = [
@@ -532,13 +521,15 @@ export default function Home() {
             <SmallStories onCategorySelect={(c) => setSelectedCategory(c)} />
             <CreditBanner />
 
-            {/* MEILLEURES VENTES (LOGIQUE MODIFIÉE) */}
+            {/* MEILLEURES VENTES MODIFIÉ */}
             <div className="bg-white p-4 relative rounded-sm">
                 <h2 className="text-xl font-bold mb-4">Meilleures Ventes</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-0 border-t border-l border-gray-200">
                 {bestSellers.map((product, idx) => {
                   const shop = shops.find(s => s.id === product.shop_id);
                   const price = getClientPrice(product);
+                  const isMakarios = shop?.company_name?.toLowerCase().includes('makarios bridal');
+
                   return (
                     <div 
                       key={product.id}
@@ -554,6 +545,13 @@ export default function Home() {
                       className="bg-white p-4 border-r border-b border-gray-200 hover:shadow-xl hover:z-10 relative cursor-pointer group transition-all"
                     >
                       <div className="absolute top-0 left-0 bg-[#C45500] text-white text-xs px-2 py-1 z-20 font-bold rounded-br-md">#{idx + 1}</div>
+                      
+                      {/* Badge Livraison/Reponse Rapide */}
+                      <div className={`absolute top-2 right-2 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm ${isMakarios ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                        {isMakarios ? <MessageSquare size={10} /> : <Zap size={10} fill="currentColor" />}
+                        {isMakarios ? 'Réponse Rapide' : 'Livraison Rapide'}
+                      </div>
+
                       <div className="relative h-40 mb-3 overflow-hidden">
                         <img src={product.image_url} className="w-full h-full object-contain group-hover:scale-105 transition-transform" alt={product.name} />
                       </div>
@@ -634,7 +632,7 @@ export default function Home() {
                         </div>
                     )}
 
-                    {selectedCategory !== 'Mariage' && !selectedShop && (
+                    {!selectedShop && selectedCategory !== 'Mariage' && (
                         <>
                             <h4 className="font-bold text-sm mb-2">Vendeurs</h4>
                             <div className="space-y-1 max-h-[60vh] overflow-y-auto custom-scrollbar">
@@ -907,7 +905,7 @@ export default function Home() {
   );
 }
 
-// Carousel Recommandations (AVEC LOGIQUE 30% MAKARIOS)
+// Carousel Recommandations MODIFIÉ
 function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice }) {
   const rowContainers = [useRef(null), useRef(null), useRef(null)];
 
@@ -951,8 +949,10 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
             <div ref={rowContainers[rowIndex]} className="flex overflow-x-auto gap-4 pb-4 scroll-smooth no-scrollbar">
               {rowProducts.map((product, idx) => {
                 const shop = shops.find(s => s.id === product.shop_id);
+                const isMakarios = shop?.company_name?.toLowerCase().includes('makarios bridal');
+
                 return (
-                  <div key={`${product.id}-${idx}`} className="flex-shrink-0 w-[180px] bg-white p-2 cursor-pointer hover:bg-gray-50" onClick={() => {
+                  <div key={`${product.id}-${idx}`} className="flex-shrink-0 w-[180px] bg-white p-2 cursor-pointer hover:bg-gray-50 relative group" onClick={() => {
                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                        if (shop?.slug && product.slug) {
                          window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
@@ -961,6 +961,13 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
                          setSelectedProduct(product);
                        }
                     }}>
+                    
+                    {/* Badge Livraison/Reponse Rapide */}
+                    <div className={`absolute top-3 right-3 z-20 flex items-center gap-1 px-1 py-0.5 rounded shadow-sm text-[8px] font-black tracking-tight ${isMakarios ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                        {isMakarios ? <MessageSquare size={8} /> : <Zap size={8} fill="currentColor" />}
+                        {isMakarios ? 'Réponse Rapide' : 'Livraison Rapide'}
+                    </div>
+
                     <div className="h-40 bg-gray-50 mb-2 p-2"><img src={product.image_url} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" /></div>
                     <div className="text-sm text-[#007185] hover:text-[#C7511F] line-clamp-2 h-10 mb-1">{product.name}</div>
                     <div className="font-medium text-lg text-[#B12704]">{Math.floor(getClientPrice(product))}.00 Gourdes</div>
