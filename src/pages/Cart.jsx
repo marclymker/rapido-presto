@@ -236,7 +236,7 @@ if (!cartItems[0]?.product_id) return [];
 
 // On récupère les détails du premier produit du panier pour avoir sa catégorie
 
-const products = await base44.entities.Product.filter({ id: cartItems[0].product_id });
+const { data: products } = await base44.entities.Product.filter({ id: cartItems[0].product_id });
 
 const product = products?.[0];
 
@@ -699,7 +699,7 @@ Passer au paiement
 
 <RadioGroupItem value="makarios_pap" id="pap" />
 
-<Label htmlFor="pap" className="text-xs font-bold uppercase">Point de retrait P.A.P</Label>
+<Label htmlFor="pap" className="text-xs font-bold uppercase">Makarios Bridal P.A.P</Label>
 
 </div>
 
@@ -713,7 +713,7 @@ Passer au paiement
 
 <RadioGroupItem value="makarios_cap" id="cap" />
 
-<Label htmlFor="cap" className="text-xs font-bold uppercase">Point de retrait CAP-H</Label>
+<Label htmlFor="cap" className="text-xs font-bold uppercase">Makarios Bridal CAP-H</Label>
 
 </div>
 
