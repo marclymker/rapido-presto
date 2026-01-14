@@ -23,6 +23,7 @@ import Product from './pages/Product';
 import Products from './pages/Products';
 import ProfileSetup from './pages/ProfileSetup';
 import UpdateProducts from './pages/UpdateProducts';
+import ShopView from './pages/ShopView';
 import __Layout from './Layout.jsx';
 
 
@@ -52,6 +53,7 @@ export const PAGES = {
     "Products": Products,
     "ProfileSetup": ProfileSetup,
     "UpdateProducts": UpdateProducts,
+    "ShopView": ShopView,
 }
 
 export const pagesConfig = {
