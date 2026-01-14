@@ -392,7 +392,31 @@ export default function Account() {
                   disabled={convertingWhatsApp}
                   className="w-full bg-green-600 hover:bg-green-700"
                 >
-                  {convertingWhatsApp ? 'Génération en cours...' : 'Générer les liens'}
+                  {convertingWhatsApp ? 'Génération en cours...' : 'Générer liens boutiques'}
+                </Button>
+              </div>
+              
+              <div className="bg-white rounded-lg p-3">
+                <h4 className="text-sm font-medium mb-2">Générer Liens Produits</h4>
+                <p className="text-xs text-slate-600 mb-3">
+                  Génère des liens uniques (slug) pour tous les produits
+                </p>
+                <Button 
+                  onClick={async () => {
+                    setConvertingWhatsApp(true);
+                    try {
+                      const response = await base44.functions.invoke('generateProductSlugs');
+                      toast.success(`${response.data.updated} liens produits générés`);
+                    } catch (error) {
+                      toast.error('Erreur lors de la génération');
+                    } finally {
+                      setConvertingWhatsApp(false);
+                    }
+                  }}
+                  disabled={convertingWhatsApp}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  {convertingWhatsApp ? 'Génération en cours...' : 'Générer liens produits'}
                 </Button>
               </div>
             </div>

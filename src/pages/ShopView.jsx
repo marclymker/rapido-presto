@@ -37,9 +37,10 @@ export default function ShopView() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const queryClient = useQueryClient();
 
-  // Get shop slug from URL
+  // Get shop slug and product slug from URL
   const urlParams = new URLSearchParams(window.location.search);
   const shopSlug = urlParams.get('slug');
+  const productSlug = urlParams.get('product');
 
   // Fetch shop by slug
   const { data: shops = [], isLoading: loadingShop } = useQuery({
@@ -56,6 +57,16 @@ export default function ShopView() {
     queryFn: () => base44.entities.Product.filter({ shop_id: shop?.id, is_available: true }),
     enabled: !!shop?.id
   });
+
+  // Auto-open product if product slug in URL
+  React.useEffect(() => {
+    if (productSlug && allProducts.length > 0) {
+      const product = allProducts.find(p => p.slug === productSlug || p.id === productSlug);
+      if (product) {
+        setSelectedProduct(product);
+      }
+    }
+  }, [productSlug, allProducts]);
 
   // Filter products by category
   const filteredProducts = useMemo(() => {
@@ -368,7 +379,10 @@ export default function ShopView() {
                           product={product}
                           shop={shop}
                           onAdd={handleAddToCart}
-                          onClick={() => setSelectedProduct(product)}
+                          onClick={() => {
+                            window.history.pushState({}, '', `${window.location.pathname}?slug=${shopSlug}&product=${product.slug || product.id}`);
+                            setSelectedProduct(product);
+                          }}
                         />
                       ))}
                     </div>
