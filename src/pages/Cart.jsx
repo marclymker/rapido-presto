@@ -35,7 +35,7 @@ export default function Cart() {
     queryFn: async () => {
       // Si on a un produit dans le panier, on cherche du similaire
       if (cartItems.length > 0 && cartItems[0].product_id) {
-        const { data: products } = await base44.entities.Product.filter({ id: cartItems[0].product_id });
+        const products = await base44.entities.Product.filter({ id: cartItems[0].product_id });
         const cat = products?.[0]?.category;
         
         const response = await base44.functions.invoke('getSimilarProducts', {
@@ -47,7 +47,7 @@ export default function Cart() {
       } 
       
       // Sinon, on affiche juste les derniers produits disponibles
-      return base44.entities.Product.filter({ is_available: true }, { limit: 10 });
+      return base44.entities.Product.list('-created_date', 10);
     },
     enabled: true // Toujours activé pour éviter que rien ne s'affiche
   });
