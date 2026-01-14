@@ -335,16 +335,64 @@ export default function Account() {
             
             <div className="space-y-3">
               <div className="bg-white rounded-lg p-3">
-                <h4 className="text-sm font-medium mb-2">Conversion WhatsApp</h4>
+                <h4 className="text-sm font-medium mb-2">Conversion WhatsApp Marchands</h4>
                 <p className="text-xs text-slate-600 mb-3">
-                  Convertit tous les numéros de téléphone des marchands au format WhatsApp international (+509...)
+                  Convertit tous les numéros de téléphone des marchands au format WhatsApp (509XXXXXXXX)
                 </p>
                 <Button 
                   onClick={handleConvertWhatsApp}
                   disabled={convertingWhatsApp}
                   className="w-full bg-purple-600 hover:bg-purple-700"
                 >
-                  {convertingWhatsApp ? 'Conversion en cours...' : 'Convertir tous les numéros'}
+                  {convertingWhatsApp ? 'Conversion en cours...' : 'Convertir numéros marchands'}
+                </Button>
+              </div>
+              
+              <div className="bg-white rounded-lg p-3">
+                <h4 className="text-sm font-medium mb-2">Conversion WhatsApp Clients</h4>
+                <p className="text-xs text-slate-600 mb-3">
+                  Convertit tous les numéros de téléphone des clients au format WhatsApp (509XXXXXXXX)
+                </p>
+                <Button 
+                  onClick={async () => {
+                    setConvertingWhatsApp(true);
+                    try {
+                      const response = await base44.functions.invoke('convertClientsToWhatsApp');
+                      toast.success(`${response.data.converted} numéros clients convertis`);
+                    } catch (error) {
+                      toast.error('Erreur lors de la conversion');
+                    } finally {
+                      setConvertingWhatsApp(false);
+                    }
+                  }}
+                  disabled={convertingWhatsApp}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                >
+                  {convertingWhatsApp ? 'Conversion en cours...' : 'Convertir numéros clients'}
+                </Button>
+              </div>
+              
+              <div className="bg-white rounded-lg p-3">
+                <h4 className="text-sm font-medium mb-2">Générer Liens Boutiques</h4>
+                <p className="text-xs text-slate-600 mb-3">
+                  Génère des liens uniques (slug) pour toutes les boutiques
+                </p>
+                <Button 
+                  onClick={async () => {
+                    setConvertingWhatsApp(true);
+                    try {
+                      const response = await base44.functions.invoke('generateShopSlug');
+                      toast.success(`${response.data.updated} liens générés`);
+                    } catch (error) {
+                      toast.error('Erreur lors de la génération');
+                    } finally {
+                      setConvertingWhatsApp(false);
+                    }
+                  }}
+                  disabled={convertingWhatsApp}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  {convertingWhatsApp ? 'Génération en cours...' : 'Générer les liens'}
                 </Button>
               </div>
             </div>
