@@ -283,7 +283,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               <div 
                 onClick={() => {
                   if (shop.slug) {
-                    window.location.href = `/shop/${shop.slug}`;
+                    window.location.href = `/shop-view?slug=${shop.slug}`;
                   } else {
                     window.location.href = `/shop-view?id=${shop.id}`;
                   }
