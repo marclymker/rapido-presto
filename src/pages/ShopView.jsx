@@ -447,6 +447,7 @@ export default function ShopView() {
         onAddToCart={handleAddToCart}
         user={user}
         similarProducts={[]}
+        onProductChange={(newProduct) => setSelectedProduct(newProduct)}
       />
     </div>
   );
