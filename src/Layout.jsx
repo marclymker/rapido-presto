@@ -16,6 +16,7 @@ import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
 import WelcomeModal from '@/components/modals/WelcomeModal';
 import { useAuth } from '@/components/auth/useAuth';
 import CookieConsent from '@/components/cookies/CookieConsent';
+import InstallPrompt from '@/components/pwa/InstallPrompt';
 
 export default function Layout({ children, currentPageName }) {
   const { user, isLoading: loading } = useAuth();
@@ -201,6 +202,7 @@ export default function Layout({ children, currentPageName }) {
         <Toaster position="top-center" />
         <OneSignalInit user={user} />
         <NotificationPermission />
+        <InstallPrompt />
         
         {/* Welcome Modal for first-time users */}
         <WelcomeModal 
