@@ -26,7 +26,17 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
   // --- LOGIQUE DE PARTAGE ---
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
+    // Utiliser le slug si disponible, sinon l'ID
+    const productIdentifier = product.slug || product.id;
+    const shopSlug = shop?.slug || '';
+    
+    // Construction du lien avec slugs
+    let shareUrl;
+    if (shopSlug && product.slug) {
+      shareUrl = `${window.location.origin}/shop/${shopSlug}/product/${product.slug}`;
+    } else {
+      shareUrl = `${window.location.origin}${window.location.pathname}?product=${productIdentifier}`;
+    }
     
     if (navigator.share) {
       try {
