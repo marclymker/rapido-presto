@@ -236,7 +236,7 @@ if (!cartItems[0]?.product_id) return [];
 
 // On récupère les détails du premier produit du panier pour avoir sa catégorie
 
-const { data: products } = await base44.entities.Product.filter({ id: cartItems[0].product_id });
+const products = await base44.entities.Product.filter({ id: cartItems[0].product_id });
 
 const product = products?.[0];
 
