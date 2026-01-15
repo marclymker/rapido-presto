@@ -32,7 +32,8 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
     user_type: 'client',
     phone: user?.phone || '',
     email: user?.email || '',
-    company_name: ''
+    company_name: '',
+    region: ''
   });
 
   const handleFileUpload = async (e, field) => {
@@ -84,6 +85,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
       await base44.auth.updateMe({
         current_profile: formData.user_type,
         phone: formData.phone,
+        region: formData.region || undefined,
         profiles: profiles
       });
 
@@ -100,7 +102,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
     if (step === 1) return !!formData.user_type;
     if (step === 2) {
       if (formData.user_type === 'client') return !!formData.phone;
-      if (formData.user_type === 'entreprise') return !!(formData.company_name && formData.phone && formData.email);
+      if (formData.user_type === 'entreprise') return !!(formData.company_name && formData.phone && formData.email && formData.region);
       if (formData.user_type === 'livreur') return !!formData.phone;
       return true;
     }
@@ -236,21 +238,51 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                           className="h-9"
                         />
                       </div>
+                      <div>
+                        <Label className="text-sm">Téléphone</Label>
+                        <div className="relative">
+                          <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <Input
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            placeholder="+509 1234 5678"
+                            className="pl-9 h-9"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-sm">Région</Label>
+                        <Select 
+                          value={formData.region} 
+                          onValueChange={(val) => setFormData({ ...formData, region: val })}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Sélectionner votre région" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {REGIONS.map(c => (
+                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </>
                   )}
 
-                  <div>
-                    <Label className="text-sm">Téléphone</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="+509 1234 5678"
-                        className="pl-9 h-9"
-                      />
+                  {(formData.user_type === 'client' || formData.user_type === 'livreur') && (
+                    <div>
+                      <Label className="text-sm">Téléphone</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="+509 1234 5678"
+                          className="pl-9 h-9"
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2 mt-6">
