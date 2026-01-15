@@ -1,5 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+// Fonction pour hasher en SHA256
+async function sha256Hash(data) {
+  if (!data) return null;
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(data.toLowerCase().trim());
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -18,14 +28,24 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Meta credentials not configured' }, { status: 500 });
     }
 
+    // Récupérer l'IP du client depuis les headers
+    const clientIp = req.headers.get('cf-connecting-ip') || 
+                     req.headers.get('x-forwarded-for')?.split(',')[0] || 
+                     req.headers.get('x-real-ip') ||
+                     user_data?.client_ip_address;
+
+    // Hasher l'email et le téléphone
+    const hashedEmail = await sha256Hash(user_data?.email || user.email);
+    const hashedPhone = user_data?.phone ? await sha256Hash(user_data.phone.replace(/[^0-9]/g, '')) : null;
+
     // Préparer les données utilisateur
     const userData = {
-      em: user_data?.email || user.email,
-      ph: user_data?.phone,
-      fn: user.full_name?.split(' ')[0],
-      ln: user.full_name?.split(' ').slice(1).join(' '),
-      client_ip_address: user_data?.client_ip_address,
-      client_user_agent: user_data?.client_user_agent,
+      em: hashedEmail,
+      ph: hashedPhone,
+      fn: user.full_name?.split(' ')[0]?.toLowerCase(),
+      ln: user.full_name?.split(' ').slice(1).join(' ')?.toLowerCase(),
+      client_ip_address: clientIp,
+      client_user_agent: user_data?.client_user_agent || req.headers.get('user-agent'),
       fbc: user_data?.fbc, // Facebook Click ID
       fbp: user_data?.fbp, // Facebook Browser ID
     };
