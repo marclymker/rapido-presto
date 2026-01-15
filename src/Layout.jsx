@@ -43,19 +43,18 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const initializeTracking = (preferences) => {
-    // Initialize Meta Pixel if marketing cookies accepted
-    if (preferences.marketing) {
-      ReactPixel.init('1698140721599563');
-      ReactPixel.pageView();
+    // Initialize Google Tag Manager if analytics cookies accepted
+    if (preferences.analytics) {
+      // GTM is already loaded in Helmet
     }
   };
 
-  // Track page views on route changes (only if cookies accepted)
+  // Track page views with Meta Pixel on route changes
   useEffect(() => {
-    if (cookiesAccepted) {
-      ReactPixel.pageView();
+    if (window.fbq) {
+      window.fbq('track', 'PageView');
     }
-  }, [currentPageName, cookiesAccepted]);
+  }, [currentPageName]);
 
   const handleCookieAccept = (preferences) => {
     setCookiesAccepted(true);
@@ -146,6 +145,24 @@ export default function Layout({ children, currentPageName }) {
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
         <meta name="google-site-verification" content="INa9gqcSulkml5JtloQvw_k9lVR-AKcxha0eRYbvqoI" />
 
+        {/* Meta Pixel Code */}
+        <script>{`
+          !function(f,b,e,v,n,t,s)
+          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+          n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t,s)}(window, document,'script',
+          'https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', '1698140721599563');
+          fbq('track', 'PageView');
+        `}</script>
+        <noscript>{`
+          <img height="1" width="1" style="display:none"
+          src="https://www.facebook.com/tr?id=1698140721599563&ev=PageView&noscript=1" />
+        `}</noscript>
+
         {cookiesAccepted && (
           <>
             {/* Google Tag Manager - Only if analytics cookies accepted */}
@@ -158,24 +175,6 @@ export default function Layout({ children, currentPageName }) {
             `}</script>
 
             <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
-
-            {/* Meta Pixel Code - Only if marketing cookies accepted */}
-            <script>{`
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '1698140721599563');
-              fbq('track', 'PageView');
-            `}</script>
-            <noscript>{`
-              <img height="1" width="1" style="display:none"
-              src="https://www.facebook.com/tr?id=1698140721599563&ev=PageView&noscript=1" />
-            `}</noscript>
           </>
         )}
         </Helmet>
