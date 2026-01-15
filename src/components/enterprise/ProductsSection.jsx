@@ -48,8 +48,7 @@ export default function ProductsSection({ shopId }) {
               setSelectedProduct(null);
               setShowModal(true);
             }}
-            disabled={!shop}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-bold shadow-lg"
           >
             <Plus className="w-5 h-5 mr-2" />
             Nouveau
@@ -59,19 +58,7 @@ export default function ProductsSection({ shopId }) {
 
       {/* Grille de Produits */}
       <div className="p-6 flex-1">
-        {!shop ? (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
-            <div className="text-4xl mb-3">🏪</div>
-            <h3 className="text-lg font-bold text-amber-900 mb-2">Créez d'abord votre boutique</h3>
-            <p className="text-amber-700 text-sm mb-4">Pour ajouter des produits, vous devez d'abord configurer votre boutique dans la section Réglages.</p>
-            <Button 
-              onClick={() => window.location.href = '#settings'}
-              className="bg-amber-600 hover:bg-amber-700"
-            >
-              Aller aux Réglages
-            </Button>
-          </div>
-        ) : filteredProducts.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border">
             <div className="text-6xl mb-4">🛍️</div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">

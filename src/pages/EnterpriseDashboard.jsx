@@ -35,20 +35,17 @@ export default function EnterpriseDashboard() {
       const shops = await base44.entities.Shop.filter({ user_id: user.id });
       if (shops.length > 0) return shops[0];
       
-      const entrepriseData = user.profiles?.entreprise || {};
-      if (entrepriseData.is_active) {
-        return base44.entities.Shop.create({
-          user_id: user.id,
-          company_name: entrepriseData.company_name,
-          company_category: entrepriseData.company_category,
-          company_logo_url: entrepriseData.company_logo_url,
-          commune: user.commune,
-          rating: entrepriseData.rating || 4.5,
-          delivery_time_minutes: entrepriseData.delivery_time_minutes || 30,
-          is_active: true
-        });
-      }
-      return null;
+      // Create shop automatically with default values
+      return base44.entities.Shop.create({
+        user_id: user.id,
+        company_name: user.profiles?.entreprise?.company_name || `Boutique ${user.full_name}`,
+        company_category: user.profiles?.entreprise?.company_category || "Electronics",
+        company_logo_url: user.profiles?.entreprise?.company_logo_url || '',
+        region: user.region || '',
+        rating: 4.5,
+        delivery_time_minutes: 30,
+        is_active: true
+      });
     },
     enabled: !!user?.id
   });
