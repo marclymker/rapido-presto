@@ -458,6 +458,18 @@ setConfirmCode(data.code);
 
 setStep('confirmed');
 
+// Track Meta Purchase
+trackMetaEvent('Purchase', {
+value: finalAmountToPay,
+currency: 'HTG',
+content_ids: cartItems.map(item => item.product_id),
+content_type: 'product',
+num_items: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+}, {
+phone: user.phone,
+email: user.email,
+});
+
 },
 
 onError: (err) => toast.error(err.message)
