@@ -39,6 +39,7 @@ import SquarePaymentForm from '@/components/payment/SquarePaymentForm';
 import { useAuth } from '@/components/auth/useAuth';
 
 import { applyClientMargin } from '@/components/utils/priceCalculation';
+import { trackMetaEvent } from '@/components/utils/metaTracking';
 
 
 

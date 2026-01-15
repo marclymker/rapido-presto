@@ -9,6 +9,7 @@ import {
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { trackMetaEvent } from '@/components/utils/metaTracking';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
@@ -61,8 +62,19 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   };
 
   useEffect(() => {
-    if (open && product && similarItems.length === 0) {
-      fetchSimilarProducts();
+    if (open && product) {
+      if (similarItems.length === 0) {
+        fetchSimilarProducts();
+      }
+      
+      // Track ViewContent
+      trackMetaEvent('ViewContent', {
+        content_ids: [product.id],
+        content_type: 'product',
+        content_name: product.name,
+        value: price,
+        currency: 'HTG',
+      });
     }
   }, [open, product]);
 
@@ -353,7 +365,19 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             </div>
             <Button
               className="flex-1 py-6 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-200"
-              onClick={() => { onAddToCart(product, quantity); onClose(); }}
+              onClick={() => { 
+                // Track AddToCart
+                trackMetaEvent('AddToCart', {
+                  content_ids: [product.id],
+                  content_type: 'product',
+                  content_name: product.name,
+                  value: price * quantity,
+                  currency: 'HTG',
+                });
+
+                onAddToCart(product, quantity); 
+                onClose(); 
+              }}
             >
               Ajouter au panier
             </Button>
