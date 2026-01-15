@@ -30,14 +30,9 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
 
   const [formData, setFormData] = useState({
     user_type: 'client',
-    region: '',
-    phone: '',
-    address: '',
-    company_name: '',
-    company_category: '',
-    company_logo_url: '',
-    vehicle_type: '',
-    id_document_url: ''
+    phone: user?.phone || '',
+    email: user?.email || '',
+    company_name: ''
   });
 
   const handleFileUpload = async (e, field) => {
@@ -74,11 +69,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
           is_active: true,
           created_at: now,
           last_used: now,
-          company_name: formData.company_name,
-          company_category: formData.company_category,
-          company_logo_url: formData.company_logo_url || '',
-          rating: 5,
-          delivery_time_minutes: 30
+          company_name: formData.company_name
         };
       } else if (formData.user_type === 'livreur') {
         profiles.livreur = {
@@ -86,17 +77,13 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
           status: 'approved',
           created_at: now,
           last_used: now,
-          vehicle_type: formData.vehicle_type,
-          id_document_url: formData.id_document_url,
           is_available: true
         };
       }
 
       await base44.auth.updateMe({
         current_profile: formData.user_type,
-        region: formData.region,
         phone: formData.phone,
-        address: formData.address,
         profiles: profiles
       });
 
@@ -112,9 +99,9 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
   const canProceed = () => {
     if (step === 1) return !!formData.user_type;
     if (step === 2) {
-      if (!formData.region || !formData.phone) return false;
-      if (formData.user_type === 'entreprise') return true; // No required fields for entreprise
-      if (formData.user_type === 'livreur' && (!formData.vehicle_type || !formData.id_document_url)) return false;
+      if (formData.user_type === 'client') return !!formData.phone;
+      if (formData.user_type === 'entreprise') return !!(formData.company_name && formData.phone && formData.email);
+      if (formData.user_type === 'livreur') return !!formData.phone;
       return true;
     }
     return true;
@@ -182,7 +169,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                       <Building2 className={`w-5 h-5 ${formData.user_type === 'entreprise' ? 'text-white' : 'text-slate-500'}`} />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">Entreprise</p>
+                      <p className="font-medium text-sm">Vendeur</p>
                       <p className="text-xs text-slate-500">Vendre et gérer mes produits</p>
                     </div>
                   </label>
@@ -221,25 +208,36 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <h3 className="text-lg font-semibold mb-4">Complétez votre profil</h3>
+                <h3 className="text-lg font-semibold mb-4">
+                  {formData.user_type === 'client' && 'Complétez votre profil'}
+                  {formData.user_type === 'entreprise' && 'Informations de votre boutique'}
+                  {formData.user_type === 'livreur' && 'Vos coordonnées'}
+                </h3>
 
                 <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm">Région</Label>
-                    <Select 
-                      value={formData.region} 
-                      onValueChange={(val) => setFormData({ ...formData, region: val })}
-                    >
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Sélectionner" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {REGIONS.map(c => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {formData.user_type === 'entreprise' && (
+                    <>
+                      <div>
+                        <Label className="text-sm">Nom de la Boutique</Label>
+                        <Input
+                          value={formData.company_name}
+                          onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                          placeholder="Ex: Boutique Fashion"
+                          className="h-9"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm">Email</Label>
+                        <Input
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="email@exemple.com"
+                          className="h-9"
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <div>
                     <Label className="text-sm">Téléphone</Label>
@@ -253,72 +251,6 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                       />
                     </div>
                   </div>
-
-                  {formData.user_type === 'client' && (
-                    <div>
-                      <Label className="text-sm">Adresse de livraison</Label>
-                      <div className="relative">
-                        <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                          value={formData.address}
-                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                          placeholder="Votre adresse"
-                          className="pl-9 h-9"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {formData.user_type === 'entreprise' && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700">
-                      ✅ Vous pouvez maintenant créer votre boutique et ajouter des produits directement depuis le dashboard.
-                    </div>
-                  )}
-
-                  {formData.user_type === 'livreur' && (
-                    <>
-                      <div>
-                        <Label className="text-sm">Type de véhicule</Label>
-                        <Select 
-                          value={formData.vehicle_type} 
-                          onValueChange={(val) => setFormData({ ...formData, vehicle_type: val })}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Sélectionner" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {VEHICLE_TYPES.map(v => (
-                              <SelectItem key={v} value={v}>{v}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-sm">Document d'identification</Label>
-                        {formData.id_document_url ? (
-                          <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg mt-1">
-                            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                              <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                            <span className="text-sm text-green-700">Document téléchargé</span>
-                          </div>
-                        ) : (
-                          <label className="flex flex-col items-center justify-center h-16 border-2 border-dashed rounded-lg cursor-pointer hover:border-orange-300 mt-1">
-                            <Upload className="w-5 h-5 text-slate-400" />
-                            <span className="text-xs text-slate-500 mt-1">Télécharger</span>
-                            <input 
-                              type="file" 
-                              accept="image/*,.pdf" 
-                              className="hidden"
-                              onChange={(e) => handleFileUpload(e, 'id_document_url')}
-                            />
-                          </label>
-                        )}
-                      </div>
-                    </>
-                  )}
                 </div>
 
                 <div className="flex gap-2 mt-6">
