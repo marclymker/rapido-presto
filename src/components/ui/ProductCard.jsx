@@ -90,6 +90,14 @@ export default function ProductCard({ product, onAdd, onClick, shop }) {
           {product.name}
         </h3>
 
+        {/* Product ID */}
+        <p className="text-[9px] text-slate-400 font-mono">ID: {product.id}</p>
+
+        {/* Availability */}
+        <p className={`text-[9px] font-bold ${product.is_available !== false && product.stock_quantity !== 0 ? 'text-green-600' : 'text-red-600'}`}>
+          {product.is_available !== false && product.stock_quantity !== 0 ? 'In stock' : 'Out of stock'}
+        </p>
+
         {/* Footer info (Livraison & Paiement) */}
         <div className="mt-auto pt-2 flex items-center justify-between border-t border-slate-50">
           <div className="flex items-center gap-1 text-slate-400 font-medium">
