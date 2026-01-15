@@ -113,7 +113,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
     if (step === 1) return !!formData.user_type;
     if (step === 2) {
       if (!formData.region || !formData.phone) return false;
-      if (formData.user_type === 'entreprise' && (!formData.company_name || !formData.company_category)) return false;
+      if (formData.user_type === 'entreprise') return true; // No required fields for entreprise
       if (formData.user_type === 'livreur' && (!formData.vehicle_type || !formData.id_document_url)) return false;
       return true;
     }
@@ -270,49 +270,9 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                   )}
 
                   {formData.user_type === 'entreprise' && (
-                    <>
-                      <div>
-                        <Label className="text-sm">Nom de l'entreprise</Label>
-                        <Input
-                          value={formData.company_name}
-                          onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                          placeholder="Ex: Restaurant Le Délice"
-                          className="h-9"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm">Catégorie</Label>
-                        <Select 
-                          value={formData.company_category} 
-                          onValueChange={(val) => setFormData({ ...formData, company_category: val })}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Sélectionner" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {COMPANY_CATEGORIES.map(c => (
-                              <SelectItem key={c} value={c}>{c}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-sm">Logo (optionnel)</Label>
-                        {formData.company_logo_url ? (
-                          <img src={formData.company_logo_url} alt="" className="h-16 w-16 object-cover rounded-lg mt-1" />
-                        ) : (
-                          <label className="flex flex-col items-center justify-center h-16 border-2 border-dashed rounded-lg cursor-pointer hover:border-orange-300 mt-1">
-                            <Upload className="w-5 h-5 text-slate-400" />
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden"
-                              onChange={(e) => handleFileUpload(e, 'company_logo_url')}
-                            />
-                          </label>
-                        )}
-                      </div>
-                    </>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700">
+                      ✅ Vous pouvez maintenant créer votre boutique et ajouter des produits directement depuis le dashboard.
+                    </div>
                   )}
 
                   {formData.user_type === 'livreur' && (

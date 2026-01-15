@@ -24,8 +24,8 @@ export default function Layout({ children, currentPageName }) {
   const [cookiesAccepted, setCookiesAccepted] = useState(false);
 
   useEffect(() => {
-    // Show welcome modal if user has no profile set up
-    if (user && !user.current_profile && currentPageName !== 'ProfileSetup') {
+    // Show welcome modal if user has no profile set up and not entreprise
+    if (user && !user.current_profile && currentPageName !== 'ProfileSetup' && !user.profiles?.entreprise?.is_active) {
       setShowWelcomeModal(true);
     }
   }, [user, currentPageName]);

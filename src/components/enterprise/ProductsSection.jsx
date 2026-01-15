@@ -11,6 +11,12 @@ export default function ProductsSection({ shopId }) {
   const [showModal, setShowModal] = useState(false);
   const queryClient = useQueryClient();
 
+  const { data: shop } = useQuery({
+    queryKey: ['my-shop', shopId],
+    queryFn: () => base44.entities.Shop.get(shopId),
+    enabled: !!shopId
+  });
+
   const { data: products = [] } = useQuery({
     queryKey: ['shop-products', shopId],
     queryFn: () => base44.entities.Product.filter({ shop_id: shopId }),
