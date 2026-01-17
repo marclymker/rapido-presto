@@ -306,7 +306,7 @@ export default function Home() {
     const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     
-    const TOTAL_BESTSELLERS = 5;
+    const TOTAL_BESTSELLERS = 100;
     const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3));
     const OTHERS_COUNT = TOTAL_BESTSELLERS - MAKARIOS_COUNT;
 
