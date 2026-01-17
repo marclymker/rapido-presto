@@ -63,7 +63,7 @@ export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 })
     },
     { 
       id: 'dashboard', 
-      label: 'Dashboard', 
+      label: 'Boutique', 
       icon: Package, 
       page: 'Dashboard',
       badge: activeOrdersCount
