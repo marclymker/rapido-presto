@@ -726,18 +726,19 @@ export default function Home() {
                                             </div>
                                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                                 {items.slice(0, 5).map(product => {
-                                                    const shop = shops.find(s => s.id === product.shop_id);
-                                                    return (
-                                                        <ProductCard
-                                                            key={product.id}
-                                                            product={product}
-                                                            shop={shop}
-                                                            onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
-                                                            onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
-                                                        />
-                                                    );
-                                                })}
-                                            </div>
+                                                        const shop = shops.find(s => s.id === product.shop_id);
+                                                        return (
+                                                            <ProductCard
+                                                                key={product.id}
+                                                                product={product}
+                                                                shop={shop}
+                                                                hideId={true}
+                                                                onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
+                                                                onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
+                                                            />
+                                                        );
+                                                    })}
+                                                </div>
                                         </div>
                                     ))
                                 )}
