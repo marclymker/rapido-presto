@@ -63,7 +63,7 @@ export default function FloatingMerchantBanner({ user }) {
               </button>
 
               <Link 
-                to={createPageUrl('ManageProfiles')}
+                to={createPageUrl('Dashboard')}
                 className="flex items-center gap-3"
               >
                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0">
@@ -71,10 +71,10 @@ export default function FloatingMerchantBanner({ user }) {
                 </div>
                 <div className="flex-1">
                   <p className="text-white font-bold text-sm">
-                    💰 Gagner plus d'argent en publiant vos produits
+                    💰 Gagnez de l'argent avec Rapido Presto
                   </p>
                   <p className="text-white/90 text-xs mt-0.5">
-                    Devenir Marchand →
+                    Publier un article →
                   </p>
                 </div>
               </Link>
