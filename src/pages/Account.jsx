@@ -396,6 +396,51 @@ export default function Account() {
                   {convertingWhatsApp ? 'Génération en cours...' : 'Générer liens produits'}
                 </Button>
               </div>
+              
+              <div className="bg-white rounded-lg p-3 border-2 border-red-200">
+                <h4 className="text-sm font-medium mb-2 text-red-600">Déconnecter tous les utilisateurs</h4>
+                <p className="text-xs text-slate-600 mb-3">
+                  ⚠️ Force tous les utilisateurs à se reconnecter (maintenance système)
+                </p>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      disabled={convertingWhatsApp}
+                      className="w-full bg-red-600 hover:bg-red-700"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Déconnecter tous
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Déconnecter tous les utilisateurs?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tous les utilisateurs recevront une notification pour se reconnecter. Utilisez ceci uniquement pour maintenance système.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction 
+                        className="bg-red-600 hover:bg-red-700"
+                        onClick={async () => {
+                          setConvertingWhatsApp(true);
+                          try {
+                            const response = await base44.functions.invoke('logoutAllUsers');
+                            toast.success(response.data.message);
+                          } catch (error) {
+                            toast.error('Erreur lors de la déconnexion');
+                          } finally {
+                            setConvertingWhatsApp(false);
+                          }
+                        }}
+                      >
+                        Confirmer
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           </div>
         )}
