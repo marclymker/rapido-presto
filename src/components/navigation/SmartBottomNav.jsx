@@ -77,6 +77,9 @@ export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 })
   ];
 
   const isActive = (page) => {
+    if (page === 'Home') {
+      return location.pathname === '/' || location.pathname === '/home' || location.pathname.includes('/home');
+    }
     return location.pathname.includes(page.toLowerCase());
   };
 
