@@ -136,6 +136,9 @@ export default function ManageProfiles() {
           company_name: formData.company_name,
           company_category: formData.company_category,
           company_logo_url: formData.company_logo_url || '',
+          moncash_number: formData.moncash_number || '',
+          natcash_number: formData.natcash_number || '',
+          whatsapp_number: formData.whatsapp_number || '',
           rating: 5,
           delivery_time_minutes: 30
         };
@@ -363,6 +366,30 @@ export default function ManageProfiles() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <Label>Numéro Moncash</Label>
+                  <Input
+                    value={formData.moncash_number || ''}
+                    onChange={(e) => setFormData({ ...formData, moncash_number: e.target.value })}
+                    placeholder="Ex: 50912345678"
+                  />
+                </div>
+                <div>
+                  <Label>Numéro Natcash</Label>
+                  <Input
+                    value={formData.natcash_number || ''}
+                    onChange={(e) => setFormData({ ...formData, natcash_number: e.target.value })}
+                    placeholder="Ex: 50912345678"
+                  />
+                </div>
+                <div>
+                  <Label>Numéro WhatsApp (sans +)</Label>
+                  <Input
+                    value={formData.whatsapp_number || ''}
+                    onChange={(e) => setFormData({ ...formData, whatsapp_number: e.target.value })}
+                    placeholder="Ex: 50912345678"
+                  />
                 </div>
                 <div>
                   <Label>Logo (optionnel)</Label>
