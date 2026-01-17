@@ -117,16 +117,9 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
         [`profiles.${targetProfile}.last_used`]: new Date().toISOString()
       });
       
-      // Redirect to appropriate dashboard
-      const redirectPages = {
-        client: 'Home',
-        entreprise: 'EnterpriseDashboard',
-        livreur: 'DriverDashboard',
-        agent: 'AgentDashboard'
-      };
-      
+      // Redirect to Home for all profiles
       toast.success(`Profil changé vers ${profileConfig[targetProfile].label}`);
-      window.location.href = createPageUrl(redirectPages[targetProfile]);
+      window.location.href = createPageUrl('Home');
       
     } catch (error) {
       toast.error('Erreur lors du changement de profil');
