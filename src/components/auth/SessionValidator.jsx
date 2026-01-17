@@ -5,29 +5,33 @@ export default function SessionValidator({ user }) {
   useEffect(() => {
     if (!user) return;
 
+    // Stocker la version de session actuelle au montage
+    if (!localStorage.getItem('user_session_version') && user.session_version) {
+      localStorage.setItem('user_session_version', user.session_version.toString());
+    }
+
     const checkSession = async () => {
       try {
         const currentUser = await base44.auth.me();
         
-        // Vérifier si l'utilisateur a été forcé à se déconnecter
-        if (currentUser?.force_logout_at) {
-          const logoutTimestamp = new Date(currentUser.force_logout_at).getTime();
-          const loginTimestamp = localStorage.getItem('login_timestamp');
-          
-          // Si le timestamp de déconnexion forcée est après la connexion
-          if (loginTimestamp && logoutTimestamp > parseInt(loginTimestamp)) {
-            localStorage.removeItem('login_timestamp');
-            base44.auth.logout(window.location.pathname);
-          }
+        if (!currentUser) return;
+
+        const storedVersion = localStorage.getItem('user_session_version');
+        const currentVersion = currentUser.session_version;
+
+        // Si la version a changé, déconnecter
+        if (storedVersion && currentVersion && currentVersion.toString() !== storedVersion) {
+          localStorage.removeItem('user_session_version');
+          window.location.href = '/';
+          base44.auth.logout();
         }
       } catch (error) {
         console.error('Session validation error:', error);
       }
     };
 
-    // Vérifier toutes les 30 secondes
-    const interval = setInterval(checkSession, 30000);
-    checkSession(); // Vérifier immédiatement
+    // Vérifier toutes les 10 secondes
+    const interval = setInterval(checkSession, 10000);
 
     return () => clearInterval(interval);
   }, [user]);

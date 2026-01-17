@@ -10,37 +10,26 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    // Timestamp de déconnexion forcée
-    const forceLogoutTimestamp = new Date().toISOString();
+    // Incrémenter la version de session globale
+    const newSessionVersion = Date.now();
 
     // Récupérer tous les utilisateurs
     const users = await base44.asServiceRole.entities.User.list();
     
-    // Mettre à jour tous les utilisateurs avec le timestamp
+    // Mettre à jour tous les utilisateurs avec la nouvelle version de session
     const updatePromises = users.map(u => 
       base44.asServiceRole.entities.User.update(u.id, {
-        force_logout_at: forceLogoutTimestamp
+        session_version: newSessionVersion
       })
     );
 
     await Promise.all(updatePromises);
-    
-    // Envoyer une notification push
-    try {
-      await base44.asServiceRole.functions.invoke('sendPushNotification', {
-        user_ids: users.map(u => u.id),
-        title: 'Maintenance système',
-        message: 'Veuillez vous reconnecter à l\'application.',
-        data: { action: 'force_logout' }
-      });
-    } catch (notifError) {
-      console.log('Notification error:', notifError);
-    }
 
     return Response.json({ 
       success: true, 
-      message: `${users.length} utilisateurs déconnectés avec succès`,
-      count: users.length
+      message: `${users.length} utilisateurs seront déconnectés`,
+      count: users.length,
+      session_version: newSessionVersion
     });
 
   } catch (error) {
