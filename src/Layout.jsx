@@ -17,6 +17,7 @@ import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
 import { useAuth } from '@/components/auth/useAuth';
 import CookieConsent from '@/components/cookies/CookieConsent';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
+import SessionValidator from '@/components/auth/SessionValidator';
 
 export default function Layout({ children, currentPageName }) {
   const { user, isLoading: loading } = useAuth();
@@ -217,6 +218,7 @@ export default function Layout({ children, currentPageName }) {
         <OneSignalInit user={user} />
         <NotificationPermission />
         <InstallPrompt />
+        <SessionValidator user={user} />
         
 
       

@@ -10,18 +10,22 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
+    // Timestamp de déconnexion forcée
+    const forceLogoutTimestamp = new Date().toISOString();
+
     // Récupérer tous les utilisateurs
     const users = await base44.asServiceRole.entities.User.list();
     
-    // Forcer la déconnexion en invalidant les sessions
-    // Note: Base44 ne permet pas de révoquer les tokens directement
-    // Cette fonction sert principalement à envoyer une notification push
-    // demandant aux utilisateurs de se reconnecter
-    
-    const loggedOutCount = users.length;
+    // Mettre à jour tous les utilisateurs avec le timestamp
+    const updatePromises = users.map(u => 
+      base44.asServiceRole.entities.User.update(u.id, {
+        force_logout_at: forceLogoutTimestamp
+      })
+    );
 
-    // Optionnel: Envoyer une notification push à tous les utilisateurs
-    // pour leur demander de se reconnecter
+    await Promise.all(updatePromises);
+    
+    // Envoyer une notification push
     try {
       await base44.asServiceRole.functions.invoke('sendPushNotification', {
         user_ids: users.map(u => u.id),
@@ -35,8 +39,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ 
       success: true, 
-      message: `${loggedOutCount} utilisateurs notifiés pour reconnexion`,
-      count: loggedOutCount
+      message: `${users.length} utilisateurs déconnectés avec succès`,
+      count: users.length
     });
 
   } catch (error) {
