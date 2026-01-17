@@ -76,6 +76,9 @@ export default function Home() {
   }, []);
   
   const articleTypes = [
+    { id: 'Bijoux', name: 'Bijoux', icon: '💎' },
+    { id: 'Pharmacie', name: 'Pharmacie', icon: '💊' },
+    { id: 'Restaurants', name: 'Restaurants', icon: '🍽️' },
     { id: 'Pour Femme', name: 'Mode Femme', icon: '👗' },
     { id: 'Boutique Fleurs', name: 'Fleurs', icon: '💐' },
     { id: 'Mariage', name: 'Mariage', icon: '💍' },
@@ -499,11 +502,11 @@ export default function Home() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {articleTypes.map((type) => (
-                <div 
-                    key={type.id} 
-                    className="bg-white p-4 cursor-pointer hover:shadow-lg transition-shadow flex flex-col justify-between h-36 rounded-md border border-gray-100"
+            <div className="overflow-x-auto no-scrollbar">
+              <div className="flex gap-3 pb-2">
+                {articleTypes.map((type) => (
+                  <button
+                    key={type.id}
                     onClick={() => {
                         if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                         setSelectedCategory(type.id);
@@ -511,11 +514,17 @@ export default function Home() {
                         setSelectedShop(null);
                         setGooglePlaces([]);
                     }}
-                >
-                   <h3 className="font-bold text-base text-slate-900 leading-tight mb-2">{type.name}</h3>
-                   <div className="flex-1 flex items-center justify-center text-4xl">{type.icon}</div>
-                </div>
-              ))}
+                    className={`flex-shrink-0 px-4 py-2.5 rounded-full border-2 transition-all flex items-center gap-2 whitespace-nowrap ${
+                      selectedCategory === type.id 
+                        ? 'bg-orange-500 text-white border-orange-500 font-bold shadow-md' 
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-orange-300 hover:shadow-sm'
+                    }`}
+                  >
+                    <span className="text-lg">{type.icon}</span>
+                    <span className="text-sm font-medium">{type.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <SmallStories onCategorySelect={(c) => setSelectedCategory(c)} />
