@@ -229,8 +229,8 @@ export default function Layout({ children, currentPageName }) {
       
       {children}
 
-      {/* Smart Bottom Navigation - Client */}
-      {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (
+      {/* Smart Bottom Navigation - All profiles */}
+      {user && !noNavPages.includes(currentPageName) && (
         <SmartBottomNav 
           cartCount={cartCount} 
           activeOrdersCount={activeOrdersCount}
