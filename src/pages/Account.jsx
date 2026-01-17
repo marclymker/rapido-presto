@@ -39,12 +39,7 @@ export default function Account() {
       });
       setLoading(false);
       
-      // Redirect if wrong profile
-      if (u.current_profile !== 'client') {
-        window.location.href = createPageUrl(
-          u.current_profile === 'entreprise' ? 'EnterpriseDashboard' : 'DriverDashboard'
-        );
-      }
+
     }).catch(() => setLoading(false));
   }, []);
 
@@ -147,25 +142,7 @@ export default function Account() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Merchant Invitation Banner */}
-        {user?.current_profile === 'client' && !user?.profiles?.entreprise?.is_active && (
-          <Link to={createPageUrl('ManageProfiles')}>
-            <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
-                  <Store className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold text-gray-800">💰 Gagner plus d'argent en publiant vos produits</p>
-                  <p className="text-sm text-gray-600">Complétez votre profil marchand maintenant</p>
-                </div>
-                <Button size="sm" className="bg-orange-500 hover:bg-orange-600">
-                  Devenir marchand
-                </Button>
-              </div>
-            </div>
-          </Link>
-        )}
+
 
         {/* Profile Info */}
         <div className="bg-white rounded-xl p-4">

@@ -174,7 +174,8 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
           Changer de profil
         </div>
         
-        {Object.entries(profileConfig).map(([key, config]) => {
+        {['client', 'agent'].map(key => {
+          const config = profileConfig[key];
           const Icon = config.icon;
           const status = getProfileStatus(key);
           const isActive = key === currentProfile;

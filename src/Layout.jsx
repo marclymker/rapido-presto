@@ -13,20 +13,27 @@ import { HelmetProvider, Helmet } from 'react-helmet-async';
 import ReactPixel from 'react-facebook-pixel';
 import SmartBottomNav from '@/components/navigation/SmartBottomNav';
 import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
-import WelcomeModal from '@/components/modals/WelcomeModal';
+
 import { useAuth } from '@/components/auth/useAuth';
 import CookieConsent from '@/components/cookies/CookieConsent';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
 
 export default function Layout({ children, currentPageName }) {
   const { user, isLoading: loading } = useAuth();
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
   const [cookiesAccepted, setCookiesAccepted] = useState(false);
 
   useEffect(() => {
-    // Show welcome modal if user has no profile set up
+    // Auto-assign client profile if no profile is set
     if (user && !user.current_profile && currentPageName !== 'ProfileSetup') {
-      setShowWelcomeModal(true);
+      base44.auth.updateMe({
+        current_profile: 'client',
+        profiles: {
+          client: { is_active: true, created_at: new Date().toISOString() }
+        }
+      }).then(() => {
+        window.location.reload();
+      });
     }
   }, [user, currentPageName]);
 
@@ -123,14 +130,24 @@ export default function Layout({ children, currentPageName }) {
           { icon: User, label: 'Compte', page: 'Account' },
         ];
       case 'entreprise':
-        return [];
+        return [
+          { icon: Home, label: 'Accueil', page: 'Home' },
+          { icon: ShoppingBag, label: 'Panier', page: 'Cart', badge: cartCount },
+          { icon: Package, label: 'Dashboard', page: 'Dashboard' },
+          { icon: User, label: 'Compte', page: 'Account' },
+        ];
       case 'livreur':
         return [
           { icon: Bike, label: 'Dashboard', page: 'DriverDashboard' },
           { icon: User, label: 'Compte', page: 'DriverAccount' },
         ];
       case 'agent':
-        return [];
+        return [
+          { icon: Home, label: 'Accueil', page: 'Home' },
+          { icon: ShoppingBag, label: 'Panier', page: 'Cart', badge: cartCount },
+          { icon: Package, label: 'Dashboard', page: 'Dashboard' },
+          { icon: User, label: 'Compte', page: 'Account' },
+        ];
       default:
         return [];
     }
@@ -201,12 +218,7 @@ export default function Layout({ children, currentPageName }) {
         <NotificationPermission />
         <InstallPrompt />
         
-        {/* Welcome Modal for first-time users */}
-        <WelcomeModal 
-          user={user}
-          open={showWelcomeModal}
-          onClose={() => setShowWelcomeModal(false)}
-        />
+
       
       {/* Profile Switcher (top right for desktop - clients only) */}
       {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (
@@ -225,12 +237,7 @@ export default function Layout({ children, currentPageName }) {
         />
       )}
 
-      {/* Business Smart Navigation - Entreprise, Livreur & Agent */}
-      {user && !noNavPages.includes(currentPageName) && (user.current_profile === 'entreprise' || user.current_profile === 'livreur' || user.current_profile === 'agent') && currentPageName === 'Home' && (
-        <BusinessSmartNav 
-          userRole={user.current_profile}
-        />
-      )}
+
       </div>
     </HelmetProvider>
   );
