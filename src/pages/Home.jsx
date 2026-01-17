@@ -451,6 +451,7 @@ export default function Home() {
                         <ProductCard
                           product={product}
                           shop={shop}
+                          hideId={true}
                           onAdd={(p) => {
                             if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                             if (shop) { setSelectedShop(shop); handleAddToCart(p); }
@@ -785,20 +786,21 @@ export default function Home() {
                                             {products.slice(0, 4).map(product => (
                                                 <div key={product.id}>
                                                     <ProductCard
-                                                        product={product}
-                                                        shop={shop}
-                                                        onAdd={(p) => {
-                                                            setSelectedShop(shop); 
-                                                            handleAddToCart(p);
-                                                        }}
-                                                        onClick={() => {
-                                                            if (shop?.slug && product.slug) {
-                                                              window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
-                                                            } else {
-                                                              setSelectedShop(shop);
-                                                              setSelectedProduct(product);
-                                                            }
-                                                        }}
+                                                       product={product}
+                                                       shop={shop}
+                                                       hideId={true}
+                                                       onAdd={(p) => {
+                                                           setSelectedShop(shop); 
+                                                           handleAddToCart(p);
+                                                       }}
+                                                       onClick={() => {
+                                                           if (shop?.slug && product.slug) {
+                                                             window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                                                           } else {
+                                                             setSelectedShop(shop);
+                                                             setSelectedProduct(product);
+                                                           }
+                                                       }}
                                                     />
                                                 </div>
                                             ))}
