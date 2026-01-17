@@ -133,7 +133,7 @@ export default function Layout({ children, currentPageName }) {
         return [
           { icon: Home, label: 'Accueil', page: 'Home' },
           { icon: ShoppingBag, label: 'Panier', page: 'Cart', badge: cartCount },
-          { icon: Package, label: 'Dashboard', page: 'Dashboard' },
+          { icon: Package, label: 'Boutique', page: 'Dashboard' },
           { icon: User, label: 'Compte', page: 'Account' },
         ];
       case 'livreur':
@@ -145,7 +145,7 @@ export default function Layout({ children, currentPageName }) {
         return [
           { icon: Home, label: 'Accueil', page: 'Home' },
           { icon: ShoppingBag, label: 'Panier', page: 'Cart', badge: cartCount },
-          { icon: Package, label: 'Dashboard', page: 'Dashboard' },
+          { icon: Package, label: 'Boutique', page: 'Dashboard' },
           { icon: User, label: 'Compte', page: 'Account' },
         ];
       default:
