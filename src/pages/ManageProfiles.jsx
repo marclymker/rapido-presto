@@ -14,7 +14,19 @@ import { toast } from "sonner";
 import { motion } from 'framer-motion';
 
 const COMPANY_CATEGORIES = [
-  "Fastfood", "Restaurants", "Pharmacie", "Vêtements", "Epicerie", "Café", "Boulangerie"
+  "Fastfood", 
+  "Restaurants", 
+  "Boutique Fleurs", 
+  "Pharmacie", 
+  "Mariage", 
+  "Epicerie", 
+  "Café", 
+  "Pour Femme", 
+  "Electronics", 
+  "Pour homme", 
+  "Maison", 
+  "Bébé", 
+  "Outils"
 ];
 
 const VEHICLE_TYPES = ["Moto", "Voiture", "Bicyclette"];
