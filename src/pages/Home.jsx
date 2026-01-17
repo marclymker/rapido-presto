@@ -76,15 +76,15 @@ export default function Home() {
   }, []);
   
   const articleTypes = [
-    { id: 'Bijoux', name: 'Bijoux', icon: '💎' },
-    { id: 'Pharmacie', name: 'Pharmacie', icon: '💊' },
-    { id: 'Restaurants', name: 'Restaurants', icon: '🍽️' },
-    { id: 'Pour Femme', name: 'Mode Femme', icon: '👗' },
-    { id: 'Boutique Fleurs', name: 'Fleurs', icon: '💐' },
     { id: 'Mariage', name: 'Mariage', icon: '💍' },
-    { id: 'Pour homme', name: 'Mode Homme', icon: '👔' },
+    { id: 'Pour Femme', name: 'Mode', icon: '👗' },
+    { id: 'Boutique Fleurs', name: 'Fleurs', icon: '💐' },
+    { id: 'Pour homme', name: 'Homme', icon: '👔' },
+    { id: 'Electronics', name: 'Electroniques', icon: '📱' },
+    { id: 'Bijoux', name: 'Bijoux', icon: '💎' },
+    { id: 'Maison', name: 'Maison', icon: '🏠' },
     { id: 'Bébé', name: 'Bébé', icon: '👶' },
-    { id: 'Maison', name: 'Maison & Déco', icon: '🏠' }
+    { id: 'Outils', name: 'Outils', icon: '🔧' }
   ];
 
   useAutoRefresh({ 
@@ -418,27 +418,7 @@ export default function Home() {
             </div>
         </div>
 
-        <nav className="text-white text-sm px-4 py-2 flex items-center gap-4 overflow-x-auto no-scrollbar whitespace-nowrap" style={{ backgroundColor: theme.lightBlue }}>
-            <div className="flex items-center font-bold gap-1 cursor-pointer hover:text-white/80" onClick={() => setSelectedCategory('Tout')}>
-                <Menu className="w-5 h-5" />
-                <span>Toutes</span>
-            </div>
-            {articleTypes.map((type) => (
-                <button 
-                    key={type.id}
-                    onClick={() => {
-                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                        setSelectedCategory(type.id);
-                        setSelectedSubCategory(null);
-                        setSelectedShop(null);
-                        setGooglePlaces([]);
-                    }}
-                    className={`hover:outline outline-1 outline-white px-2 py-1 rounded-sm transition-colors ${selectedCategory === type.id ? 'font-bold underline text-orange-400' : ''}`}
-                >
-                    {type.name}
-                </button>
-            ))}
-        </nav>
+
       </header>
       
       <div className="max-w-[1500px] mx-auto">
