@@ -123,7 +123,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     promo_price: '',
     description: '',
     category: 'Fastfood',
-    subCategory: '',
+    subcategory: '',
     stock_quantity: 0,
     image_url: '',
     additional_images: [],
@@ -162,7 +162,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         promo_price: '',
         description: '',
         category: 'Fastfood',
-        subCategory: '',
+        subcategory: '',
         stock_quantity: 0,
         image_url: '',
         additional_images: [],
@@ -197,7 +197,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         promo_price: product.promo_price || '',
         description: product.description || '',
         category: product.category || 'Fastfood',
-        subCategory: product.subCategory || '',
+        subcategory: product.subcategory || '',
         stock_quantity: product.stock_quantity || 0,
         image_url: product.image_url || '',
         additional_images: product.additional_images || [],
@@ -344,7 +344,7 @@ Répondez au format JSON strict.`,
         ...formData,
         description: result.description || formData.description,
         category: result.category || formData.category,
-        subCategory: result.category === 'Mariage' ? (result.subcategory || formData.subCategory) : formData.subCategory,
+        subcategory: result.category === 'Mariage' ? (result.subcategory || formData.subcategory) : formData.subcategory,
         seo_tags: result.seo_tags || formData.seo_tags
       });
       
@@ -556,7 +556,7 @@ Répondez au format JSON strict.`,
                   <Label className="mb-1.5">Type d'article</Label>
                   <Select 
                     value={formData.category} 
-                    onValueChange={(v) => setFormData({ ...formData, category: v, subCategory: v === 'Mariage' ? formData.subCategory : '' })}
+                    onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: v === 'Mariage' ? formData.subcategory : '' })}
                   >
                     <SelectTrigger className="h-11">
                       <SelectValue />
@@ -584,8 +584,8 @@ Répondez au format JSON strict.`,
                   <div className="animate-in fade-in slide-in-from-top-2">
                     <Label className="mb-1.5">Sous-catégorie Mariage</Label>
                     <Select 
-                      value={formData.subCategory} 
-                      onValueChange={(v) => setFormData({ ...formData, subCategory: v })}
+                      value={formData.subcategory} 
+                      onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
                     >
                       <SelectTrigger className="h-11 border-purple-200 bg-purple-50/50">
                         <SelectValue placeholder="Sélectionner..." />
