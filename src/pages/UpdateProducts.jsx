@@ -29,21 +29,8 @@ export default function UpdateProducts() {
     setInventoryResult(null);
     
     try {
-      const products = await base44.entities.Product.list();
-      let updated = 0;
-      
-      for (const product of products) {
-        await base44.entities.Product.update(product.id, {
-          stock_quantity: 100
-        });
-        updated++;
-      }
-      
-      setInventoryResult({ 
-        success: true, 
-        total: products.length,
-        updated 
-      });
+      const response = await base44.functions.invoke('renewInventory');
+      setInventoryResult(response.data);
     } catch (error) {
       setInventoryResult({ error: error.message });
     } finally {
@@ -146,6 +133,18 @@ export default function UpdateProducts() {
                       <p className="text-sm text-green-600">
                         {inventoryResult.updated} produits mis à jour sur {inventoryResult.total}
                       </p>
+                      {inventoryResult.errors && inventoryResult.errors.length > 0 && (
+                        <details className="mt-2 text-xs">
+                          <summary className="cursor-pointer text-yellow-700">
+                            {inventoryResult.errors.length} erreurs
+                          </summary>
+                          <ul className="mt-1 space-y-1">
+                            {inventoryResult.errors.map((err, i) => (
+                              <li key={i}>{err.name}: {err.error}</li>
+                            ))}
+                          </ul>
+                        </details>
+                      )}
                     </div>
                   </div>
                 )}
