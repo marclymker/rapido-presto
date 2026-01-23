@@ -7,6 +7,8 @@ import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 export default function UpdateProducts() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [loadingInventory, setLoadingInventory] = useState(false);
+  const [inventoryResult, setInventoryResult] = useState(null);
 
   const handleUpdate = async () => {
     setLoading(true);
@@ -19,6 +21,33 @@ export default function UpdateProducts() {
       setResult({ error: error.message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRenewInventory = async () => {
+    setLoadingInventory(true);
+    setInventoryResult(null);
+    
+    try {
+      const products = await base44.entities.Product.list();
+      let updated = 0;
+      
+      for (const product of products) {
+        await base44.entities.Product.update(product.id, {
+          stock_quantity: 100
+        });
+        updated++;
+      }
+      
+      setInventoryResult({ 
+        success: true, 
+        total: products.length,
+        updated 
+      });
+    } catch (error) {
+      setInventoryResult({ error: error.message });
+    } finally {
+      setLoadingInventory(false);
     }
   };
 
@@ -73,6 +102,50 @@ export default function UpdateProducts() {
                           </ul>
                         </details>
                       )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Renouvellement de l'inventaire</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Cette action va mettre à jour le stock de tous les produits à 100 unités.
+            </p>
+            
+            <Button 
+              onClick={handleRenewInventory}
+              disabled={loadingInventory}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              {loadingInventory && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Renouveler l'inventaire (100 unités)
+            </Button>
+
+            {inventoryResult && (
+              <div className={`p-4 rounded-lg ${inventoryResult.error ? 'bg-red-50' : 'bg-green-50'}`}>
+                {inventoryResult.error ? (
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-500 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-red-800">Erreur</p>
+                      <p className="text-sm text-red-600">{inventoryResult.error}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-green-800">Inventaire renouvelé !</p>
+                      <p className="text-sm text-green-600">
+                        {inventoryResult.updated} produits mis à jour sur {inventoryResult.total}
+                      </p>
                     </div>
                   </div>
                 )}
