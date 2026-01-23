@@ -500,6 +500,54 @@ export default function Home() {
 
       <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-32">
         
+        {/* Onglets sous-catégories Mariage */}
+        {selectedCategory === 'Mariage' && !searchQuery.trim() && (
+          <div className="bg-white mb-4 p-3 rounded-lg shadow-sm overflow-x-auto no-scrollbar">
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigateToCategory(selectedCategory)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                  !selectedSubCategory
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Tout voir
+              </button>
+              {WEDDING_STRUCTURE.map((group) => {
+                if (group.subtypes) {
+                  return group.subtypes.map((subtype) => (
+                    <button
+                      key={subtype}
+                      onClick={() => navigateToCategory(selectedCategory, subtype)}
+                      className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                        selectedSubCategory === subtype
+                          ? 'bg-orange-500 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {subtype}
+                    </button>
+                  ));
+                }
+                return (
+                  <button
+                    key={group.title}
+                    onClick={() => navigateToCategory(selectedCategory, group.title)}
+                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                      selectedSubCategory === group.title
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {group.title}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        
         {searchQuery.trim() ? (
           <div className="bg-white p-4 rounded shadow-sm">
             <h2 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
