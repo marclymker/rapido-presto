@@ -15,7 +15,6 @@ import DriverAccount from './pages/DriverAccount';
 import DriverDashboard from './pages/DriverDashboard';
 import EnterpriseAccount from './pages/EnterpriseAccount';
 import EnterpriseDashboard from './pages/EnterpriseDashboard';
-import Home from './pages/Home';
 import ManageProfiles from './pages/ManageProfiles';
 import Orders from './pages/Orders';
 import PaymentCallback from './pages/PaymentCallback';
@@ -25,6 +24,7 @@ import Products from './pages/Products';
 import ProfileSetup from './pages/ProfileSetup';
 import ShopView from './pages/ShopView';
 import UpdateProducts from './pages/UpdateProducts';
+import Home from './pages/Home';
 import __Layout from './Layout.jsx';
 
 
@@ -46,7 +46,6 @@ export const PAGES = {
     "DriverDashboard": DriverDashboard,
     "EnterpriseAccount": EnterpriseAccount,
     "EnterpriseDashboard": EnterpriseDashboard,
-    "Home": Home,
     "ManageProfiles": ManageProfiles,
     "Orders": Orders,
     "PaymentCallback": PaymentCallback,
@@ -56,6 +55,7 @@ export const PAGES = {
     "ProfileSetup": ProfileSetup,
     "ShopView": ShopView,
     "UpdateProducts": UpdateProducts,
+    "Home": Home,
 }
 
 export const pagesConfig = {
