@@ -78,13 +78,33 @@ export default function Layout({ children, currentPageName }) {
   const showNav = !noNavPages.includes(currentPageName) && user;
 
   // Fetch cart count for badge
-  const { data: cartItems = [] } = useQuery({
+  const { data: dbCartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
     queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id
   });
+  
+  // Get guest cart from localStorage
+  const [guestCartCount, setGuestCartCount] = React.useState(0);
+  
+  React.useEffect(() => {
+    if (!user) {
+      const stored = localStorage.getItem('guest_cart');
+      if (stored) {
+        try {
+          const guestCart = JSON.parse(stored);
+          const count = guestCart.reduce((sum, item) => sum + item.quantity, 0);
+          setGuestCartCount(count);
+        } catch (e) {
+          setGuestCartCount(0);
+        }
+      }
+    }
+  }, [user]);
 
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = user 
+    ? dbCartItems.reduce((sum, item) => sum + item.quantity, 0)
+    : guestCartCount;
 
   // Fetch active orders count
   const { data: orders = [] } = useQuery({

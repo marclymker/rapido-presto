@@ -13,6 +13,7 @@ import ProductCard from '@/components/ui/ProductCard';
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
+import { useGuestCart } from '@/components/cart/useGuestCart';
 
 const WEDDING_STRUCTURE = [
   {
@@ -31,6 +32,7 @@ const WEDDING_STRUCTURE = [
 
 export default function ShopView() {
   const { user } = useAuth();
+  const { addToGuestCart } = useGuestCart();
   const [selectedCategory, setSelectedCategory] = useState('Tout');
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -157,8 +159,18 @@ export default function ShopView() {
 
   const handleAddToCart = (product, quantity = 1) => {
     if (!user) { 
-      toast.error('Connectez-vous pour ajouter au panier');
-      base44.auth.redirectToLogin(window.location.pathname + window.location.search); 
+      // Add to guest cart
+      addToGuestCart({
+        product_id: product.id,
+        product_name: product.name,
+        product_image: product.image_url,
+        quantity: quantity,
+        unit_price: getClientPrice(product),
+        shop_id: shop?.id,
+        shop_name: shop?.company_name,
+        shop_region: shop?.region
+      });
+      toast.success('Ajouté au panier');
       return; 
     }
     addToCartMutation.mutate({ product, quantity });

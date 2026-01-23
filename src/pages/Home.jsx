@@ -23,6 +23,7 @@ import ProfileCompletionModal from '@/components/modals/ProfileCompletionModal';
 import SEO from '@/components/SEO';
 import SmallStories from '@/components/home/SmallStories';
 import { useAuth } from '@/components/auth/useAuth';
+import { useGuestCart } from '@/components/cart/useGuestCart';
 import CreditBanner from '@/components/home/CreditBanner';
 import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
@@ -50,6 +51,7 @@ const WEDDING_STRUCTURE = [
 
 export default function Home() {
   const { user, isLoading: authLoading } = useAuth();
+  const { addToGuestCart } = useGuestCart();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -303,7 +305,22 @@ export default function Home() {
   });
 
   const handleAddToCart = (product, quantity = 1) => {
-    if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+    if (!user) {
+      // Add to guest cart
+      const productShop = shops.find(s => s.id === product.shop_id) || selectedShop;
+      addToGuestCart({
+        product_id: product.id,
+        product_name: product.name,
+        product_image: product.image_url,
+        quantity: quantity,
+        unit_price: getClientPrice(product),
+        shop_id: productShop?.id,
+        shop_name: productShop?.company_name,
+        shop_region: productShop?.region
+      });
+      toast.success('Ajouté au panier');
+      return;
+    }
     if (!user.current_profile) { setShowProfileModal(true); return; }
     addToCartMutation.mutate({ product, quantity });
   };
