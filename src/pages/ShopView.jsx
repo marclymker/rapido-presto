@@ -236,6 +236,9 @@ export default function ShopView() {
     ? `${selectedProductForMeta.description || selectedProductForMeta.name} - ${getClientPrice(selectedProductForMeta)} Gourdes` 
     : `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`;
   const pageImage = selectedProductForMeta?.image_url || shop.company_logo_url;
+  const pageUrl = selectedProductForMeta 
+    ? `${window.location.origin}${createPageUrl('ShopView')}?slug=${shopSlug}&product=${selectedProductForMeta.slug || selectedProductForMeta.id}`
+    : window.location.href;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -249,9 +252,11 @@ export default function ShopView() {
         <meta property="og:description" content={pageDescription} />
         <meta property="og:site_name" content="Rapido Presto" />
         {pageImage && <meta property="og:image" content={pageImage} />}
+        {pageImage && <meta property="og:image:secure_url" content={pageImage} />}
         {pageImage && <meta property="og:image:width" content="1200" />}
         {pageImage && <meta property="og:image:height" content="630" />}
-        <meta property="og:url" content={window.location.href} />
+        {pageImage && <meta property="og:image:alt" content={pageTitle} />}
+        <meta property="og:url" content={pageUrl} />
         
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
