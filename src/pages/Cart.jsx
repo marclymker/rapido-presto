@@ -37,6 +37,7 @@ import { getHaitiTime } from '@/components/utils/dateFormat';
 import SquarePaymentForm from '@/components/payment/SquarePaymentForm';
 
 import { useAuth } from '@/components/auth/useAuth';
+import { useGuestCart } from '@/components/cart/useGuestCart';
 
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
@@ -156,6 +157,7 @@ natcash: { number: "3527-0511", name: "Rebecca Christa Rigaud" }
 export default function Cart() {
 
 const { user, isLoading: authLoading } = useAuth();
+const { guestCart, updateGuestCartItem, removeFromGuestCart } = useGuestCart();
 
 const [step, setStep] = useState('cart');
 
@@ -188,15 +190,7 @@ const navigate = useNavigate();
 
 
 
-useEffect(() => {
-
-if (!authLoading && !user) {
-
-navigate(createPageUrl('Home'));
-
-}
-
-}, [user, authLoading, navigate]);
+// Removed redirect - allow guest users to view cart
 
 
 
@@ -212,7 +206,7 @@ setTempAddress(user.address);
 
 
 
-const { data: cartItems = [], isLoading: loadingCart } = useQuery({
+const { data: dbCartItems = [], isLoading: loadingCart } = useQuery({
 
 queryKey: ['cart', user?.id],
 
@@ -221,6 +215,9 @@ queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
 enabled: !!user?.id
 
 });
+
+// Combine guest cart and DB cart
+const cartItems = user ? dbCartItems : guestCart;
 
 
 
@@ -318,7 +315,16 @@ toast.success('Copié !');
 
 const updateQuantityMutation = useMutation({
 
-mutationFn: ({ id, quantity }) => {
+mutationFn: ({ id, product_id, quantity }) => {
+if (!user) {
+  // Guest cart
+  if (quantity <= 0) {
+    removeFromGuestCart(product_id);
+  } else {
+    updateGuestCartItem(product_id, quantity);
+  }
+  return Promise.resolve();
+}
 
 if (quantity <= 0) return base44.entities.CartItem.delete(id);
 
@@ -326,7 +332,9 @@ return base44.entities.CartItem.update(id, { quantity });
 
 },
 
-onSuccess: () => queryClient.invalidateQueries(['cart'])
+onSuccess: () => {
+  if (user) queryClient.invalidateQueries(['cart']);
+}
 
 });
 
@@ -334,9 +342,17 @@ onSuccess: () => queryClient.invalidateQueries(['cart'])
 
 const deleteItemMutation = useMutation({
 
-mutationFn: (id) => base44.entities.CartItem.delete(id),
+mutationFn: ({ id, product_id }) => {
+  if (!user) {
+    removeFromGuestCart(product_id);
+    return Promise.resolve();
+  }
+  return base44.entities.CartItem.delete(id);
+},
 
-onSuccess: () => queryClient.invalidateQueries(['cart'])
+onSuccess: () => {
+  if (user) queryClient.invalidateQueries(['cart']);
+}
 
 });
 
@@ -345,6 +361,11 @@ onSuccess: () => queryClient.invalidateQueries(['cart'])
 const createOrderMutation = useMutation({
 
 mutationFn: async () => {
+if (!user) {
+  // Redirect to login before payment
+  base44.auth.redirectToLogin(window.location.pathname);
+  throw new Error('Connexion requise');
+}
 
 if ((paymentMethod === 'moncash' || paymentMethod === 'natcash') && !transactionCode.trim()) {
 
@@ -530,7 +551,7 @@ return (
 
 <p className="font-medium text-sm leading-tight">{item.product_name}</p>
 
-<button onClick={() => deleteItemMutation.mutate(item.id)}><Trash2 className="w-4 h-4 text-gray-300" /></button>
+<button onClick={() => deleteItemMutation.mutate({ id: item.id, product_id: item.product_id })}><Trash2 className="w-4 h-4 text-gray-300" /></button>
 
 </div>
 
@@ -540,11 +561,11 @@ return (
 
 <div className="flex items-center border border-black rounded-sm overflow-hidden">
 
-<button className="px-2 py-1 hover:bg-black hover:text-white" onClick={() => updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity - 1 })}><Minus className="w-3 h-3"/></button>
+<button className="px-2 py-1 hover:bg-black hover:text-white" onClick={() => updateQuantityMutation.mutate({ id: item.id, product_id: item.product_id, quantity: item.quantity - 1 })}><Minus className="w-3 h-3"/></button>
 
 <span className="px-3 text-xs font-bold">{item.quantity}</span>
 
-<button className="px-2 py-1 hover:bg-black hover:text-white" onClick={() => updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity + 1 })}><Plus className="w-3 h-3"/></button>
+<button className="px-2 py-1 hover:bg-black hover:text-white" onClick={() => updateQuantityMutation.mutate({ id: item.id, product_id: item.product_id, quantity: item.quantity + 1 })}><Plus className="w-3 h-3"/></button>
 
 </div>
 
