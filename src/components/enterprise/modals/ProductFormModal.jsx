@@ -197,7 +197,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         promo_price: product.promo_price || '',
         description: product.description || '',
         category: product.category || 'Fastfood',
-        subcategory: product.subcategory || '',
+        subcategory: product.subcategory || product.subCategory || '',
         stock_quantity: product.stock_quantity || 0,
         image_url: product.image_url || '',
         additional_images: product.additional_images || [],
