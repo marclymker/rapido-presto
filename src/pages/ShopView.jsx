@@ -157,6 +157,7 @@ export default function ShopView() {
 
   const handleAddToCart = (product, quantity = 1) => {
     if (!user) { 
+      toast.error('Connectez-vous pour ajouter au panier');
       base44.auth.redirectToLogin(window.location.pathname + window.location.search); 
       return; 
     }

@@ -479,14 +479,13 @@ export default function Home() {
                             if (shop) { setSelectedShop(shop); handleAddToCart(p); }
                           }}
                           onClick={() => {
-                            if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                            const shop = shops.find(s => s.id === product.shop_id);
-                            if (shop?.slug && product.slug) {
-                              window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
-                            } else if (shop) {
-                              setSelectedShop(shop);
-                              setSelectedProduct(product);
-                            }
+                              const shop = shops.find(s => s.id === product.shop_id);
+                              if (shop?.slug && product.slug) {
+                                window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                              } else if (shop) {
+                                setSelectedShop(shop);
+                                setSelectedProduct(product);
+                              }
                           }}
                         />
                     </div>
@@ -511,9 +510,8 @@ export default function Home() {
                   <button
                     key={type.id}
                     onClick={() => {
-                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                        navigateToCategory(type.id);
-                    }}
+                          navigateToCategory(type.id);
+                      }}
                     className={`flex-shrink-0 px-4 py-2.5 rounded-full border-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                       selectedCategory === type.id 
                         ? 'bg-orange-500 text-white border-orange-500 font-bold shadow-md' 
@@ -543,7 +541,6 @@ export default function Home() {
                     <div 
                       key={product.id}
                       onClick={() => {
-                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                         if (shop?.slug && product.slug) {
                           window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
                         } else if (shop) {
@@ -575,7 +572,10 @@ export default function Home() {
                             className="w-full mt-2 h-7 text-xs bg-[#FFD814] hover:bg-[#F7CA00] text-black border border-[#FCD200] rounded-full"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+                              if (!user) { 
+                                base44.auth.redirectToLogin(window.location.pathname); 
+                                return; 
+                              }
                               if (shop) { setSelectedShop(shop); handleAddToCart(product); }
                             }}
                         >
