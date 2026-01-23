@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
         batch.map(async (product) => {
           try {
             await base44.asServiceRole.entities.Product.update(product.id, {
-              stock_quantity: 100
+              stock_quantity: 20
             });
             updated++;
           } catch (error) {

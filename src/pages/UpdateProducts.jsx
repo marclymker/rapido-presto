@@ -103,7 +103,7 @@ export default function UpdateProducts() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-gray-600">
-              Cette action va mettre à jour le stock de tous les produits à 100 unités.
+              Cette action va mettre à jour le stock de tous les produits à 20 unités.
             </p>
             
             <Button 
@@ -112,7 +112,7 @@ export default function UpdateProducts() {
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
               {loadingInventory && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Renouveler l'inventaire (100 unités)
+              Renouveler l'inventaire (20 unités)
             </Button>
 
             {inventoryResult && (
