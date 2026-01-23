@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { categoryToSlug } from '@/components/utils/urlHelpers';
 
 export default function SmallStories({ onCategorySelect }) {
   const stories = [
@@ -20,9 +22,13 @@ export default function SmallStories({ onCategorySelect }) {
   return (
     <div className="flex overflow-x-auto gap-3 p-4 no-scrollbar">
       {stories.map((item) => (
-        <button 
+        <Link
           key={item.id}
-          onClick={() => onCategorySelect(item.id)}
+          to={`?category=${categoryToSlug(item.id)}`}
+          onClick={(e) => {
+            e.preventDefault();
+            onCategorySelect(item.id);
+          }}
           className="flex flex-col items-center min-w-[65px] cursor-pointer group"
         >
           <div className={`${item.color} w-14 h-14 rounded-2xl flex items-center justify-center relative shadow-sm mb-1 transition-transform group-hover:scale-105 group-active:scale-95`}>
@@ -36,7 +42,7 @@ export default function SmallStories({ onCategorySelect }) {
           <span className="text-[10px] font-medium text-slate-700 text-center leading-tight">
             {item.title}
           </span>
-        </button>
+        </Link>
       ))}
     </div>
   );

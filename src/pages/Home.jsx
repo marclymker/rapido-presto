@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { categoryToSlug, slugToCategory, subcategoryToSlug, slugToSubcategory, getCategoryMeta } from '@/components/utils/urlHelpers';
 import { Search, ShoppingCart, ArrowLeft, Menu, MapPin, Star, ChevronRight, X, Clock, Zap, MessageSquare } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,8 +50,9 @@ const WEDDING_STRUCTURE = [
 
 export default function Home() {
   const { user, isLoading: authLoading } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState('Tout');
-  const [selectedSubCategory, setSelectedSubCategory] = useState(null); 
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const [selectedShop, setSelectedShop] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -59,10 +61,17 @@ export default function Home() {
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [userLocation, setSelectedLocation] = useState(null);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
-  
   const [showCartReminder, setShowCartReminder] = useState(false);
   
   const queryClient = useQueryClient();
+
+  // Lire catégorie et sous-catégorie depuis l'URL
+  const urlParams = new URLSearchParams(location.search);
+  const categorySlug = urlParams.get('category') || '';
+  const subcategorySlug = urlParams.get('sub') || '';
+  
+  const selectedCategory = slugToCategory(categorySlug);
+  const selectedSubCategory = slugToSubcategory(subcategorySlug, WEDDING_STRUCTURE);
 
   useEffect(() => {
     const generateSlugs = async () => {
@@ -99,12 +108,24 @@ export default function Home() {
     enabled: !!selectedShop 
   });
 
+  // Fonction pour changer de catégorie via URL
+  const navigateToCategory = (category, subcategory = null) => {
+    const catSlug = categoryToSlug(category);
+    const subSlug = subcategory ? subcategoryToSlug(subcategory) : '';
+    
+    const params = new URLSearchParams();
+    if (catSlug) params.set('category', catSlug);
+    if (subSlug) params.set('sub', subSlug);
+    
+    const queryString = params.toString();
+    navigate(queryString ? `?${queryString}` : '/', { replace: true });
+    setSelectedShop(null);
+    setGooglePlaces([]);
+  };
+
   useEffect(() => {
     const handleCategorySelect = (e) => {
-      setSelectedCategory(e.detail);
-      setSelectedSubCategory(null);
-      setSelectedShop(null);
-      setGooglePlaces([]);
+      navigateToCategory(e.detail);
     };
 
     const handleSearchQuery = (e) => {
@@ -337,9 +358,9 @@ export default function Home() {
                     if (selectedShop) {
                       setSelectedShop(null);
                     } else if (selectedSubCategory) {
-                      setSelectedSubCategory(null);
+                      navigateToCategory(selectedCategory);
                     } else {
-                      setSelectedCategory('Tout');
+                      navigate('/', { replace: true });
                       setGooglePlaces([]);
                     }
                   }}
@@ -428,8 +449,9 @@ export default function Home() {
       </div>
 
       <SEO 
-        title={selectedShop ? selectedShop.company_name : "Rapido Presto - Shopping en ligne"}
-        description="La meilleure plateforme e-commerce en Haïti."
+        title={selectedShop ? selectedShop.company_name : getCategoryMeta(selectedCategory, selectedSubCategory).title}
+        description={selectedShop ? `Boutique ${selectedShop.company_name} en Haïti` : getCategoryMeta(selectedCategory, selectedSubCategory).description}
+        keywords={getCategoryMeta(selectedCategory, selectedSubCategory).keywords}
         image={selectedShop?.company_logo_url}
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
@@ -490,10 +512,7 @@ export default function Home() {
                     key={type.id}
                     onClick={() => {
                         if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                        setSelectedCategory(type.id);
-                        setSelectedSubCategory(null);
-                        setSelectedShop(null);
-                        setGooglePlaces([]);
+                        navigateToCategory(type.id);
                     }}
                     className={`flex-shrink-0 px-4 py-2.5 rounded-full border-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                       selectedCategory === type.id 
@@ -508,7 +527,7 @@ export default function Home() {
               </div>
             </div>
 
-            <SmallStories onCategorySelect={(c) => setSelectedCategory(c)} />
+            <SmallStories onCategorySelect={(c) => navigateToCategory(c)} />
             <CreditBanner />
 
             {/* MEILLEURES VENTES MODIFIÉ */}
@@ -590,7 +609,7 @@ export default function Home() {
                             <h4 className="font-bold text-sm mb-2 text-slate-800">Départements</h4>
                             <div 
                                 className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${!selectedSubCategory ? 'font-bold bg-gray-50 text-orange-600' : ''}`}
-                                onClick={() => setSelectedSubCategory(null)}
+                                onClick={() => navigateToCategory(selectedCategory)}
                             >
                                 Tout voir
                             </div>
@@ -603,7 +622,7 @@ export default function Home() {
                                                 <div 
                                                     key={sub}
                                                     className={`cursor-pointer text-sm p-2 pl-4 rounded hover:bg-gray-100 ${selectedSubCategory === sub ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
-                                                    onClick={() => setSelectedSubCategory(sub)}
+                                                    onClick={() => navigateToCategory(selectedCategory, sub)}
                                                 >
                                                     {sub}
                                                 </div>
@@ -612,7 +631,7 @@ export default function Home() {
                                     ) : (
                                         <div 
                                             className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${selectedSubCategory === group.title ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
-                                            onClick={() => setSelectedSubCategory(group.title)}
+                                            onClick={() => navigateToCategory(selectedCategory, group.title)}
                                         >
                                             {group.title}
                                         </div>
@@ -719,7 +738,7 @@ export default function Home() {
                                                 <Button 
                                                     variant="link" 
                                                     className="text-xs text-[#007185]"
-                                                    onClick={() => setSelectedSubCategory(subCat)}
+                                                    onClick={() => navigateToCategory(selectedCategory, subCat)}
                                                 >
                                                     Voir plus
                                                 </Button>
@@ -812,7 +831,7 @@ export default function Home() {
                                 <div className="text-center py-20 bg-white rounded-lg shadow-sm">
                                     <div className="text-4xl mb-4">📦</div>
                                     <h3 className="text-lg font-bold text-gray-800">Aucun produit disponible</h3>
-                                    <Button className="mt-4 bg-orange-400" onClick={() => setSelectedCategory('Tout')}>Retour</Button>
+                                    <Button className="mt-4 bg-orange-400" onClick={() => navigate('/', { replace: true })}>Retour</Button>
                                 </div>
                             )
                         )}
