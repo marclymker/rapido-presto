@@ -503,149 +503,213 @@ export default function Home() {
         {/* Onglets sous-catégories Mariage */}
         {selectedCategory === 'Mariage' && !searchQuery.trim() && (
           <div className="bg-white mb-4 p-3 rounded-lg shadow-sm overflow-x-auto no-scrollbar">
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={() => navigateToCategory(selectedCategory)}
-                title="Tout voir"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   !selectedSubCategory
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                🎊
+                }`}>
+                  🎊
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight ${
+                  !selectedSubCategory ? 'text-orange-500' : 'text-gray-600'
+                }`}>Tout</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, 'Robe Sirène')}
-                title="Robe Sirène"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === 'Robe Sirène'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                👰
+                }`}>
+                  👰
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === 'Robe Sirène' ? 'text-orange-500' : 'text-gray-600'
+                }`}>Sirène</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, 'Robe Catalina')}
-                title="Robe Catalina"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === 'Robe Catalina'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                💃
+                }`}>
+                  💃
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === 'Robe Catalina' ? 'text-orange-500' : 'text-gray-600'
+                }`}>Catalina</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, 'Robe Ponpon (Princesse)')}
-                title="Robe Ponpon (Princesse)"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === 'Robe Ponpon (Princesse)'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                👸
+                }`}>
+                  👸
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === 'Robe Ponpon (Princesse)' ? 'text-orange-500' : 'text-gray-600'
+                }`}>Princesse</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, 'Robe Civil')}
-                title="Robe Civil"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === 'Robe Civil'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                👗
+                }`}>
+                  👗
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === 'Robe Civil' ? 'text-orange-500' : 'text-gray-600'
+                }`}>Civil</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, "Demoiselle d'honneur")}
-                title="Demoiselle d'honneur"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === "Demoiselle d'honneur"
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                💐
+                }`}>
+                  💐
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === "Demoiselle d'honneur" ? 'text-orange-500' : 'text-gray-600'
+                }`}>Demoiselle</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, 'Annonceuse')}
-                title="Annonceuse"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === 'Annonceuse'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                🌸
+                }`}>
+                  🌸
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === 'Annonceuse' ? 'text-orange-500' : 'text-gray-600'
+                }`}>Annonceuse</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, 'Témoins')}
-                title="Témoins"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === 'Témoins'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                🤵
+                }`}>
+                  🤵
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === 'Témoins' ? 'text-orange-500' : 'text-gray-600'
+                }`}>Témoins</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, 'Bague de Mariage')}
-                title="Bague de Mariage"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === 'Bague de Mariage'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                💍
+                }`}>
+                  💍
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === 'Bague de Mariage' ? 'text-orange-500' : 'text-gray-600'
+                }`}>Alliance</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, 'Bague')}
-                title="Bague"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === 'Bague'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                💎
+                }`}>
+                  💎
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === 'Bague' ? 'text-orange-500' : 'text-gray-600'
+                }`}>Bague</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, 'Accessoires')}
-                title="Accessoires"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === 'Accessoires'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                👑
+                }`}>
+                  👑
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === 'Accessoires' ? 'text-orange-500' : 'text-gray-600'
+                }`}>Accessoires</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, 'Carte et programmation')}
-                title="Carte et programmation"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === 'Carte et programmation'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                💌
+                }`}>
+                  💌
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === 'Carte et programmation' ? 'text-orange-500' : 'text-gray-600'
+                }`}>Cartes</span>
               </button>
+              
               <button
                 onClick={() => navigateToCategory(selectedCategory, 'Matériels Décor')}
-                title="Matériels Décor"
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                className="flex-shrink-0 flex flex-col items-center gap-1"
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   selectedSubCategory === 'Matériels Décor'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                🎀
+                }`}>
+                  🎀
+                </div>
+                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                  selectedSubCategory === 'Matériels Décor' ? 'text-orange-500' : 'text-gray-600'
+                }`}>Décor</span>
               </button>
             </div>
           </div>
