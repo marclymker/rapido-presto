@@ -38,6 +38,7 @@ import SquarePaymentForm from '@/components/payment/SquarePaymentForm';
 
 import { useAuth } from '@/components/auth/useAuth';
 import { useGuestCart } from '@/components/cart/useGuestCart';
+import { useBackButton } from '@/components/navigation/useBackButton';
 
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
@@ -187,6 +188,17 @@ const [tempAddress, setTempAddress] = useState('');
 const queryClient = useQueryClient();
 
 const navigate = useNavigate();
+
+// Gérer le bouton retour natif
+useBackButton(() => {
+  if (step === 'checkout') {
+    setStep('cart');
+  } else if (step === 'confirmed') {
+    navigate(createPageUrl('Home'));
+  } else {
+    navigate(-1);
+  }
+}, step !== 'cart' || true);
 
 
 

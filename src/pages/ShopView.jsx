@@ -14,6 +14,7 @@ import ProductDetailModal from '@/components/modals/ProductDetailModal';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
 import { useGuestCart } from '@/components/cart/useGuestCart';
+import { useBackButton } from '@/components/navigation/useBackButton';
 
 const WEDDING_STRUCTURE = [
   {

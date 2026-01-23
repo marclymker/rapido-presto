@@ -24,6 +24,7 @@ import SEO from '@/components/SEO';
 import SmallStories from '@/components/home/SmallStories';
 import { useAuth } from '@/components/auth/useAuth';
 import { useGuestCart } from '@/components/cart/useGuestCart';
+import { useBackButton } from '@/components/navigation/useBackButton';
 import CreditBanner from '@/components/home/CreditBanner';
 import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
@@ -74,6 +75,19 @@ export default function Home() {
   
   const selectedCategory = slugToCategory(categorySlug);
   const selectedSubCategory = slugToSubcategory(subcategorySlug, WEDDING_STRUCTURE);
+
+  // Gérer le bouton retour natif
+  useBackButton(() => {
+    if (selectedProduct) {
+      setSelectedProduct(null);
+    } else if (selectedShop) {
+      setSelectedShop(null);
+    } else if (selectedSubCategory) {
+      navigateToCategory(selectedCategory);
+    } else if (selectedCategory !== 'Tout') {
+      navigate('/', { replace: true });
+    }
+  }, selectedProduct || selectedShop || selectedSubCategory || selectedCategory !== 'Tout');
 
   useEffect(() => {
     const generateSlugs = async () => {
