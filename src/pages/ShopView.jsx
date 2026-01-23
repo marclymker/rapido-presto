@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Search, ShoppingCart, ArrowLeft, MapPin, Star, Phone, Mail, ChevronRight } from 'lucide-react';
+import { Search, ShoppingCart, ArrowLeft, MapPin, Star, Phone } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -202,11 +202,37 @@ export default function ShopView() {
     );
   }
 
+  // Get selected product for meta tags
+  const selectedProductForMeta = selectedProduct || (productSlug && allProducts.find(p => p.slug === productSlug));
+  const pageTitle = selectedProductForMeta 
+    ? `${selectedProductForMeta.name} - ${shop.company_name}` 
+    : `${shop.company_name}`;
+  const pageDescription = selectedProductForMeta 
+    ? `${selectedProductForMeta.description || selectedProductForMeta.name} - ${getClientPrice(selectedProductForMeta)} Gourdes` 
+    : `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`;
+  const pageImage = selectedProductForMeta?.image_url || shop.company_logo_url;
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <Helmet>
-        <title>{shop.company_name} - Rapido Presto</title>
-        <meta name="description" content={`Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`} />
+        <title>{pageTitle} - Rapido Presto</title>
+        <meta name="description" content={pageDescription} />
+        
+        {/* Open Graph pour partages */}
+        <meta property="og:type" content={selectedProductForMeta ? "product" : "website"} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:site_name" content="Rapido Presto" />
+        {pageImage && <meta property="og:image" content={pageImage} />}
+        {pageImage && <meta property="og:image:width" content="1200" />}
+        {pageImage && <meta property="og:image:height" content="630" />}
+        <meta property="og:url" content={window.location.href} />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        {pageImage && <meta name="twitter:image" content={pageImage} />}
       </Helmet>
 
       {/* Header */}
