@@ -40,6 +40,17 @@ export default function ShopView() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const queryClient = useQueryClient();
 
+  // Gérer le bouton retour natif
+  useBackButton(() => {
+    if (selectedProduct) {
+      setSelectedProduct(null);
+    } else if (selectedSubCategory) {
+      setSelectedSubCategory(null);
+    } else {
+      window.location.href = createPageUrl('Home');
+    }
+  }, selectedProduct || selectedSubCategory);
+
   // Get shop slug and product slug from URL
   const urlParams = new URLSearchParams(window.location.search);
   const shopSlug = urlParams.get('slug');

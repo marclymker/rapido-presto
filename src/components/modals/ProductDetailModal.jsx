@@ -10,6 +10,7 @@ import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
+import { useBackButton } from '@/components/navigation/useBackButton';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
@@ -24,6 +25,13 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+
+  // Gérer le bouton retour natif pour fermer la modale
+  useBackButton(() => {
+    if (open) {
+      onClose();
+    }
+  }, open);
 
   // --- LOGIQUE DE PARTAGE ---
   const handleShare = async () => {
