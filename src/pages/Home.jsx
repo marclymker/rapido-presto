@@ -547,6 +547,27 @@ export default function Home() {
                 </div>
             </div>
 
+            <div className="overflow-x-auto no-scrollbar">
+              <div className="flex gap-3 pb-2">
+                {articleTypes.map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => {
+                          navigateToCategory(type.id);
+                      }}
+                    className={`flex-shrink-0 px-4 py-2.5 rounded-full border-2 transition-all flex items-center gap-2 whitespace-nowrap ${
+                      selectedCategory === type.id 
+                        ? 'bg-orange-500 text-white border-orange-500 font-bold shadow-md' 
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-orange-300 hover:shadow-sm'
+                    }`}
+                  >
+                    <span className="text-lg">{type.icon}</span>
+                    <span className="text-sm font-medium">{type.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <SmallStories onCategorySelect={(c) => navigateToCategory(c)} />
             <CreditBanner />
 
