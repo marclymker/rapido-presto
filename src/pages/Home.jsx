@@ -506,44 +506,147 @@ export default function Home() {
             <div className="flex gap-2">
               <button
                 onClick={() => navigateToCategory(selectedCategory)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                title="Tout voir"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                   !selectedSubCategory
                     ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 hover:bg-gray-200'
                 }`}
               >
-                Tout voir
+                🎊
               </button>
-              {WEDDING_STRUCTURE.map((group) => {
-                if (group.subtypes) {
-                  return group.subtypes.map((subtype) => (
-                    <button
-                      key={subtype}
-                      onClick={() => navigateToCategory(selectedCategory, subtype)}
-                      className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                        selectedSubCategory === subtype
-                          ? 'bg-orange-500 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {subtype}
-                    </button>
-                  ));
-                }
-                return (
-                  <button
-                    key={group.title}
-                    onClick={() => navigateToCategory(selectedCategory, group.title)}
-                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                      selectedSubCategory === group.title
-                        ? 'bg-orange-500 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {group.title}
-                  </button>
-                );
-              })}
+              <button
+                onClick={() => navigateToCategory(selectedCategory, 'Robe Sirène')}
+                title="Robe Sirène"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === 'Robe Sirène'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                👰
+              </button>
+              <button
+                onClick={() => navigateToCategory(selectedCategory, 'Robe Catalina')}
+                title="Robe Catalina"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === 'Robe Catalina'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                💃
+              </button>
+              <button
+                onClick={() => navigateToCategory(selectedCategory, 'Robe Ponpon (Princesse)')}
+                title="Robe Ponpon (Princesse)"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === 'Robe Ponpon (Princesse)'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                👸
+              </button>
+              <button
+                onClick={() => navigateToCategory(selectedCategory, 'Robe Civil')}
+                title="Robe Civil"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === 'Robe Civil'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                👗
+              </button>
+              <button
+                onClick={() => navigateToCategory(selectedCategory, "Demoiselle d'honneur")}
+                title="Demoiselle d'honneur"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === "Demoiselle d'honneur"
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                💐
+              </button>
+              <button
+                onClick={() => navigateToCategory(selectedCategory, 'Annonceuse')}
+                title="Annonceuse"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === 'Annonceuse'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                🌸
+              </button>
+              <button
+                onClick={() => navigateToCategory(selectedCategory, 'Témoins')}
+                title="Témoins"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === 'Témoins'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                🤵
+              </button>
+              <button
+                onClick={() => navigateToCategory(selectedCategory, 'Bague de Mariage')}
+                title="Bague de Mariage"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === 'Bague de Mariage'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                💍
+              </button>
+              <button
+                onClick={() => navigateToCategory(selectedCategory, 'Bague')}
+                title="Bague"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === 'Bague'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                💎
+              </button>
+              <button
+                onClick={() => navigateToCategory(selectedCategory, 'Accessoires')}
+                title="Accessoires"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === 'Accessoires'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                👑
+              </button>
+              <button
+                onClick={() => navigateToCategory(selectedCategory, 'Carte et programmation')}
+                title="Carte et programmation"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === 'Carte et programmation'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                💌
+              </button>
+              <button
+                onClick={() => navigateToCategory(selectedCategory, 'Matériels Décor')}
+                title="Matériels Décor"
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                  selectedSubCategory === 'Matériels Décor'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                🎀
+              </button>
             </div>
           </div>
         )}
