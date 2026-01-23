@@ -24,6 +24,13 @@ Deno.serve(async (req) => {
         { user_id: user.id }
       );
 
+      // Get user activity (views, clicks, searches)
+      const activities = await base44.asServiceRole.entities.UserActivity.filter(
+        { user_id: user.id },
+        '-created_date',
+        50
+      );
+
       // Get all active shops
       const activeShops = await base44.asServiceRole.entities.Shop.filter(
         { is_active: true }
@@ -50,22 +57,50 @@ Deno.serve(async (req) => {
 
       const cartProductIds = cartItems.map(c => c.product_id);
 
+      // Analyser les activités
+      const viewedProducts = activities
+        .filter(a => a.activity_type === 'product_view')
+        .map(a => a.product_id);
+      
+      const viewedCategories = activities
+        .filter(a => a.category)
+        .map(a => a.category);
+      
+      const searchQueries = activities
+        .filter(a => a.activity_type === 'search')
+        .map(a => a.search_query)
+        .filter(Boolean);
+
+      // Calculer les catégories les plus intéressantes
+      const categoryFrequency = {};
+      [...purchasedCategories, ...viewedCategories].forEach(cat => {
+        categoryFrequency[cat] = (categoryFrequency[cat] || 0) + 1;
+      });
+      const topCategories = Object.entries(categoryFrequency)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([cat]) => cat);
+
       // Build AI prompt for personalized recommendations
       const prompt = `Tu es un expert en recommandations produits pour une marketplace haïtienne.
 
-Historique d'achat de l'utilisateur :
+Profil utilisateur :
 - Catégories achetées: ${purchasedCategories.join(', ') || 'Aucune'}
 - Nombre de commandes: ${orders.length}
+- Produits consultés récemment: ${viewedProducts.slice(0, 5).length}
+- Catégories consultées: ${topCategories.join(', ') || 'Aucune'}
+- Recherches récentes: ${searchQueries.slice(0, 3).join(', ') || 'Aucune'}
 - Produits dans le panier: ${cartProductIds.length}
 
 Produits disponibles (extrait):
 ${validProducts.slice(0, 20).map(p => `- ${p.name} (${p.category}) - ${p.price} HTG`).join('\n')}
 
-Recommande ${limit} produits pertinents basés sur l'historique. Retourne une liste d'IDs de produits en JSON.
+Recommande ${limit} produits pertinents basés sur l'historique complet. Retourne une liste d'IDs de produits en JSON.
 Privilégie:
-1. Des catégories similaires à celles achetées
-2. Des produits complémentaires
-3. Des nouveautés dans les catégories favorites
+1. Des catégories fréquemment consultées: ${topCategories.join(', ')}
+2. Des produits liés aux recherches: ${searchQueries.slice(0, 2).join(', ')}
+3. Des produits complémentaires aux achats
+4. Des nouveautés dans les catégories favorites
 
 Format: {"product_ids": ["id1", "id2", ...]}`;
 
@@ -101,12 +136,13 @@ Format: {"product_ids": ["id1", "id2", ...]}`;
         return Response.json({ recommendations });
       } catch (aiError) {
         console.error('AI recommendation error:', aiError);
-        // Fallback: similar categories
+        // Fallback: produits des catégories top consultées
         const similarProducts = validProducts
           .filter(p => 
-            purchasedCategories.includes(p.category) && 
+            (topCategories.includes(p.category) || purchasedCategories.includes(p.category)) && 
             !purchasedProducts.includes(p.id) &&
-            !cartProductIds.includes(p.id)
+            !cartProductIds.includes(p.id) &&
+            !viewedProducts.includes(p.id)
           )
           .sort(() => Math.random() - 0.5)
           .slice(0, limit);

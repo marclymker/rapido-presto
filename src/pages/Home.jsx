@@ -25,6 +25,7 @@ import SmallStories from '@/components/home/SmallStories';
 import { useAuth } from '@/components/auth/useAuth';
 import { useGuestCart } from '@/components/cart/useGuestCart';
 import { useBackButton } from '@/components/navigation/useBackButton';
+import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import CreditBanner from '@/components/home/CreditBanner';
 import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
@@ -55,6 +56,7 @@ export default function Home() {
   const { addToGuestCart } = useGuestCart();
   const navigate = useNavigate();
   const location = useLocation();
+  const { trackProductView, trackCategoryView, trackShopView, trackSearch, trackAddToCart } = useActivityTracker();
   
   const [selectedShop, setSelectedShop] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,6 +139,9 @@ export default function Home() {
     navigate(queryString ? `?${queryString}` : '/', { replace: true });
     setSelectedShop(null);
     setGooglePlaces([]);
+    
+    // Track category view
+    trackCategoryView(category);
   };
 
   useEffect(() => {
@@ -146,6 +151,9 @@ export default function Home() {
 
     const handleSearchQuery = (e) => {
       setSearchQuery(e.detail);
+      if (e.detail) {
+        trackSearch(e.detail);
+      }
     };
 
     window.addEventListener('selectCategory', handleCategorySelect);
@@ -319,6 +327,9 @@ export default function Home() {
   });
 
   const handleAddToCart = (product, quantity = 1) => {
+    // Track add to cart
+    trackAddToCart(product);
+    
     if (!user) {
       // Add to guest cart
       const productShop = shops.find(s => s.id === product.shop_id) || selectedShop;
@@ -511,6 +522,7 @@ export default function Home() {
                           }}
                           onClick={() => {
                               const shop = shops.find(s => s.id === product.shop_id);
+                              trackProductView(product, shop);
                               if (shop?.slug && product.slug) {
                                 window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
                               } else if (shop) {
