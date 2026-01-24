@@ -182,6 +182,7 @@ export default function Layout({ children, currentPageName }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
         <meta name="google-site-verification" content="INa9gqcSulkml5JtloQvw_k9lVR-AKcxha0eRYbvqoI" />
+        <meta name="google-site-verification" content="TGLvYzGeMnDhLk5dxXLxm-_9a3zAAgAt-BBTDzQehUM" />
 
         {/* Google Tag Manager */}
         <script>{`
