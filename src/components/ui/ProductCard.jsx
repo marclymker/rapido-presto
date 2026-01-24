@@ -43,7 +43,7 @@ export default function ProductCard({ product, onAdd, onClick, shop, hideId = fa
         >
           {product.image_url ? (
             <img
-              src={product.image_url}
+              src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=300&q=75`}
               className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
               alt={product.name}
               loading="lazy"
