@@ -237,6 +237,16 @@ export default function Layout({ children, currentPageName }) {
         />
       </noscript>
 
+      {/* Google Tag Manager (noscript) - Second Container */}
+      <noscript>
+        <iframe 
+          src="https://www.googletagmanager.com/ns.html?id=GTM-P7C42MMP"
+          height="0" 
+          width="0" 
+          style={{display: 'none', visibility: 'hidden'}}
+        />
+      </noscript>
+
       {/* Cookie Consent Banner */}
       <CookieConsent 
         onAccept={handleCookieAccept}
