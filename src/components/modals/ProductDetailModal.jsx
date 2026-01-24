@@ -134,19 +134,25 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
     if (!product.image_url) return;
     setDownloading(true);
     try {
-      const response = await fetch(product.image_url);
+      const response = await fetch(product.image_url, { mode: 'cors' });
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `produit-${product.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.jpg`;
+      link.download = `${product.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.jpg`;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success("Image téléchargée avec succès");
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      toast.success("Image téléchargée");
     } catch (error) {
-      toast.error("Erreur lors du téléchargement");
+      console.error('Download error:', error);
+      // Fallback: ouvrir dans un nouvel onglet
+      window.open(product.image_url, '_blank');
+      toast.info("Image ouverte dans un nouvel onglet");
     } finally {
       setDownloading(false);
     }
