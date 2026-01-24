@@ -9,6 +9,8 @@ export default function UpdateProducts() {
   const [result, setResult] = useState(null);
   const [loadingInventory, setLoadingInventory] = useState(false);
   const [inventoryResult, setInventoryResult] = useState(null);
+  const [compressingImages, setCompressingImages] = useState(false);
+  const [compressResult, setCompressResult] = useState(null);
 
   const handleUpdate = async () => {
     setLoading(true);
@@ -35,6 +37,20 @@ export default function UpdateProducts() {
       setInventoryResult({ error: error.message });
     } finally {
       setLoadingInventory(false);
+    }
+  };
+
+  const handleCompressImages = async () => {
+    setCompressingImages(true);
+    setCompressResult(null);
+    
+    try {
+      const response = await base44.functions.invoke('compressAllImages');
+      setCompressResult(response.data);
+    } catch (error) {
+      setCompressResult({ error: error.message });
+    } finally {
+      setCompressingImages(false);
     }
   };
 
@@ -144,6 +160,55 @@ export default function UpdateProducts() {
                             ))}
                           </ul>
                         </details>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Compression des images</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Cette action va optimiser toutes les photos des produits en ajoutant des paramètres de compression (800px, qualité 80%).
+            </p>
+            
+            <Button 
+              onClick={handleCompressImages}
+              disabled={compressingImages}
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              {compressingImages && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Compresser toutes les images
+            </Button>
+
+            {compressResult && (
+              <div className={`p-4 rounded-lg ${compressResult.error ? 'bg-red-50' : 'bg-green-50'}`}>
+                {compressResult.error ? (
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-500 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-red-800">Erreur</p>
+                      <p className="text-sm text-red-600">{compressResult.error}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-green-800">Images compressées !</p>
+                      <p className="text-sm text-green-600">
+                        {compressResult.compressed} images compressées sur {compressResult.total} produits
+                      </p>
+                      {compressResult.failed > 0 && (
+                        <p className="text-sm text-yellow-600 mt-1">
+                          {compressResult.failed} erreurs
+                        </p>
                       )}
                     </div>
                   </div>
