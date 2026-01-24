@@ -252,7 +252,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             >
               <img 
                 ref={imageRef}
-                src={product.image_url} 
+                src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=800&q=85`} 
                 alt={product.name} 
                 className="max-w-full max-h-full object-contain transition-opacity duration-300"
                 style={{ opacity: imageLoaded ? 1 : 0 }}

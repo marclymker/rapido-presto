@@ -796,7 +796,7 @@ export default function Home() {
                       </div>
 
                       <div className="relative h-40 mb-3 overflow-hidden">
-                        <img src={product.image_url} className="w-full h-full object-contain group-hover:scale-105 transition-transform" alt={product.name} />
+                        <img src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=300&q=75`} className="w-full h-full object-contain group-hover:scale-105 transition-transform" alt={product.name} loading="lazy" />
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm text-[#007185] group-hover:text-[#C7511F] hover:underline leading-snug line-clamp-2 h-9 overflow-hidden">{product.name}</p>
@@ -1216,7 +1216,7 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
                         {isMakarios ? 'Réponse Rapide' : 'Livraison Rapide'}
                     </div>
 
-                    <div className="h-40 bg-gray-50 mb-2 p-2"><img src={product.image_url} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" /></div>
+                    <div className="h-40 bg-gray-50 mb-2 p-2"><img src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=300&q=75`} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" loading="lazy" /></div>
                     <div className="text-sm text-[#007185] hover:text-[#C7511F] line-clamp-2 h-10 mb-1">{product.name}</div>
                     <div className="font-medium text-lg text-[#B12704]">{Math.floor(getClientPrice(product))}.00 Gourdes</div>
                   </div>
