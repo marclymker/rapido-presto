@@ -88,6 +88,28 @@ Deno.serve(async (req) => {
         last_message: body.content,
         last_message_date: new Date().toISOString()
       });
+
+      // Déclencher la réponse IA automatique si c'est le client qui envoie
+      const conversation = await base44.entities.Conversation.get(body.conversation_id);
+      if (conversation && conversation.customer_id === user.id && body.enable_ai !== false) {
+        try {
+          // Récupérer le contexte produit si disponible
+          let productContext = null;
+          if (conversation.product_context_id) {
+            productContext = await base44.entities.Product.get(conversation.product_context_id);
+          }
+
+          // Appeler l'IA (sans attendre la réponse)
+          base44.functions.invoke('aiChatAssistant', {
+            conversation_id: body.conversation_id,
+            customer_message: body.content,
+            product_context: productContext
+          }).catch(err => console.error('AI response failed:', err));
+        } catch (err) {
+          console.error('AI trigger error:', err);
+        }
+      }
+
       return new Response(JSON.stringify({ data: message }), { headers });
     }
 
