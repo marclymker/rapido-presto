@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { X, Download, Sparkles, Smartphone, Share2, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { detectAccessSource } from '@/components/utils/detectFacebookInApp';
+import { getAccessSource } from '@/components/utils/detectFacebookInApp';
 
 export default function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
@@ -25,7 +25,7 @@ export default function InstallPrompt() {
     fetchUser();
 
     // Detect access source
-    const source = detectAccessSource();
+    const source = getAccessSource();
     setAccessSource(source);
   }, []);
 
