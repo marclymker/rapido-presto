@@ -37,9 +37,16 @@ export default function ProductCard({ product, onAdd, onClick, shop, hideId = fa
           </button>
         )}
 
+        {/* Logo MonCash en bas à gauche */}
+        <img
+          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
+          alt="MonCash"
+          className="absolute bottom-2 left-2 h-3 opacity-70 group-hover:opacity-100 transition-opacity z-10"
+        />
+
         {/* Image */}
         <div
-          className="w-full h-full p-2 cursor-pointer touch-manipulation relative"
+          className="w-full h-full p-2 cursor-pointer touch-manipulation"
           onClick={() => product.is_available !== false && onClick && onClick(product)}
         >
           {product.image_url ? (
@@ -55,12 +62,6 @@ export default function ProductCard({ product, onAdd, onClick, shop, hideId = fa
               Photo à venir
             </div>
           )}
-          {/* Logo MonCash en bas à gauche */}
-          <img
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
-            alt="MonCash"
-            className="absolute bottom-2 left-2 h-3 opacity-70 group-hover:opacity-100 transition-opacity"
-          />
         </div>
 
         {/* Overlay Indisponible */}

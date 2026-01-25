@@ -245,6 +245,15 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             className="relative aspect-[4/3] sm:aspect-square w-full bg-slate-100 overflow-hidden cursor-move"
             onMouseDown={handleMouseDown}
           >
+            {/* Logo MonCash en bas à gauche */}
+            {imageLoaded && (
+              <img
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
+                alt="MonCash"
+                className="absolute bottom-4 left-4 h-4 opacity-80 z-10"
+              />
+            )}
+
             <div 
               className="w-full h-full flex items-center justify-center transition-transform duration-200"
               style={{
@@ -263,15 +272,6 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-slate-300" />
                 </div>
-              )}
-              {/* Logo MonCash en bas à gauche */}
-              {imageLoaded && (
-                <img
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
-                  alt="MonCash"
-                  className="absolute bottom-3 left-3 h-4 opacity-80 pointer-events-none"
-                  style={{ pointerEvents: 'none' }}
-                />
               )}
             </div>
 
