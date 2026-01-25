@@ -205,15 +205,12 @@ export default function Layout({ children, currentPageName }) {
         `}</script>
 
         {/* Google Analytics 4 */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-3RQXJBJN7Z"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-JHEWLB2WTT"></script>
         <script>{`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', 'G-3RQXJBJN7Z', {
-            send_page_view: true,
-            currency: 'HTG'
-          });
+          gtag('config', 'G-JHEWLB2WTT');
         `}</script>
 
         {/* Meta Pixel Code */}
