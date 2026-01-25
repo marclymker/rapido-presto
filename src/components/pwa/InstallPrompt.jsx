@@ -35,23 +35,30 @@ export default function InstallPrompt() {
                        window.navigator.standalone === true;
 
     if (isInstalled) {
-      return; // Don't show if already installed
-    }
-
-    // Check if user already installed
-    const installed = localStorage.getItem('pwa_installed');
-    if (installed) {
+      console.log('[PWA] App already installed (standalone mode)');
       return;
     }
 
+    // Check if user already dismissed or installed
+    const installed = localStorage.getItem('pwa_installed');
+    if (installed) {
+      console.log('[PWA] User already has pwa_installed flag');
+      return;
+    }
+
+    console.log('[PWA] Initializing install prompt detection');
+    console.log('[PWA] Access source:', accessSource);
+
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e) => {
+      console.log('[PWA] beforeinstallprompt event fired');
       e.preventDefault();
       setDeferredPrompt(e);
       setPromptType('browser');
       
       // Show prompt after 5 seconds
       setTimeout(() => {
+        console.log('[PWA] Showing browser install prompt');
         setShowPrompt(true);
       }, 5000);
     };
@@ -60,19 +67,27 @@ export default function InstallPrompt() {
 
     // Fallback: pour InAPP browsers (Facebook, Instagram, Messenger)
     // Montrer invitation après 3 secondes
-    if (!isInstalled && ['facebook_inapp', 'instagram_inapp', 'messenger_inapp'].includes(accessSource)) {
-      setTimeout(() => {
+    const isInAppBrowser = accessSource && ['facebook_inapp', 'instagram_inapp', 'messenger_inapp'].includes(accessSource);
+    if (isInAppBrowser) {
+      console.log('[PWA] InAPP browser detected:', accessSource);
+      const inappTimeout = setTimeout(() => {
+        console.log('[PWA] Showing InAPP browser prompt');
         setPromptType('inapp');
         setShowPrompt(true);
       }, 3000);
+
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        clearTimeout(inappTimeout);
+      };
     }
 
     // Check if already in standalone mode (installed)
     const handleAppInstalled = async () => {
+      console.log('[PWA] appinstalled event fired');
       localStorage.setItem('pwa_installed', 'true');
       setShowPrompt(false);
       
-      // Save to user profile if logged in
       if (user) {
         try {
           await base44.auth.updateMe({ pwa_installed: true });
@@ -92,19 +107,20 @@ export default function InstallPrompt() {
         const now = Date.now();
         const minutesSinceDismissed = (now - dismissedTime) / (1000 * 60);
         
-        if (minutesSinceDismissed >= 5 && deferredPrompt) {
+        if (minutesSinceDismissed >= 5) {
+          console.log('[PWA] Re-showing prompt after 5 minutes');
           setShowPrompt(true);
           localStorage.removeItem('pwa_install_dismissed');
         }
       }
-    }, 60000); // Check every minute
+    }, 60000);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
       clearInterval(intervalId);
     };
-  }, [user, deferredPrompt, accessSource]);
+  }, [user, accessSource]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
