@@ -36,6 +36,7 @@ import FlowersBanner from '@/components/home/FlowersBanner';
 import GiftBanner from '@/components/home/GiftBanner';
 import AdvancedSearch from '@/components/search/AdvancedSearch';
 import SearchResults from '@/components/search/SearchResults';
+import NewMessagesBanner from '@/components/home/NewMessagesBanner';
 
 // --- CONFIGURATION DES SOUS-CATÉGORIES MARIAGE ---
 const WEDDING_STRUCTURE = [
@@ -1198,6 +1199,8 @@ export default function Home() {
             </div>
         </div>
       )}
+
+      <NewMessagesBanner user={user} />
 
       <ProductDetailModal
         product={selectedProduct}
