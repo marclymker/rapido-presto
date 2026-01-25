@@ -11,6 +11,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { useBackButton } from '@/components/navigation/useBackButton';
+import ChatButton from '@/components/chat/ChatButton';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
@@ -376,11 +377,8 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             />
           </div>
 
-          {shop?.company_category === "Mariage" && (
-            <Button onClick={() => window.open('https://wa.me/c/50948690366', '_blank')} className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl mb-3">
-              WhatsApp
-            </Button>
-          )}
+          <ChatButton product={product} shop={shop} />
+          
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-slate-100 rounded-xl p-1">
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus size={14} /></Button>
