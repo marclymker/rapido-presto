@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import QuickSellButton from '@/components/product/QuickSellButton';
 
 const REGIONS = [
   "Petion-ville", "Route de Freres", "Delmas", "Pelerin", "Thomassain", "Kenscoff",
@@ -143,6 +144,14 @@ export default function Account() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
 
+        {/* Quick Sell Button */}
+        <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 border-2 border-orange-200">
+          <h3 className="font-semibold mb-2 text-slate-800">Vendez vos articles</h3>
+          <p className="text-sm text-slate-600 mb-3">
+            Publiez vos produits en quelques secondes et vendez à des milliers de clients
+          </p>
+          <QuickSellButton user={user} />
+        </div>
 
         {/* Profile Info */}
         <div className="bg-white rounded-xl p-4">
