@@ -36,12 +36,24 @@ Deno.serve(async (req) => {
     const conversation = await base44.entities.Conversation.get(conversation_id);
     const shop = await base44.entities.Shop.get(conversation.shop_id);
 
+    // Récupérer TOUS les produits de la boutique
+    const allProducts = await base44.entities.Product.filter({ 
+      shop_id: conversation.shop_id,
+      is_available: true 
+    });
+
+    // Formater la liste des produits pour l'IA
+    const productsList = allProducts.map(p => 
+      `- ${p.name}: ${p.price} HTG${p.promo_price ? ` (Promo: ${p.promo_price} HTG)` : ''} - ${p.description || 'Pas de description'}`
+    ).join('\n');
+
     // Construire le contexte pour l'IA
     const systemPrompt = `Tu es un assistant commercial IA pour ${shop.company_name}, une boutique de ${shop.company_category} sur Rapido Presto en Haïti.
 
 Ton rôle :
 - Répondre aux questions des clients de manière professionnelle et amicale
 - Donner des informations sur les produits, prix, et disponibilité
+- Recommander des produits similaires ou complémentaires de la boutique
 - Aider avec les commandes et la livraison
 - Être courtois et utiliser le créole haïtien ou français selon le client
 - Rester concis et utile
@@ -52,8 +64,12 @@ Informations boutique :
 - Région : ${shop.region || 'Non spécifiée'}
 - Horaires : ${shop.opening_hours ? 'Disponibles' : 'À confirmer'}
 
-${product_context ? `Produit en contexte : ${product_context.name} - ${product_context.price} HTG` : ''}
+${product_context ? `Produit en contexte initial : ${product_context.name} - ${product_context.price} HTG\n` : ''}
 
+CATALOGUE COMPLET DE LA BOUTIQUE (${allProducts.length} produits disponibles):
+${productsList}
+
+Tu peux recommander n'importe quel produit de ce catalogue selon les besoins du client.
 Réponds au client de manière naturelle et professionnelle.`;
 
     // Construire l'historique des messages
