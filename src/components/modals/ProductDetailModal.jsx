@@ -366,6 +366,16 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
         </div>
 
         <div className="p-4 bg-white border-t border-slate-100 space-y-3 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+          {/* Logo MonCash */}
+          <div className="flex items-center justify-center gap-2 py-2 border-t border-slate-50">
+            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Paiement sécurisé</span>
+            <img
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
+              alt="MonCash"
+              className="h-4 opacity-80"
+            />
+          </div>
+
           {shop?.company_category === "Mariage" && (
             <Button onClick={() => window.open('https://wa.me/c/50948690366', '_blank')} className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl mb-3">
               WhatsApp
