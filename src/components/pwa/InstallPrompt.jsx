@@ -181,15 +181,22 @@ export default function InstallPrompt() {
               {/* Icon */}
               <div className="flex items-start gap-4 mb-4">
                 <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 shadow-lg">
-                  <Smartphone className="w-8 h-8 text-white" />
+                  {promptType === 'inapp' ? (
+                    <ExternalLink className="w-8 h-8 text-white" />
+                  ) : (
+                    <Smartphone className="w-8 h-8 text-white" />
+                  )}
                 </div>
                 
                 <div className="flex-1">
                   <h3 className="text-white font-bold text-lg mb-1">
-                    Installer Rapido Presto
+                    {promptType === 'inapp' ? 'Ouvrir dans le navigateur' : 'Installer Rapido Presto'}
                   </h3>
                   <p className="text-white/90 text-sm leading-relaxed">
-                    Accédez instantanément depuis votre écran d'accueil pour une expérience plus rapide et fluide
+                    {promptType === 'inapp'
+                      ? 'Ouvrez l\'app dans votre navigateur pour une meilleure expérience et installer le PWA'
+                      : 'Accédez instantanément depuis votre écran d\'accueil pour une expérience plus rapide et fluide'
+                    }
                   </p>
                 </div>
               </div>
@@ -212,20 +219,41 @@ export default function InstallPrompt() {
 
               {/* Buttons */}
               <div className="flex gap-3">
-                <Button
-                  onClick={handleInstall}
-                  className="flex-1 bg-white text-orange-600 hover:bg-orange-50 font-bold shadow-lg h-11 text-base"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Installer maintenant
-                </Button>
-                <Button
-                  onClick={handleDismiss}
-                  variant="ghost"
-                  className="text-white hover:bg-white/10 font-medium"
-                >
-                  Plus tard
-                </Button>
+                {promptType === 'browser' && deferredPrompt ? (
+                  <>
+                    <Button
+                      onClick={handleInstall}
+                      className="flex-1 bg-white text-orange-600 hover:bg-orange-50 font-bold shadow-lg h-11 text-base"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Installer maintenant
+                    </Button>
+                    <Button
+                      onClick={handleDismiss}
+                      variant="ghost"
+                      className="text-white hover:bg-white/10 font-medium"
+                    >
+                      Plus tard
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      onClick={handleOpenInBrowser}
+                      className="flex-1 bg-white text-orange-600 hover:bg-orange-50 font-bold shadow-lg h-11 text-base"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Ouvrir le navigateur
+                    </Button>
+                    <Button
+                      onClick={handleDismiss}
+                      variant="ghost"
+                      className="text-white hover:bg-white/10 font-medium"
+                    >
+                      Plus tard
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
 
