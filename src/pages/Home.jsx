@@ -24,6 +24,7 @@ import SEO from '@/components/SEO';
 import SmallStories from '@/components/home/SmallStories';
 import { useAuth } from '@/components/auth/useAuth';
 import { useGuestCart } from '@/components/cart/useGuestCart';
+import WeddingCreditBanner from '@/components/home/WeddingCreditBanner';
 import { useBackButton } from '@/components/navigation/useBackButton';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import CreditBanner from '@/components/home/CreditBanner';
@@ -522,6 +523,13 @@ export default function Home() {
 
       <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-32">
         
+        {/* Wedding Credit Banner - Entre hero et contenu principal */}
+        {selectedCategory === 'Mariage' && !selectedShop && (
+          <div className="mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4">
+            <WeddingCreditBanner />
+          </div>
+        )}
+
         {/* Advanced Search */}
         {showAdvancedSearch && (
           <div className="mb-4 animate-in slide-in-from-top-4">
@@ -1016,9 +1024,16 @@ export default function Home() {
                             <div className="space-y-8">
                                 {selectedSubCategory ? (
                                     <div className="bg-white p-4 rounded-lg shadow-sm">
+                                        {/* Wedding Credit Banner - Après 2ème rangée de produits */}
+                                        {weddingProductsBySubCategory[selectedSubCategory]?.slice(0, 8).length > 0 && (
+                                          <div className="mb-8 col-span-full">
+                                            <WeddingCreditBanner />
+                                          </div>
+                                        )}
+
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            {weddingProductsBySubCategory[selectedSubCategory]?.length > 0 ? (
-                                                weddingProductsBySubCategory[selectedSubCategory].map(product => {
+                                                         {weddingProductsBySubCategory[selectedSubCategory]?.length > 0 ? (
+                                                             weddingProductsBySubCategory[selectedSubCategory].map(product => {
                                                     const shop = shops.find(s => s.id === product.shop_id);
                                                     return (
                                                         <ProductCard
