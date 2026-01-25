@@ -803,23 +803,23 @@ Passer au paiement
 
 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
 
-{['card', 'moncash', 'natcash'].map((m) => (
+  {['moncash', 'natcash'].map((m) => (
 
-<div key={m} className={`flex items-center space-x-3 p-4 border rounded-xl uppercase text-[10px] font-bold tracking-widest ${paymentMethod === m ? 'border-orange-500 bg-orange-50/30' : 'border-gray-100'}`}>
+    <div key={m} className={`flex items-center space-x-3 p-4 border rounded-xl uppercase text-[10px] font-bold tracking-widest ${paymentMethod === m ? 'border-orange-500 bg-orange-50/30' : 'border-gray-100'}`}>
 
-<RadioGroupItem value={m} id={m} />
+      <RadioGroupItem value={m} id={m} />
 
-<Label htmlFor={m} className="flex-1 cursor-pointer flex justify-between items-center">
+      <Label htmlFor={m} className="flex-1 cursor-pointer flex justify-between items-center">
 
-{m === 'card' ? 'Carte de Crédit' : m.toUpperCase()}
+        {m.toUpperCase()}
 
-{m === 'moncash' && <span className="bg-[#df1f26] text-white px-2 py-0.5 rounded">Recommandé</span>}
+        {m === 'moncash' && <span className="bg-[#df1f26] text-white px-2 py-0.5 rounded">Recommandé</span>}
 
-</Label>
+      </Label>
 
-</div>
+    </div>
 
-))}
+  ))}
 
 </RadioGroup>
 
