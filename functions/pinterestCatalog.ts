@@ -37,12 +37,9 @@ Deno.serve(async (req) => {
       const price = product.promo_price || product.price;
       
       // Construire l'URL du produit
-      let productUrl;
-      if (shop?.slug && product.slug) {
-        productUrl = `https://rapido-presto.base44.app/shop/${shop.slug}/product/${product.slug}`;
-      } else {
-        productUrl = `https://rapido-presto.base44.app/?product=${product.id}`;
-      }
+      const productUrl = product.slug 
+        ? `https://rapido-presto.base44.app/product?slug=${product.slug}` 
+        : `https://rapido-presto.base44.app/product?id=${product.id}`;
       
       return {
         id: product.id,

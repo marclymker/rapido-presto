@@ -23,7 +23,9 @@ Deno.serve(async (req) => {
                 ? product.promo_price 
                 : product.price;
 
-            const productUrl = `https://rapido-presto.base44.app/product?slug=${product.slug || product.id}`;
+            const productUrl = product.slug 
+                ? `https://rapido-presto.base44.app/product?slug=${product.slug}` 
+                : `https://rapido-presto.base44.app/product?id=${product.id}`;
             const imageUrl = product.image_url || '';
 
             // Map category to Google product category
