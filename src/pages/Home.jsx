@@ -1208,7 +1208,7 @@ export default function Home() {
         user={user}
         similarProducts={[]}
         onProductChange={(newProduct) => {
-          const newShop = shops.find(s => s.id => newProduct.shop_id);
+          const newShop = shops.find(s => s.id === newProduct.shop_id);
           if (newShop) setSelectedShop(newShop);
           setSelectedProduct(newProduct);
         }}
