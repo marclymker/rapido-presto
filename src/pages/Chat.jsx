@@ -4,30 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Send, MessageSquare, ArrowLeft } from 'lucide-react';
-<button 
-  onClick={() => {
-    // Test vibration
-    if (navigator.vibrate) {
-      navigator.vibrate([500, 200, 500]);
-      console.log("✅ Vibration testée");
-    }
-    
-    // Test son
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    audio.play().then(() => console.log("✅ Son joué")).catch(e => console.log("❌ Son bloqué:", e));
-    
-    // Test notification
-    if (Notification.permission === "granted") {
-      new Notification("TEST", { body: "Ça marche !" });
-      console.log("✅ Notification envoyée");
-    } else {
-      console.log("❌ Permission notifications:", Notification.permission);
-    }
-  }}
-  className="bg-red-500 text-white p-4 fixed top-4 right-4 z-50"
->
-  🔔 TEST NOTIFS
-</button>
+
 export default function Chat() {
   const [user, setUser] = useState(null);
   const [selectedConv, setSelectedConv] = useState(null);
