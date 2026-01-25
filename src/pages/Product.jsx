@@ -244,12 +244,8 @@ export default function Product() {
 
   useEffect(() => {
     const fetchData = async () => {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setUser(MOCK_USER);
-      setProduct(MOCK_PRODUCT);
-      setActiveImage(MOCK_PRODUCT.images[0]); // Set initial image
-      setShop(MOCK_SHOP);
-      setIsLoading(false);
+      // Rediriger vers la page d'accueil si produit introuvable
+      window.location.href = '/';
     };
     fetchData();
   }, []);
@@ -289,7 +285,18 @@ export default function Product() {
     );
   }
 
-  if (!product) return <div>Produit introuvable</div>;
+  if (!product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center p-6">
+          <div className="text-6xl mb-4">🔍</div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Produit introuvable</h2>
+          <p className="text-slate-600 mb-4">Ce produit n'existe plus ou a été supprimé.</p>
+          <p className="text-sm text-slate-500">Redirection vers l'accueil...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white pb-32 font-sans text-slate-900">
