@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Minus, Plus, Store, MessageSquare, Loader2, MapPin, X, 
   ChevronRight, ZoomIn, ZoomOut, Download, RotateCcw, 
-  Share2 // Ajout de l'icône de partage
+  Share2, Plus as PlusIcon
 } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { base44 } from '@/api/base44Client';
@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { useBackButton } from '@/components/navigation/useBackButton';
 import ChatButton from '@/components/chat/ChatButton';
+import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
@@ -26,6 +27,8 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [showCreateProductModal, setShowCreateProductModal] = useState(false);
+  const [userShop, setUserShop] = useState(null);
 
   // Gérer le bouton retour natif pour fermer la modale
   useBackButton(() => {
@@ -33,6 +36,19 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
       onClose();
     }
   }, open);
+
+  // Récupérer la boutique de l'utilisateur si c'est un vendeur
+  useEffect(() => {
+    if (user?.id && open) {
+      base44.entities.Shop.filter({ user_id: user.id })
+        .then(shops => {
+          if (shops.length > 0) {
+            setUserShop(shops[0]);
+          }
+        })
+        .catch(err => console.log('Erreur chargement boutique:', err));
+    }
+  }, [user?.id, open]);
 
   // --- LOGIQUE DE PARTAGE ---
   const handleShare = async () => {
