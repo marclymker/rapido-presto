@@ -183,6 +183,7 @@ export default function Layout({ children, currentPageName }) {
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
         <meta name="google-site-verification" content="INa9gqcSulkml5JtloQvw_k9lVR-AKcxha0eRYbvqoI" />
         <meta name="google-site-verification" content="TGLvYzGeMnDhLk5dxXLxm-_9a3zAAgAt-BBTDzQehUM" />
+        <meta name="google-site-verification" content="google2665276976d944ab" />
 
         {/* Google Tag Manager */}
         <script>{`
