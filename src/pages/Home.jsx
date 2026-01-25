@@ -1144,6 +1144,8 @@ export default function Home() {
             </main>
           </div>
         )}
+          </>
+        )}
       </main>
 
       {user && cartCount > 0 && (
@@ -1216,8 +1218,6 @@ export default function Home() {
         open={showProfileModal}
         onComplete={handleProfileComplete}
       />
-          </>
-        )}
     </div>
   );
 }
