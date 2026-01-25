@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
 import { 
   ArrowLeft, 
   ShoppingCart, 
@@ -18,98 +19,11 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-/**
- * MOCK DATA & UTILS
- */
-
-const MOCK_USER = {
-  id: 'user_123',
-  name: 'Jean Baptiste',
-  email: 'jean@example.com'
-};
-
-const MOCK_SHOP = {
-  id: 'shop_01',
-  user_id: 'vendor_01',
-  company_name: 'Rapido Presto Mariage',
-  company_logo_url: 'https://images.unsplash.com/photo-1532529867795-e3b29ae00366?auto=format&fit=crop&w=200&h=200',
-  region: 'Pétion-Ville, Haïti',
-  company_category: 'Mariage',
-  rating: 4.8,
-  years_active: 4
-};
-
-const MOCK_PRODUCT = {
-  id: 'prod_88',
-  shop_id: 'shop_01',
-  name: 'Robe de Mariée Bohème',
-  description: 'Une magnifique robe en dentelle style bohème, parfaite pour les cérémonies en plein air. Tissu léger et respirant, finitions main. Conçue pour offrir élégance et confort tout au long de votre journée spéciale.',
-  price: 45000,
-  promo_price: 38500,
-  // Ajout d'une galerie d'images
-  images: [
-    'https://images.unsplash.com/photo-1594552072238-b8a33785b261?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1546193430-c2d207739ed7?auto=format&fit=crop&w=800&q=80'
-  ],
-  stock_quantity: 3,
-  is_available: true,
-  delivery_time: '3-5 jours',
-  category: 'Mariage',
-  rating: 4.7,
-  reviews_count: 124,
-  customization_options: {
-    text_customization: { price: 1500 },
-    colors: [
-      { name: 'Blanc Pur', value: '#ffffff', additional_price: 0 },
-      { name: 'Ivoire', value: '#fffff0', additional_price: 0 },
-      { name: 'Champagne', value: '#f7e7ce', additional_price: 2500 }
-    ],
-    sizes: [
-      { name: 'S', additional_price: 0 },
-      { name: 'M', additional_price: 0 },
-      { name: 'L', additional_price: 0 },
-      { name: 'Sur Mesure', additional_price: 5000 }
-    ]
-  },
-  specifications: [
-    { label: "Matière", value: "Dentelle & Soie" },
-    { label: "Style", value: "Bohème Chic" },
-    { label: "Origine", value: "Fait main en Haïti" },
-    { label: "Entretien", value: "Nettoyage à sec uniquement" }
-  ]
-};
-
-const MOCK_SIMILAR_PRODUCTS = [
-  {
-    id: 'prod_90',
-    name: 'Voile Cathédrale',
-    price: 8500,
-    image_url: 'https://images.unsplash.com/photo-1546193430-c2d207739ed7?auto=format&fit=crop&w=400&q=80',
-    category: 'Accessoires'
-  },
-  {
-    id: 'prod_91',
-    name: 'Diadème Cristal',
-    price: 4200,
-    image_url: 'https://images.unsplash.com/photo-1534145353245-564bb376b8df?auto=format&fit=crop&w=400&q=80',
-    category: 'Bijoux'
-  },
-  {
-    id: 'prod_92',
-    name: 'Bouquet Séché',
-    price: 6000,
-    image_url: 'https://images.unsplash.com/photo-1563220067-d86b97609203?auto=format&fit=crop&w=400&q=80',
-    category: 'Fleurs'
-  }
-];
-
 const getClientPrice = (product) => {
-  if (product.promo_price && parseFloat(product.promo_price) < parseFloat(product.price)) {
-    return parseFloat(product.promo_price);
-  }
-  return parseFloat(product.price);
+  const basePrice = product.promo_price && parseFloat(product.promo_price) < parseFloat(product.price)
+    ? parseFloat(product.promo_price)
+    : parseFloat(product.price);
+  return Math.round(basePrice * 1.1);
 };
 
 // --- COMPONENTS ---
@@ -237,15 +151,66 @@ export default function Product() {
   const [customization, setCustomization] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isZoomed, setIsZoomed] = useState(false);
-  
-  // NEW STATES
   const [activeImage, setActiveImage] = useState('');
   const [activeTab, setActiveTab] = useState('description');
+  const [similarProducts, setSimilarProducts] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Rediriger vers la page d'accueil si produit introuvable
-      window.location.href = '/';
+      try {
+        // Lire le slug depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const slug = urlParams.get('slug');
+
+        if (!slug) {
+          window.location.href = '/';
+          return;
+        }
+
+        // Charger le produit depuis la base de données
+        const allProducts = await base44.entities.Product.list();
+        const foundProduct = allProducts.find(p => p.slug === slug);
+
+        if (!foundProduct) {
+          // Produit introuvable, rediriger vers l'accueil après 2 secondes
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
+          setIsLoading(false);
+          return;
+        }
+
+        setProduct(foundProduct);
+        
+        // Préparer les images (image principale + images additionnelles)
+        const images = [foundProduct.image_url, ...(foundProduct.additional_images || [])].filter(Boolean);
+        foundProduct.images = images;
+        setActiveImage(images[0]);
+
+        // Charger la boutique
+        const allShops = await base44.entities.Shop.list();
+        const foundShop = allShops.find(s => s.id === foundProduct.shop_id);
+        setShop(foundShop);
+
+        // Charger les produits similaires (même catégorie)
+        const similar = allProducts
+          .filter(p => p.category === foundProduct.category && p.id !== foundProduct.id && p.is_available !== false)
+          .slice(0, 6);
+        setSimilarProducts(similar);
+
+        // Charger l'utilisateur
+        try {
+          const currentUser = await base44.auth.me();
+          setUser(currentUser);
+        } catch (e) {
+          // Utilisateur non connecté
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Erreur chargement produit:', error);
+        window.location.href = '/';
+      }
     };
     fetchData();
   }, []);
@@ -262,9 +227,40 @@ export default function Product() {
     return basePrice + (customizationTotal * quantity);
   };
 
-  const handleAddToCart = () => {
-    if (!user) { alert("Veuillez vous connecter"); return; }
-    alert(`Produit ajouté : ${product.name}`);
+  const handleAddToCart = async () => {
+    if (!user) {
+      base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+      return;
+    }
+    
+    try {
+      const existingCart = await base44.entities.CartItem.filter({ 
+        user_id: user.id, 
+        product_id: product.id 
+      });
+      
+      if (existingCart.length > 0) {
+        await base44.entities.CartItem.update(existingCart[0].id, {
+          quantity: existingCart[0].quantity + quantity
+        });
+      } else {
+        await base44.entities.CartItem.create({
+          user_id: user.id,
+          product_id: product.id,
+          product_name: product.name,
+          product_image: product.image_url,
+          quantity: quantity,
+          unit_price: clientPrice,
+          shop_id: shop?.id,
+          shop_name: shop?.company_name,
+          shop_region: shop?.region
+        });
+      }
+      
+      window.location.href = '/cart';
+    } catch (error) {
+      alert('Erreur lors de l\'ajout au panier');
+    }
   };
 
   const handleDownloadImage = async () => {
@@ -314,7 +310,7 @@ export default function Product() {
         
         {/* Header Navigation */}
         <div className="absolute top-10 left-4 z-30">
-          <Button variant="ghost" size="icon" onClick={() => console.log('Back')} className="bg-white/80 rounded-full shadow-sm hover:bg-white">
+          <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="bg-white/80 rounded-full shadow-sm hover:bg-white">
             <ArrowLeft className="w-5 h-5" />
           </Button>
         </div>
@@ -364,13 +360,7 @@ export default function Product() {
           
           {/* Title, Rating & Price */}
           <div className="space-y-3">
-            <div className="flex justify-between items-start gap-4">
-               <h2 className="text-xl font-bold text-slate-900 leading-tight">{product.name}</h2>
-               {/* 1. SOCIAL PROOF (RATING) */}
-               <div className="flex-shrink-0 text-right">
-                  <StarRating rating={product.rating} count={product.reviews_count} />
-               </div>
-            </div>
+            <h2 className="text-xl font-bold text-slate-900 leading-tight">{product.name}</h2>
 
             <div className="flex items-baseline gap-3">
               <span className="text-3xl font-black text-orange-500">{clientPrice.toLocaleString()} HTG</span>
@@ -395,7 +385,7 @@ export default function Product() {
           {/* 4. TABS FOR INFORMATION */}
           <div className="space-y-4">
              <div className="flex border-b border-slate-200">
-                {['description', 'specs', 'avis'].map((tab) => (
+                {['description', 'avis'].map((tab) => (
                    <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
@@ -413,24 +403,11 @@ export default function Product() {
 
              <div className="min-h-[100px]">
                 {activeTab === 'description' && (
-                   <p className="text-slate-600 leading-relaxed text-sm animate-in fade-in">{product.description}</p>
-                )}
-                {activeTab === 'specs' && (
-                   <div className="space-y-2 animate-in fade-in">
-                      {product.specifications?.map((spec, i) => (
-                         <div key={i} className="flex justify-between text-sm py-1 border-b border-slate-50 last:border-0">
-                            <span className="text-slate-500">{spec.label}</span>
-                            <span className="font-medium text-slate-800">{spec.value}</span>
-                         </div>
-                      ))}
-                   </div>
+                  <p className="text-slate-600 leading-relaxed text-sm animate-in fade-in">{product.description || 'Aucune description disponible.'}</p>
                 )}
                 {activeTab === 'avis' && (
                    <div className="text-center py-4 text-slate-500 text-sm animate-in fade-in">
-                      <p>Les avis détaillés seront bientôt disponibles.</p>
-                      <div className="mt-2 inline-flex items-center gap-2 bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full text-xs font-medium">
-                         <Star className="w-3 h-3 fill-current" /> Note moyenne: {product.rating}/5
-                      </div>
+                     <p>Les avis clients seront bientôt disponibles.</p>
                    </div>
                 )}
              </div>
@@ -443,22 +420,28 @@ export default function Product() {
           {shop && (
             <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mt-6">
                <div className="flex items-center gap-3 mb-4">
-                  <img src={shop.company_logo_url} className="w-12 h-12 rounded-full object-cover border border-slate-100" alt="" />
+                  {shop.company_logo_url ? (
+                    <img src={shop.company_logo_url} className="w-12 h-12 rounded-full object-cover border border-slate-100" alt="" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-lg font-bold text-orange-600">
+                      {shop.company_name[0]}
+                    </div>
+                  )}
                   <div>
                      <p className="font-bold text-slate-900 text-base">{shop.company_name}</p>
-                     <p className="text-xs text-slate-500">{shop.years_active} ans d'activité • {shop.region}</p>
+                     <p className="text-xs text-slate-500">{shop.region}</p>
                   </div>
                </div>
                
                <div className="flex flex-col gap-3">
                   <button 
-                    onClick={() => alert("Chat")} 
+                    onClick={() => window.location.href = '/chat'}
                     className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-md active:scale-[0.98]"
                   >
                      <MessageCircle className="w-5 h-5" /> Discuter avec le vendeur
                   </button>
                   
-                  {shop.company_category === "Mariage" && (
+                  {shop.company_name?.toLowerCase().includes('makarios') && (
                     <button 
                        onClick={() => window.open('https://wa.me/c/50948690366', '_blank')}
                        className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white py-3 rounded-xl font-bold hover:bg-[#20bd5a] transition-all shadow-md active:scale-[0.98]"
@@ -472,20 +455,30 @@ export default function Product() {
           )}
 
           {/* Similar Products (Horizontal Scroll) */}
-          <div className="pt-6 border-t border-slate-100">
-            <h3 className="font-bold text-slate-900 mb-4 text-lg">Inspiré de votre historique</h3>
-            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
-              {MOCK_SIMILAR_PRODUCTS.map((simProduct) => (
-                <div key={simProduct.id} className="flex-shrink-0 w-36 group cursor-pointer">
-                  <div className="relative w-36 h-36 mb-2 overflow-hidden rounded-lg bg-slate-100 border border-slate-200">
-                    <img src={simProduct.image_url} alt={simProduct.name} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+          {similarProducts.length > 0 && (
+            <div className="pt-6 border-t border-slate-100">
+              <h3 className="font-bold text-slate-900 mb-4 text-lg">Produits similaires</h3>
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
+                {similarProducts.map((simProduct) => (
+                  <div 
+                    key={simProduct.id} 
+                    className="flex-shrink-0 w-36 group cursor-pointer"
+                    onClick={() => {
+                      if (simProduct.slug) {
+                        window.location.href = `/product?slug=${simProduct.slug}`;
+                      }
+                    }}
+                  >
+                    <div className="relative w-36 h-36 mb-2 overflow-hidden rounded-lg bg-slate-100 border border-slate-200">
+                      <img src={simProduct.image_url} alt={simProduct.name} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                    </div>
+                    <h4 className="font-medium text-slate-800 text-xs line-clamp-2">{simProduct.name}</h4>
+                    <p className="text-orange-600 font-bold text-sm">{getClientPrice(simProduct).toLocaleString()} HTG</p>
                   </div>
-                  <h4 className="font-medium text-slate-800 text-xs line-clamp-2">{simProduct.name}</h4>
-                  <p className="text-orange-600 font-bold text-sm">{simProduct.price.toLocaleString()} HTG</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
