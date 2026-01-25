@@ -104,7 +104,7 @@ export default function InstallPrompt() {
       window.removeEventListener('appinstalled', handleAppInstalled);
       clearInterval(intervalId);
     };
-  }, [user, deferredPrompt]);
+  }, [user, deferredPrompt, accessSource]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
@@ -137,6 +137,12 @@ export default function InstallPrompt() {
   const handleDismiss = () => {
     localStorage.setItem('pwa_install_dismissed', Date.now().toString());
     setShowPrompt(false);
+  };
+
+  const handleOpenInBrowser = () => {
+    // Open in default browser for InAPP users
+    const url = window.location.href;
+    window.location.href = `intent://${window.location.host}${window.location.pathname}#Intent;scheme=https;package=com.android.chrome;action=android.intent.action.VIEW;end`;
   };
 
   return (
