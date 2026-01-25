@@ -186,6 +186,15 @@ export default function Layout({ children, currentPageName }) {
         <meta name="google-site-verification" content="TGLvYzGeMnDhLk5dxXLxm-_9a3zAAgAt-BBTDzQehUM" />
         <meta name="google-site-verification" content="google2665276976d944ab" />
 
+        {/* Google Analytics 4 - FIRST */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-JHEWLB2WTT"></script>
+        <script>{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-JHEWLB2WTT');
+        `}</script>
+
         {/* Google Tag Manager */}
         <script>{`
           (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -202,15 +211,6 @@ export default function Layout({ children, currentPageName }) {
           j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
           })(window,document,'script','dataLayer','GTM-P7C42MMP');
-        `}</script>
-
-        {/* Google Analytics 4 */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-JHEWLB2WTT"></script>
-        <script>{`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-JHEWLB2WTT');
         `}</script>
 
         {/* Meta Pixel Code */}
