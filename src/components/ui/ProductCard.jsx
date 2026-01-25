@@ -116,10 +116,19 @@ export default function ProductCard({ product, onAdd, onClick, shop, hideId = fa
         </div>
       </div>
 
-      {/* Bouton Chat pour tous les produits */}
-      <div className="m-2" onClick={(e) => e.stopPropagation()}>
-        <ChatButton product={product} shop={shop} />
-      </div>
+      {/* Bouton WhatsApp pour MAKARIOS BRIDAL, Chat pour les autres */}
+      {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') ? (
+        <button
+          className="m-2 bg-[#25D366] text-white py-1.5 rounded-lg flex items-center justify-center gap-2 text-[10px] font-bold hover:bg-green-600 transition-colors"
+          onClick={(e) => { e.stopPropagation(); window.open('https://wa.me/c/50948690366', '_blank'); }}
+        >
+          <MessageCircle size={14} /> WhatsApp
+        </button>
+      ) : (
+        <div className="m-2" onClick={(e) => e.stopPropagation()}>
+          <ChatButton product={product} shop={shop} />
+        </div>
+      )}
     </div>
   );
 }
