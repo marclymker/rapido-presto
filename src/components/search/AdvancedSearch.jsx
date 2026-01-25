@@ -334,46 +334,62 @@ async function performAISearch(query, filters, allProducts, shops) {
 }
 
 function calculateRelevanceScore(query, product, shops) {
-  const queryLower = query.toLowerCase();
-  const terms = queryLower.split(' ').filter(t => t.length > 2);
+  const queryLower = query.toLowerCase().trim();
+  if (!queryLower) return 0;
+  
+  const terms = queryLower.split(' ').filter(t => t.length > 1);
   let score = 0;
 
-  const searchText = `
-    ${product.name} 
-    ${product.description || ''} 
-    ${product.category} 
-    ${product.subcategory || ''} 
-    ${product.seo_tags?.join(' ') || ''}
-    ${product.product_attributes?.color || ''}
-    ${product.product_attributes?.material || ''}
-    ${shops.find(s => s.id === product.shop_id)?.company_name || ''}
-  `.toLowerCase();
+  // Build comprehensive searchable text
+  const productName = (product.name || '').toLowerCase();
+  const productDesc = (product.description || '').toLowerCase();
+  const productCategory = (product.category || '').toLowerCase();
+  const productSubcategory = (product.subcategory || '').toLowerCase();
+  const productTags = (product.seo_tags || []).join(' ').toLowerCase();
+  const productColor = (product.product_attributes?.color || '').toLowerCase();
+  const productMaterial = (product.product_attributes?.material || '').toLowerCase();
+  const productSize = (product.product_attributes?.size || '').toLowerCase();
+  const shopName = (shops.find(s => s.id === product.shop_id)?.company_name || '').toLowerCase();
+
+  const searchText = `${productName} ${productDesc} ${productCategory} ${productSubcategory} ${productTags} ${productColor} ${productMaterial} ${productSize} ${shopName}`;
 
   // Exact match in title (highest score)
-  if (product.name.toLowerCase().includes(queryLower)) {
+  if (productName.includes(queryLower)) {
     score += 10;
   }
 
-  // Term matches
+  // SEO tags exact match (high priority)
+  if (productTags.includes(queryLower)) {
+    score += 8;
+  }
+
+  // Category exact match
+  if (productCategory.includes(queryLower)) {
+    score += 7;
+  }
+
+  // Description match
+  if (productDesc.includes(queryLower)) {
+    score += 5;
+  }
+
+  // Term-by-term matches
   terms.forEach(term => {
-    if (product.name.toLowerCase().includes(term)) score += 5;
-    if (searchText.includes(term)) score += 2;
+    if (productName.includes(term)) score += 5;
+    if (productTags.includes(term)) score += 4;
+    if (productCategory.includes(term)) score += 3;
+    if (productDesc.includes(term)) score += 2;
+    if (searchText.includes(term)) score += 1;
   });
 
-  // Category match
-  if (product.category.toLowerCase().includes(queryLower)) {
+  // Shop name match
+  if (shopName.includes(queryLower)) {
     score += 3;
   }
 
-  // Shop reputation boost (Makarios gets boost)
-  const shop = shops.find(s => s.id === product.shop_id);
-  if (shop?.company_name?.toLowerCase().includes('makarios')) {
-    score += 1;
-  }
-
   // Availability boost
-  if (product.stock_quantity > 0) {
-    score += 0.5;
+  if (product.is_available !== false && product.stock_quantity > 0) {
+    score += 1;
   }
 
   // Promo boost
