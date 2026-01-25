@@ -299,10 +299,21 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               {downloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
             </button>
 
-            {/* BOUTON PARTAGE AJOUTÉ ICI */}
-            <button onClick={handleShare} className="absolute top-4 left-16 p-2 bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-black/40 transition-colors z-10">
-              <Share2 size={20} />
-            </button>
+            {/* BOUTON PARTAGE */}
+             <button onClick={handleShare} className="absolute top-4 left-16 p-2 bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-black/40 transition-colors z-10">
+               <Share2 size={20} />
+             </button>
+
+             {/* BOUTON CRÉER ARTICLE - pour vendeurs/clients */}
+             {user && (
+               <button 
+                 onClick={() => setShowCreateProductModal(true)}
+                 title="Créer un article similaire"
+                 className="absolute top-4 left-32 p-2 bg-blue-500/70 backdrop-blur-md rounded-full text-white hover:bg-blue-600 transition-colors z-10"
+               >
+                 <PlusIcon size={20} />
+               </button>
+             )}
 
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-1 bg-black/20 backdrop-blur-md rounded-full p-1 z-10">
               <button onClick={handleZoomOut} disabled={zoom <= 1} className="p-2 rounded-full text-white hover:bg-white/20 disabled:opacity-40"><ZoomOut size={18} /></button>
@@ -441,5 +452,19 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
         </div>
       </DialogContent>
     </Dialog>
-  );
+
+    {/* Modal création article - ouvert depuis ProductDetailModal */}
+    {userShop && (
+      <ProductFormModal
+        product={null}
+        shopId={userShop.id}
+        open={showCreateProductModal}
+        onClose={() => setShowCreateProductModal(false)}
+        onSuccess={() => {
+          toast.success('Article créé avec succès!');
+          setShowCreateProductModal(false);
+        }}
+      />
+    )}
+  </>;
 }
