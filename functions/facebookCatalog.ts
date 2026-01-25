@@ -31,8 +31,8 @@ Deno.serve(async (req) => {
       const availability = p.is_available !== false && (p.stock_quantity === undefined || p.stock_quantity > 0) ? 'in stock' : 'out of stock';
       const condition = 'new';
       const price = `${parseFloat(p.price || 0).toFixed(2)} HTG`;
-      const link = `https://rapidopresto.shop/product?id=${p.id}`;
-      const image_link = p.image_url || "https://rapidopresto.shop/logo.png";
+      const link = `https://rapido-presto.base44.app/product?id=${p.id}`;
+      const image_link = p.image_url || "https://rapido-presto.base44.app/logo.png";
       const brand = escapeCSV(p.shop_name || "Rapido Presto");
       
       // Attributs produits (standards Facebook/Google Shopping)
