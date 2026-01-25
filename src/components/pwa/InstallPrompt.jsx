@@ -126,6 +126,12 @@ export default function InstallPrompt() {
           console.error('Failed to update user profile:', error);
         }
       }
+
+      // Wait for app to install and launch in installed app
+      setTimeout(() => {
+        // Launch the PWA - this will open in the installed app
+        window.location.href = window.location.href;
+      }, 500);
     } else {
       localStorage.setItem('pwa_install_dismissed', Date.now().toString());
       setShowPrompt(false);
