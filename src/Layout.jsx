@@ -18,6 +18,7 @@ import { useAuth } from '@/components/auth/useAuth';
 import CookieConsent from '@/components/cookies/CookieConsent';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
 import SessionValidator from '@/components/auth/SessionValidator';
+import GA4Tracker from '@/components/tracking/GA4Tracker';
 
 export default function Layout({ children, currentPageName }) {
   const { user, isLoading: loading } = useAuth();
@@ -272,6 +273,7 @@ export default function Layout({ children, currentPageName }) {
         <NotificationPermission />
         <InstallPrompt />
         <SessionValidator user={user} />
+        <GA4Tracker />
         
 
       
