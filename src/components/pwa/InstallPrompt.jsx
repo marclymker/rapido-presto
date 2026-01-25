@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { X, Download, Sparkles, Smartphone } from 'lucide-react';
+import { X, Download, Sparkles, Smartphone, Share2, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { detectAccessSource } from '@/components/utils/detectFacebookInApp';
 
 export default function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [user, setUser] = useState(null);
+  const [accessSource, setAccessSource] = useState(null);
+  const [promptType, setPromptType] = useState(null); // 'browser' | 'inapp'
 
   useEffect(() => {
     // Fetch current user
@@ -20,6 +23,10 @@ export default function InstallPrompt() {
       }
     };
     fetchUser();
+
+    // Detect access source
+    const source = detectAccessSource();
+    setAccessSource(source);
   }, []);
 
   useEffect(() => {
@@ -41,6 +48,7 @@ export default function InstallPrompt() {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      setPromptType('browser');
       
       // Show prompt after 5 seconds
       setTimeout(() => {
@@ -49,6 +57,15 @@ export default function InstallPrompt() {
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Fallback: pour InAPP browsers (Facebook, Instagram, Messenger)
+    // Montrer invitation après 3 secondes
+    if (!isInstalled && ['facebook_inapp', 'instagram_inapp', 'messenger_inapp'].includes(accessSource)) {
+      setTimeout(() => {
+        setPromptType('inapp');
+        setShowPrompt(true);
+      }, 3000);
+    }
 
     // Check if already in standalone mode (installed)
     const handleAppInstalled = async () => {
