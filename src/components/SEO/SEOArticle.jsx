@@ -1,8 +1,8 @@
 import { Helmet } from 'react-helmet-async';
 
 export default function SEOArticle({ product, shop }) {
-  const siteUrl = "https://rapidopresto.shop";
-  const productUrl = `${siteUrl}/articles/${product.id}`;
+  const siteUrl = "https://rapido-presto.base44.app";
+  const productUrl = `${siteUrl}/product?id=${product.id}`;
   
   // Gestion des images
   const productImages = product.additional_images && product.additional_images.length > 0
