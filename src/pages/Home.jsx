@@ -1078,7 +1078,14 @@ export default function Home() {
                                         <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
                                             <div 
                                                 className="flex items-center gap-3 cursor-pointer group"
-                                                onClick={() => setSelectedShop(shop)}
+                                                onClick={() => {
+                                                    trackShopView(shop);
+                                                    if (shop?.slug) {
+                                                        window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
+                                                    } else {
+                                                        setSelectedShop(shop);
+                                                    }
+                                                }}
                                             >
                                                 <div className="w-12 h-12 rounded-full border border-gray-200 overflow-hidden">
                                                     {shop.company_logo_url ? (
@@ -1099,11 +1106,17 @@ export default function Home() {
                                                 </div>
                                             </div>
                                             <Button 
-                                                size="sm"
-                                                className="hidden md:flex bg-white border border-gray-300 text-black hover:bg-gray-50"
-                                                onClick={() => setSelectedShop(shop)}
+                                               size="sm"
+                                               className="hidden md:flex bg-white border border-gray-300 text-black hover:bg-gray-50"
+                                               onClick={() => {
+                                                   if (shop?.slug) {
+                                                       window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
+                                                   } else {
+                                                       setSelectedShop(shop);
+                                                   }
+                                               }}
                                             >
-                                                Visiter la boutique
+                                               Visiter la boutique
                                             </Button>
                                         </div>
 
@@ -1119,13 +1132,16 @@ export default function Home() {
                                                            handleAddToCart(p);
                                                        }}
                                                        onClick={() => {
-                                                           if (shop?.slug && product.slug) {
-                                                             window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
-                                                           } else {
-                                                             setSelectedShop(shop);
-                                                             setSelectedProduct(product);
-                                                           }
-                                                       }}
+                                                                  trackProductView(product, shop);
+                                                                  if (shop?.slug && product.slug) {
+                                                                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                                                                  } else if (shop?.slug) {
+                                                                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
+                                                                  } else {
+                                                                    setSelectedShop(shop);
+                                                                    setSelectedProduct(product);
+                                                                  }
+                                                              }}
                                                     />
                                                 </div>
                                             ))}
