@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import QuickSellButton from '@/components/product/QuickSellButton';
+import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 
 const REGIONS = [
   "Petion-ville", "Route de Freres", "Delmas", "Pelerin", "Thomassain", "Kenscoff",
@@ -29,6 +29,8 @@ export default function Account() {
   const [newPayment, setNewPayment] = useState({ type: 'card', details: '' });
   const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
   const [convertingWhatsApp, setConvertingWhatsApp] = useState(false);
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [userShop, setUserShop] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -43,6 +45,18 @@ export default function Account() {
 
     }).catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (user?.id) {
+      base44.entities.Shop.filter({ user_id: user.id })
+        .then(shops => {
+          if (shops.length > 0) {
+            setUserShop(shops[0]);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user?.id]);
 
   const handleSave = async () => {
     try {
@@ -144,13 +158,19 @@ export default function Account() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
 
-        {/* Quick Sell Button */}
-        <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 border-2 border-orange-200">
+        {/* Sell Products Section */}
+         <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 border-2 border-orange-200">
           <h3 className="font-semibold mb-2 text-slate-800">Vendez vos articles</h3>
           <p className="text-sm text-slate-600 mb-3">
             Publiez vos produits en quelques secondes et vendez à des milliers de clients
           </p>
-          <QuickSellButton user={user} />
+          <Button 
+            onClick={() => setShowProductForm(true)}
+            className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Vendre un article
+          </Button>
         </div>
 
         {/* Profile Info */}
@@ -594,6 +614,20 @@ export default function Account() {
             </AlertDialogContent>
           </AlertDialog>
         </div>
+
+        {/* Product Form Modal */}
+        {userShop && (
+          <ProductFormModal
+            product={null}
+            shopId={userShop.id}
+            open={showProductForm}
+            onClose={() => setShowProductForm(false)}
+            onSuccess={() => {
+              toast.success('Article créé avec succès!');
+              setShowProductForm(false);
+            }}
+          />
+        )}
       </main>
     </div>
   );
