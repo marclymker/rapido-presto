@@ -2,10 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Download, Sparkles, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { base44 } from '@/api/base44Client';
 
 export default function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Fetch current user
+    const fetchUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch (error) {
+        console.log('User not logged in');
+      }
+    };
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     // Check if app is already installed
@@ -14,18 +29,6 @@ export default function InstallPrompt() {
 
     if (isInstalled) {
       return; // Don't show if already installed
-    }
-
-    // Check if user dismissed the prompt
-    const dismissed = localStorage.getItem('pwa_install_dismissed');
-    if (dismissed) {
-      const dismissedTime = parseInt(dismissed);
-      const now = Date.now();
-      const hoursSinceDismissed = (now - dismissedTime) / (1000 * 60 * 60);
-      
-      if (hoursSinceDismissed < 24) {
-        return; // Don't show if dismissed less than 24 hours ago
-      }
     }
 
     // Check if user already installed
@@ -48,15 +51,43 @@ export default function InstallPrompt() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     // Check if already in standalone mode (installed)
-    window.addEventListener('appinstalled', () => {
+    const handleAppInstalled = async () => {
       localStorage.setItem('pwa_installed', 'true');
       setShowPrompt(false);
-    });
+      
+      // Save to user profile if logged in
+      if (user) {
+        try {
+          await base44.auth.updateMe({ pwa_installed: true });
+        } catch (error) {
+          console.error('Failed to update user profile:', error);
+        }
+      }
+    };
+
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Relancer la notification toutes les 5 minutes pour ceux qui n'ont pas installé
+    const intervalId = setInterval(() => {
+      const dismissed = localStorage.getItem('pwa_install_dismissed');
+      if (dismissed) {
+        const dismissedTime = parseInt(dismissed);
+        const now = Date.now();
+        const minutesSinceDismissed = (now - dismissedTime) / (1000 * 60);
+        
+        if (minutesSinceDismissed >= 5 && deferredPrompt) {
+          setShowPrompt(true);
+          localStorage.removeItem('pwa_install_dismissed');
+        }
+      }
+    }, 60000); // Check every minute
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+      clearInterval(intervalId);
     };
-  }, []);
+  }, [user, deferredPrompt]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
@@ -69,6 +100,15 @@ export default function InstallPrompt() {
     if (outcome === 'accepted') {
       localStorage.setItem('pwa_installed', 'true');
       setShowPrompt(false);
+      
+      // Save to user profile if logged in
+      if (user) {
+        try {
+          await base44.auth.updateMe({ pwa_installed: true });
+        } catch (error) {
+          console.error('Failed to update user profile:', error);
+        }
+      }
     } else {
       localStorage.setItem('pwa_install_dismissed', Date.now().toString());
       setShowPrompt(false);
