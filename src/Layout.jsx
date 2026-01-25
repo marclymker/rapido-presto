@@ -203,6 +203,18 @@ export default function Layout({ children, currentPageName }) {
           })(window,document,'script','dataLayer','GTM-P7C42MMP');
         `}</script>
 
+        {/* Google Analytics 4 */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-3RQXJBJN7Z"></script>
+        <script>{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-3RQXJBJN7Z', {
+            send_page_view: true,
+            currency: 'HTG'
+          });
+        `}</script>
+
         {/* Meta Pixel Code */}
         <script>{`
           !function(f,b,e,v,n,t,s)
