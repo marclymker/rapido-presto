@@ -264,6 +264,15 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                   <Loader2 className="h-8 w-8 animate-spin text-slate-300" />
                 </div>
               )}
+              {/* Logo MonCash en bas à gauche */}
+              {imageLoaded && (
+                <img
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
+                  alt="MonCash"
+                  className="absolute bottom-3 left-3 h-4 opacity-80 pointer-events-none"
+                  style={{ pointerEvents: 'none' }}
+                />
+              )}
             </div>
 
             <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-black/40 transition-colors z-10">
