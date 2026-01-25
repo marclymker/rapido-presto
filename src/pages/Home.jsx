@@ -34,6 +34,8 @@ import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
 import FlashBanner from '@/components/home/FlashBanner';
 import FlowersBanner from '@/components/home/FlowersBanner';
 import GiftBanner from '@/components/home/GiftBanner';
+import AdvancedSearch from '@/components/search/AdvancedSearch';
+import SearchResults from '@/components/search/SearchResults';
 
 // --- CONFIGURATION DES SOUS-CATÉGORIES MARIAGE ---
 const WEDDING_STRUCTURE = [
@@ -67,6 +69,9 @@ export default function Home() {
   const [userLocation, setSelectedLocation] = useState(null);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCartReminder, setShowCartReminder] = useState(false);
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [activeFilters, setActiveFilters] = useState({});
   
   const queryClient = useQueryClient();
 
@@ -144,6 +149,13 @@ export default function Home() {
     trackCategoryView(category);
   };
 
+  const handleSearchResults = (results, query, filters) => {
+    setSearchResults(results);
+    setSearchQuery(query);
+    setActiveFilters(filters);
+    setShowAdvancedSearch(true);
+  };
+
   useEffect(() => {
     const handleCategorySelect = (e) => {
       navigateToCategory(e.detail);
@@ -153,6 +165,7 @@ export default function Home() {
       setSearchQuery(e.detail);
       if (e.detail) {
         trackSearch(e.detail);
+        setShowAdvancedSearch(true);
       }
     };
 
@@ -427,22 +440,30 @@ export default function Home() {
                     className="flex-1 px-4 text-black outline-none"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && setShowAdvancedSearch(true)}
+                    onFocus={() => setShowAdvancedSearch(true)}
                 />
-                <button className="px-5 hover:bg-orange-600 transition-colors" style={{ backgroundColor: theme.amazonOrange }}>
+                <button 
+                    className="px-5 hover:bg-orange-600 transition-colors" 
+                    style={{ backgroundColor: theme.amazonOrange }}
+                    onClick={() => setShowAdvancedSearch(true)}
+                >
                     <Search className="w-5 h-5 text-gray-900" />
                 </button>
             </div>
 
             <div className="flex-1 md:hidden">
                  <div className="flex items-center bg-white rounded-md px-2 py-1.5">
-                    <Search className="text-gray-500 w-4 h-4 mr-2" />
-                    <input 
-                      type="text" 
-                      placeholder="Rechercher..." 
-                      className="bg-transparent outline-none w-full text-black text-sm"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                   <Search className="text-gray-500 w-4 h-4 mr-2" />
+                   <input 
+                     type="text" 
+                     placeholder="Rechercher..." 
+                     className="bg-transparent outline-none w-full text-black text-sm"
+                     value={searchQuery}
+                     onChange={(e) => setSearchQuery(e.target.value)}
+                     onKeyDown={(e) => e.key === 'Enter' && setShowAdvancedSearch(true)}
+                     onFocus={() => setShowAdvancedSearch(true)}
+                   />
                  </div>
             </div>
 
@@ -499,6 +520,52 @@ export default function Home() {
       />
 
       <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-32">
+        
+        {/* Advanced Search */}
+        {showAdvancedSearch && (
+          <div className="mb-4 animate-in slide-in-from-top-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setShowAdvancedSearch(false);
+                setSearchResults([]);
+                setSearchQuery('');
+              }}
+              className="mb-2"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Fermer la recherche
+            </Button>
+            <AdvancedSearch
+              onSearch={handleSearchResults}
+              allProducts={allProducts}
+              shops={shops}
+              initialQuery={searchQuery}
+            />
+          </div>
+        )}
+
+        {/* Search Results */}
+        {showAdvancedSearch && searchResults.length >= 0 ? (
+          <SearchResults
+            results={searchResults}
+            query={searchQuery}
+            filters={activeFilters}
+            shops={shops}
+            user={user}
+            onProductClick={(product, shop) => {
+              if (shop?.slug && product.slug) {
+                window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+              } else if (shop) {
+                setSelectedShop(shop);
+                setSelectedProduct(product);
+              }
+            }}
+            onAddToCart={handleAddToCart}
+          />
+        ) : (
+          <>
         
         {/* Onglets sous-catégories Mariage */}
         {selectedCategory === 'Mariage' && !searchQuery.trim() && (
@@ -1139,7 +1206,7 @@ export default function Home() {
         user={user}
         similarProducts={[]}
         onProductChange={(newProduct) => {
-          const newShop = shops.find(s => s.id === newProduct.shop_id);
+          const newShop = shops.find(s => s.id => newProduct.shop_id);
           if (newShop) setSelectedShop(newShop);
           setSelectedProduct(newProduct);
         }}
@@ -1149,6 +1216,8 @@ export default function Home() {
         open={showProfileModal}
         onComplete={handleProfileComplete}
       />
+          </>
+        )}
     </div>
   );
 }
