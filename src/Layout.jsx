@@ -16,7 +16,7 @@ import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
 
 import { useAuth } from '@/components/auth/useAuth';
 import CookieConsent from '@/components/cookies/CookieConsent';
-import InstallButton from '@/components/pwa/InstallButton';
+import InstallPrompt from '@/components/pwa/InstallPrompt';
 import SessionValidator from '@/components/auth/SessionValidator';
 import GA4Tracker from '@/components/tracking/GA4Tracker';
 import OfflineIndicator from '@/components/offline/OfflineIndicator';
@@ -293,16 +293,16 @@ export default function Layout({ children, currentPageName }) {
         <Toaster position="top-center" />
         <OneSignalInit user={user} />
         <NotificationPermission />
+        <InstallPrompt />
         <SessionValidator user={user} />
         <GA4Tracker />
         <OfflineIndicator />
         
 
       
-      {/* Profile Switcher and Install Button (top right) */}
+      {/* Profile Switcher (top right for desktop - clients only) */}
       {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
-          <InstallButton />
+        <div className="fixed top-4 right-4 z-50">
           <ProfileSwitcher user={user} />
         </div>
       )}
