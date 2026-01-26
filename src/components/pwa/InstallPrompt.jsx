@@ -287,10 +287,20 @@ export default function InstallPrompt() {
                 ) : (
                   <>
                     <Button
-                      onClick={handleDismiss}
+                      onClick={() => {
+                        alert('📱 Android:\n\n1. Appuyez sur ⋮ (menu)\n2. Sélectionnez "Ajouter à l\'écran d\'accueil"\n3. Confirmez l\'installation');
+                      }}
                       className="flex-1 bg-white text-orange-600 hover:bg-orange-50 font-bold shadow-lg h-11 text-base"
                     >
-                      J'ai compris
+                      🤖 Android
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        alert('🍎 iOS:\n\n1. Appuyez sur l\'icône de partage (⎙)\n2. Faites défiler et sélectionnez "Sur l\'écran d\'accueil"\n3. Appuyez sur "Ajouter"');
+                      }}
+                      className="flex-1 bg-white text-orange-600 hover:bg-orange-50 font-bold shadow-lg h-11 text-base"
+                    >
+                      🍎 iOS
                     </Button>
                   </>
                 )}
