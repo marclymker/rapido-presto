@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
+import NotificationPreferences from '@/components/notifications/NotificationPreferences';
 
 const REGIONS = [
   "Petion-ville", "Route de Freres", "Delmas", "Pelerin", "Thomassain", "Kenscoff",
@@ -473,6 +474,9 @@ export default function Account() {
             </div>
           </div>
         )}
+
+        {/* Notification Preferences */}
+        <NotificationPreferences user={user} />
 
         {/* Payment Methods */}
         <div className="bg-white rounded-xl p-4">
