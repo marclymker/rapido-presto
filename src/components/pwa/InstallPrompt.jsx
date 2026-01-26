@@ -113,15 +113,11 @@ setDeferredPrompt(e);
 setPromptType('browser');
 
 
-// Show prompt after 5 seconds
-
+// Show prompt dès la première connexion
 setTimeout(() => {
-
-console.log('[PWA] Showing browser install prompt');
-
-setShowPrompt(true);
-
-}, 5000);
+  console.log('[PWA] Showing browser install prompt');
+  setShowPrompt(true);
+}, 1000); // Afficher après 1 seconde
 
 };
 
@@ -129,27 +125,16 @@ setShowPrompt(true);
 
 window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-
-
 // Fallback: pour InAPP browsers (Facebook, Instagram, Messenger)
-
-// Montrer invitation après 3 secondes
-
+// Montrer invitation dès la première connexion
 const isInAppBrowser = accessSource && ['facebook_inapp', 'instagram_inapp', 'messenger_inapp'].includes(accessSource);
-
 if (isInAppBrowser) {
-
-console.log('[PWA] InAPP browser detected:', accessSource);
-
-const inappTimeout = setTimeout(() => {
-
-console.log('[PWA] Showing InAPP browser prompt');
-
-setPromptType('inapp');
-
-setShowPrompt(true);
-
-}, 3000);
+  console.log('[PWA] InAPP browser detected:', accessSource);
+  const inappTimeout = setTimeout(() => {
+    console.log('[PWA] Showing InAPP browser prompt');
+    setPromptType('inapp');
+    setShowPrompt(true);
+  }, 1000); // Afficher après 1 seconde seulement
 
 
 
