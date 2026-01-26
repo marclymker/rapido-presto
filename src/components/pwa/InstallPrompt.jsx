@@ -183,34 +183,21 @@ window.addEventListener('appinstalled', handleAppInstalled);
 
 
 
-// Relancer la notification toutes les 5 minutes pour ceux qui n'ont pas installé
-
+// Relancer la notification toutes les 60 minutes pour ceux qui n'ont pas installé
 const intervalId = setInterval(() => {
+  const dismissed = localStorage.getItem('pwa_install_dismissed');
+  if (dismissed) {
+    const dismissedTime = parseInt(dismissed);
+    const now = Date.now();
+    const minutesSinceDismissed = (now - dismissedTime) / (1000 * 60);
 
-const dismissed = localStorage.getItem('pwa_install_dismissed');
-
-if (dismissed) {
-
-const dismissedTime = parseInt(dismissed);
-
-const now = Date.now();
-
-const minutesSinceDismissed = (now - dismissedTime) / (1000 * 60);
-
-
-if (minutesSinceDismissed >= 5) {
-
-console.log('[PWA] Re-showing prompt after 5 minutes');
-
-setShowPrompt(true);
-
-localStorage.removeItem('pwa_install_dismissed');
-
-}
-
-}
-
-}, 60000);
+    if (minutesSinceDismissed >= 60) {
+      console.log('[PWA] Re-showing prompt after 60 minutes');
+      setShowPrompt(true);
+      localStorage.removeItem('pwa_install_dismissed');
+    }
+  }
+}, 60000); // Vérifier chaque minute
 
 
 
