@@ -288,7 +288,12 @@ export default function InstallPrompt() {
                   <>
                     <Button
                       onClick={() => {
-                        alert('📱 Android:\n\n1. Appuyez sur ⋮ (menu)\n2. Sélectionnez "Ajouter à l\'écran d\'accueil"\n3. Confirmez l\'installation');
+                        // Si deferredPrompt existe, installer directement
+                        if (deferredPrompt) {
+                          handleInstall();
+                        } else {
+                          alert('📱 Android:\n\n1. Appuyez sur ⋮ (menu)\n2. Sélectionnez "Ajouter à l\'écran d\'accueil"\n3. Confirmez l\'installation');
+                        }
                       }}
                       className="flex-1 bg-white text-orange-600 hover:bg-orange-50 font-bold shadow-lg h-11 text-base"
                     >
