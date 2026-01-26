@@ -4,6 +4,7 @@ import { X, Download, Sparkles, Smartphone, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { getAccessSource } from '@/components/utils/detectFacebookInApp';
+import { toast } from 'sonner';
 
 export default function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
@@ -87,7 +88,7 @@ export default function InstallPrompt() {
 
     // Check if already in standalone mode (installed)
     const handleAppInstalled = async () => {
-      console.log('[PWA] appinstalled event fired');
+      console.log('[PWA] appinstalled event fired - App successfully installed!');
       localStorage.setItem('pwa_installed', 'true');
       setShowPrompt(false);
       
@@ -98,6 +99,12 @@ export default function InstallPrompt() {
           console.error('Failed to update user profile:', error);
         }
       }
+
+      // Show success notification
+      toast.success('✅ Rapido Presto installé !', {
+        description: 'L\'application est maintenant sur votre écran d\'accueil. Cliquez sur l\'icône pour la lancer.',
+        duration: 6000
+      });
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);
@@ -134,6 +141,7 @@ export default function InstallPrompt() {
     const { outcome } = await deferredPrompt.userChoice;
 
     if (outcome === 'accepted') {
+      console.log('[PWA] User accepted installation');
       localStorage.setItem('pwa_installed', 'true');
       setShowPrompt(false);
       
@@ -146,12 +154,22 @@ export default function InstallPrompt() {
         }
       }
 
-      // Wait for app to install and launch in installed app
+      // Show success message and guide to launch
+      toast.success('🎉 Installation réussie !', {
+        description: 'Cliquez sur l\'icône Rapido Presto sur votre écran d\'accueil pour lancer l\'app',
+        duration: 5000
+      });
+
+      // Try to redirect to standalone mode (works on some browsers)
       setTimeout(() => {
-        // Launch the PWA - this will open in the installed app
-        window.location.href = window.location.href;
-      }, 500);
+        const manifestUrl = '/manifest.json';
+        if (window.matchMedia('(display-mode: browser)').matches) {
+          // Still in browser, try to open in standalone
+          window.location.href = window.location.origin + '/?source=pwa';
+        }
+      }, 1000);
     } else {
+      console.log('[PWA] User dismissed installation');
       localStorage.setItem('pwa_install_dismissed', Date.now().toString());
       setShowPrompt(false);
     }
