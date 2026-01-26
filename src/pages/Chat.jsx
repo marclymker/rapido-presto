@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Send, MessageSquare, ArrowLeft } from 'lucide-react';
+import ProductContextCard from '@/components/chat/ProductContextCard';
 
 export default function Chat() {
   const [user, setUser] = useState(null);
@@ -139,6 +140,11 @@ export default function Chat() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
+              {/* Afficher le produit en contexte si disponible */}
+              {selectedConv?.product_context_id && (
+                <ProductContextCard productId={selectedConv.product_context_id} />
+              )}
+              
               {messages.map(m => (
                 <div key={m.id} className={`flex ${m.sender_id === user.id ? 'justify-end' : 'justify-start'}`}>
                   <div className={`p-3 rounded-2xl max-w-[85%] shadow-sm text-sm ${m.sender_id === user.id ? 'bg-orange-500 text-white rounded-br-none' : 'bg-white text-slate-800 border rounded-bl-none'}`}>
