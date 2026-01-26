@@ -10,7 +10,7 @@ export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [user, setUser] = useState(null);
   const [accessSource, setAccessSource] = useState(null);
-  const [promptType, setPromptType] = useState(null); // 'browser' | 'inapp'
+  const [promptType, setPromptType] = useState(null); // 'browser' | 'inapp' | 'manual'
 
   useEffect(() => {
     // Fetch current user
@@ -55,32 +55,35 @@ export default function InstallPrompt() {
       e.preventDefault();
       setDeferredPrompt(e);
       setPromptType('browser');
-      
-      // Show prompt dès la première connexion
-      setTimeout(() => {
-        console.log('[PWA] Showing browser install prompt');
-        setShowPrompt(true);
-      }, 1000); // Afficher après 1 seconde
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Fallback: pour InAPP browsers (Facebook, Instagram, Messenger)
-    // Montrer invitation dès la première connexion
-    const isInAppBrowser = accessSource && ['facebook_inapp', 'instagram_inapp', 'messenger_inapp'].includes(accessSource);
-    if (isInAppBrowser) {
-      console.log('[PWA] InAPP browser detected:', accessSource);
-      const inappTimeout = setTimeout(() => {
-        console.log('[PWA] Showing InAPP browser prompt');
+    // AFFICHER LA NOTIFICATION POUR TOUS LES UTILISATEURS après 1 seconde
+    const universalTimeout = setTimeout(() => {
+      console.log('[PWA] Showing universal install prompt');
+      
+      // Déterminer le type de prompt basé sur l'accès
+      const isInAppBrowser = accessSource && ['facebook_inapp', 'instagram_inapp', 'messenger_inapp'].includes(accessSource);
+      
+      if (isInAppBrowser) {
         setPromptType('inapp');
-        setShowPrompt(true);
-      }, 1000); // Afficher après 1 seconde seulement
+      } else if (deferredPrompt) {
+        setPromptType('browser');
+      } else {
+        // Pour iOS Safari et autres navigateurs sans support natif
+        setPromptType('manual');
+      }
+      
+      setShowPrompt(true);
+    }, 1000);
 
-      return () => {
-        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        clearTimeout(inappTimeout);
-      };
-    }
+    const cleanup = () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      clearTimeout(universalTimeout);
+    };
+
+    return cleanup;
 
     // Check if already in standalone mode (installed)
     const handleAppInstalled = async () => {
@@ -212,11 +215,17 @@ export default function InstallPrompt() {
                 
                 <div className="flex-1">
                   <h3 className="text-white font-bold text-lg mb-1">
-                    {promptType === 'inapp' ? 'Ouvrir dans le navigateur' : 'Installer Rapido Presto'}
+                    {promptType === 'inapp' 
+                      ? 'Ouvrir dans le navigateur' 
+                      : promptType === 'manual'
+                      ? 'Installer sur iOS'
+                      : 'Installer Rapido Presto'}
                   </h3>
                   <p className="text-white/90 text-sm leading-relaxed">
                     {promptType === 'inapp'
                       ? 'Ouvrez l\'app dans votre navigateur pour une meilleure expérience et installer le PWA'
+                      : promptType === 'manual'
+                      ? 'Appuyez sur le bouton de partage puis "Sur l\'écran d\'accueil" pour installer'
                       : 'Accédez instantanément depuis votre écran d\'accueil pour une expérience plus rapide et fluide'
                     }
                   </p>
@@ -258,7 +267,7 @@ export default function InstallPrompt() {
                       Plus tard
                     </Button>
                   </>
-                ) : (
+                ) : promptType === 'inapp' ? (
                   <>
                     <Button
                       onClick={handleOpenInBrowser}
@@ -273,6 +282,15 @@ export default function InstallPrompt() {
                       className="text-white hover:bg-white/10 font-medium"
                     >
                       Plus tard
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      onClick={handleDismiss}
+                      className="flex-1 bg-white text-orange-600 hover:bg-orange-50 font-bold shadow-lg h-11 text-base"
+                    >
+                      J'ai compris
                     </Button>
                   </>
                 )}
