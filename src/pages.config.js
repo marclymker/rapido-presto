@@ -25,6 +25,7 @@ import Products from './pages/Products';
 import ProfileSetup from './pages/ProfileSetup';
 import ShopView from './pages/ShopView';
 import UpdateProducts from './pages/UpdateProducts';
+import Register from './pages/Register';
 import __Layout from './Layout.jsx';
 
 
@@ -56,6 +57,7 @@ export const PAGES = {
     "ProfileSetup": ProfileSetup,
     "ShopView": ShopView,
     "UpdateProducts": UpdateProducts,
+    "Register": Register,
 }
 
 export const pagesConfig = {
