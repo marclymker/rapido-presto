@@ -38,6 +38,7 @@ import GiftBanner from '@/components/home/GiftBanner';
 import AdvancedSearch from '@/components/search/AdvancedSearch';
 import SearchResults from '@/components/search/SearchResults';
 import NewMessagesBanner from '@/components/home/NewMessagesBanner';
+import FreeShippingBanner from '@/components/home/FreeShippingBanner';
 
 // --- CONFIGURATION DES SOUS-CATÉGORIES MARIAGE ---
 const WEDDING_STRUCTURE = [
@@ -523,6 +524,11 @@ export default function Home() {
 
       <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-32">
         
+        {/* Bannière Livraison Gratuite - Tout en haut */}
+        {!selectedShop && (
+          <FreeShippingBanner />
+        )}
+        
         {/* Wedding Credit Banner - Entre hero et contenu principal */}
         {selectedCategory === 'Mariage' && !selectedShop && (
           <div className="mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4">
@@ -839,6 +845,10 @@ export default function Home() {
             </div>
 
             <SmallStories onCategorySelect={(c) => navigateToCategory(c)} />
+            
+            {/* Bannière intermédiaire */}
+            <FreeShippingBanner />
+            
             <CreditBanner />
 
             {/* MEILLEURES VENTES MODIFIÉ */}

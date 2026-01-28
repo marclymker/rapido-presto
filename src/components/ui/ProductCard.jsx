@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, MessageCircle, Clock, Zap } from 'lucide-react';
+import { Plus, MessageCircle, Clock, Zap, Truck } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import ChatButton from '@/components/chat/ChatButton';
 
@@ -82,14 +82,24 @@ export default function ProductCard({ product, onAdd, onClick, shop, hideId = fa
         </div>
 
         {/* Prix principal */}
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-            {displayPrice.toLocaleString()} <span className="text-[10px] font-bold">HTG</span>
-          </span>
-          {hasPromo && (
-            <span className="text-[10px] text-slate-400 line-through decoration-red-400/50">
-              {originalDisplayPrice}
+        <div className="flex flex-col gap-1">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+              {displayPrice.toLocaleString()} <span className="text-[10px] font-bold">HTG</span>
             </span>
+            {hasPromo && (
+              <span className="text-[10px] text-slate-400 line-through decoration-red-400/50">
+                {originalDisplayPrice}
+              </span>
+            )}
+          </div>
+          
+          {/* Badge Livraison Gratuite si prix >= 3000 */}
+          {displayPrice >= 3000 && (
+            <div className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-0.5 rounded-md w-fit">
+              <Truck size={10} />
+              <span className="text-[9px] font-bold uppercase">Livraison Gratuite</span>
+            </div>
           )}
         </div>
 

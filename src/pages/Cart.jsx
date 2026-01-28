@@ -14,7 +14,7 @@ ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Banknote,
 
 Clock, AlertTriangle, Copy, Check, Info, MapPin, Edit3,
 
-ShoppingBag, Zap, Loader2, ChevronRight
+ShoppingBag, Zap, Loader2, ChevronRight, Truck
 
 } from 'lucide-react';
 
@@ -280,20 +280,19 @@ enabled: cartItems.length > 0
 
 const subtotal = cartItems.reduce((sum, item) => sum + (item.unit_price + (item.total_customization_price || 0)) * item.quantity, 0);
 
+// Règle livraison gratuite : >= 3000 HTG
+const FREE_SHIPPING_THRESHOLD = 3000;
+const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
 
 const getDeliveryPrice = () => {
-
-if (deliveryOption === 'makarios_pap') return 250;
-
-if (deliveryOption === 'makarios_cap') return 1000;
-
-return 300;
-
+  if (isFreeShipping) return 0; // Livraison gratuite
+  if (deliveryOption === 'makarios_pap') return 250;
+  if (deliveryOption === 'makarios_cap') return 1000;
+  return 300;
 };
 
-
-
 const deliveryFee = getDeliveryPrice();
+const amountToFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
 
 const baseTotal = subtotal + deliveryFee + (user?.pending_balance || 0);
 
@@ -668,23 +667,46 @@ return (
 
 <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-40 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
 
-<div className="max-w-xl mx-auto space-y-3">
+  <div className="max-w-xl mx-auto space-y-3">
 
-<div className="flex justify-between font-bold text-lg">
+    {/* Message incitatif livraison gratuite */}
+    {!isFreeShipping && amountToFreeShipping > 0 && (
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-center gap-2 animate-pulse">
+        <span className="text-2xl">🎁</span>
+        <div className="flex-1">
+          <p className="text-xs font-bold text-orange-800">
+            Ajoutez encore <span className="text-orange-600 text-sm">{amountToFreeShipping.toLocaleString()} HTG</span>
+          </p>
+          <p className="text-[10px] text-orange-600">pour profiter de la livraison gratuite !</p>
+        </div>
+      </div>
+    )}
 
-<span className="uppercase text-xs tracking-widest flex items-center">Total</span>
+    {/* Badge livraison gratuite active */}
+    {isFreeShipping && (
+      <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+        <Truck className="w-5 h-5 text-green-600" />
+        <span className="text-xs font-bold text-green-800 uppercase">
+          🎉 Livraison Gratuite Activée !
+        </span>
+      </div>
+    )}
 
-<span>{baseTotal.toLocaleString()} HTG</span>
+    <div className="flex justify-between font-bold text-lg">
 
-</div>
+      <span className="uppercase text-xs tracking-widest flex items-center">Total</span>
 
-<Button className="w-full bg-black text-white rounded-xl h-14 uppercase tracking-widest font-black text-xs" onClick={() => setStep('checkout')}>
+      <span>{baseTotal.toLocaleString()} HTG</span>
 
-Passer au paiement
+    </div>
 
-</Button>
+    <Button className="w-full bg-black text-white rounded-xl h-14 uppercase tracking-widest font-black text-xs" onClick={() => setStep('checkout')}>
 
-</div>
+      Passer au paiement
+
+    </Button>
+
+  </div>
 
 </div>
 

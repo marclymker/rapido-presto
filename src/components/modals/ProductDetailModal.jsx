@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Minus, Plus, Store, MessageSquare, Loader2, MapPin, X, 
   ChevronRight, ZoomIn, ZoomOut, Download, RotateCcw, 
-  Share2, Plus as PlusIcon
+  Share2, Plus as PlusIcon, Truck
 } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { base44 } from '@/api/base44Client';
@@ -324,7 +324,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
           </div>
 
           <div className="p-5 space-y-4">
-            <div className="space-y-1">
+            <div className="space-y-2">
               <h2 className="text-xl font-black text-slate-900 leading-tight">{product.name}</h2>
               <div className="flex items-center gap-3">
                 <span className="text-2xl font-black text-orange-500">{price.toLocaleString()} HTG</span>
@@ -334,6 +334,14 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                   </span>
                 )}
               </div>
+              
+              {/* Badge Livraison Gratuite si prix >= 3000 */}
+              {price >= 3000 && (
+                <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg w-fit border border-green-200">
+                  <Truck size={16} />
+                  <span className="text-xs font-bold uppercase">Livraison Gratuite</span>
+                </div>
+              )}
             </div>
 
             {product.description && (
