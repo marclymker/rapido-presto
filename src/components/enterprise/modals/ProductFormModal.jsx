@@ -291,14 +291,23 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     if (!file) return;
      
     setLoading(true);
+    toast.info('📸 Upload et optimisation en cours...');
+    
     try {
+      // Upload initial
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      
+      // Détection et crop automatique des marges noires (screenshots)
+      const cropResult = await base44.functions.invoke('cropScreenshot', { file_url });
+      
+      const finalUrl = cropResult.data?.file_url || file_url;
+      
       if (isAdditional) {
-        setFormData({ ...formData, additional_images: [...formData.additional_images, file_url] });
-        toast.success('Image ajoutée');
+        setFormData({ ...formData, additional_images: [...formData.additional_images, finalUrl] });
+        toast.success(cropResult.data?.cropped ? '✨ Image optimisée et ajoutée' : 'Image ajoutée');
       } else {
-        setFormData({ ...formData, image_url: file_url });
-        toast.success('Image téléchargée');
+        setFormData({ ...formData, image_url: finalUrl });
+        toast.success(cropResult.data?.cropped ? '✨ Marges noires supprimées automatiquement' : 'Image téléchargée');
       }
     } catch (error) {
       toast.error('Erreur lors du téléchargement');
