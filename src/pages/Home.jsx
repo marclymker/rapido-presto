@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, Suspense, lazy, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,35 +9,29 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Helmet } from 'react-helmet-async';
 
-// --- COMPOSANTS CRITIQUES (Chargement immédiat) ---
+// Import des composants
 import ProductCard from '@/components/ui/ProductCard';
+import { getClientPrice } from '@/components/utils/priceCalculation';
 import SEO from '@/components/SEO';
+import SmallStories from '@/components/home/SmallStories';
 import { useAuth } from '@/components/auth/useAuth';
 import { useGuestCart } from '@/components/cart/useGuestCart';
+import WeddingCreditBanner from '@/components/home/WeddingCreditBanner';
 import { useBackButton } from '@/components/navigation/useBackButton';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
-import { getClientPrice } from '@/components/utils/priceCalculation';
 import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
 import FreeShippingBanner from '@/components/home/FreeShippingBanner';
-import WeddingCreditBanner from '@/components/home/WeddingCreditBanner';
 
-// --- COMPOSANTS NON-CRITIQUES (Lazy Loading) ---
+// Lazy loading pour alléger le chargement initial
 const RecommendedSection = lazy(() => import('./RecommendedSection'));
 const ProductDetailModal = lazy(() => import('@/components/modals/ProductDetailModal'));
-const ProfileCompletionModal = lazy(() => import('@/components/modals/ProfileCompletionModal'));
-const SmallStories = lazy(() => import('@/components/home/SmallStories'));
 const NewMessagesBanner = lazy(() => import('@/components/home/NewMessagesBanner'));
 
 const WEDDING_STRUCTURE = [
   { title: "Robe de Mariage", subtypes: ["Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe Civil"] },
-  { title: "Demoiselle d'honneur" },
-  { title: "Annonceuse" },
-  { title: "Témoins" },
-  { title: "Bague de Mariage" },
-  { title: "Bague" },
-  { title: "Accessoires" },
-  { title: "Carte et programmation" },
-  { title: "Matériels Décor" }
+  { title: "Demoiselle d'honneur" }, { title: "Annonceuse" }, { title: "Témoins" },
+  { title: "Bague de Mariage" }, { title: "Bague" }, { title: "Accessoires" },
+  { title: "Carte et programmation" }, { title: "Matériels Décor" }
 ];
 
 export default function Home() {
@@ -49,78 +43,70 @@ export default function Home() {
   const queryClient = useQueryClient();
 
   // --- ÉTATS ---
-  const [limit, setLimit] = useState(30); // Pagination
+  const [limit, setLimit] = useState(30); // État pour le "Voir plus"
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
-  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const urlParams = new URLSearchParams(location.search);
   const selectedCategory = slugToCategory(urlParams.get('category') || 'Tout');
-  const selectedSubCategory = slugToSubcategory(urlParams.get('sub') || '', WEDDING_STRUCTURE);
 
-  useBackButton(() => {
-    if (selectedProduct) setSelectedProduct(null);
-    else if (selectedShop) setSelectedShop(null);
-    else if (selectedCategory !== 'Tout') navigate('/', { replace: true });
-  }, selectedProduct || selectedShop || selectedCategory !== 'Tout');
-
-  // --- DATA FETCHING (OPTIMISÉ) ---
+  // --- RÉCUPÉRATION DES DONNÉES ---
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
     staleTime: 300000
   });
 
+  // On récupère les produits avec la limite dynamique
   const { data: allProducts = [], isLoading, isFetching } = useQuery({
-    queryKey: ['products-home-paginated', limit],
+    queryKey: ['products-home', limit],
     queryFn: () => base44.entities.Product.filter({ is_available: true }, { limit: limit }),
     keepPreviousData: true,
     staleTime: 60000
   });
 
-  // --- MOTEUR DE RECHERCHE & FILTRAGE ---
+  // --- LOGIQUE DE RECHERCHE & FILTRAGE ---
+  // On utilise useMemo pour filtrer sur le Titre, SEO (tags) et Description
   const filteredProducts = useMemo(() => {
     let results = allProducts;
 
-    // 1. Catégorie
+    // 1. Filtre par catégorie (URL)
     if (selectedCategory !== 'Tout') {
       results = results.filter(p => p.category === selectedCategory);
     }
 
-    // 2. Recherche par Mots-Clés (Titre, Description, SEO)
+    // 2. Filtre par recherche (Mots-clés)
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
       results = results.filter(p => 
-        p.name?.toLowerCase().includes(q) || 
-        p.description?.toLowerCase().includes(q) || 
-        p.seo_keywords?.toLowerCase().includes(q) ||
-        p.subcategory?.toLowerCase().includes(q)
+        (p.name?.toLowerCase().includes(q)) || 
+        (p.description?.toLowerCase().includes(q)) || 
+        (p.seo_keywords?.toLowerCase().includes(q)) || // Assure-toi que ce champ existe en BDD
+        (p.subcategory?.toLowerCase().includes(q))
       );
     }
     return results;
   }, [allProducts, searchQuery, selectedCategory]);
 
   // --- HANDLERS ---
-  const handleLoadMore = () => setLimit(prev => prev + 30);
+  const handleLoadMore = () => {
+    setLimit(prev => prev + 30); // Ajoute 30 produits de plus
+  };
 
   const handleAddToCart = (product, quantity = 1) => {
     trackAddToCart(product);
     const shop = shops.find(s => s.id === product.shop_id);
-    if (!user) {
-      addToGuestCart({
-        product_id: product.id,
-        product_name: product.name,
-        product_image: product.image_url,
-        quantity,
-        unit_price: getClientPrice(product),
-        shop_id: shop?.id,
-        shop_name: shop?.company_name
-      });
-      toast.success('Ajouté au panier');
-      return;
-    }
-    // Mutation panier ici...
+    addToGuestCart({
+      product_id: product.id,
+      product_name: product.name,
+      product_image: product.image_url,
+      quantity,
+      unit_price: getClientPrice(product),
+      shop_id: shop?.id,
+      shop_name: shop?.company_name
+    });
+    toast.success('Ajouté au panier');
   };
 
   const theme = { darkBlue: '#232F3E', amazonOrange: '#FF9900', bgGray: '#EAEDED' };
@@ -128,51 +114,49 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-20 font-sans" style={{ backgroundColor: theme.bgGray }}>
       <Helmet>
-        <title>Rapido Presto | Marketplace</title>
+        <title>Rapido Presto | Boutique en ligne</title>
       </Helmet>
       
       <header className="sticky top-0 z-50 flex flex-col shadow-md">
         <div className="text-white px-4 py-2 flex items-center gap-4" style={{ backgroundColor: theme.darkBlue }}>
             <div className="flex-shrink-0 cursor-pointer" onClick={() => navigate('/')}>
-                <span className="text-xl font-bold tracking-tight">Rapido</span>
+                <span className="text-xl font-bold">Rapido</span>
                 <span className="text-sm text-orange-400 ml-1">Presto</span>
             </div>
 
-            {/* Moteur de Recherche */}
+            {/* BARRE DE RECHERCHE AMÉLIORÉE */}
             <div className="flex-1 max-w-3xl mx-auto flex h-10 rounded-md overflow-hidden bg-white">
                 <input 
                   type="text" 
-                  placeholder="Rechercher un article, mariage, électronique..." 
+                  placeholder="Rechercher par titre, description, mots-clés..." 
                   className="flex-1 px-4 text-black outline-none text-sm"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <button className="px-5 transition-colors hover:bg-orange-600" style={{ backgroundColor: theme.amazonOrange }}>
+                <button className="px-5 transition-colors" style={{ backgroundColor: theme.amazonOrange }}>
                     <Search className="w-5 h-5 text-gray-900" />
                 </button>
             </div>
         </div>
       </header>
       
-      <MerchantProfileAlert user={user} />
-
       <main className="max-w-[1500px] mx-auto p-2 md:p-4">
+        <MerchantProfileAlert user={user} />
         <FreeShippingBanner />
         
         {!searchQuery && (
-          <Suspense fallback={<div className="h-20" />}>
-            <SmallStories onCategorySelect={(c) => navigate(`?category=${categoryToSlug(c)}`)} />
-          </Suspense>
+          <SmallStories onCategorySelect={(c) => navigate(`?category=${categoryToSlug(c)}`)} />
         )}
 
         {selectedCategory === 'Mariage' && <WeddingCreditBanner />}
 
         <div className="mt-6">
             <h2 className="text-lg font-bold text-slate-800 mb-4 px-2">
-                {searchQuery ? `Résultats pour "${searchQuery}"` : "Sélection du moment"}
+                {searchQuery ? `Résultats pour "${searchQuery}"` : "Nos articles populaires"}
             </h2>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {/* GRILLE DE PRODUITS */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
                 {filteredProducts.map(product => (
                     <ProductCard 
                         key={product.id} 
@@ -184,35 +168,41 @@ export default function Home() {
                 ))}
             </div>
 
-            {/* Pagination Button */}
+            {/* ÉTAT VIDE SI RECHERCHE SANS RÉSULTAT */}
+            {filteredProducts.length === 0 && !isLoading && (
+                <div className="text-center py-20 bg-white rounded-lg mt-4">
+                    <p className="text-gray-500 italic">Aucun article ne correspond à votre recherche.</p>
+                </div>
+            )}
+
+            {/* BOUTON VOIR PLUS */}
             {allProducts.length >= limit && !searchQuery && (
-                <div className="mt-12 flex flex-col items-center gap-2">
+                <div className="mt-12 flex justify-center">
                     <Button 
                         onClick={handleLoadMore}
                         disabled={isFetching}
-                        className="bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white px-10 py-6 text-lg font-bold rounded-full shadow-lg transition-all"
+                        className="bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white px-12 py-6 text-lg font-black rounded-full shadow-xl transition-all"
                     >
-                        {isFetching ? <Loader2 className="animate-spin" /> : <Plus className="mr-2" />}
+                        {isFetching ? <Loader2 className="animate-spin mr-2" /> : <Plus className="mr-2" />}
                         VOIR PLUS D'ARTICLES
                     </Button>
-                    <span className="text-xs text-gray-400">{allProducts.length} produits affichés</span>
                 </div>
             )}
         </div>
 
-        {/* Section Recommandations - Chargée différée */}
+        {/* RECOMMANDATIONS (Uniquement hors recherche) */}
         {!searchQuery && (
           <Suspense fallback={<div className="h-40" />}>
             <RecommendedSection 
                 allProducts={allProducts} 
                 shops={shops} 
                 setSelectedProduct={setSelectedProduct} 
-                getClientPrice={getClientPrice}
             />
           </Suspense>
         )}
       </main>
 
+      {/* MODAL DETAIL PRODUIT */}
       <Suspense fallback={null}>
         {selectedProduct && (
           <ProductDetailModal 
