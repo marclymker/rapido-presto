@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { categoryToSlug, slugToCategory, subcategoryToSlug, slugToSubcategory, getCategoryMeta } from '@/components/utils/urlHelpers';
-import { Search, ShoppingCart, ArrowLeft, Menu, MapPin, Star, ChevronRight, X, Clock, Zap, MessageSquare } from 'lucide-react';
+import { Search, ShoppingCart, ArrowLeft, Menu, MapPin, Star, ChevronRight, X, Clock, Zap, MessageSquare, Truck } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,10 +42,7 @@ import FreeShippingBanner from '@/components/home/FreeShippingBanner';
 
 // --- CONFIGURATION DES SOUS-CATÉGORIES MARIAGE ---
 const WEDDING_STRUCTURE = [
-  {
-    title: "Robe de Mariage",
-    subtypes: ["Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe Civil"]
-  },
+  { title: "Robe de Mariage", subtypes: ["Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe Civil"] },
   { title: "Demoiselle d'honneur" },
   { title: "Annonceuse" },
   { title: "Témoins" },
@@ -148,7 +145,6 @@ export default function Home() {
     setSelectedShop(null);
     setGooglePlaces([]);
     
-    // Track category view
     trackCategoryView(category);
   };
 
@@ -343,11 +339,8 @@ export default function Home() {
   });
 
   const handleAddToCart = (product, quantity = 1) => {
-    // Track add to cart
     trackAddToCart(product);
-    
     if (!user) {
-      // Add to guest cart
       const productShop = shops.find(s => s.id === product.shop_id) || selectedShop;
       addToGuestCart({
         product_id: product.id,
@@ -504,8 +497,6 @@ export default function Home() {
                 </div>
             </div>
         </div>
-
-
       </header>
       
       <div className="max-w-[1500px] mx-auto">
@@ -846,15 +837,14 @@ export default function Home() {
 
             <SmallStories onCategorySelect={(c) => navigateToCategory(c)} />
             
-            {/* Bannière intermédiaire */}
             <FreeShippingBanner />
             
             <CreditBanner />
 
-            {/* MEILLEURES VENTES MODIFIÉ */}
-            <div className="bg-white p-4 relative rounded-sm">
-                <h2 className="text-xl font-bold mb-4">Meilleures Ventes</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-0 border-t border-l border-gray-200">
+            {/* --- MEILLEURES VENTES RÉÉCRIT --- */}
+            <div className="bg-white p-2 md:p-4 relative rounded-sm shadow-sm border border-gray-100 mt-6">
+                <h2 className="text-lg md:text-xl font-bold mb-4 px-2">Meilleures Ventes</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-l border-gray-100">
                 {bestSellers.map((product, idx) => {
                   const shop = shops.find(s => s.id === product.shop_id);
                   const price = getClientPrice(product);
@@ -871,40 +861,36 @@ export default function Home() {
                           setSelectedProduct(product);
                         }
                       }}
-                      className="bg-white p-4 border-r border-b border-gray-200 hover:shadow-xl hover:z-10 relative cursor-pointer group transition-all"
+                      className="bg-white p-2 border-r border-b border-gray-100 hover:shadow-lg hover:z-10 relative cursor-pointer group transition-all flex flex-col h-full"
                     >
-                      <div className="absolute top-0 left-0 bg-[#C45500] text-white text-xs px-2 py-1 z-20 font-bold rounded-br-md">#{idx + 1}</div>
+                      {/* Numéro discret */}
+                      <div className="absolute top-0 left-0 bg-slate-800 text-white text-[9px] px-1.5 py-0.5 z-20 font-bold rounded-br">#{idx + 1}</div>
                       
-                      {/* Badge Livraison/Reponse Rapide */}
-                      <div className={`absolute top-2 right-2 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm ${isMakarios ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
-                        {isMakarios ? <MessageSquare size={10} /> : <Zap size={10} fill="currentColor" />}
-                        {isMakarios ? 'Réponse Rapide' : 'Livraison Rapide'}
+                      {/* 1. L'IMAGE */}
+                      <div className="relative aspect-square mb-1.5 overflow-hidden bg-gray-50 rounded">
+                        <img 
+                          src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=250&q=75`} 
+                          className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform" 
+                          alt={product.name} 
+                          loading="lazy" 
+                        />
+                        {/* Badge de réassurance sur l'image */}
+                        <div className={`absolute bottom-1 right-1 flex items-center gap-0.5 px-1 rounded-sm text-[8px] font-black uppercase shadow-sm ${isMakarios ? 'bg-blue-600 text-white' : 'bg-amber-500 text-white'}`}>
+                          <Zap size={8} fill="currentColor" />
+                          {isMakarios ? 'Réponse' : 'Livraison'}
+                        </div>
                       </div>
 
-                      <div className="relative h-40 mb-3 overflow-hidden">
-                        <img src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=300&q=75`} className="w-full h-full object-contain group-hover:scale-105 transition-transform" alt={product.name} loading="lazy" />
+                      {/* 2. LE PRIX (Inversé) */}
+                      <div className="flex items-baseline gap-0.5 leading-none px-1">
+                        <span className="text-sm font-black text-slate-900">{Math.floor(price).toLocaleString()}</span>
+                        <span className="text-[8px] font-bold text-slate-900">HTG</span>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-[#007185] group-hover:text-[#C7511F] hover:underline leading-snug line-clamp-2 h-9 overflow-hidden">{product.name}</p>
-                        <div className="flex items-start mt-1 font-medium">
-                            <span className="text-lg leading-none">{Math.floor(price)}</span>
-                            <span className="text-xs relative top-0.5">.00</span>
-                            <span className="text-gray-500 text-xs self-center ml-1">Gourdes</span>
-                        </div>
-                        <Button 
-                            className="w-full mt-2 h-7 text-xs bg-[#FFD814] hover:bg-[#F7CA00] text-black border border-[#FCD200] rounded-full"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (!user) { 
-                                base44.auth.redirectToLogin(window.location.pathname); 
-                                return; 
-                              }
-                              if (shop) { setSelectedShop(shop); handleAddToCart(product); }
-                            }}
-                        >
-                            Ajouter
-                        </Button>
-                      </div>
+
+                      {/* 3. LE TITRE (Forcé sur 1 ligne) */}
+                      <h3 className="text-[10px] text-slate-500 font-medium truncate w-full mt-0.5 px-1" title={product.name}>
+                        {product.name}
+                      </h3>
                     </div>
                   );
                 })}
@@ -1034,7 +1020,6 @@ export default function Home() {
                             <div className="space-y-8">
                                 {selectedSubCategory ? (
                                     <div className="bg-white p-4 rounded-lg shadow-sm">
-                                        {/* Wedding Credit Banner - Après 2ème rangée de produits */}
                                         {weddingProductsBySubCategory[selectedSubCategory]?.slice(0, 8).length > 0 && (
                                           <div className="mb-8 col-span-full">
                                             <WeddingCreditBanner />
@@ -1042,8 +1027,8 @@ export default function Home() {
                                         )}
 
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                         {weddingProductsBySubCategory[selectedSubCategory]?.length > 0 ? (
-                                                             weddingProductsBySubCategory[selectedSubCategory].map(product => {
+                                                 {weddingProductsBySubCategory[selectedSubCategory]?.length > 0 ? (
+                                                     weddingProductsBySubCategory[selectedSubCategory].map(product => {
                                                     const shop = shops.find(s => s.id === product.shop_id);
                                                     return (
                                                         <ProductCard
@@ -1087,7 +1072,7 @@ export default function Home() {
                                                             />
                                                         );
                                                     })}
-                                                </div>
+                                            </div>
                                         </div>
                                     ))
                                 )}
@@ -1266,7 +1251,7 @@ export default function Home() {
   );
 }
 
-// Carousel Recommandations MODIFIÉ
+// Carousel Recommandations RÉÉCRIT
 function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice }) {
   const rowContainers = [useRef(null), useRef(null), useRef(null)];
 
@@ -1300,20 +1285,24 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
   const rowTitles = ["Inspiré de votre historique", "Les clients ont aussi acheté", "Recommandé pour vous"];
 
   return (
-    <div className="mt-8 space-y-8 bg-white p-4 border-t border-gray-200">
+    <div className="mt-8 space-y-6">
       {productRows.map((rowProducts, rowIndex) => (
-          <div key={rowIndex} className="relative group/carousel">
-            <h3 className="text-xl font-bold text-slate-900 mb-2">{rowTitles[rowIndex]}</h3>
+          <div key={rowIndex} className="bg-white p-3 md:p-4 rounded-sm border border-gray-200 relative group/carousel shadow-sm">
+            <h3 className="text-base font-bold text-slate-900 mb-3">{rowTitles[rowIndex]}</h3>
             <button onClick={() => handleScroll(rowIndex, 'left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-r-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600" /></button>
             <button onClick={() => handleScroll(rowIndex, 'right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-l-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600 rotate-180" /></button>
 
-            <div ref={rowContainers[rowIndex]} className="flex overflow-x-auto gap-4 pb-4 scroll-smooth no-scrollbar">
+            <div ref={rowContainers[rowIndex]} className="flex overflow-x-auto gap-2 pb-2 scroll-smooth no-scrollbar">
               {rowProducts.map((product, idx) => {
                 const shop = shops.find(s => s.id === product.shop_id);
+                const price = getClientPrice(product);
                 const isMakarios = shop?.company_name?.toLowerCase().includes('makarios bridal');
 
                 return (
-                  <div key={`${product.id}-${idx}`} className="flex-shrink-0 w-[180px] bg-white p-2 cursor-pointer hover:bg-gray-50 relative group" onClick={() => {
+                  <div 
+                    key={`${product.id}-${idx}`} 
+                    className="flex-shrink-0 w-[130px] md:w-[150px] bg-white p-1 cursor-pointer transition-all hover:bg-gray-50 relative group" 
+                    onClick={() => {
                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                        if (shop?.slug && product.slug) {
                          window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
@@ -1323,15 +1312,28 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
                        }
                     }}>
                     
-                    {/* Badge Livraison/Reponse Rapide */}
-                    <div className={`absolute top-3 right-3 z-20 flex items-center gap-1 px-1 py-0.5 rounded shadow-sm text-[8px] font-black tracking-tight ${isMakarios ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
-                        {isMakarios ? <MessageSquare size={8} /> : <Zap size={8} fill="currentColor" />}
-                        {isMakarios ? 'Réponse Rapide' : 'Livraison Rapide'}
+                    {/* Image Carrée Compacte */}
+                    <div className="aspect-square bg-gray-50 mb-1.5 rounded overflow-hidden p-1">
+                        <img 
+                          src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=200&q=75`} 
+                          alt={product.name} 
+                          className="w-full h-full object-contain mix-blend-multiply" 
+                          loading="lazy" 
+                        />
+                        {/* Badge sur l'image */}
+                        <div className={`absolute bottom-2 right-2 flex items-center gap-0.5 px-1 rounded-sm text-[7px] font-black uppercase shadow-sm ${isMakarios ? 'bg-blue-600 text-white' : 'bg-amber-500 text-white'}`}>
+                          <Zap size={7} fill="currentColor" />
+                          {isMakarios ? 'Réponse' : 'Livraison'}
+                        </div>
                     </div>
 
-                    <div className="h-40 bg-gray-50 mb-2 p-2"><img src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=300&q=75`} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" loading="lazy" /></div>
-                    <div className="text-sm text-[#007185] hover:text-[#C7511F] line-clamp-2 h-10 mb-1">{product.name}</div>
-                    <div className="font-medium text-lg text-[#B12704]">{Math.floor(getClientPrice(product))}.00 Gourdes</div>
+                    {/* Prix d'abord */}
+                    <div className="font-black text-sm text-slate-900 leading-none px-1">
+                        {Math.floor(price).toLocaleString()} <span className="text-[8px]">HTG</span>
+                    </div>
+
+                    {/* Titre sur 1 ligne ensuite */}
+                    <div className="text-[10px] text-slate-500 truncate mt-1 w-full px-1 leading-tight">{product.name}</div>
                   </div>
                 );
               })}
