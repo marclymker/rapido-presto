@@ -75,7 +75,6 @@ export default function Home() {
   
   const queryClient = useQueryClient();
 
-  // Lire catégorie et sous-catégorie depuis l'URL
   const urlParams = new URLSearchParams(location.search);
   const categorySlug = urlParams.get('category') || '';
   const subcategorySlug = urlParams.get('sub') || '';
@@ -83,7 +82,6 @@ export default function Home() {
   const selectedCategory = slugToCategory(categorySlug);
   const selectedSubCategory = slugToSubcategory(subcategorySlug, WEDDING_STRUCTURE);
 
-  // Gérer le bouton retour natif
   useBackButton(() => {
     if (selectedProduct) {
       setSelectedProduct(null);
@@ -119,19 +117,19 @@ export default function Home() {
     { id: 'Outils', name: 'Outils', icon: '🔧' }
   ];
 
+  // OPTIMISATION 1 : Passage à 5 minutes (300000ms)
   useAutoRefresh({ 
     queryKey: ['shops'], 
-    refetchInterval: 60000,
+    refetchInterval: 300000,
     enabled: !selectedShop 
   });
   
   useAutoRefresh({ 
     queryKey: ['products'], 
-    refetchInterval: 60000,
+    refetchInterval: 300000,
     enabled: !!selectedShop 
   });
 
-  // Fonction pour changer de catégorie via URL
   const navigateToCategory = (category, subcategory = null) => {
     const catSlug = categoryToSlug(category);
     const subSlug = subcategory ? subcategoryToSlug(subcategory) : '';
@@ -171,8 +169,9 @@ export default function Home() {
     window.addEventListener('selectCategory', handleCategorySelect);
     window.addEventListener('setSearchQuery', handleSearchQuery);
 
+    // OPTIMISATION 2 : Utilisation de getCurrentPosition pour alléger le réseau
     if (navigator.geolocation) {
-      const watchId = navigator.geolocation.watchPosition(
+      navigator.geolocation.getCurrentPosition(
         (position) => {
           setSelectedLocation({
             lat: position.coords.latitude,
@@ -182,11 +181,6 @@ export default function Home() {
         (error) => console.log('Géolocalisation refusée:', error),
         { enableHighAccuracy: true }
       );
-      return () => {
-        navigator.geolocation.clearWatch(watchId);
-        window.removeEventListener('selectCategory', handleCategorySelect);
-        window.removeEventListener('setSearchQuery', handleSearchQuery);
-      };
     }
 
     return () => {
@@ -208,14 +202,14 @@ export default function Home() {
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
-    refetchInterval: 60000
+    refetchInterval: 300000
   });
 
   const { data: allProducts = [] } = useQuery({
     queryKey: ['all-products'],
     queryFn: () => base44.entities.Product.list(),
     enabled: !selectedShop,
-    refetchInterval: 60000
+    refetchInterval: 300000
   });
 
   const filteredProductsByType = React.useMemo(() => {
@@ -241,7 +235,7 @@ export default function Home() {
       });
     },
     enabled: !!selectedShop && !selectedShop.is_google_place,
-    refetchInterval: 60000
+    refetchInterval: 300000
   });
 
   const productsByShopInCategory = React.useMemo(() => {
@@ -373,12 +367,13 @@ export default function Home() {
     bgGray: '#EAEDED'
   };
 
+  // OPTIMISATION 3 : Réduction du calcul BestSellers à 50
   const bestSellers = React.useMemo(() => {
     const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
     const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     
-    const TOTAL_BESTSELLERS = 100;
+    const TOTAL_BESTSELLERS = 50;
     const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3));
     const OTHERS_COUNT = TOTAL_BESTSELLERS - MAKARIOS_COUNT;
 
@@ -841,11 +836,11 @@ export default function Home() {
             
             <CreditBanner />
 
-            {/* --- MEILLEURES VENTES RÉÉCRIT --- */}
+            {/* --- MEILLEURES VENTES MODIFIÉ AVEC LOGO MONCASH --- */}
             <div className="bg-white p-2 md:p-4 relative rounded-sm shadow-sm border border-gray-100 mt-6">
                 <h2 className="text-lg md:text-xl font-bold mb-4 px-2">Meilleures Ventes</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-l border-gray-100">
-                {bestSellers.map((product, idx) => {
+                {bestSellers.map((product) => {
                   const shop = shops.find(s => s.id === product.shop_id);
                   const price = getClientPrice(product);
                   const isMakarios = shop?.company_name?.toLowerCase().includes('makarios bridal');
@@ -863,10 +858,15 @@ export default function Home() {
                       }}
                       className="bg-white p-2 border-r border-b border-gray-100 hover:shadow-lg hover:z-10 relative cursor-pointer group transition-all flex flex-col h-full"
                     >
-                      {/* Numéro discret */}
-                      <div className="absolute top-0 left-0 bg-slate-800 text-white text-[9px] px-1.5 py-0.5 z-20 font-bold rounded-br">#{idx + 1}</div>
+                      {/* MODIFICATION : LOGO MONCASH AU LIEU DU NUMÉRO */}
+                      <div className="absolute top-1 left-1 z-20">
+                          <img 
+                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/MonCash_logo.svg/1024px-MonCash_logo.svg.png" 
+                            className="h-4 w-auto drop-shadow-sm" 
+                            alt="MonCash" 
+                          />
+                      </div>
                       
-                      {/* 1. L'IMAGE */}
                       <div className="relative aspect-square mb-1.5 overflow-hidden bg-gray-50 rounded">
                         <img 
                           src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=250&q=75`} 
@@ -874,20 +874,17 @@ export default function Home() {
                           alt={product.name} 
                           loading="lazy" 
                         />
-                        {/* Badge de réassurance sur l'image */}
                         <div className={`absolute bottom-1 right-1 flex items-center gap-0.5 px-1 rounded-sm text-[8px] font-black uppercase shadow-sm ${isMakarios ? 'bg-blue-600 text-white' : 'bg-amber-500 text-white'}`}>
                           <Zap size={8} fill="currentColor" />
                           {isMakarios ? 'Réponse' : 'Livraison'}
                         </div>
                       </div>
 
-                      {/* 2. LE PRIX (Inversé) */}
                       <div className="flex items-baseline gap-0.5 leading-none px-1">
                         <span className="text-sm font-black text-slate-900">{Math.floor(price).toLocaleString()}</span>
                         <span className="text-[8px] font-bold text-slate-900">HTG</span>
                       </div>
 
-                      {/* 3. LE TITRE (Forcé sur 1 ligne) */}
                       <h3 className="text-[10px] text-slate-500 font-medium truncate w-full mt-0.5 px-1" title={product.name}>
                         {product.name}
                       </h3>
@@ -982,7 +979,7 @@ export default function Home() {
 
             <main className="flex-1 min-w-0">
                {selectedShop ? (
-                   <div className="bg-white p-4 rounded-lg shadow-sm min-h-[500px]">
+                    <div className="bg-white p-4 rounded-lg shadow-sm min-h-[500px]">
                         <div className="flex items-center gap-4 mb-6 border-b pb-4">
                             <div className="w-16 h-16 rounded-full border-2 border-orange-100 overflow-hidden">
                                 {selectedShop.company_logo_url ? 
@@ -1009,7 +1006,7 @@ export default function Home() {
                         </div>
                    </div>
                ) : (
-                   <div className="space-y-6">
+                    <div className="space-y-6">
                         <div className="bg-white p-4 rounded shadow-sm">
                             <h2 className="text-xl font-bold text-slate-800">
                                 {selectedSubCategory ? selectedSubCategory : selectedCategory}
@@ -1251,7 +1248,7 @@ export default function Home() {
   );
 }
 
-// Carousel Recommandations RÉÉCRIT
+// Carousel Recommandations
 function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice }) {
   const rowContainers = [useRef(null), useRef(null), useRef(null)];
 
@@ -1312,7 +1309,6 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
                        }
                     }}>
                     
-                    {/* Image Carrée Compacte */}
                     <div className="aspect-square bg-gray-50 mb-1.5 rounded overflow-hidden p-1">
                         <img 
                           src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=200&q=75`} 
@@ -1320,19 +1316,25 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
                           className="w-full h-full object-contain mix-blend-multiply" 
                           loading="lazy" 
                         />
-                        {/* Badge sur l'image */}
+                        {/* MODIFICATION : LOGO MONCASH SUR LES RECOMMANDATIONS AUSSI */}
+                        <div className="absolute top-1 left-1 z-20">
+                          <img 
+                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/MonCash_logo.svg/1024px-MonCash_logo.svg.png" 
+                            className="h-3 w-auto" 
+                            alt="MonCash" 
+                          />
+                        </div>
+
                         <div className={`absolute bottom-2 right-2 flex items-center gap-0.5 px-1 rounded-sm text-[7px] font-black uppercase shadow-sm ${isMakarios ? 'bg-blue-600 text-white' : 'bg-amber-500 text-white'}`}>
                           <Zap size={7} fill="currentColor" />
                           {isMakarios ? 'Réponse' : 'Livraison'}
                         </div>
                     </div>
 
-                    {/* Prix d'abord */}
                     <div className="font-black text-sm text-slate-900 leading-none px-1">
                         {Math.floor(price).toLocaleString()} <span className="text-[8px]">HTG</span>
                     </div>
 
-                    {/* Titre sur 1 ligne ensuite */}
                     <div className="text-[10px] text-slate-500 truncate mt-1 w-full px-1 leading-tight">{product.name}</div>
                   </div>
                 );
