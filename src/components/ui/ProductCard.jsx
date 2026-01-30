@@ -10,142 +10,110 @@ export default function ProductCard({ product, onAdd, onClick, shop, hideId = fa
     : applyClientMargin(product.price);
   const originalDisplayPrice = applyClientMargin(product.price);
 
-  // Définition du texte selon le nom de la boutique
   const fastText = shop?.name === "MAKARIOS BRIDAL" ? "Réponse Rapide" : "Livraison Rapide";
 
   return (
     <div
       id={`product-card-${product.id}`}
-      className="group relative bg-white rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full border border-slate-100 overflow-hidden"
+      className="group relative bg-white rounded-xl transition-all duration-300 hover:shadow-lg flex flex-col h-full border border-slate-100 overflow-hidden"
     >
-      {/* --- ZONE IMAGE ET BADGES --- */}
+      {/* --- ZONE IMAGE --- */}
       <div className="relative aspect-square overflow-hidden bg-slate-50">
-        {/* Badge Flottant Promo */}
         {hasPromo && shop?.company_category !== "Mariage" && (
-          <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black z-20 shadow-sm">
+          <div className="absolute top-1 left-1 bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black z-20 shadow-sm">
             -{Math.round((1 - product.promo_price / product.price) * 100)}%
           </div>
         )}
 
-        {/* Bouton Ajout Panier */}
         {product.is_available !== false && (
           <button
-            className="absolute top-2 right-2 z-20 bg-white/90 backdrop-blur-sm text-[#25D366] w-8 h-8 rounded-full shadow-md flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all active:scale-90"
+            className="absolute top-1 right-1 z-20 bg-white/90 backdrop-blur-sm text-[#25D366] w-7 h-7 rounded-full shadow-md flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all"
             onClick={(e) => { e.stopPropagation(); onAdd(product); }}
           >
-            <Plus size={20} strokeWidth={3} />
+            <Plus size={18} strokeWidth={3} />
           </button>
         )}
 
-        {/* Logo MonCash en bas à gauche */}
-        <img
-          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
-          alt="MonCash"
-          className="absolute bottom-2 left-2 h-3 opacity-70 group-hover:opacity-100 transition-opacity z-10"
-        />
-
-        {/* Image */}
         <div
-          className="w-full h-full p-2 cursor-pointer touch-manipulation"
+          className="w-full h-full p-1 cursor-pointer"
           onClick={() => product.is_available !== false && onClick && onClick(product)}
         >
           {product.image_url ? (
             <img
               src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=300&q=75`}
-              className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+              className="w-full h-full object-contain"
               alt={product.name}
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 italic text-[10px]">
-              <span className="text-2xl mb-1">🍽️</span>
-              Photo à venir
-            </div>
+            <div className="w-full h-full flex items-center justify-center text-slate-300 text-[9px]">Photo à venir</div>
           )}
         </div>
 
-        {/* Overlay Indisponible */}
         {!product.is_available && (
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] flex items-center justify-center z-10">
-            <span className="bg-slate-800 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Épuisé</span>
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center z-10">
+            <span className="bg-slate-800 text-white px-2 py-0.5 rounded text-[8px] font-bold uppercase">Épuisé</span>
           </div>
         )}
       </div>
 
-      {/* --- ZONE CONTENU --- */}
-      <div className="p-3 flex flex-col flex-grow gap-1">
+      {/* --- ZONE CONTENU OPTIMISÉE --- */}
+      <div className="p-2 flex flex-col flex-grow">
         
-        {/* Badge Dynamique : Livraison ou Réponse Rapide */}
-        <div className="flex items-center gap-1 text-amber-600 bg-amber-50 w-fit px-2 py-0.5 rounded-md mb-1">
-          <Zap size={10} fill="currentColor" />
-          <span className="text-[9px] font-bold uppercase tracking-wider">{fastText}</span>
+        {/* Badge Compact */}
+        <div className="flex items-center gap-1 text-amber-600 mb-1">
+          <Zap size={9} fill="currentColor" />
+          <span className="text-[8px] font-bold uppercase tracking-tight">{fastText}</span>
         </div>
 
-        {/* Prix principal */}
-        <div className="flex flex-col gap-1">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-              {displayPrice.toLocaleString()} <span className="text-[10px] font-bold">HTG</span>
+        {/* Prix (Priorité visuelle) */}
+        <div className="flex items-baseline gap-1">
+          <span className="text-sm font-black text-slate-900 leading-none">
+            {displayPrice.toLocaleString()} <span className="text-[8px]">HTG</span>
+          </span>
+          {hasPromo && (
+            <span className="text-[8px] text-slate-400 line-through">
+              {originalDisplayPrice}
             </span>
-            {hasPromo && (
-              <span className="text-[10px] text-slate-400 line-through decoration-red-400/50">
-                {originalDisplayPrice}
-              </span>
-            )}
-          </div>
-          
-          {/* Badge Livraison Gratuite si prix >= 3000 */}
-          {displayPrice >= 3000 && (
-            <div className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-0.5 rounded-md w-fit">
-              <Truck size={10} />
-              <span className="text-[9px] font-bold uppercase">Livraison Gratuite</span>
-            </div>
           )}
         </div>
 
-        {/* Nom du produit */}
-        <h3 className="text-xs text-slate-600 font-medium leading-tight line-clamp-2 h-8 group-hover:text-orange-600 transition-colors">
+        {/* Nom du produit (Une seule ligne) */}
+        <h3 className="text-[11px] text-slate-600 font-medium truncate mt-0.5 mb-1 group-hover:text-orange-600">
           {product.name}
         </h3>
 
-        {/* Product ID */}
-        {!hideId && (
-          <>
-            <p className="text-[9px] text-slate-400 font-mono">ID: {product.id}</p>
-            {/* Availability */}
-            <p className={`text-[9px] font-bold ${product.is_available !== false && product.stock_quantity !== 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {product.is_available !== false && product.stock_quantity !== 0 ? 'In stock' : 'Out of stock'}
-            </p>
-          </>
+        {/* Livraison gratuite si éligible */}
+        {displayPrice >= 3000 && (
+          <div className="flex items-center gap-1 text-green-700 text-[8px] font-bold uppercase mb-1">
+            <Truck size={10} /> Livraison Offerte
+          </div>
         )}
 
-        {/* Footer info (Livraison & Paiement) */}
-        <div className="mt-auto pt-2 flex items-center justify-between border-t border-slate-50">
-          <div className="flex items-center gap-1 text-slate-400 font-medium">
-            <Clock size={10} />
-            <span className="text-[9px]">{product.delivery_time || 'Express'}</span>
+        {/* Footer info réduit */}
+        <div className="mt-auto pt-1 flex items-center justify-between border-t border-slate-50">
+          <div className="flex items-center gap-1 text-slate-400">
+            <Clock size={9} />
+            <span className="text-[8px]">{product.delivery_time || 'Express'}</span>
           </div>
-          <img
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
-            alt="MonCash"
-            className="h-3 opacity-80 grayscale group-hover:grayscale-0 transition-all"
-          />
         </div>
       </div>
 
-      {/* Bouton WhatsApp pour MAKARIOS BRIDAL, Chat pour les autres */}
-      {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') ? (
-        <button
-          className="m-2 bg-[#25D366] text-white py-1.5 rounded-lg flex items-center justify-center gap-2 text-[10px] font-bold hover:bg-green-600 transition-colors"
-          onClick={(e) => { e.stopPropagation(); window.open('https://wa.me/c/50948690366', '_blank'); }}
-        >
-          <MessageCircle size={14} /> WhatsApp
-        </button>
-      ) : (
-        <div className="m-2" onClick={(e) => e.stopPropagation()}>
-          <ChatButton product={product} shop={shop} />
-        </div>
-      )}
+      {/* Boutons d'Action */}
+      <div className="px-2 pb-2 mt-1">
+        {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') ? (
+          <button
+            className="w-full bg-[#25D366] text-white py-1 rounded-md flex items-center justify-center gap-1 text-[9px] font-bold"
+            onClick={(e) => { e.stopPropagation(); window.open('https://wa.me/c/50948690366', '_blank'); }}
+          >
+            <MessageCircle size={12} /> WhatsApp
+          </button>
+        ) : (
+          <div onClick={(e) => e.stopPropagation()}>
+            <ChatButton product={product} shop={shop} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
