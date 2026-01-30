@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { categoryToSlug, slugToCategory, subcategoryToSlug, slugToSubcategory, getCategoryMeta } from '@/components/utils/urlHelpers';
-import { Search, ShoppingCart, ArrowLeft, Menu, MapPin, Star, ChevronRight, X, Clock, Zap, MessageSquare, Truck } from 'lucide-react';
+import { Search, ShoppingCart, ArrowLeft, Menu, MapPin, Star, ChevronRight, X, Clock, Zap, MessageSquare, Truck, ShoppingBag } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -841,7 +841,7 @@ export default function Home() {
             
             <CreditBanner />
 
-            {/* --- MEILLEURES VENTES RÉÉCRIT --- */}
+            {/* --- MEILLEURES VENTES --- */}
             <div className="bg-white p-2 md:p-4 relative rounded-sm shadow-sm border border-gray-100 mt-6">
                 <h2 className="text-lg md:text-xl font-bold mb-4 px-2">Meilleures Ventes</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-l border-gray-100">
@@ -863,8 +863,10 @@ export default function Home() {
                       }}
                       className="bg-white p-2 border-r border-b border-gray-100 hover:shadow-lg hover:z-10 relative cursor-pointer group transition-all flex flex-col h-full"
                     >
-                      {/* Numéro discret */}
-                      <div className="absolute top-0 left-0 bg-slate-800 text-white text-[9px] px-1.5 py-0.5 z-20 font-bold rounded-br">#{idx + 1}</div>
+                      {/* Icône ShoppingBag au lieu du numéro #idx */}
+                      <div className="absolute top-0 left-0 bg-slate-800 text-white p-1 z-20 rounded-br shadow-sm">
+                        <ShoppingBag className="w-3 h-3 text-orange-400" />
+                      </div>
                       
                       {/* 1. L'IMAGE */}
                       <div className="relative aspect-square mb-1.5 overflow-hidden bg-gray-50 rounded">
@@ -1251,7 +1253,7 @@ export default function Home() {
   );
 }
 
-// Carousel Recommandations RÉÉCRIT
+// Carousel Recommandations
 function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice }) {
   const rowContainers = [useRef(null), useRef(null), useRef(null)];
 
