@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 
 import { base44 } from '@/api/base44Client';
 
@@ -22,63 +22,32 @@ import { toast } from "sonner";
 
 import { Helmet } from 'react-helmet-async';
 
-
-
-// Composants internes
-
-import ShopCard from '@/components/ui/ShopCard';
-
-import GooglePlaceCard from '@/components/ui/GooglePlaceCard';
-
+// Composants critiques (chargés immédiatement)
 import ProductCard from '@/components/ui/ProductCard';
-
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
-
-import StoreMapView from '@/components/maps/StoreMapView';
-
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
-
 import { getClientPrice } from '@/components/utils/priceCalculation';
-
 import ProfileCompletionModal from '@/components/modals/ProfileCompletionModal';
-
 import SEO from '@/components/SEO';
-
-import SmallStories from '@/components/home/SmallStories';
-
 import { useAuth } from '@/components/auth/useAuth';
-
 import { useGuestCart } from '@/components/cart/useGuestCart';
-
-import WeddingCreditBanner from '@/components/home/WeddingCreditBanner';
-
 import { useBackButton } from '@/components/navigation/useBackButton';
-
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 
-import CreditBanner from '@/components/home/CreditBanner';
-
-import RecruitmentBanner from '@/components/home/RecruitmentBanner';
-
-import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
-
-import FloatingMerchantBanner from '@/components/home/FloatingMerchantBanner';
-
-import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
-
-import FlashBanner from '@/components/home/FlashBanner';
-
-import FlowersBanner from '@/components/home/FlowersBanner';
-
-import GiftBanner from '@/components/home/GiftBanner';
-
-import AdvancedSearch from '@/components/search/AdvancedSearch';
-
-import SearchResults from '@/components/search/SearchResults';
-
-import NewMessagesBanner from '@/components/home/NewMessagesBanner';
-
-import FreeShippingBanner from '@/components/home/FreeShippingBanner';
+// ⚡ Lazy Loading - Composants lourds chargés à la demande
+const SmallStories = lazy(() => import('@/components/home/SmallStories'));
+const WeddingCreditBanner = lazy(() => import('@/components/home/WeddingCreditBanner'));
+const CreditBanner = lazy(() => import('@/components/home/CreditBanner'));
+const RecruitmentBanner = lazy(() => import('@/components/home/RecruitmentBanner'));
+const FloatingMerchantBanner = lazy(() => import('@/components/home/FloatingMerchantBanner'));
+const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
+const FlashBanner = lazy(() => import('@/components/home/FlashBanner'));
+const FlowersBanner = lazy(() => import('@/components/home/FlowersBanner'));
+const GiftBanner = lazy(() => import('@/components/home/GiftBanner'));
+const AdvancedSearch = lazy(() => import('@/components/search/AdvancedSearch'));
+const SearchResults = lazy(() => import('@/components/search/SearchResults'));
+const NewMessagesBanner = lazy(() => import('@/components/home/NewMessagesBanner'));
+const FreeShippingBanner = lazy(() => import('@/components/home/FreeShippingBanner'));
 
 
 
@@ -244,7 +213,7 @@ export default function Home() {
 
     queryKey: ['shops'], 
 
-    refetchInterval: 60000,
+    refetchInterval: 300000, // ⚡ 5 minutes au lieu de 1 minute
 
     enabled: !selectedShop 
 
@@ -256,7 +225,7 @@ export default function Home() {
 
     queryKey: ['products'], 
 
-    refetchInterval: 60000,
+    refetchInterval: 300000, // ⚡ 5 minutes au lieu de 1 minute
 
     enabled: !!selectedShop 
 
@@ -412,51 +381,47 @@ export default function Home() {
 
 
 
+  // ⚡ Optimisation: Charger shops en premier (priorité)
   const { data: shops = [] } = useQuery({
-
     queryKey: ['shops'],
-
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
-
-    refetchInterval: 60000
-
+    staleTime: 5 * 60 * 1000, // ⚡ 5 min cache
+    refetchInterval: 300000 // ⚡ 5 min auto-refresh
   });
 
-
-
+  // ⚡ Optimisation: Charger produits APRÈS shops (évite race condition)
   const { data: allProducts = [] } = useQuery({
-
     queryKey: ['all-products'],
-
-    queryFn: () => base44.entities.Product.list(),
-
-    enabled: !selectedShop,
-
-    refetchInterval: 60000
-
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 500), // ⚡ Limite 500 + tri
+    enabled: !selectedShop && shops.length > 0, // ⚡ Attendre shops
+    staleTime: 5 * 60 * 1000, // ⚡ 5 min cache
+    refetchInterval: 300000 // ⚡ 5 min auto-refresh
   });
 
 
 
-  const filteredProductsByType = React.useMemo(() => {
-
-    if (selectedCategory === 'Tout') return allProducts;
-
-    return allProducts.filter(p => p.category === selectedCategory && p.is_available !== false);
-
-  }, [allProducts, selectedCategory]);
-
-
-
-  const shopsWithProducts = React.useMemo(() => {
-
-    if (selectedCategory === 'Tout') return shops;
-
-    const shopIds = new Set(filteredProductsByType.map(p => p.shop_id));
-
-    return shops.filter(s => shopIds.has(s.id));
-
-  }, [shops, filteredProductsByType, selectedCategory]);
+  // ⚡ Optimisation: Fusionner les filtres en un seul calcul
+  const { filteredProductsByType, shopsWithProducts } = React.useMemo(() => {
+    if (selectedCategory === 'Tout') {
+      return {
+        filteredProductsByType: allProducts,
+        shopsWithProducts: shops
+      };
+    }
+    
+    // Un seul .filter() au lieu de deux chaînés
+    const filtered = allProducts.filter(p => 
+      p.category === selectedCategory && p.is_available !== false
+    );
+    
+    const shopIds = new Set(filtered.map(p => p.shop_id));
+    const activeShops = shops.filter(s => shopIds.has(s.id));
+    
+    return {
+      filteredProductsByType: filtered,
+      shopsWithProducts: activeShops
+    };
+  }, [allProducts, shops, selectedCategory]);
 
 
 
@@ -596,23 +561,7 @@ export default function Home() {
 
 
 
-  useEffect(() => {
-
-    const interval = setInterval(() => {
-
-        if (cartItems.length > 0) {
-
-            setShowCartReminder(true);
-
-        }
-
-    }, 60 * 60 * 1000);
-
-
-
-    return () => clearInterval(interval);
-
-  }, [cartItems]);
+  // ⚡ Optimisation: Supprimer setInterval inutile (déjà géré par useEffect précédent)
 
 
 
@@ -728,7 +677,16 @@ export default function Home() {
 
 
 
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  // ⚡ Optimisation: Mettre cartCount en useMemo
+  const cartCount = React.useMemo(() => 
+    cartItems.reduce((sum, item) => sum + item.quantity, 0),
+    [cartItems]
+  );
+  
+  const cartTotal = React.useMemo(() => 
+    cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0),
+    [cartItems]
+  );
 
 
 
@@ -749,42 +707,47 @@ export default function Home() {
 
 
   const bestSellers = React.useMemo(() => {
-    // 🔒 Protection 1: Ne calculer que si les données sont chargées
-    if (!shops.length || !allProducts.length) {
-      console.warn('⚠️ Données non chargées, bestSellers vide');
-      return [];
+    if (!shops.length || !allProducts.length) return [];
+
+    // ⚡ Optimisation: Créer un Map pour lookup O(1) au lieu de .find() O(n)
+    const shopsMap = new Map(shops.map(s => [s.id, s]));
+
+    // ⚡ Un seul .filter() combiné au lieu de multiples chaînés
+    const productsWithPhotos = allProducts.filter(p => 
+      p.image_url && p.is_available !== false && shopsMap.has(p.shop_id)
+    );
+
+    // ⚡ Séparer Makarios vs autres
+    const makariosProducts = [];
+    const otherProducts = [];
+    
+    for (const p of productsWithPhotos) {
+      const shop = shopsMap.get(p.shop_id);
+      if (shop?.company_name?.toLowerCase().includes('makarios')) {
+        makariosProducts.push(p);
+      } else {
+        otherProducts.push(p);
+      }
     }
 
-    // 🔒 Protection 2: Filtrer SEULEMENT les produits dont la boutique existe
-    const productsWithPhotos = allProducts.filter(p => {
-      const hasPhoto = p.image_url && p.is_available !== false;
-      const shopExists = shops.find(s => s.id === p.shop_id);
-      
-      if (hasPhoto && !shopExists) {
-        console.warn('⚠️ Produit orphelin (boutique supprimée):', p.id, p.name);
-      }
-      
-      return hasPhoto && shopExists; // ✅ Les deux conditions sont nécessaires
-    });
-
-    const makariosProducts = productsWithPhotos.filter(p => 
-      shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios')
-    );
-    
-    const otherProducts = productsWithPhotos.filter(p => 
-      !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios')
-    );
-
-    const TOTAL_BESTSELLERS = 100;
+    const TOTAL_BESTSELLERS = 50; // ⚡ Réduit de 100 → 50
     const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3));
     const OTHERS_COUNT = TOTAL_BESTSELLERS - MAKARIOS_COUNT;
 
-    const selected = [
-        ...makariosProducts.sort(() => Math.random() - 0.5).slice(0, MAKARIOS_COUNT),
-        ...otherProducts.sort(() => Math.random() - 0.5).slice(0, OTHERS_COUNT)
-    ];
+    // ⚡ Sélection aléatoire optimisée
+    const shuffleAndSlice = (arr, count) => {
+      const shuffled = [...arr];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled.slice(0, count);
+    };
 
-    return selected.sort(() => Math.random() - 0.5);
+    return [
+      ...shuffleAndSlice(makariosProducts, MAKARIOS_COUNT),
+      ...shuffleAndSlice(otherProducts, OTHERS_COUNT)
+    ];
   }, [allProducts, shops]);
 
 
@@ -1008,13 +971,11 @@ export default function Home() {
       
 
       <div className="max-w-[1500px] mx-auto">
-
-        <RecruitmentBanner />
-
-        <FloatingMerchantBanner user={user} />
-
-        <MerchantProfileAlert user={user} />
-
+        <Suspense fallback={<div className="h-16" />}>
+          <RecruitmentBanner />
+          <FloatingMerchantBanner user={user} />
+          <MerchantProfileAlert user={user} />
+        </Suspense>
       </div>
 
 
@@ -1050,105 +1011,65 @@ export default function Home() {
         
 
         {/* Wedding Credit Banner - Entre hero et contenu principal */}
-
         {selectedCategory === 'Mariage' && !selectedShop && (
-
           <div className="mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4">
-
-            <WeddingCreditBanner />
-
+            <Suspense fallback={<div className="h-32 bg-white rounded animate-pulse" />}>
+              <WeddingCreditBanner />
+            </Suspense>
           </div>
-
         )}
 
 
 
         {/* Advanced Search */}
-
         {showAdvancedSearch && (
-
           <div className="mb-4 animate-in slide-in-from-top-4">
-
             <Button
-
               variant="ghost"
-
               size="sm"
-
               onClick={() => {
-
                 setShowAdvancedSearch(false);
-
                 setSearchResults([]);
-
                 setSearchQuery('');
-
               }}
-
               className="mb-2"
-
             >
-
               <X className="w-4 h-4 mr-2" />
-
               Fermer la recherche
-
             </Button>
-
-            <AdvancedSearch
-
-              onSearch={handleSearchResults}
-
-              allProducts={allProducts}
-
-              shops={shops}
-
-              initialQuery={searchQuery}
-
-            />
-
+            <Suspense fallback={<div className="h-64 bg-white rounded animate-pulse" />}>
+              <AdvancedSearch
+                onSearch={handleSearchResults}
+                allProducts={allProducts}
+                shops={shops}
+                initialQuery={searchQuery}
+              />
+            </Suspense>
           </div>
-
         )}
 
 
 
         {/* Search Results */}
-
         {showAdvancedSearch && searchResults.length >= 0 ? (
-
-          <SearchResults
-
-            results={searchResults}
-
-            query={searchQuery}
-
-            filters={activeFilters}
-
-            shops={shops}
-
-            user={user}
-
-            onProductClick={(product, shop) => {
-
-              if (shop?.slug && product.slug) {
-
-                window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
-
-              } else if (shop) {
-
-                setSelectedShop(shop);
-
-                setSelectedProduct(product);
-
-              }
-
-            }}
-
-            onAddToCart={handleAddToCart}
-
-          />
-
+          <Suspense fallback={<div className="h-96 bg-white rounded animate-pulse" />}>
+            <SearchResults
+              results={searchResults}
+              query={searchQuery}
+              filters={activeFilters}
+              shops={shops}
+              user={user}
+              onProductClick={(product, shop) => {
+                if (shop?.slug && product.slug) {
+                  window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                } else if (shop) {
+                  setSelectedShop(shop);
+                  setSelectedProduct(product);
+                }
+              }}
+              onAddToCart={handleAddToCart}
+            />
+          </Suspense>
         ) : (
 
           <>
@@ -1663,43 +1584,29 @@ export default function Home() {
 
             
 
-            <div className="grid gap-4">
-
+            <Suspense fallback={<div className="h-32 bg-white rounded animate-pulse" />}>
+              <div className="grid gap-4">
                 <FlashBanner />
-
                 <div className="hidden md:grid grid-cols-2 gap-4">
-
-                    <FlowersBanner />
-
-                    <GiftBanner />
-
+                  <FlowersBanner />
+                  <GiftBanner />
                 </div>
+              </div>
 
-            </div>
-
-
-
-            <SmallStories onCategorySelect={(c) => navigateToCategory(c)} />
-
-            
-
-            <FreeShippingBanner />
-
-            
-
-            <CreditBanner />
+              <SmallStories onCategorySelect={(c) => navigateToCategory(c)} />
+              
+              <FreeShippingBanner />
+              
+              <CreditBanner />
+            </Suspense>
 
 
 
             {/* --- MEILLEURES VENTES --- */}
-
             <div className="bg-white p-2 md:p-4 relative rounded-sm shadow-sm border border-gray-100 mt-6">
-
                 <h2 className="text-lg md:text-xl font-bold mb-4 px-2">Meilleures Ventes</h2>
-
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-l border-gray-100">
-
-                {bestSellers.map((product, idx) => {
+                {bestSellers.slice(0, 24).map((product, idx) => { // ⚡ Limiter à 24 produits visibles d'un coup
 
                   const shop = shops.find(s => s.id === product.shop_id);
                   
@@ -1769,7 +1676,8 @@ export default function Home() {
 
                           alt={product.name} 
 
-                          loading="lazy" 
+                          loading="lazy"
+                          decoding="async" 
 
                         />
 
@@ -1819,21 +1727,16 @@ export default function Home() {
 
 
 
-            <RecommendedSection 
-
-              allProducts={allProducts} 
-
-              shops={shops}
-
-              user={user}
-
-              setSelectedShop={setSelectedShop}
-
-              setSelectedProduct={setSelectedProduct}
-
-              getClientPrice={getClientPrice}
-
-            />
+            <Suspense fallback={<div className="h-64 bg-white rounded animate-pulse" />}>
+              <RecommendedSection 
+                allProducts={allProducts} 
+                shops={shops}
+                user={user}
+                setSelectedShop={setSelectedShop}
+                setSelectedProduct={setSelectedProduct}
+                getClientPrice={getClientPrice}
+              />
+            </Suspense>
 
           </div>
 
@@ -2068,8 +1971,9 @@ export default function Home() {
                                         {weddingProductsBySubCategory[selectedSubCategory]?.slice(0, 8).length > 0 && (
 
                                           <div className="mb-8 col-span-full">
-
-                                            <WeddingCreditBanner />
+                                            <Suspense fallback={<div className="h-32 bg-white rounded animate-pulse" />}>
+                                              <WeddingCreditBanner />
+                                            </Suspense>
 
                                           </div>
 
@@ -2401,7 +2305,7 @@ export default function Home() {
 
                 <span className="font-bold text-sm text-gray-900 pr-2">
 
-                     {cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0).toFixed(0)} G
+                     {cartTotal.toFixed(0)} G
 
                 </span>
 
@@ -2477,7 +2381,9 @@ export default function Home() {
 
 
 
-      <NewMessagesBanner user={user} />
+      <Suspense fallback={null}>
+        <NewMessagesBanner user={user} />
+      </Suspense>
 
 
 
@@ -2536,52 +2442,49 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
 
 
   const productRows = React.useMemo(() => {
-    // 🔒 Protection: Ne calculer que si les données sont chargées
     if (!shops.length || !allProducts.length) return [[], [], []];
 
-    // 🔒 Filtrer SEULEMENT les produits dont la boutique existe
-    const productsWithPhotos = allProducts.filter(p => {
-      const hasPhoto = p.image_url && p.is_available !== false;
-      const shopExists = shops.find(s => s.id === p.shop_id);
-      return hasPhoto && shopExists; // ✅ Produits orphelins exclus
-    });
+    // ⚡ Optimisation: Map pour lookup O(1)
+    const shopsMap = new Map(shops.map(s => [s.id, s]));
 
-    const makariosProducts = productsWithPhotos.filter(p => 
-      shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios')
-    );
+    // ⚡ Un seul passage sur les produits
+    const makariosProducts = [];
+    const otherProducts = [];
     
-    const otherProducts = productsWithPhotos.filter(p => 
-      !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios')
-    );
-
-    
-
-    const ITEMS_PER_ROW = 16;
-
-    const MAKARIOS_COUNT = Math.floor(ITEMS_PER_ROW * 0.3);
-
-    const OTHERS_COUNT = ITEMS_PER_ROW - MAKARIOS_COUNT;
-
-
-
-    const rows = [];
-
-    for (let i = 0; i < 3; i++) {
-
-        const selected = [
-
-          ...makariosProducts.sort(() => Math.random() - 0.5).slice(0, MAKARIOS_COUNT),
-
-          ...otherProducts.sort(() => Math.random() - 0.5).slice(0, OTHERS_COUNT)
-
-        ].sort(() => Math.random() - 0.5);
-
-        rows.push(selected);
-
+    for (const p of allProducts) {
+      if (!p.image_url || p.is_available === false) continue;
+      const shop = shopsMap.get(p.shop_id);
+      if (!shop) continue;
+      
+      if (shop.company_name?.toLowerCase().includes('makarios')) {
+        makariosProducts.push(p);
+      } else {
+        otherProducts.push(p);
+      }
     }
 
-    return rows;
+    const ITEMS_PER_ROW = 12; // ⚡ Réduit de 16 → 12
+    const MAKARIOS_COUNT = Math.floor(ITEMS_PER_ROW * 0.3);
+    const OTHERS_COUNT = ITEMS_PER_ROW - MAKARIOS_COUNT;
 
+    // ⚡ Fonction shuffle optimisée
+    const shuffleAndSlice = (arr, count) => {
+      const shuffled = [...arr];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled.slice(0, count);
+    };
+
+    const rows = [];
+    for (let i = 0; i < 3; i++) {
+      rows.push([
+        ...shuffleAndSlice(makariosProducts, MAKARIOS_COUNT),
+        ...shuffleAndSlice(otherProducts, OTHERS_COUNT)
+      ]);
+    }
+    return rows;
   }, [allProducts, shops]);
 
 
@@ -2685,7 +2588,8 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
 
                           className="w-full h-full object-contain mix-blend-multiply" 
 
-                          loading="lazy" 
+                          loading="lazy"
+                          decoding="async" 
 
                         />
 
