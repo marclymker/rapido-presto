@@ -2,7 +2,7 @@ import React from 'react';
 import { Plus, Zap, Truck } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 
-export default function ProductCard({ product, onAdd, onClick, shop }) {
+const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, shop }) {
   const hasPromo = product.promo_price && product.promo_price < product.price;
   const displayPrice = hasPromo
     ? applyClientMargin(product.promo_price)
