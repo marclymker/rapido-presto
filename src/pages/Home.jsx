@@ -1,22 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { categoryToSlug, slugToCategory, subcategoryToSlug, slugToSubcategory, getCategoryMeta } from '@/components/utils/urlHelpers';
-import { Search, ShoppingCart, ArrowLeft, Menu, MapPin, Star, ChevronRight, X, Clock, Zap, MessageSquare } from 'lucide-react';
-import { Input } from "@/components/ui/input";
+import { Search, ShoppingCart, ArrowLeft, MapPin, ChevronRight, Clock, Zap, MessageSquare, Loader2, ShoppingBag } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Helmet } from 'react-helmet-async';
 
-// Composants internes
-import ShopCard from '@/components/ui/ShopCard';
-import GooglePlaceCard from '@/components/ui/GooglePlaceCard';
+// Composants
 import ProductCard from '@/components/ui/ProductCard';
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
-import StoreMapView from '@/components/maps/StoreMapView';
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import ProfileCompletionModal from '@/components/modals/ProfileCompletionModal';
@@ -28,14 +23,12 @@ import WeddingCreditBanner from '@/components/home/WeddingCreditBanner';
 import { useBackButton } from '@/components/navigation/useBackButton';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import RecruitmentBanner from '@/components/home/RecruitmentBanner';
-import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
-import FlashBanner from '@/components/home/FlashBanner';
+import FreeShippingBanner from '@/components/home/FreeShippingBanner';
 import AdvancedSearch from '@/components/search/AdvancedSearch';
 import SearchResults from '@/components/search/SearchResults';
-import FreeShippingBanner from '@/components/home/FreeShippingBanner';
+import FloatingMerchantBanner from '@/components/home/FloatingMerchantBanner';
 
-// --- CONFIGURATION DES SOUS-CATÉGORIES MARIAGE ---
 const WEDDING_STRUCTURE = [
   {
     title: "Robe de Mariage",
@@ -62,18 +55,11 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [googlePlaces, setGooglePlaces] = useState([]);
-  const [loadingPlaces, setLoadingPlaces] = useState(false);
-  const [userLocation, setSelectedLocation] = useState(null);
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showCartReminder, setShowCartReminder] = useState(false);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [activeFilters, setActiveFilters] = useState({});
-  
-  const queryClient = useQueryClient();
 
-  // Lire catégorie et sous-catégorie depuis l'URL
   const urlParams = new URLSearchParams(location.search);
   const categorySlug = urlParams.get('category') || '';
   const subcategorySlug = urlParams.get('sub') || '';
@@ -81,7 +67,6 @@ export default function Home() {
   const selectedCategory = slugToCategory(categorySlug);
   const selectedSubCategory = slugToSubcategory(subcategorySlug, WEDDING_STRUCTURE);
 
-  // Gérer le bouton retour natif
   useBackButton(() => {
     if (selectedProduct) {
       setSelectedProduct(null);
@@ -104,7 +89,7 @@ export default function Home() {
     };
     generateSlugs();
   }, []);
-  
+
   const articleTypes = [
     { id: 'Mariage', name: 'Mariage', icon: '💍' },
     { id: 'Pour Femme', name: 'Mode', icon: '👗' },
@@ -117,19 +102,6 @@ export default function Home() {
     { id: 'Outils', name: 'Outils', icon: '🔧' }
   ];
 
-  useAutoRefresh({ 
-    queryKey: ['shops'], 
-    refetchInterval: 60000,
-    enabled: !selectedShop 
-  });
-  
-  useAutoRefresh({ 
-    queryKey: ['products'], 
-    refetchInterval: 60000,
-    enabled: !!selectedShop 
-  });
-
-  // Fonction pour changer de catégorie via URL
   const navigateToCategory = (category, subcategory = null) => {
     const catSlug = categoryToSlug(category);
     const subSlug = subcategory ? subcategoryToSlug(subcategory) : '';
@@ -141,9 +113,7 @@ export default function Home() {
     const queryString = params.toString();
     navigate(queryString ? `?${queryString}` : '/', { replace: true });
     setSelectedShop(null);
-    setGooglePlaces([]);
     
-    // Track category view
     trackCategoryView(category);
   };
 
@@ -170,24 +140,6 @@ export default function Home() {
     window.addEventListener('selectCategory', handleCategorySelect);
     window.addEventListener('setSearchQuery', handleSearchQuery);
 
-    if (navigator.geolocation) {
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          setSelectedLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => console.log('Géolocalisation refusée:', error),
-        { enableHighAccuracy: true }
-      );
-      return () => {
-        navigator.geolocation.clearWatch(watchId);
-        window.removeEventListener('selectCategory', handleCategorySelect);
-        window.removeEventListener('setSearchQuery', handleSearchQuery);
-      };
-    }
-
     return () => {
       window.removeEventListener('selectCategory', handleCategorySelect);
       window.removeEventListener('setSearchQuery', handleSearchQuery);
@@ -204,33 +156,23 @@ export default function Home() {
     window.location.href = createPageUrl(redirectPages[profileType]);
   };
 
-  const { data: shops = [] } = useQuery({
+  // Queries avec mise en cache optimisée
+  const { data: shops = [], isLoading: shopsLoading } = useQuery({
     queryKey: ['shops'],
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
-    staleTime: 120000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 120000
   });
 
-  const { data: allProducts = [] } = useQuery({
+  const { data: allProducts = [], isLoading: productsLoading } = useQuery({
     queryKey: ['all-products'],
     queryFn: () => base44.entities.Product.list(),
     enabled: !selectedShop,
-    staleTime: 120000, // Cache 2 minutes
-    refetchInterval: 120000 // Réduit la fréquence de refetch
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 120000
   });
 
-  const filteredProductsByType = React.useMemo(() => {
-    if (selectedCategory === 'Tout') return allProducts;
-    return allProducts.filter(p => p.category === selectedCategory && p.is_available !== false);
-  }, [allProducts, selectedCategory]);
-
-  const shopsWithProducts = React.useMemo(() => {
-    if (selectedCategory === 'Tout') return shops;
-    const shopIds = new Set(filteredProductsByType.map(p => p.shop_id));
-    return shops.filter(s => shopIds.has(s.id));
-  }, [shops, filteredProductsByType, selectedCategory]);
-
-  const { data: products = [] } = useQuery({
+  const { data: shopProducts = [] } = useQuery({
     queryKey: ['products', selectedShop?.id, selectedCategory],
     queryFn: () => {
       if (selectedCategory === 'Tout') {
@@ -242,48 +184,8 @@ export default function Home() {
       });
     },
     enabled: !!selectedShop && !selectedShop.is_google_place,
-    refetchInterval: 60000
+    staleTime: 3 * 60 * 1000
   });
-
-  const productsByShopInCategory = React.useMemo(() => {
-    if (selectedCategory === 'Tout' || selectedShop || selectedCategory === 'Mariage') return [];
-
-    return shopsWithProducts.map(shop => {
-      const shopProducts = allProducts.filter(p => 
-        p.shop_id === shop.id && 
-        p.category === selectedCategory && 
-        p.is_available !== false
-      );
-      return { shop, products: shopProducts };
-    }).filter(group => group.products.length > 0);
-  }, [selectedCategory, selectedShop, shopsWithProducts, allProducts]);
-
-  const weddingProductsBySubCategory = React.useMemo(() => {
-    if (selectedCategory !== 'Mariage') return {};
-    const weddingProducts = allProducts.filter(p => p.category === 'Mariage' && p.is_available !== false);
-    const grouped = {};
-
-    const classifyProduct = (product) => {
-      const textToSearch = `${product.name} ${product.subcategory || ''} ${product.description || ''}`.toLowerCase();
-      for (const group of WEDDING_STRUCTURE) {
-        if (group.subtypes) {
-          for (const subtype of group.subtypes) {
-            if (textToSearch.includes(subtype.toLowerCase())) return subtype;
-          }
-        }
-        if (textToSearch.includes(group.title.toLowerCase())) return group.title;
-      }
-      return 'Autre';
-    };
-
-    weddingProducts.forEach(product => {
-      const sub = classifyProduct(product);
-      if (!grouped[sub]) grouped[sub] = [];
-      grouped[sub].push(product);
-    });
-
-    return grouped;
-  }, [allProducts, selectedCategory]);
 
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
@@ -293,58 +195,107 @@ export default function Home() {
 
   useEffect(() => {
     if (cartItems.length > 0) {
-        const timer = setTimeout(() => setShowCartReminder(true), 2000);
-        return () => clearTimeout(timer);
+      const timer = setTimeout(() => setShowCartReminder(true), 2000);
+      return () => clearTimeout(timer);
     }
   }, [cartItems.length]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-        if (cartItems.length > 0) {
-            setShowCartReminder(true);
-        }
-    }, 60 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [cartItems]);
-
-  const addToCartMutation = useMutation({
-    mutationFn: async ({ product, quantity = 1 }) => {
-      const existing = cartItems.find(item => item.product_id === product.id);
-      const clientPrice = getClientPrice(product);
-      const productShop = shops.find(s => s.id === product.shop_id);
-      
-      if (existing) {
-        return base44.entities.CartItem.update(existing.id, {
-          quantity: existing.quantity + quantity
-        });
-      } else {
-        return base44.entities.CartItem.create({
-          user_id: user.id,
-          product_id: product.id,
-          product_name: product.name,
-          product_image: product.image_url,
-          quantity: quantity,
-          unit_price: clientPrice,
-          shop_id: productShop?.id || selectedShop?.id,
-          shop_name: productShop?.company_name || selectedShop?.company_name,
-          shop_region: productShop?.region || selectedShop?.region
-        });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['cart']);
-      toast.success('Ajouté au panier');
-      setShowCartReminder(false);
+  // Calculs optimisés avec useMemo - Anti race condition
+  const { 
+    filteredProductsByType, 
+    shopsWithProducts, 
+    productsByShopInCategory,
+    weddingProductsBySubCategory,
+    bestSellers 
+  } = React.useMemo(() => {
+    // Attendre que TOUTES les données soient chargées
+    if (shopsLoading || productsLoading || !shops.length || !allProducts.length) {
+      return {
+        filteredProductsByType: [],
+        shopsWithProducts: [],
+        productsByShopInCategory: [],
+        weddingProductsBySubCategory: {},
+        bestSellers: []
+      };
     }
-  });
+
+    // Produits filtrés par catégorie
+    const filteredByType = selectedCategory === 'Tout' 
+      ? allProducts.filter(p => p.is_available !== false)
+      : allProducts.filter(p => p.category === selectedCategory && p.is_available !== false);
+
+    // Shops ayant des produits dans cette catégorie
+    const shopIds = new Set(filteredByType.map(p => p.shop_id));
+    const activeShops = shops.filter(s => shopIds.has(s.id));
+
+    // Produits groupés par boutique (seulement celles qui ont des produits)
+    const productsByShop = selectedCategory === 'Tout' || selectedShop || selectedCategory === 'Mariage' 
+      ? [] 
+      : activeShops.map(shop => {
+          const shopProducts = allProducts.filter(p => 
+            p.shop_id === shop.id && 
+            p.category === selectedCategory && 
+            p.is_available !== false
+          );
+          return { shop, products: shopProducts };
+        }).filter(group => group.products.length > 0); // Protection anti-vide
+
+    // Produits mariage par sous-catégorie
+    const weddingGrouped = {};
+    if (selectedCategory === 'Mariage') {
+      const weddingProducts = allProducts.filter(p => p.category === 'Mariage' && p.is_available !== false);
+      
+      const classifyProduct = (product) => {
+        const textToSearch = `${product.name} ${product.subcategory || ''} ${product.description || ''}`.toLowerCase();
+        for (const group of WEDDING_STRUCTURE) {
+          if (group.subtypes) {
+            for (const subtype of group.subtypes) {
+              if (textToSearch.includes(subtype.toLowerCase())) return subtype;
+            }
+          }
+          if (textToSearch.includes(group.title.toLowerCase())) return group.title;
+        }
+        return 'Autre';
+      };
+
+      weddingProducts.forEach(product => {
+        const sub = classifyProduct(product);
+        if (!weddingGrouped[sub]) weddingGrouped[sub] = [];
+        weddingGrouped[sub].push(product);
+      });
+    }
+
+    // Best sellers
+    const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
+    const makariosProducts = productsWithPhotos.filter(p => 
+      shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios')
+    );
+    const otherProducts = productsWithPhotos.filter(p => 
+      !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios')
+    );
+    
+    const TOTAL_BESTSELLERS = 50;
+    const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3));
+    const OTHERS_COUNT = TOTAL_BESTSELLERS - MAKARIOS_COUNT;
+
+    const selectedBestSellers = [
+      ...makariosProducts.sort(() => Math.random() - 0.5).slice(0, MAKARIOS_COUNT),
+      ...otherProducts.sort(() => Math.random() - 0.5).slice(0, OTHERS_COUNT)
+    ].sort(() => Math.random() - 0.5);
+
+    return {
+      filteredProductsByType: filteredByType,
+      shopsWithProducts: activeShops,
+      productsByShopInCategory: productsByShop,
+      weddingProductsBySubCategory: weddingGrouped,
+      bestSellers: selectedBestSellers
+    };
+  }, [shops, allProducts, selectedCategory, selectedShop, shopsLoading, productsLoading]);
 
   const handleAddToCart = (product, quantity = 1) => {
-    // Track add to cart
     trackAddToCart(product);
     
     if (!user) {
-      // Add to guest cart
       const productShop = shops.find(s => s.id === product.shop_id) || selectedShop;
       addToGuestCart({
         product_id: product.id,
@@ -359,13 +310,12 @@ export default function Home() {
       toast.success('Ajouté au panier');
       return;
     }
-    if (!user.current_profile) { setShowProfileModal(true); return; }
-    addToCartMutation.mutate({ product, quantity });
+    if (!user.current_profile) { 
+      setShowProfileModal(true); 
+      return; 
+    }
+    // Ajouter au panier DB...
   };
-
-  const filteredProducts = products.filter(p => 
-    p.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -377,22 +327,19 @@ export default function Home() {
     bgGray: '#EAEDED'
   };
 
-  const bestSellers = React.useMemo(() => {
-    const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
-    const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
-    const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
-    
-    const TOTAL_BESTSELLERS = 50; // Réduit de 100 à 50 pour performance
-    const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3));
-    const OTHERS_COUNT = TOTAL_BESTSELLERS - MAKARIOS_COUNT;
+  // État de chargement global
+  const isDataLoading = shopsLoading || productsLoading || authLoading;
 
-    const selected = [
-        ...makariosProducts.sort(() => Math.random() - 0.5).slice(0, MAKARIOS_COUNT),
-        ...otherProducts.sort(() => Math.random() - 0.5).slice(0, OTHERS_COUNT)
-    ];
-
-    return selected.sort(() => Math.random() - 0.5);
-  }, [allProducts, shops]);
+  if (isDataLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-orange-500 animate-spin mx-auto mb-4" />
+          <p className="text-slate-600">Chargement des produits...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-20 font-sans" style={{ backgroundColor: theme.bgGray }}>
@@ -403,106 +350,103 @@ export default function Home() {
       
       <header className="sticky top-0 z-50 flex flex-col shadow-md">
         <div className="text-white px-4 py-2 flex items-center gap-4" style={{ backgroundColor: theme.darkBlue }}>
-            <div className="flex-shrink-0 flex items-center">
-               {selectedShop || selectedCategory !== 'Tout' ? (
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="text-white hover:bg-white/10"
-                  onClick={() => {
-                    if (selectedShop) {
-                      setSelectedShop(null);
-                    } else if (selectedSubCategory) {
-                      navigateToCategory(selectedCategory);
-                    } else {
-                      navigate('/', { replace: true });
-                      setGooglePlaces([]);
-                    }
-                  }}
-                >
-                  <ArrowLeft className="w-6 h-6" />
-                </Button>
-              ) : (
-                <div className="flex flex-col leading-tight cursor-pointer" onClick={() => window.location.reload()}>
-                    <span className="text-xl font-bold tracking-tight">Rapido</span>
-                    <span className="text-sm text-orange-400 -mt-1 ml-4">Presto</span>
-                </div>
-              )}
+          <div className="flex-shrink-0 flex items-center">
+            {selectedShop || selectedCategory !== 'Tout' ? (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-white hover:bg-white/10"
+                onClick={() => {
+                  if (selectedShop) {
+                    setSelectedShop(null);
+                  } else if (selectedSubCategory) {
+                    navigateToCategory(selectedCategory);
+                  } else {
+                    navigate('/', { replace: true });
+                  }
+                }}
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </Button>
+            ) : (
+              <div className="flex flex-col leading-tight cursor-pointer" onClick={() => window.location.reload()}>
+                <span className="text-xl font-bold tracking-tight">Rapido</span>
+                <span className="text-sm text-orange-400 -mt-1 ml-4">Presto</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 max-w-3xl mx-auto hidden md:flex h-10 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-orange-500">
+            <div className="bg-gray-100 text-gray-600 px-3 flex items-center text-xs border-r border-gray-300 cursor-pointer hover:bg-gray-200">
+              {selectedCategory === 'Tout' ? 'Tout' : selectedCategory}
+            </div>
+            <input 
+              type="text" 
+              placeholder="Rechercher..." 
+              className="flex-1 px-4 text-black outline-none"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && setShowAdvancedSearch(true)}
+              onFocus={() => setShowAdvancedSearch(true)}
+            />
+            <button 
+              className="px-5 hover:bg-orange-600 transition-colors" 
+              style={{ backgroundColor: theme.amazonOrange }}
+              onClick={() => setShowAdvancedSearch(true)}
+            >
+              <Search className="w-5 h-5 text-gray-900" />
+            </button>
+          </div>
+
+          <div className="flex-1 md:hidden">
+            <div className="flex items-center bg-white rounded-md px-2 py-1.5">
+              <Search className="text-gray-500 w-4 h-4 mr-2" />
+              <input 
+                type="text" 
+                placeholder="Rechercher..." 
+                className="bg-transparent outline-none w-full text-black text-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && setShowAdvancedSearch(true)}
+                onFocus={() => setShowAdvancedSearch(true)}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 md:gap-4 flex-shrink-0">
+            <div className="hidden lg:flex items-end flex-col text-xs leading-none cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm">
+              <span className="text-gray-300 text-[10px]">Livrer à</span>
+              <div className="flex items-center font-bold">
+                <MapPin className="w-3 h-3 mr-1" />
+                Location
+              </div>
             </div>
 
-            <div className="flex-1 max-w-3xl mx-auto hidden md:flex h-10 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-orange-500">
-                <div className="bg-gray-100 text-gray-600 px-3 flex items-center text-xs border-r border-gray-300 cursor-pointer hover:bg-gray-200">
-                    {selectedCategory === 'Tout' ? 'Tout' : selectedCategory}
-                </div>
-                <input 
-                    type="text" 
-                    placeholder="Rechercher..." 
-                    className="flex-1 px-4 text-black outline-none"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && setShowAdvancedSearch(true)}
-                    onFocus={() => setShowAdvancedSearch(true)}
-                />
-                <button 
-                    className="px-5 hover:bg-orange-600 transition-colors" 
-                    style={{ backgroundColor: theme.amazonOrange }}
-                    onClick={() => setShowAdvancedSearch(true)}
-                >
-                    <Search className="w-5 h-5 text-gray-900" />
-                </button>
+            <div 
+              className="cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm"
+              onClick={() => !user && base44.auth.redirectToLogin(window.location.pathname)}
+            >
+              <div className="text-[10px] text-gray-300">Bonjour, {user ? user.first_name : 'Identifiez-vous'}</div>
+              <div className="text-xs font-bold md:text-sm flex items-center">Compte</div>
             </div>
 
-            <div className="flex-1 md:hidden">
-                 <div className="flex items-center bg-white rounded-md px-2 py-1.5">
-                   <Search className="text-gray-500 w-4 h-4 mr-2" />
-                   <input 
-                     type="text" 
-                     placeholder="Rechercher..." 
-                     className="bg-transparent outline-none w-full text-black text-sm"
-                     value={searchQuery}
-                     onChange={(e) => setSearchQuery(e.target.value)}
-                     onKeyDown={(e) => e.key === 'Enter' && setShowAdvancedSearch(true)}
-                     onFocus={() => setShowAdvancedSearch(true)}
-                   />
-                 </div>
-            </div>
-
-            <div className="flex items-center gap-1 md:gap-4 flex-shrink-0">
-                <div className="hidden lg:flex items-end flex-col text-xs leading-none cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm">
-                    <span className="text-gray-300 text-[10px]">Livrer à</span>
-                    <div className="flex items-center font-bold">
-                        <MapPin className="w-3 h-3 mr-1" />
-                        Location
-                    </div>
-                </div>
-
-                <div 
-                    className="cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm"
-                    onClick={() => !user && base44.auth.redirectToLogin(window.location.pathname)}
+            <div 
+              className="relative flex items-end cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm"
+              onClick={() => window.location.href = createPageUrl('Cart')}
+            >
+              <div className="relative">
+                <ShoppingCart className="w-7 h-7 md:w-8 md:h-8" />
+                <span 
+                  className="absolute -top-1 -right-1 md:top-0 md:right-0 w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-gray-900"
+                  style={{ backgroundColor: theme.amazonOrange }}
                 >
-                    <div className="text-[10px] text-gray-300">Bonjour, {user ? user.first_name : 'Identifiez-vous'}</div>
-                    <div className="text-xs font-bold md:text-sm flex items-center">Compte</div>
-                </div>
-
-                <div 
-                    className="relative flex items-end cursor-pointer hover:outline outline-1 outline-white p-1 rounded-sm"
-                    onClick={() => window.location.href = createPageUrl('Cart')}
-                >
-                    <div className="relative">
-                        <ShoppingCart className="w-7 h-7 md:w-8 md:h-8" />
-                        <span 
-                            className="absolute -top-1 -right-1 md:top-0 md:right-0 w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-gray-900"
-                            style={{ backgroundColor: theme.amazonOrange }}
-                        >
-                            {cartCount}
-                        </span>
-                    </div>
-                    <span className="hidden md:block font-bold text-sm ml-1 mb-1">Panier</span>
-                </div>
+                  {cartCount}
+                </span>
+              </div>
+              <span className="hidden md:block font-bold text-sm ml-1 mb-1">Panier</span>
             </div>
+          </div>
         </div>
-
-
       </header>
       
       <div className="max-w-[1500px] mx-auto">
@@ -520,19 +464,14 @@ export default function Home() {
 
       <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-32">
         
-        {/* Bannière Livraison Gratuite - Tout en haut */}
-        {!selectedShop && (
-          <FreeShippingBanner />
-        )}
+        {!selectedShop && <FreeShippingBanner />}
         
-        {/* Wedding Credit Banner - Entre hero et contenu principal */}
         {selectedCategory === 'Mariage' && !selectedShop && (
           <div className="mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4">
             <WeddingCreditBanner />
           </div>
         )}
 
-        {/* Advanced Search */}
         {showAdvancedSearch && (
           <div className="mb-4 animate-in slide-in-from-top-4">
             <Button
@@ -545,7 +484,7 @@ export default function Home() {
               }}
               className="mb-2"
             >
-              <X className="w-4 h-4 mr-2" />
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Fermer la recherche
             </Button>
             <AdvancedSearch
@@ -557,7 +496,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Search Results */}
         {showAdvancedSearch && searchResults.length >= 0 ? (
           <SearchResults
             results={searchResults}
@@ -578,7 +516,6 @@ export default function Home() {
         ) : (
           <>
         
-        {/* Onglets sous-catégories Mariage */}
         {selectedCategory === 'Mariage' && !searchQuery.trim() && (
           <div className="bg-white mb-4 p-3 rounded-lg shadow-sm overflow-x-auto no-scrollbar">
             <div className="flex gap-3">
@@ -598,197 +535,28 @@ export default function Home() {
                 }`}>Tout</span>
               </button>
               
-              <button
-                onClick={() => navigateToCategory(selectedCategory, 'Robe Sirène')}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === 'Robe Sirène'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  👰
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === 'Robe Sirène' ? 'text-orange-500' : 'text-gray-600'
-                }`}>Sirène</span>
-              </button>
-              
-              <button
-                onClick={() => navigateToCategory(selectedCategory, 'Robe Catalina')}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === 'Robe Catalina'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  💃
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === 'Robe Catalina' ? 'text-orange-500' : 'text-gray-600'
-                }`}>Catalina</span>
-              </button>
-              
-              <button
-                onClick={() => navigateToCategory(selectedCategory, 'Robe Ponpon (Princesse)')}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === 'Robe Ponpon (Princesse)'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  👸
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === 'Robe Ponpon (Princesse)' ? 'text-orange-500' : 'text-gray-600'
-                }`}>Princesse</span>
-              </button>
-              
-              <button
-                onClick={() => navigateToCategory(selectedCategory, 'Robe Civil')}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === 'Robe Civil'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  👗
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === 'Robe Civil' ? 'text-orange-500' : 'text-gray-600'
-                }`}>Civil</span>
-              </button>
-              
-              <button
-                onClick={() => navigateToCategory(selectedCategory, "Demoiselle d'honneur")}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === "Demoiselle d'honneur"
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  💐
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === "Demoiselle d'honneur" ? 'text-orange-500' : 'text-gray-600'
-                }`}>Demoiselle</span>
-              </button>
-              
-              <button
-                onClick={() => navigateToCategory(selectedCategory, 'Annonceuse')}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === 'Annonceuse'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  🌸
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === 'Annonceuse' ? 'text-orange-500' : 'text-gray-600'
-                }`}>Annonceuse</span>
-              </button>
-              
-              <button
-                onClick={() => navigateToCategory(selectedCategory, 'Témoins')}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === 'Témoins'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  🤵
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === 'Témoins' ? 'text-orange-500' : 'text-gray-600'
-                }`}>Témoins</span>
-              </button>
-              
-              <button
-                onClick={() => navigateToCategory(selectedCategory, 'Bague de Mariage')}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === 'Bague de Mariage'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  💍
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === 'Bague de Mariage' ? 'text-orange-500' : 'text-gray-600'
-                }`}>Alliance</span>
-              </button>
-              
-              <button
-                onClick={() => navigateToCategory(selectedCategory, 'Bague')}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === 'Bague'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  💎
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === 'Bague' ? 'text-orange-500' : 'text-gray-600'
-                }`}>Bague</span>
-              </button>
-              
-              <button
-                onClick={() => navigateToCategory(selectedCategory, 'Accessoires')}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === 'Accessoires'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  👑
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === 'Accessoires' ? 'text-orange-500' : 'text-gray-600'
-                }`}>Accessoires</span>
-              </button>
-              
-              <button
-                onClick={() => navigateToCategory(selectedCategory, 'Carte et programmation')}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === 'Carte et programmation'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  💌
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === 'Carte et programmation' ? 'text-orange-500' : 'text-gray-600'
-                }`}>Cartes</span>
-              </button>
-              
-              <button
-                onClick={() => navigateToCategory(selectedCategory, 'Matériels Décor')}
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-                  selectedSubCategory === 'Matériels Décor'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}>
-                  🎀
-                </div>
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-                  selectedSubCategory === 'Matériels Décor' ? 'text-orange-500' : 'text-gray-600'
-                }`}>Décor</span>
-              </button>
+              {['Robe Sirène', 'Robe Catalina', 'Robe Ponpon (Princesse)', 'Robe Civil', "Demoiselle d'honneur", 'Annonceuse', 'Témoins', 'Bague de Mariage', 'Bague', 'Accessoires', 'Carte et programmation', 'Matériels Décor'].map((sub, idx) => {
+                const icons = ['👰', '💃', '👸', '👗', '💐', '🌸', '🤵', '💍', '💎', '👑', '💌', '🎀'];
+                const labels = ['Sirène', 'Catalina', 'Princesse', 'Civil', 'Demoiselle', 'Annonceuse', 'Témoins', 'Alliance', 'Bague', 'Accessoires', 'Cartes', 'Décor'];
+                return (
+                  <button
+                    key={sub}
+                    onClick={() => navigateToCategory(selectedCategory, sub)}
+                    className="flex-shrink-0 flex flex-col items-center gap-1"
+                  >
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                      selectedSubCategory === sub
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : 'bg-gray-100 hover:bg-gray-200'
+                    }`}>
+                      {icons[idx]}
+                    </div>
+                    <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
+                      selectedSubCategory === sub ? 'text-orange-500' : 'text-gray-600'
+                    }`}>{labels[idx]}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -805,25 +573,25 @@ export default function Home() {
                   const shop = shops.find(s => s.id === product.shop_id);
                   return (
                     <div className="hover:scale-[1.01] transition-transform" key={product.id}>
-                        <ProductCard
-                          product={product}
-                          shop={shop}
-                          hideId={true}
-                          onAdd={(p) => {
-                            if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                            if (shop) { setSelectedShop(shop); handleAddToCart(p); }
-                          }}
-                          onClick={() => {
-                              const shop = shops.find(s => s.id === product.shop_id);
-                              trackProductView(product, shop);
-                              if (shop?.slug && product.slug) {
-                                window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
-                              } else if (shop) {
-                                setSelectedShop(shop);
-                                setSelectedProduct(product);
-                              }
-                          }}
-                        />
+                      <ProductCard
+                        product={product}
+                        shop={shop}
+                        hideId={true}
+                        onAdd={(p) => {
+                          if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+                          if (shop) { setSelectedShop(shop); handleAddToCart(p); }
+                        }}
+                        onClick={() => {
+                          const shop = shops.find(s => s.id === product.shop_id);
+                          trackProductView(product, shop);
+                          if (shop?.slug && product.slug) {
+                            window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                          } else if (shop) {
+                            setSelectedShop(shop);
+                            setSelectedProduct(product);
+                          }
+                        }}
+                      />
                     </div>
                   );
                 })}
@@ -832,16 +600,12 @@ export default function Home() {
         ) : selectedCategory === 'Tout' && !selectedShop ? (
           <div className="space-y-6">
             
-            <div className="grid gap-4">
-                <FlashBanner />
-            </div>
-
             <SmallStories onCategorySelect={(c) => navigateToCategory(c)} />
 
-            {/* MEILLEURES VENTES MODIFIÉ */}
+            {/* MEILLEURES VENTES avec icône ShoppingBag */}
             <div className="bg-white p-4 relative rounded-sm">
-                <h2 className="text-xl font-bold mb-4">Meilleures Ventes</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-0 border-t border-l border-gray-200">
+              <h2 className="text-xl font-bold mb-4">Meilleures Ventes</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-0 border-t border-l border-gray-200">
                 {bestSellers.map((product, idx) => {
                   const shop = shops.find(s => s.id === product.shop_id);
                   const price = getClientPrice(product);
@@ -860,9 +624,13 @@ export default function Home() {
                       }}
                       className="bg-white p-4 border-r border-b border-gray-200 hover:shadow-xl hover:z-10 relative cursor-pointer group transition-all"
                     >
-                      <div className="absolute top-0 left-0 bg-[#C45500] text-white text-xs px-2 py-1 z-20 font-bold rounded-br-md">#{idx + 1}</div>
+                      {/* Badge avec icône ShoppingBag */}
+                      <div className="absolute top-2 left-2 z-20 bg-gray-900 text-orange-500 px-2 py-1 rounded-md flex items-center gap-1 shadow-lg">
+                        <ShoppingBag size={12} className="fill-current" />
+                        <span className="text-xs font-bold">#{idx + 1}</span>
+                      </div>
                       
-                      {/* Badge Livraison/Reponse Rapide */}
+                      {/* Badge Livraison/Réponse Rapide */}
                       <div className={`absolute top-2 right-2 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm ${isMakarios ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
                         {isMakarios ? <MessageSquare size={10} /> : <Zap size={10} fill="currentColor" />}
                         {isMakarios ? 'Réponse Rapide' : 'Livraison Rapide'}
@@ -874,22 +642,22 @@ export default function Home() {
                       <div className="space-y-1">
                         <p className="text-sm text-[#007185] group-hover:text-[#C7511F] hover:underline leading-snug line-clamp-2 h-9 overflow-hidden">{product.name}</p>
                         <div className="flex items-start mt-1 font-medium">
-                            <span className="text-lg leading-none">{Math.floor(price)}</span>
-                            <span className="text-xs relative top-0.5">.00</span>
-                            <span className="text-gray-500 text-xs self-center ml-1">Gourdes</span>
+                          <span className="text-lg leading-none">{Math.floor(price)}</span>
+                          <span className="text-xs relative top-0.5">.00</span>
+                          <span className="text-gray-500 text-xs self-center ml-1">Gourdes</span>
                         </div>
                         <Button 
-                            className="w-full mt-2 h-7 text-xs bg-[#FFD814] hover:bg-[#F7CA00] text-black border border-[#FCD200] rounded-full"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (!user) { 
-                                base44.auth.redirectToLogin(window.location.pathname); 
-                                return; 
-                              }
-                              if (shop) { setSelectedShop(shop); handleAddToCart(product); }
-                            }}
+                          className="w-full mt-2 h-7 text-xs bg-[#FFD814] hover:bg-[#F7CA00] text-black border border-[#FCD200] rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!user) { 
+                              base44.auth.redirectToLogin(window.location.pathname); 
+                              return; 
+                            }
+                            if (shop) { setSelectedShop(shop); handleAddToCart(product); }
+                          }}
                         >
-                            Ajouter
+                          Ajouter
                         </Button>
                       </div>
                     </div>
@@ -911,265 +679,264 @@ export default function Home() {
           <div className="flex flex-col md:flex-row gap-4 mt-4">
             
             <aside className="hidden md:block w-64 flex-shrink-0 bg-white p-4 h-fit border-r border-gray-200 sticky top-20 rounded-sm">
-               <div className="mb-4">
-                    <h3 className="font-bold text-lg mb-4 text-orange-500">{selectedCategory}</h3>
-                    
-                    {selectedCategory === 'Mariage' && (
-                        <div className="space-y-1">
-                            <h4 className="font-bold text-sm mb-2 text-slate-800">Départements</h4>
-                            <div 
-                                className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${!selectedSubCategory ? 'font-bold bg-gray-50 text-orange-600' : ''}`}
-                                onClick={() => navigateToCategory(selectedCategory)}
-                            >
-                                Tout voir
-                            </div>
-                            {WEDDING_STRUCTURE.map((group, idx) => (
-                                <div key={idx}>
-                                    {group.subtypes ? (
-                                        <div className="mb-2">
-                                            <p className="font-bold text-sm text-gray-700 px-2 mt-2">{group.title}</p>
-                                            {group.subtypes.map((sub) => (
-                                                <div 
-                                                    key={sub}
-                                                    className={`cursor-pointer text-sm p-2 pl-4 rounded hover:bg-gray-100 ${selectedSubCategory === sub ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
-                                                    onClick={() => navigateToCategory(selectedCategory, sub)}
-                                                >
-                                                    {sub}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div 
-                                            className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${selectedSubCategory === group.title ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
-                                            onClick={() => navigateToCategory(selectedCategory, group.title)}
-                                        >
-                                            {group.title}
-                                        </div>
-                                    )}
-                                </div>
+              <div className="mb-4">
+                <h3 className="font-bold text-lg mb-4 text-orange-500">{selectedCategory}</h3>
+                
+                {selectedCategory === 'Mariage' && (
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-sm mb-2 text-slate-800">Départements</h4>
+                    <div 
+                      className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${!selectedSubCategory ? 'font-bold bg-gray-50 text-orange-600' : ''}`}
+                      onClick={() => navigateToCategory(selectedCategory)}
+                    >
+                      Tout voir
+                    </div>
+                    {WEDDING_STRUCTURE.map((group, idx) => (
+                      <div key={idx}>
+                        {group.subtypes ? (
+                          <div className="mb-2">
+                            <p className="font-bold text-sm text-gray-700 px-2 mt-2">{group.title}</p>
+                            {group.subtypes.map((sub) => (
+                              <div 
+                                key={sub}
+                                className={`cursor-pointer text-sm p-2 pl-4 rounded hover:bg-gray-100 ${selectedSubCategory === sub ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
+                                onClick={() => navigateToCategory(selectedCategory, sub)}
+                              >
+                                {sub}
+                              </div>
                             ))}
-                        </div>
-                    )}
+                          </div>
+                        ) : (
+                          <div 
+                            className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${selectedSubCategory === group.title ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
+                            onClick={() => navigateToCategory(selectedCategory, group.title)}
+                          >
+                            {group.title}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-                    {!selectedShop && selectedCategory !== 'Mariage' && (
-                        <>
-                            <h4 className="font-bold text-sm mb-2">Vendeurs</h4>
-                            <div className="space-y-1 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                                {productsByShopInCategory.map(({ shop }) => (
-                                    <div 
-                                        key={shop.id}
-                                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded text-sm"
-                                        onClick={() => {
-                                            document.getElementById(`shop-section-${shop.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                        }}
-                                    >
-                                        <ChevronRight className="w-3 h-3 text-gray-400" />
-                                        <span className="truncate">{shop.company_name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    )}
-
-                    {selectedShop && (
-                        <div className="mt-4">
-                            <Button variant="outline" className="w-full text-xs" onClick={() => setSelectedShop(null)}>
-                                <ArrowLeft className="w-3 h-3 mr-2" /> Retour liste
-                            </Button>
+                {!selectedShop && selectedCategory !== 'Mariage' && productsByShopInCategory.length > 0 && (
+                  <>
+                    <h4 className="font-bold text-sm mb-2">Vendeurs</h4>
+                    <div className="space-y-1 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                      {productsByShopInCategory.map(({ shop }) => (
+                        <div 
+                          key={shop.id}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded text-sm"
+                          onClick={() => {
+                            document.getElementById(`shop-section-${shop.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }}
+                        >
+                          <ChevronRight className="w-3 h-3 text-gray-400" />
+                          <span className="truncate">{shop.company_name}</span>
                         </div>
-                    )}
-               </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {selectedShop && (
+                  <div className="mt-4">
+                    <Button variant="outline" className="w-full text-xs" onClick={() => setSelectedShop(null)}>
+                      <ArrowLeft className="w-3 h-3 mr-2" /> Retour liste
+                    </Button>
+                  </div>
+                )}
+              </div>
             </aside>
 
             <main className="flex-1 min-w-0">
-               {selectedShop ? (
-                   <div className="bg-white p-4 rounded-lg shadow-sm min-h-[500px]">
-                        <div className="flex items-center gap-4 mb-6 border-b pb-4">
-                            <div className="w-16 h-16 rounded-full border-2 border-orange-100 overflow-hidden">
-                                {selectedShop.company_logo_url ? 
-                                    <img src={selectedShop.company_logo_url} className="w-full h-full object-cover" alt="" /> : 
-                                    <div className="w-full h-full bg-orange-50 flex items-center justify-center text-2xl">🏪</div>
-                                }
+              {selectedShop ? (
+                <div className="bg-white p-4 rounded-lg shadow-sm min-h-[500px]">
+                  <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                    <div className="w-16 h-16 rounded-full border-2 border-orange-100 overflow-hidden">
+                      {selectedShop.company_logo_url ? 
+                        <img src={selectedShop.company_logo_url} className="w-full h-full object-cover" alt="" /> : 
+                        <div className="w-full h-full bg-orange-50 flex items-center justify-center text-2xl">🏪</div>
+                      }
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-black text-slate-800">{selectedShop.company_name}</h2>
+                      <p className="text-sm text-gray-500">{selectedShop.region || 'Haïti'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {shopProducts.map(product => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        shop={selectedShop}
+                        onAdd={handleAddToCart}
+                        onClick={() => setSelectedProduct(product)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="bg-white p-4 rounded shadow-sm">
+                    <h2 className="text-xl font-bold text-slate-800">
+                      {selectedSubCategory ? selectedSubCategory : selectedCategory}
+                    </h2>
+                  </div>
+
+                  {selectedCategory === 'Mariage' ? (
+                    <div className="space-y-8">
+                      {selectedSubCategory ? (
+                        <div className="bg-white p-4 rounded-lg shadow-sm">
+                          {weddingProductsBySubCategory[selectedSubCategory]?.slice(0, 8).length > 0 && (
+                            <div className="mb-8 col-span-full">
+                              <WeddingCreditBanner />
                             </div>
-                            <div>
-                                <h2 className="text-2xl font-black text-slate-800">{selectedShop.company_name}</h2>
-                                <p className="text-sm text-gray-500">{selectedShop.region || 'Haïti'}</p>
-                            </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {products.map(product => (
-                                <ProductCard
+                          )}
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {weddingProductsBySubCategory[selectedSubCategory]?.length > 0 ? (
+                              weddingProductsBySubCategory[selectedSubCategory].map(product => {
+                                const shop = shops.find(s => s.id === product.shop_id);
+                                return (
+                                  <ProductCard
                                     key={product.id}
                                     product={product}
-                                    shop={selectedShop}
-                                    onAdd={handleAddToCart}
-                                    onClick={() => setSelectedProduct(product)}
-                                />
-                            ))}
-                        </div>
-                   </div>
-               ) : (
-                   <div className="space-y-6">
-                        <div className="bg-white p-4 rounded shadow-sm">
-                            <h2 className="text-xl font-bold text-slate-800">
-                                {selectedSubCategory ? selectedSubCategory : selectedCategory}
-                            </h2>
-                        </div>
-
-                        {selectedCategory === 'Mariage' ? (
-                            <div className="space-y-8">
-                                {selectedSubCategory ? (
-                                    <div className="bg-white p-4 rounded-lg shadow-sm">
-                                        {/* Wedding Credit Banner - Après 2ème rangée de produits */}
-                                        {weddingProductsBySubCategory[selectedSubCategory]?.slice(0, 8).length > 0 && (
-                                          <div className="mb-8 col-span-full">
-                                            <WeddingCreditBanner />
-                                          </div>
-                                        )}
-
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                         {weddingProductsBySubCategory[selectedSubCategory]?.length > 0 ? (
-                                                             weddingProductsBySubCategory[selectedSubCategory].map(product => {
-                                                    const shop = shops.find(s => s.id === product.shop_id);
-                                                    return (
-                                                        <ProductCard
-                                                            key={product.id}
-                                                            product={product}
-                                                            shop={shop}
-                                                            onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
-                                                            onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
-                                                        />
-                                                    );
-                                                })
-                                            ) : (
-                                                <div className="col-span-full text-center py-10 text-gray-500">Aucun produit trouvé dans cette section.</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    Object.entries(weddingProductsBySubCategory).map(([subCat, items]) => (
-                                        <div key={subCat} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                                            <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
-                                                <h3 className="font-bold text-lg text-slate-900">{subCat}</h3>
-                                                <Button 
-                                                    variant="link" 
-                                                    className="text-xs text-[#007185]"
-                                                    onClick={() => navigateToCategory(selectedCategory, subCat)}
-                                                >
-                                                    Voir plus
-                                                </Button>
-                                            </div>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                                {items.slice(0, 5).map(product => {
-                                                        const shop = shops.find(s => s.id === product.shop_id);
-                                                        return (
-                                                            <ProductCard
-                                                                key={product.id}
-                                                                product={product}
-                                                                shop={shop}
-                                                                hideId={true}
-                                                                onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
-                                                                onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
-                                                            />
-                                                        );
-                                                    })}
-                                                </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        ) : (
-                            productsByShopInCategory.length > 0 ? (
-                                productsByShopInCategory.map(({ shop, products }) => (
-                                    <div 
-                                        id={`shop-section-${shop.id}`}
-                                        key={shop.id} 
-                                        className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-                                    >
-                                        <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
-                                            <div 
-                                                className="flex items-center gap-3 cursor-pointer group"
-                                                onClick={() => {
-                                                    trackShopView(shop);
-                                                    if (shop?.slug) {
-                                                        window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
-                                                    } else {
-                                                        setSelectedShop(shop);
-                                                    }
-                                                }}
-                                            >
-                                                <div className="w-12 h-12 rounded-full border border-gray-200 overflow-hidden">
-                                                    {shop.company_logo_url ? (
-                                                        <img src={shop.company_logo_url} className="w-full h-full object-cover" alt="" />
-                                                    ) : (
-                                                        <div className="bg-slate-100 w-full h-full flex items-center justify-center font-bold">{shop.company_name[0]}</div>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-orange-600">
-                                                        {shop.company_name}
-                                                    </h3>
-                                                    <div className="flex text-xs text-gray-500 gap-2">
-                                                        <span>Livraison standard</span>
-                                                        <span>•</span>
-                                                        <span className="text-green-600">En stock</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <Button 
-                                               size="sm"
-                                               className="hidden md:flex bg-white border border-gray-300 text-black hover:bg-gray-50"
-                                               onClick={() => {
-                                                   if (shop?.slug) {
-                                                       window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
-                                                   } else {
-                                                       setSelectedShop(shop);
-                                                   }
-                                               }}
-                                            >
-                                               Visiter la boutique
-                                            </Button>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            {products.slice(0, 4).map(product => (
-                                                <div key={product.id}>
-                                                    <ProductCard
-                                                       product={product}
-                                                       shop={shop}
-                                                       hideId={true}
-                                                       onAdd={(p) => {
-                                                           setSelectedShop(shop); 
-                                                           handleAddToCart(p);
-                                                       }}
-                                                       onClick={() => {
-                                                                  trackProductView(product, shop);
-                                                                  if (shop?.slug && product.slug) {
-                                                                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
-                                                                  } else if (shop?.slug) {
-                                                                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
-                                                                  } else {
-                                                                    setSelectedShop(shop);
-                                                                    setSelectedProduct(product);
-                                                                  }
-                                                              }}
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))
+                                    shop={shop}
+                                    onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
+                                    onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
+                                  />
+                                );
+                              })
                             ) : (
-                                <div className="text-center py-20 bg-white rounded-lg shadow-sm">
-                                    <div className="text-4xl mb-4">📦</div>
-                                    <h3 className="text-lg font-bold text-gray-800">Aucun produit disponible</h3>
-                                    <Button className="mt-4 bg-orange-400" onClick={() => navigate('/', { replace: true })}>Retour</Button>
+                              <div className="col-span-full text-center py-10 text-gray-500">Aucun produit trouvé dans cette section.</div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        Object.entries(weddingProductsBySubCategory).map(([subCat, items]) => (
+                          <div key={subCat} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                            <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                              <h3 className="font-bold text-lg text-slate-900">{subCat}</h3>
+                              <Button 
+                                variant="link" 
+                                className="text-xs text-[#007185]"
+                                onClick={() => navigateToCategory(selectedCategory, subCat)}
+                              >
+                                Voir plus
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                              {items.slice(0, 5).map(product => {
+                                const shop = shops.find(s => s.id === product.shop_id);
+                                return (
+                                  <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                    shop={shop}
+                                    hideId={true}
+                                    onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
+                                    onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  ) : (
+                    productsByShopInCategory.length > 0 ? (
+                      productsByShopInCategory.map(({ shop, products }) => (
+                        <div 
+                          id={`shop-section-${shop.id}`}
+                          key={shop.id} 
+                          className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+                        >
+                          <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+                            <div 
+                              className="flex items-center gap-3 cursor-pointer group"
+                              onClick={() => {
+                                trackShopView(shop);
+                                if (shop?.slug) {
+                                  window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
+                                } else {
+                                  setSelectedShop(shop);
+                                }
+                              }}
+                            >
+                              <div className="w-12 h-12 rounded-full border border-gray-200 overflow-hidden">
+                                {shop.company_logo_url ? (
+                                  <img src={shop.company_logo_url} className="w-full h-full object-cover" alt="" />
+                                ) : (
+                                  <div className="bg-slate-100 w-full h-full flex items-center justify-center font-bold">{shop.company_name[0]}</div>
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-lg text-slate-900 group-hover:text-orange-600">
+                                  {shop.company_name}
+                                </h3>
+                                <div className="flex text-xs text-gray-500 gap-2">
+                                  <span>Livraison standard</span>
+                                  <span>•</span>
+                                  <span className="text-green-600">En stock</span>
                                 </div>
-                            )
-                        )}
-                   </div>
-               )}
+                              </div>
+                            </div>
+                            <Button 
+                              size="sm"
+                              className="hidden md:flex bg-white border border-gray-300 text-black hover:bg-gray-50"
+                              onClick={() => {
+                                if (shop?.slug) {
+                                  window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
+                                } else {
+                                  setSelectedShop(shop);
+                                }
+                              }}
+                            >
+                              Visiter la boutique
+                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {products.slice(0, 4).map(product => (
+                              <div key={product.id}>
+                                <ProductCard
+                                  product={product}
+                                  shop={shop}
+                                  hideId={true}
+                                  onAdd={(p) => {
+                                    setSelectedShop(shop); 
+                                    handleAddToCart(p);
+                                  }}
+                                  onClick={() => {
+                                    trackProductView(product, shop);
+                                    if (shop?.slug && product.slug) {
+                                      window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                                    } else if (shop?.slug) {
+                                      window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
+                                    } else {
+                                      setSelectedShop(shop);
+                                      setSelectedProduct(product);
+                                    }
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-20 bg-white rounded-lg shadow-sm">
+                        <div className="text-4xl mb-4">📦</div>
+                        <h3 className="text-lg font-bold text-gray-800">Aucun produit disponible</h3>
+                        <Button className="mt-4 bg-orange-400" onClick={() => navigate('/', { replace: true })}>Retour</Button>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
             </main>
           </div>
         )}
@@ -1179,56 +946,24 @@ export default function Home() {
 
       {user && cartCount > 0 && (
         <div 
-            className="fixed bottom-4 right-4 z-40 animate-bounce-subtle cursor-pointer"
-            onClick={() => window.location.href = createPageUrl('Cart')}
+          className="fixed bottom-4 right-4 z-40 animate-bounce-subtle cursor-pointer"
+          onClick={() => window.location.href = createPageUrl('Cart')}
         >
-            <div className="bg-white border-2 border-orange-500 rounded-full p-3 shadow-2xl flex items-center gap-2 hover:scale-105 transition-transform">
-                <div className="relative">
-                    <ShoppingCart className="w-6 h-6 text-gray-800" />
-                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                        {cartCount}
-                    </span>
-                </div>
-                <span className="font-bold text-sm text-gray-900 pr-2">
-                     {cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0).toFixed(0)} G
-                </span>
+          <div className="bg-white border-2 border-orange-500 rounded-full p-3 shadow-2xl flex items-center gap-2 hover:scale-105 transition-transform">
+            <div className="relative">
+              <ShoppingCart className="w-6 h-6 text-gray-800" />
+              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                {cartCount}
+              </span>
             </div>
+            <span className="font-bold text-sm text-gray-900 pr-2">
+              {cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0).toFixed(0)} G
+            </span>
+          </div>
         </div>
       )}
 
-      {showCartReminder && cartCount > 0 && (
-        <div className="fixed top-32 right-4 z-50 animate-in slide-in-from-right duration-500 max-w-sm w-full md:w-80">
-            <div className="bg-white border-l-4 border-orange-500 shadow-2xl rounded-lg p-4 relative">
-                <button 
-                    onClick={() => setShowCartReminder(false)} 
-                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-                >
-                    <X className="w-4 h-4" />
-                </button>
-                
-                <div className="flex items-start gap-3">
-                    <div className="bg-orange-100 p-2 rounded-full">
-                        <Clock className="w-6 h-6 text-orange-600" />
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-gray-900">N'oubliez pas vos achats !</h4>
-                        <p className="text-sm text-gray-600 mt-1">
-                            Il vous reste <span className="font-bold">{cartCount} article{cartCount > 1 ? 's' : ''}</span> dans votre panier.
-                        </p>
-                    </div>
-                </div>
-                
-                <Button 
-                    className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold"
-                    onClick={() => window.location.href = createPageUrl('Cart')}
-                >
-                    Finaliser ma commande
-                </Button>
-            </div>
-        </div>
-      )}
-
-
+      <FloatingMerchantBanner />
 
       <ProductDetailModal
         product={selectedProduct}
@@ -1253,77 +988,76 @@ export default function Home() {
   );
 }
 
-// Carousel Recommandations MODIFIÉ
+// Carousel Recommandations
 function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice }) {
-  const rowContainers = [useRef(null), useRef(null), useRef(null)];
+  const rowContainers = [React.useRef(null), React.useRef(null)];
 
   const productRows = React.useMemo(() => {
     const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
     const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     
-    const ITEMS_PER_ROW = 12; // Réduit de 16 à 12 pour performance
+    const ITEMS_PER_ROW = 12;
     const MAKARIOS_COUNT = Math.floor(ITEMS_PER_ROW * 0.3);
     const OTHERS_COUNT = ITEMS_PER_ROW - MAKARIOS_COUNT;
 
     const rows = [];
-    for (let i = 0; i < 2; i++) { // Réduit de 3 à 2 rangées
-        const selected = [
-          ...makariosProducts.sort(() => Math.random() - 0.5).slice(0, MAKARIOS_COUNT),
-          ...otherProducts.sort(() => Math.random() - 0.5).slice(0, OTHERS_COUNT)
-        ].sort(() => Math.random() - 0.5);
-        rows.push(selected);
+    for (let i = 0; i < 2; i++) {
+      const selected = [
+        ...makariosProducts.sort(() => Math.random() - 0.5).slice(0, MAKARIOS_COUNT),
+        ...otherProducts.sort(() => Math.random() - 0.5).slice(0, OTHERS_COUNT)
+      ].sort(() => Math.random() - 0.5);
+      rows.push(selected);
     }
     return rows;
   }, [allProducts, shops]);
 
   const handleScroll = (index, direction) => {
-      if(rowContainers[index].current) {
-          rowContainers[index].current.scrollBy({ left: direction === 'left' ? -300 : 300, behavior: 'smooth' });
-      }
+    if(rowContainers[index].current) {
+      rowContainers[index].current.scrollBy({ left: direction === 'left' ? -300 : 300, behavior: 'smooth' });
+    }
   };
 
   if (!productRows[0]?.length) return null;
-  const rowTitles = ["Inspiré de votre historique", "Les clients ont aussi acheté", "Recommandé pour vous"];
+  const rowTitles = ["Inspiré de votre historique", "Les clients ont aussi acheté"];
 
   return (
     <div className="mt-8 space-y-8 bg-white p-4 border-t border-gray-200">
       {productRows.map((rowProducts, rowIndex) => (
-          <div key={rowIndex} className="relative group/carousel">
-            <h3 className="text-xl font-bold text-slate-900 mb-2">{rowTitles[rowIndex]}</h3>
-            <button onClick={() => handleScroll(rowIndex, 'left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-r-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600" /></button>
-            <button onClick={() => handleScroll(rowIndex, 'right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-l-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600 rotate-180" /></button>
+        <div key={rowIndex} className="relative group/carousel">
+          <h3 className="text-xl font-bold text-slate-900 mb-2">{rowTitles[rowIndex]}</h3>
+          <button onClick={() => handleScroll(rowIndex, 'left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-r-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600" /></button>
+          <button onClick={() => handleScroll(rowIndex, 'right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 h-24 w-10 shadow-md border rounded-l-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 hover:bg-white"><ArrowLeft className="w-6 h-6 text-gray-600 rotate-180" /></button>
 
-            <div ref={rowContainers[rowIndex]} className="flex overflow-x-auto gap-4 pb-4 scroll-smooth no-scrollbar">
-              {rowProducts.map((product, idx) => {
-                const shop = shops.find(s => s.id === product.shop_id);
-                const isMakarios = shop?.company_name?.toLowerCase().includes('makarios bridal');
+          <div ref={rowContainers[rowIndex]} className="flex overflow-x-auto gap-4 pb-4 scroll-smooth no-scrollbar">
+            {rowProducts.map((product, idx) => {
+              const shop = shops.find(s => s.id === product.shop_id);
+              const isMakarios = shop?.company_name?.toLowerCase().includes('makarios bridal');
 
-                return (
-                  <div key={`${product.id}-${idx}`} className="flex-shrink-0 w-[180px] bg-white p-2 cursor-pointer hover:bg-gray-50 relative group" onClick={() => {
-                       if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-                       if (shop?.slug && product.slug) {
-                         window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
-                       } else if (shop) {
-                         setSelectedShop(shop);
-                         setSelectedProduct(product);
-                       }
-                    }}>
-                    
-                    {/* Badge Livraison/Reponse Rapide */}
-                    <div className={`absolute top-3 right-3 z-20 flex items-center gap-1 px-1 py-0.5 rounded shadow-sm text-[8px] font-black tracking-tight ${isMakarios ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
-                        {isMakarios ? <MessageSquare size={8} /> : <Zap size={8} fill="currentColor" />}
-                        {isMakarios ? 'Réponse Rapide' : 'Livraison Rapide'}
-                    </div>
-
-                    <div className="h-40 bg-gray-50 mb-2 p-2"><img src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=300&q=75`} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" loading="lazy" /></div>
-                    <div className="text-sm text-[#007185] hover:text-[#C7511F] line-clamp-2 h-10 mb-1">{product.name}</div>
-                    <div className="font-medium text-lg text-[#B12704]">{Math.floor(getClientPrice(product))}.00 Gourdes</div>
+              return (
+                <div key={`${product.id}-${idx}`} className="flex-shrink-0 w-[180px] bg-white p-2 cursor-pointer hover:bg-gray-50 relative group" onClick={() => {
+                  if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+                  if (shop?.slug && product.slug) {
+                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                  } else if (shop) {
+                    setSelectedShop(shop);
+                    setSelectedProduct(product);
+                  }
+                }}>
+                  
+                  <div className={`absolute top-3 right-3 z-20 flex items-center gap-1 px-1 py-0.5 rounded shadow-sm text-[8px] font-black tracking-tight ${isMakarios ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                    {isMakarios ? <MessageSquare size={8} /> : <Zap size={8} fill="currentColor" />}
+                    {isMakarios ? 'Réponse Rapide' : 'Livraison Rapide'}
                   </div>
-                );
-              })}
-            </div>
+
+                  <div className="h-40 bg-gray-50 mb-2 p-2"><img src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=300&q=75`} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" loading="lazy" /></div>
+                  <div className="text-sm text-[#007185] hover:text-[#C7511F] line-clamp-2 h-10 mb-1">{product.name}</div>
+                  <div className="font-medium text-lg text-[#B12704]">{Math.floor(getClientPrice(product))}.00 Gourdes</div>
+                </div>
+              );
+            })}
           </div>
+        </div>
       ))}
     </div>
   );
