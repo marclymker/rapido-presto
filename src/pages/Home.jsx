@@ -1578,14 +1578,6 @@ export default function Home() {
               <SmallStories onCategorySelect={(c) => navigateToCategory(c)} />
             </Suspense>
 
-            <Suspense fallback={<div className="h-20 bg-white rounded animate-pulse" />}>
-              <FreeShippingBanner />
-            </Suspense>
-
-            <Suspense fallback={<div className="h-32 bg-white rounded animate-pulse" />}>
-              <CreditBanner />
-            </Suspense>
-
 
 
             {/* --- MEILLEURES VENTES --- */}
