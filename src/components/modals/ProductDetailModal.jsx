@@ -433,6 +433,44 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             <ChatButton product={product} shop={shop} />
           )}
           
+          <Button
+            className="w-full py-6 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl shadow-lg"
+            onClick={() => {
+              // Track InitiateCheckout
+              trackMetaEvent('InitiateCheckout', {
+                content_ids: [product.id],
+                content_type: 'product',
+                content_name: product.name,
+                value: price * quantity,
+                currency: 'HTG',
+              });
+
+              // Rediriger vers la page de paiement avec les données du produit
+              const checkoutData = {
+                items: [{
+                  product_id: product.id,
+                  product_name: product.name,
+                  product_image: product.image_url,
+                  quantity: quantity,
+                  unit_price: price,
+                  shop_id: shop?.id,
+                  shop_name: shop?.company_name,
+                  shop_region: shop?.region
+                }],
+                total: price * quantity,
+                fromBuyNow: true
+              };
+              
+              // Stocker temporairement dans sessionStorage
+              sessionStorage.setItem('quick_checkout', JSON.stringify(checkoutData));
+              
+              // Rediriger vers le panier (qui détectera le quick checkout)
+              window.location.href = createPageUrl('Cart');
+            }}
+          >
+            Payer Maintenant
+          </Button>
+          
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-slate-100 rounded-xl p-1">
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus size={14} /></Button>
