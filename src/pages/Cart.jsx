@@ -95,9 +95,13 @@ export default function Cart() {
       }, 0);
       
       let totalDeliveryFee = 0;
-      for (const shopId of shopIds) {
-        const shopRegion = itemsByShop[shopId][0].shop_region;
-        totalDeliveryFee += calculateDeliveryFee(user.region, shopRegion);
+      
+      // Livraison gratuite si sous-total >= 3000 HTG
+      if (subtotal < 3000) {
+        for (const shopId of shopIds) {
+          const shopRegion = itemsByShop[shopId][0].shop_region;
+          totalDeliveryFee += calculateDeliveryFee(user.region, shopRegion);
+        }
       }
       
       const baseAmount = subtotal + totalDeliveryFee + (user?.pending_balance || 0);
@@ -303,10 +307,14 @@ export default function Cart() {
   }, 0);
 
   let deliveryFee = 0;
-  Object.keys(itemsByShop).forEach(shopId => {
-    const shopRegion = itemsByShop[shopId][0].shop_region;
-    deliveryFee += calculateDeliveryFee(user.region, shopRegion);
-  });
+  
+  // Livraison gratuite si sous-total >= 3000 HTG
+  if (subtotal < 3000) {
+    Object.keys(itemsByShop).forEach(shopId => {
+      const shopRegion = itemsByShop[shopId][0].shop_region;
+      deliveryFee += calculateDeliveryFee(user.region, shopRegion);
+    });
+  }
 
   const pendingBalance = user?.pending_balance || 0;
   const baseTotal = subtotal + deliveryFee + pendingBalance;
@@ -457,7 +465,11 @@ export default function Cart() {
                     <span>Frais de livraison {shopCount > 1 ? `(${shopCount} boutiques)` : ''}</span>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium">{deliveryFee} HTG</div>
+                    {deliveryFee === 0 && subtotal >= 3000 ? (
+                      <div className="font-medium text-green-600">GRATUIT ✓</div>
+                    ) : (
+                      <div className="font-medium">{deliveryFee} HTG</div>
+                    )}
                     <div className="text-xs text-slate-400">Livraison: 20-30 min</div>
                   </div>
                 </div>
