@@ -797,7 +797,7 @@ export default function Home() {
     ];
 
     return selected.sort(() => Math.random() - 0.5);
-  }, [allProducts, shops]);
+  }, [allProducts, shops, shopsLoading, productsLoading]);
 
 
 
@@ -2560,8 +2560,8 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
 
 
   const productRows = React.useMemo(() => {
-    // 🔒 Protection: Attendre que les queries soient terminées ET qu'il y ait des données
-    if (shopsLoading || productsLoading || !shops.length || !allProducts.length) {
+    // 🔒 Protection: Vérifier que les données sont disponibles (pas besoin de shopsLoading ici)
+    if (!shops.length || !allProducts.length) {
       return [[], [], []];
     }
 
@@ -2608,7 +2608,7 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
 
     return rows;
 
-  }, [allProducts, shops, shopsLoading, productsLoading]);
+  }, [allProducts, shops]);
 
 
 
