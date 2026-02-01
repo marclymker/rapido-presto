@@ -35,53 +35,95 @@ Deno.serve(async (req) => {
     
     const user = await base44.auth.me();
     if (!user) {
+      console.error('❌ User not authenticated');
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await req.json();
     const { orderId, amount, description } = body;
     
-    console.log('MonCash payment request:', { orderId, amount, description });
+    console.log('🔵 MonCash Payment Request:', { 
+      orderId, 
+      amount: typeof amount, 
+      amountValue: amount, 
+      description 
+    });
     
     if (!orderId || !amount) {
-      return Response.json({ error: 'Missing orderId or amount' }, { status: 400 });
+      console.error('❌ Missing parameters:', { orderId: !!orderId, amount: !!amount });
+      return Response.json({ 
+        success: false,
+        error: 'Missing orderId or amount' 
+      }, { status: 400 });
     }
 
-    const accessToken = await getMoncashAccessToken();
-    console.log('Access token obtained:', accessToken ? 'Yes' : 'No');
+    // S'assurer que le montant est un nombre pur
+    const cleanAmount = typeof amount === 'string' 
+      ? parseFloat(amount.replace(/[^0-9.]/g, ''))
+      : parseFloat(amount);
     
+    if (isNaN(cleanAmount) || cleanAmount <= 0) {
+      console.error('❌ Invalid amount:', amount, '→', cleanAmount);
+      return Response.json({ 
+        success: false,
+        error: 'Montant invalide' 
+      }, { status: 400 });
+    }
+
+    console.log('✅ Clean amount:', cleanAmount, 'HTG');
+
+    // Générer un ID unique avec timestamp pour éviter les doublons
+    const uniqueOrderId = `${orderId}_${Date.now()}`;
+    console.log('📋 Unique Order ID:', uniqueOrderId);
+
+    const accessToken = await getMoncashAccessToken();
+    console.log('✅ Access token obtained');
+    
+    // Payload MonCash - MONTANT PUR, PAS DE SYMBOLE
     const paymentPayload = {
-      amount: amount,
-      orderId: orderId
+      amount: cleanAmount,
+      orderId: uniqueOrderId
     };
     
-    console.log('Payment payload:', paymentPayload);
+    console.log('📦 Payment Payload (JSON):', JSON.stringify(paymentPayload, null, 2));
     
     // SANDBOX URL pour tests
-    const paymentResponse = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/v1/CreatePayment', {
+    const createPaymentUrl = 'https://sandbox.moncashbutton.digicelgroup.com/Api/v1/CreatePayment';
+    console.log('🌐 POST:', createPaymentUrl);
+    
+    const paymentResponse = await fetch(createPaymentUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify(paymentPayload)
     });
 
+    console.log('📡 MonCash Response Status:', paymentResponse.status);
+
     if (!paymentResponse.ok) {
       const errorText = await paymentResponse.text();
-      console.error('MonCash CreatePayment error:', paymentResponse.status, errorText);
+      console.error('❌ MonCash CreatePayment Error:', {
+        status: paymentResponse.status,
+        statusText: paymentResponse.statusText,
+        body: errorText
+      });
+      
       return Response.json({ 
         success: false, 
-        error: `Erreur MonCash: ${paymentResponse.status}`,
-        details: errorText
+        error: `MonCash Error ${paymentResponse.status}`,
+        details: errorText,
+        sentPayload: paymentPayload
       }, { status: 400 });
     }
 
     const paymentData = await paymentResponse.json();
-    console.log('MonCash response:', paymentData);
+    console.log('✅ MonCash Success Response:', JSON.stringify(paymentData, null, 2));
     
     if (!paymentData.payment_token?.token) {
-      console.error('No payment token in response:', paymentData);
+      console.error('❌ No payment token in response:', paymentData);
       return Response.json({ 
         success: false, 
         error: 'Token de paiement manquant',
@@ -89,23 +131,25 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // SANDBOX URL pour tests
+    // SANDBOX URL pour redirection
     const paymentUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=${paymentData.payment_token.token}`;
     
-    console.log('Payment URL generated:', paymentUrl);
+    console.log('🚀 Payment URL:', paymentUrl);
     
     return Response.json({
       success: true,
       paymentUrl: paymentUrl,
       transactionId: paymentData.payment_token.token,
-      orderId: orderId
+      orderId: uniqueOrderId
     });
 
   } catch (error) {
-    console.error('MonCash payment creation error:', error);
+    console.error('❌ Exception in MonCash payment:', error);
+    console.error('Stack trace:', error.stack);
     return Response.json({ 
       success: false, 
-      error: error.message 
+      error: error.message,
+      stack: error.stack
     }, { status: 500 });
   }
 });

@@ -292,7 +292,7 @@ export default function Home() {
     };
   }, [shops, allProducts, selectedCategory, selectedShop, shopsLoading, productsLoading]);
 
-  const handleAddToCart = (product, quantity = 1) => {
+  const handleAddToCart = async (product, quantity = 1) => {
     trackAddToCart(product);
     
     if (!user) {
@@ -310,11 +310,31 @@ export default function Home() {
       toast.success('Ajouté au panier');
       return;
     }
+    
     if (!user.current_profile) { 
       setShowProfileModal(true); 
       return; 
     }
-    // Ajouter au panier DB...
+    
+    // Ajouter au panier DB
+    try {
+      const productShop = shops.find(s => s.id === product.shop_id) || selectedShop;
+      await base44.entities.CartItem.create({
+        user_id: user.id,
+        product_id: product.id,
+        product_name: product.name,
+        product_image: product.image_url,
+        quantity: quantity,
+        unit_price: getClientPrice(product),
+        shop_id: productShop?.id,
+        shop_name: productShop?.company_name,
+        shop_region: productShop?.region
+      });
+      toast.success('Ajouté au panier');
+    } catch (error) {
+      console.error('Erreur ajout panier:', error);
+      toast.error('Erreur lors de l\'ajout au panier');
+    }
   };
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
