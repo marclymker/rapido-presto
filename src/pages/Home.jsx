@@ -643,7 +643,7 @@ export default function Home() {
 
     addToCartMutation.mutate({ product, quantity });
 
-  };
+  }, [user, shops, selectedShop, trackAddToCart, addToGuestCart, addToCartMutation]);
 
 
 
