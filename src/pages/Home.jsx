@@ -1564,18 +1564,25 @@ export default function Home() {
             
 
             <Suspense fallback={<div className="h-32 bg-white rounded animate-pulse" />}>
-              <div className="grid gap-4">
-                <FlashBanner />
-                <div className="hidden md:grid grid-cols-2 gap-4">
-                  <FlowersBanner />
-                  <GiftBanner />
-                </div>
-              </div>
+              <FlashBanner />
+            </Suspense>
 
+            <Suspense fallback={<div className="h-32 bg-white rounded animate-pulse" />}>
+              <div className="hidden md:grid grid-cols-2 gap-4">
+                <FlowersBanner />
+                <GiftBanner />
+              </div>
+            </Suspense>
+
+            <Suspense fallback={<div className="h-24 bg-white rounded animate-pulse" />}>
               <SmallStories onCategorySelect={(c) => navigateToCategory(c)} />
-              
+            </Suspense>
+
+            <Suspense fallback={<div className="h-20 bg-white rounded animate-pulse" />}>
               <FreeShippingBanner />
-              
+            </Suspense>
+
+            <Suspense fallback={<div className="h-32 bg-white rounded animate-pulse" />}>
               <CreditBanner />
             </Suspense>
 
