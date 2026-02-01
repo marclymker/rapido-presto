@@ -980,9 +980,9 @@ export default function Home() {
         {/* Bannière Livraison Gratuite - Tout en haut */}
 
         {!selectedShop && (
-
-          <FreeShippingBanner />
-
+          <Suspense fallback={<div className="h-20 bg-white rounded animate-pulse" />}>
+            <FreeShippingBanner />
+          </Suspense>
         )}
 
         
