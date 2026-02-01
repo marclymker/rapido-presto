@@ -1,6 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// Fonction pour obtenir le token d'accès MonCash
 async function getMoncashAccessToken() {
   const clientId = Deno.env.get("MONCASH_CLIENT_ID");
   const clientSecret = Deno.env.get("MONCASH_CLIENT_SECRET");
@@ -24,51 +23,58 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Vérifier l'authentification
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { transactionId } = await req.json();
+    const body = await req.json();
+    const { transactionId } = body;
+    
+    console.log('Verifying MonCash payment:', transactionId);
     
     if (!transactionId) {
-      return Response.json({ error: 'Missing transactionId' }, { status: 400 });
-    }
-
-    // Obtenir le token d'accès
-    const accessToken = await getMoncashAccessToken();
-    
-    // Vérifier le statut du paiement
-    const paymentResponse = await fetch(`https://sandbox.moncashbutton.digicelgroup.com/Api/v1/RetrieveTransactionPayment?transactionId=${transactionId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const paymentData = await paymentResponse.json();
-    
-    if (!paymentResponse.ok) {
       return Response.json({ 
-        success: false, 
-        error: paymentData.message || 'Erreur lors de la vérification du paiement' 
+        success: false,
+        error: 'Transaction ID manquant' 
       }, { status: 400 });
     }
 
-    // Retourner le statut du paiement
+    const accessToken = await getMoncashAccessToken();
+    
+    const verifyResponse = await fetch(
+      `https://sandbox.moncashbutton.digicelgroup.com/Api/v1/RetrieveTransactionPayment?transactionId=${transactionId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const paymentData = await verifyResponse.json();
+    console.log('MonCash verification response:', paymentData);
+    
+    if (!verifyResponse.ok) {
+      return Response.json({ 
+        success: false,
+        error: 'Transaction non trouvée',
+        details: paymentData
+      }, { status: 400 });
+    }
+
+    // Vérifier le statut du paiement
+    const isSuccessful = paymentData.payment && 
+                        paymentData.payment.message === 'successful';
+    
     return Response.json({
       success: true,
-      status: paymentData.payment.status,
-      amount: paymentData.payment.cost,
-      orderId: paymentData.payment.reference
+      status: isSuccessful ? 'success' : 'pending',
+      transactionId: transactionId,
+      amount: paymentData.payment?.cost || 0,
+      details: paymentData
     });
 
   } catch (error) {
-    console.error('MonCash payment verification error:', error);
+    console.error('MonCash verification error:', error);
     return Response.json({ 
-      success: false, 
+      success: false,
       error: error.message 
     }, { status: 500 });
   }
