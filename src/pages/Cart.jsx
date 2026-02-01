@@ -433,6 +433,7 @@ if (paymentMethod === 'moncash') {
       delivery_fee: shopDeliveryFee,
       total: shopSubtotal + shopDeliveryFee,
       payment_method: 'moncash',
+      payment_split: paymentSplit,
       status: 'pending',
       payment_status: 'pending',
       confirmation_code: code,
