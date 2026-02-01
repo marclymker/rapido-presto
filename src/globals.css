@@ -55,6 +55,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* ⚡ Polices système natives pour performance optimale */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    /* ⚡ Optimisation du rendu des polices */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   /* Safe area for iOS notch */
@@ -64,6 +70,11 @@
   
   .safe-pb {
     padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+  
+  /* ⚡ Optimisation images */
+  img {
+    content-visibility: auto;
   }
 }
 

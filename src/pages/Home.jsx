@@ -734,11 +734,11 @@ export default function Home() {
     <div className="min-h-screen pb-20 font-sans" style={{ backgroundColor: theme.bgGray }}>
 
       <Helmet>
-
+        {/* ⚡ Préchargement critique */}
+        <link rel="preload" as="style" href="/globals.css" />
+        
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
-
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
-
       </Helmet>
 
       
