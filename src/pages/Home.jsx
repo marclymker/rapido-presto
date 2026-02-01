@@ -163,25 +163,7 @@ export default function Home() {
 
 
 
-  useEffect(() => {
-
-    const generateSlugs = async () => {
-
-      try {
-
-        await base44.functions.invoke('autoGenerateSlugs');
-
-      } catch (error) {
-
-        console.log('Slug generation:', error);
-
-      }
-
-    };
-
-    generateSlugs();
-
-  }, []);
+  // ⚡ Supprimé: autoGenerateSlugs appelé inutilement à chaque mount
 
   
 
@@ -311,11 +293,13 @@ export default function Home() {
 
     window.addEventListener('setSearchQuery', handleSearchQuery);
 
+    
 
+    // ⚡ Optimisation: getCurrentPosition une seule fois au lieu de watchPosition en continu
 
     if (navigator.geolocation) {
 
-      const watchId = navigator.geolocation.watchPosition(
+      navigator.geolocation.getCurrentPosition(
 
         (position) => {
 
@@ -331,19 +315,9 @@ export default function Home() {
 
         (error) => console.log('Géolocalisation refusée:', error),
 
-        { enableHighAccuracy: true }
+        { timeout: 10000, maximumAge: 300000 } // ⚡ Cache 5 min, timeout 10s
 
       );
-
-      return () => {
-
-        navigator.geolocation.clearWatch(watchId);
-
-        window.removeEventListener('selectCategory', handleCategorySelect);
-
-        window.removeEventListener('setSearchQuery', handleSearchQuery);
-
-      };
 
     }
 
