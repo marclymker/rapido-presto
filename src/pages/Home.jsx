@@ -697,9 +697,7 @@ export default function Home() {
     const otherProducts = productsWithPhotos.filter(p => p.category !== 'Boutique Fleurs' && p.category !== 'Mariage');
 
     const TOTAL_BESTSELLERS = 24;
-    const FLEUR_COUNT = Math.floor(TOTAL_BESTSELLERS * 0.5);
-    const MARIAGE_COUNT = Math.floor(TOTAL_BESTSELLERS * 0.3);
-    const OTHER_COUNT = TOTAL_BESTSELLERS - FLEUR_COUNT - MARIAGE_COUNT;
+    const COUNT_PER_CATEGORY = Math.floor(TOTAL_BESTSELLERS / 3);
 
     const shuffleAndSlice = (arr, count) => {
       const shuffled = [...arr];
@@ -710,11 +708,20 @@ export default function Home() {
       return shuffled.slice(0, count);
     };
 
-    return [
-      ...shuffleAndSlice(fleurProducts, FLEUR_COUNT),
-      ...shuffleAndSlice(mairiageProducts, MARIAGE_COUNT),
-      ...shuffleAndSlice(otherProducts, OTHER_COUNT)
+    // Sélectionner 33% de chaque catégorie
+    const selected = [
+      ...shuffleAndSlice(fleurProducts, COUNT_PER_CATEGORY),
+      ...shuffleAndSlice(mairiageProducts, COUNT_PER_CATEGORY),
+      ...shuffleAndSlice(otherProducts, COUNT_PER_CATEGORY)
     ];
+
+    // Mélanger tous les produits ensemble
+    const finalShuffled = [...selected];
+    for (let i = finalShuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [finalShuffled[i], finalShuffled[j]] = [finalShuffled[j], finalShuffled[i]];
+    }
+    return finalShuffled;
   }, [allProducts, shops]);
 
 
