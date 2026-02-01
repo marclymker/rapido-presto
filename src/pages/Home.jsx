@@ -749,35 +749,42 @@ export default function Home() {
 
 
   const bestSellers = React.useMemo(() => {
+    // 🔒 Protection 1: Ne calculer que si les données sont chargées
+    if (!shops.length || !allProducts.length) {
+      console.warn('⚠️ Données non chargées, bestSellers vide');
+      return [];
+    }
 
-    const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
+    // 🔒 Protection 2: Filtrer SEULEMENT les produits dont la boutique existe
+    const productsWithPhotos = allProducts.filter(p => {
+      const hasPhoto = p.image_url && p.is_available !== false;
+      const shopExists = shops.find(s => s.id === p.shop_id);
+      
+      if (hasPhoto && !shopExists) {
+        console.warn('⚠️ Produit orphelin (boutique supprimée):', p.id, p.name);
+      }
+      
+      return hasPhoto && shopExists; // ✅ Les deux conditions sont nécessaires
+    });
 
-    const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
-
-    const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
-
+    const makariosProducts = productsWithPhotos.filter(p => 
+      shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios')
+    );
     
+    const otherProducts = productsWithPhotos.filter(p => 
+      !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios')
+    );
 
     const TOTAL_BESTSELLERS = 100;
-
     const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3));
-
     const OTHERS_COUNT = TOTAL_BESTSELLERS - MAKARIOS_COUNT;
 
-
-
     const selected = [
-
         ...makariosProducts.sort(() => Math.random() - 0.5).slice(0, MAKARIOS_COUNT),
-
         ...otherProducts.sort(() => Math.random() - 0.5).slice(0, OTHERS_COUNT)
-
     ];
 
-
-
     return selected.sort(() => Math.random() - 0.5);
-
   }, [allProducts, shops]);
 
 
@@ -1695,6 +1702,12 @@ export default function Home() {
                 {bestSellers.map((product, idx) => {
 
                   const shop = shops.find(s => s.id === product.shop_id);
+                  
+                  // 🔒 Protection 3: Ne pas afficher si boutique manquante (sécurité supplémentaire)
+                  if (!shop) {
+                    console.error('❌ ERREUR: Produit sans boutique dans bestSellers:', product.id, product.name);
+                    return null;
+                  }
 
                   const price = getClientPrice(product);
 
@@ -1709,8 +1722,14 @@ export default function Home() {
                       key={product.id}
 
                       onClick={() => {
+                        // 🔒 Protection 4: Double vérification avant redirection
+                        if (!shop) {
+                          console.error('❌ Clic sur produit sans boutique');
+                          toast.error('Boutique non disponible');
+                          return;
+                        }
 
-                        if (shop?.slug && product.slug) {
+                        if (shop.slug && product.slug) {
 
                           window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
 
@@ -2517,12 +2536,23 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
 
 
   const productRows = React.useMemo(() => {
+    // 🔒 Protection: Ne calculer que si les données sont chargées
+    if (!shops.length || !allProducts.length) return [[], [], []];
 
-    const productsWithPhotos = allProducts.filter(p => p.image_url && p.is_available !== false);
+    // 🔒 Filtrer SEULEMENT les produits dont la boutique existe
+    const productsWithPhotos = allProducts.filter(p => {
+      const hasPhoto = p.image_url && p.is_available !== false;
+      const shopExists = shops.find(s => s.id === p.shop_id);
+      return hasPhoto && shopExists; // ✅ Produits orphelins exclus
+    });
 
-    const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
-
-    const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
+    const makariosProducts = productsWithPhotos.filter(p => 
+      shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios')
+    );
+    
+    const otherProducts = productsWithPhotos.filter(p => 
+      !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios')
+    );
 
     
 
@@ -2595,6 +2625,12 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
               {rowProducts.map((product, idx) => {
 
                 const shop = shops.find(s => s.id === product.shop_id);
+                
+                // 🔒 Protection: Ne pas afficher si boutique manquante
+                if (!shop) {
+                  console.error('❌ Produit sans boutique dans recommandations:', product.id);
+                  return null;
+                }
 
                 const price = getClientPrice(product);
 
@@ -2613,8 +2649,15 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
                     onClick={() => {
 
                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+                       
+                       // 🔒 Double vérification avant redirection
+                       if (!shop) {
+                         console.error('❌ Clic sur produit sans boutique');
+                         toast.error('Boutique non disponible');
+                         return;
+                       }
 
-                       if (shop?.slug && product.slug) {
+                       if (shop.slug && product.slug) {
 
                          window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
 
