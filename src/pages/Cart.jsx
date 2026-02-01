@@ -53,7 +53,7 @@ export default function Cart() {
     }).catch(() => {
       navigate(createPageUrl('Home'));
     });
-  }, []);
+  }, [navigate]);
 
   const { data: cartItems = [], isLoading } = useQuery({
     queryKey: ['cart', user?.id],
