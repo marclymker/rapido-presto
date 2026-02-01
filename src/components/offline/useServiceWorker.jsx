@@ -2,35 +2,40 @@ import { useEffect } from 'react';
 
 export function useServiceWorker() {
   useEffect(() => {
-    // Register service worker
+    // ⚡ Enregistrement optimisé après chargement complet
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/service-worker.js')
-        .then((registration) => {
-          console.log('[SW] Registered successfully');
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('/service-worker.js')
+          .then((registration) => {
+            console.log('✅ [SW] Registered - Cache optimisé pour connexions lentes');
 
-          // Check for updates periodically
-          setInterval(() => {
-            registration.update();
-          }, 60000); // Every minute
+            // ⚡ Vérifier mises à jour toutes les heures (au lieu de chaque minute)
+            setInterval(() => {
+              registration.update();
+            }, 60 * 60 * 1000);
 
-          // Listen for updates
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            console.log('[SW] New version available');
+            // ⚡ Nettoyer le cache d'images périodiquement
+            setInterval(() => {
+              registration.active?.postMessage({ type: 'CLEAN_CACHE' });
+            }, 30 * 60 * 1000);
 
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New service worker is ready
-                console.log('[SW] Update ready for installation');
-                // Could show user a "update available" notification here
-              }
+            // Listen for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              console.log('[SW] New version available');
+
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('[SW] Update ready for installation');
+                }
+              });
             });
+          })
+          .catch((error) => {
+            console.error('[SW] Registration failed:', error);
           });
-        })
-        .catch((error) => {
-          console.error('[SW] Registration failed:', error);
-        });
+      });
     } else {
       console.warn('[SW] Service Workers not supported');
     }
