@@ -331,7 +331,7 @@ export default function Home() {
 
     };
 
-  }, []);
+  }, [navigateToCategory, trackSearch]);
 
 
 
