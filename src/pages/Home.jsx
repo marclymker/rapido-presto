@@ -412,7 +412,7 @@ export default function Home() {
 
 
 
-  const { data: shops = [] } = useQuery({
+  const { data: shops = [], isLoading: shopsLoading } = useQuery({
 
     queryKey: ['shops'],
 
@@ -424,7 +424,7 @@ export default function Home() {
 
 
 
-  const { data: allProducts = [] } = useQuery({
+  const { data: allProducts = [], isLoading: productsLoading } = useQuery({
 
     queryKey: ['all-products'],
 
@@ -439,16 +439,20 @@ export default function Home() {
 
 
   const filteredProductsByType = React.useMemo(() => {
+    // 🔒 Attendre que les données soient chargées
+    if (shopsLoading || productsLoading) return [];
 
     if (selectedCategory === 'Tout') return allProducts;
 
     return allProducts.filter(p => p.category === selectedCategory && p.is_available !== false);
 
-  }, [allProducts, selectedCategory]);
+  }, [allProducts, selectedCategory, shopsLoading, productsLoading]);
 
 
 
   const shopsWithProducts = React.useMemo(() => {
+    // 🔒 Attendre que les données soient chargées
+    if (shopsLoading || productsLoading) return [];
 
     if (selectedCategory === 'Tout') return shops;
 
@@ -456,7 +460,7 @@ export default function Home() {
 
     return shops.filter(s => shopIds.has(s.id));
 
-  }, [shops, filteredProductsByType, selectedCategory]);
+  }, [shops, filteredProductsByType, selectedCategory, shopsLoading, productsLoading]);
 
 
 
@@ -491,6 +495,8 @@ export default function Home() {
 
 
   const productsByShopInCategory = React.useMemo(() => {
+    // 🔒 Attendre que les données soient chargées
+    if (shopsLoading || productsLoading) return [];
 
     if (selectedCategory === 'Tout' || selectedShop || selectedCategory === 'Mariage') return [];
 
@@ -512,11 +518,13 @@ export default function Home() {
 
     }).filter(group => group.products.length > 0);
 
-  }, [selectedCategory, selectedShop, shopsWithProducts, allProducts]);
+  }, [selectedCategory, selectedShop, shopsWithProducts, allProducts, shopsLoading, productsLoading]);
 
 
 
   const weddingProductsBySubCategory = React.useMemo(() => {
+    // 🔒 Attendre que les données soient chargées
+    if (shopsLoading || productsLoading) return {};
 
     if (selectedCategory !== 'Mariage') return {};
 
@@ -566,7 +574,7 @@ export default function Home() {
 
     return grouped;
 
-  }, [allProducts, selectedCategory]);
+  }, [allProducts, selectedCategory, shopsLoading, productsLoading]);
 
 
 
@@ -746,12 +754,16 @@ export default function Home() {
 
   };
 
+  
+  // 🔒 État de chargement global
+  const isInitialLoading = (shopsLoading || productsLoading) && (!shops.length || !allProducts.length);
+
 
 
   const bestSellers = React.useMemo(() => {
-    // 🔒 Protection 1: Ne calculer que si les données sont chargées
-    if (!shops.length || !allProducts.length) {
-      console.warn('⚠️ Données non chargées, bestSellers vide');
+    // 🔒 Protection 1: Attendre que les queries soient terminées ET qu'il y ait des données
+    if (shopsLoading || productsLoading || !shops.length || !allProducts.length) {
+      console.warn('⚠️ Données en cours de chargement ou vides');
       return [];
     }
 
@@ -788,6 +800,18 @@ export default function Home() {
   }, [allProducts, shops]);
 
 
+
+  // 🔒 Afficher un loader pendant le chargement initial
+  if (isInitialLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-600 font-medium">Chargement des produits...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
 
@@ -2536,8 +2560,10 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
 
 
   const productRows = React.useMemo(() => {
-    // 🔒 Protection: Ne calculer que si les données sont chargées
-    if (!shops.length || !allProducts.length) return [[], [], []];
+    // 🔒 Protection: Attendre que les queries soient terminées ET qu'il y ait des données
+    if (shopsLoading || productsLoading || !shops.length || !allProducts.length) {
+      return [[], [], []];
+    }
 
     // 🔒 Filtrer SEULEMENT les produits dont la boutique existe
     const productsWithPhotos = allProducts.filter(p => {
@@ -2582,7 +2608,7 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
 
     return rows;
 
-  }, [allProducts, shops]);
+  }, [allProducts, shops, shopsLoading, productsLoading]);
 
 
 
