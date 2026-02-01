@@ -686,32 +686,21 @@ export default function Home() {
   const bestSellers = React.useMemo(() => {
     if (!shops.length || !allProducts.length) return [];
 
-    // ⚡ Optimisation: Créer un Map pour lookup O(1) au lieu de .find() O(n)
     const shopsMap = new Map(shops.map(s => [s.id, s]));
-
-    // ⚡ Un seul .filter() combiné au lieu de multiples chaînés
     const productsWithPhotos = allProducts.filter(p => 
       p.image_url && p.is_available !== false && shopsMap.has(p.shop_id)
     );
 
-    // ⚡ Séparer Makarios vs autres
-    const makariosProducts = [];
-    const otherProducts = [];
-    
-    for (const p of productsWithPhotos) {
-      const shop = shopsMap.get(p.shop_id);
-      if (shop?.company_name?.toLowerCase().includes('makarios')) {
-        makariosProducts.push(p);
-      } else {
-        otherProducts.push(p);
-      }
-    }
+    // Séparer par catégories
+    const fleurProducts = productsWithPhotos.filter(p => p.category === 'Boutique Fleurs');
+    const mairiageProducts = productsWithPhotos.filter(p => p.category === 'Mariage');
+    const otherProducts = productsWithPhotos.filter(p => p.category !== 'Boutique Fleurs' && p.category !== 'Mariage');
 
-    const TOTAL_BESTSELLERS = 24; // ⚡ Réduit à 24 (visible d'un coup)
-    const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3));
-    const OTHERS_COUNT = TOTAL_BESTSELLERS - MAKARIOS_COUNT;
+    const TOTAL_BESTSELLERS = 24;
+    const FLEUR_COUNT = Math.floor(TOTAL_BESTSELLERS * 0.5);
+    const MARIAGE_COUNT = Math.floor(TOTAL_BESTSELLERS * 0.3);
+    const OTHER_COUNT = TOTAL_BESTSELLERS - FLEUR_COUNT - MARIAGE_COUNT;
 
-    // ⚡ Sélection aléatoire optimisée
     const shuffleAndSlice = (arr, count) => {
       const shuffled = [...arr];
       for (let i = shuffled.length - 1; i > 0; i--) {
@@ -722,8 +711,9 @@ export default function Home() {
     };
 
     return [
-      ...shuffleAndSlice(makariosProducts, MAKARIOS_COUNT),
-      ...shuffleAndSlice(otherProducts, OTHERS_COUNT)
+      ...shuffleAndSlice(fleurProducts, FLEUR_COUNT),
+      ...shuffleAndSlice(mairiageProducts, MARIAGE_COUNT),
+      ...shuffleAndSlice(otherProducts, OTHER_COUNT)
     ];
   }, [allProducts, shops]);
 
