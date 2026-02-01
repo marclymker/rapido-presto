@@ -47,6 +47,8 @@ const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, s
               className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
               alt={product.name}
               loading="lazy"
+              decoding="async"
+              fetchpriority="low"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-slate-300 text-[9px] italic">
