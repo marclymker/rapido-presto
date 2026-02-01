@@ -94,6 +94,7 @@ export default function Home() {
   const [selectedShop, setSelectedShop] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const [selectedProduct, setSelectedProduct] = useState(null);
 
@@ -249,7 +250,7 @@ export default function Home() {
 
 
 
-  const handleSearchResults = (results, query, filters) => {
+  const handleSearchResults = React.useCallback((results, query, filters) => {
 
     setSearchResults(results);
 
@@ -366,7 +367,7 @@ export default function Home() {
   // ⚡ Optimisation: Charger produits APRÈS shops (évite race condition)
   const { data: allProducts = [] } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 500), // ⚡ Limite 500 + tri
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200), // ⚡ Limite 200 + tri
     enabled: !selectedShop && shops.length > 0, // ⚡ Attendre shops
     staleTime: 5 * 60 * 1000, // ⚡ 5 min cache
     refetchInterval: 300000 // ⚡ 5 min auto-refresh
@@ -535,7 +536,11 @@ export default function Home() {
 
 
 
-  // ⚡ Optimisation: Supprimer setInterval inutile (déjà géré par useEffect précédent)
+  // ⚡ Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
 
 
@@ -601,7 +606,7 @@ export default function Home() {
 
 
 
-  const handleAddToCart = (product, quantity = 1) => {
+  const handleAddToCart = React.useCallback((product, quantity = 1) => {
 
     trackAddToCart(product);
 
@@ -704,7 +709,7 @@ export default function Home() {
       }
     }
 
-    const TOTAL_BESTSELLERS = 50; // ⚡ Réduit de 100 → 50
+    const TOTAL_BESTSELLERS = 24; // ⚡ Réduit à 24 (visible d'un coup)
     const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3));
     const OTHERS_COUNT = TOTAL_BESTSELLERS - MAKARIOS_COUNT;
 
@@ -1580,7 +1585,7 @@ export default function Home() {
             <div className="bg-white p-2 md:p-4 relative rounded-sm shadow-sm border border-gray-100 mt-6">
                 <h2 className="text-lg md:text-xl font-bold mb-4 px-2">Meilleures Ventes</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-l border-gray-100">
-                {bestSellers.slice(0, 24).map((product, idx) => { // ⚡ Limiter à 24 produits visibles d'un coup
+                {bestSellers.map((product, idx) => { // ⚡ Déjà limité à 24 dans useMemo
 
                   const shop = shops.find(s => s.id === product.shop_id);
                   
@@ -2437,7 +2442,7 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
       }
     }
 
-    const ITEMS_PER_ROW = 12; // ⚡ Réduit de 16 → 12
+    const ITEMS_PER_ROW = 8; // ⚡ Réduit à 8 par ligne
     const MAKARIOS_COUNT = Math.floor(ITEMS_PER_ROW * 0.3);
     const OTHERS_COUNT = ITEMS_PER_ROW - MAKARIOS_COUNT;
 

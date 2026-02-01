@@ -103,4 +103,6 @@ export default function ProductCard({ product, onAdd, onClick, shop }) {
       */}
     </div>
   );
-}
+});
+
+export default ProductCard;
