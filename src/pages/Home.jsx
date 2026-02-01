@@ -427,28 +427,22 @@ export default function Home() {
 
 
   const filteredProductsByType = React.useMemo(() => {
-    // 🔒 Attendre que les données soient chargées
-    if (shopsLoading || productsLoading) return [];
-
     if (selectedCategory === 'Tout') return allProducts;
 
     return allProducts.filter(p => p.category === selectedCategory && p.is_available !== false);
 
-  }, [allProducts, selectedCategory, shopsLoading, productsLoading]);
+  }, [allProducts, selectedCategory]);
 
 
 
   const shopsWithProducts = React.useMemo(() => {
-    // 🔒 Attendre que les données soient chargées
-    if (shopsLoading || productsLoading) return [];
-
     if (selectedCategory === 'Tout') return shops;
 
     const shopIds = new Set(filteredProductsByType.map(p => p.shop_id));
 
     return shops.filter(s => shopIds.has(s.id));
 
-  }, [shops, filteredProductsByType, selectedCategory, shopsLoading, productsLoading]);
+  }, [shops, filteredProductsByType, selectedCategory]);
 
 
 
@@ -483,12 +477,7 @@ export default function Home() {
 
 
   const productsByShopInCategory = React.useMemo(() => {
-    // 🔒 Attendre que les données soient chargées
-    if (shopsLoading || productsLoading) return [];
-
     if (selectedCategory === 'Tout' || selectedShop || selectedCategory === 'Mariage') return [];
-
-
 
     return shopsWithProducts.map(shop => {
 
@@ -506,14 +495,11 @@ export default function Home() {
 
     }).filter(group => group.products.length > 0);
 
-  }, [selectedCategory, selectedShop, shopsWithProducts, allProducts, shopsLoading, productsLoading]);
+  }, [selectedCategory, selectedShop, shopsWithProducts, allProducts]);
 
 
 
   const weddingProductsBySubCategory = React.useMemo(() => {
-    // 🔒 Attendre que les données soient chargées
-    if (shopsLoading || productsLoading) return {};
-
     if (selectedCategory !== 'Mariage') return {};
 
     const weddingProducts = allProducts.filter(p => p.category === 'Mariage' && p.is_available !== false);
@@ -562,7 +548,7 @@ export default function Home() {
 
     return grouped;
 
-  }, [allProducts, selectedCategory, shopsLoading, productsLoading]);
+  }, [allProducts, selectedCategory]);
 
 
 
@@ -749,8 +735,8 @@ export default function Home() {
 
 
   const bestSellers = React.useMemo(() => {
-    // 🔒 Protection 1: Attendre que les queries soient terminées ET qu'il y ait des données
-    if (shopsLoading || productsLoading || !shops.length || !allProducts.length) {
+    // 🔒 Protection 1: Attendre qu'il y ait des données
+    if (!shops.length || !allProducts.length) {
       console.warn('⚠️ Données en cours de chargement ou vides');
       return [];
     }
