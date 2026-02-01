@@ -6,8 +6,8 @@ async function getMoncashAccessToken() {
   
   const authString = btoa(`${clientId}:${clientSecret}`);
   
-  // PRODUCTION URL
-  const response = await fetch('https://moncashbutton.digicelgroup.com/Api/oauth/token', {
+  // SANDBOX URL pour tests
+  const response = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/oauth/token', {
     method: 'POST',
     headers: {
       'Authorization': `Basic ${authString}`,

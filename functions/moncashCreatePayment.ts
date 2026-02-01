@@ -6,8 +6,8 @@ async function getMoncashAccessToken() {
   
   const authString = btoa(`${clientId}:${clientSecret}`);
   
-  // PRODUCTION URL - Enlevé sandbox
-  const response = await fetch('https://moncashbutton.digicelgroup.com/Api/oauth/token', {
+  // SANDBOX URL pour tests
+  const response = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/oauth/token', {
     method: 'POST',
     headers: {
       'Authorization': `Basic ${authString}`,
@@ -57,8 +57,8 @@ Deno.serve(async (req) => {
     
     console.log('Payment payload:', paymentPayload);
     
-    // PRODUCTION URL - Enlevé sandbox
-    const paymentResponse = await fetch('https://moncashbutton.digicelgroup.com/Api/v1/CreatePayment', {
+    // SANDBOX URL pour tests
+    const paymentResponse = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/v1/CreatePayment', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -89,8 +89,8 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // PRODUCTION URL - Enlevé sandbox
-    const paymentUrl = `https://moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=${paymentData.payment_token.token}`;
+    // SANDBOX URL pour tests
+    const paymentUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=${paymentData.payment_token.token}`;
     
     console.log('Payment URL generated:', paymentUrl);
     
