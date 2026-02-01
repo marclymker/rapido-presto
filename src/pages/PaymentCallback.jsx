@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from 'framer-motion';
 
 export default function PaymentCallback() {
-  const [status, setStatus] = useState('loading'); 
+  const [status, setStatus] = useState('loading');
   const [orderDetails, setOrderDetails] = useState(null);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -18,17 +18,12 @@ export default function PaymentCallback() {
 
   const verifyPayment = async () => {
     try {
-      // Moncash renvoie transactionId et orderId dans l'URL
       const urlParams = new URLSearchParams(window.location.search);
       const transactionId = urlParams.get('transactionId');
       const orderIdParam = urlParams.get('orderId'); 
 
-      if (!transactionId) {
-        throw new Error('ID de transaction manquant');
-      }
+      if (!transactionId) throw new Error('ID de transaction manquant');
 
-      // 1. Vérification coté serveur
-      // Note: Assure-toi que la fonction backend 'moncashVerifyPayment' existe aussi
       const response = await base44.functions.invoke('moncashVerifyPayment', {
         transactionId: transactionId,
         orderId: orderIdParam 
@@ -36,88 +31,66 @@ export default function PaymentCallback() {
 
       const paymentData = response.data;
 
-      if (paymentData.success || paymentData.status === 'success' || paymentData.payment?.message === 'successful') {
+      if (paymentData.success || paymentData.status === 'success') {
         
-        // 2. Mise à jour de la commande
-        // On cherche les commandes qui commencent par RP... (car dans la DB c'est RP...-SHOPID)
-        const pendingOrders = await base44.entities.Order.filter({ 
-            status: 'pending_validation'
-        });
+        // Gestion Commande Standard
+        if (orderIdParam && !orderIdParam.startsWith('SUB_')) {
+             const pendingOrders = await base44.entities.Order.filter({ status: 'pending_validation' });
+             const orders = pendingOrders.filter(o => o.order_number.startsWith(orderIdParam));
+             
+             for (const order of orders) {
+                await base44.entities.Order.update(order.id, {
+                  payment_status: 'paid',
+                  status: 'pending',
+                  moncash_transaction_id: transactionId,
+                  external_transaction_code: transactionId
+                });
+                // Notifications (Silent fail si erreur)
+                base44.functions.invoke('sendOrderNotification', { orderId: order.id }).catch(e => console.log(e));
+                base44.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.id }).catch(e => console.log(e));
+             }
+        }
         
-        const orders = pendingOrders.filter(o => o.order_number.startsWith(orderIdParam));
-
-        if (orders.length > 0) {
-          for (const order of orders) {
-            await base44.entities.Order.update(order.id, {
-              payment_status: 'paid',
-              status: 'pending', 
-              moncash_transaction_id: transactionId,
-              external_transaction_code: transactionId
-            });
-
-            // Trigger Notifications
-            base44.functions.invoke('sendOrderNotification', { orderId: order.id, status: 'pending' }).catch(console.error);
-            base44.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.id }).catch(console.error);
-          }
+        // Gestion Premium (Si nécessaire)
+        if (orderIdParam && orderIdParam.startsWith('SUB_')) {
+             await base44.functions.invoke('premiumWebhook', { transaction_id: transactionId, order_id: orderIdParam, status: 'successful' });
         }
 
-        setOrderDetails({
-            orderNumber: orderIdParam,
-            amount: paymentData.amount || "Payé",
-            isPremium: false
-        });
+        setOrderDetails({ orderNumber: orderIdParam, amount: paymentData.amount });
         setStatus('success');
 
       } else {
-        throw new Error(paymentData.error || 'Statut de paiement invalide');
+        throw new Error(paymentData.error || 'Paiement non validé');
       }
 
     } catch (error) {
-      console.error('Payment verification error:', error);
+      console.error(error);
       setStatus('failed');
       setError(error.message);
     }
   };
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-center">
-        <Loader2 className="w-12 h-12 animate-spin text-red-600 mb-4" />
-        <h2 className="text-lg font-bold">Vérification Moncash...</h2>
-        <p className="text-sm text-slate-500">Ne fermez pas cette page.</p>
-      </div>
-    );
-  }
+  if (status === 'loading') return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-red-600 w-10 h-10"/></div>;
 
-  if (status === 'success') {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-10 h-10 text-green-600" />
-          </div>
-          <h1 className="text-2xl font-black uppercase mb-2">Paiement Réussi !</h1>
-          <p className="text-slate-600 mb-6">Votre commande {orderDetails?.orderNumber} a été validée.</p>
-          <Button onClick={() => navigate(createPageUrl('Orders'))} className="w-full bg-black text-white h-12 uppercase font-bold">
-            Voir mes commandes
-          </Button>
-        </motion.div>
-      </div>
-    );
-  }
+  if (status === 'success') return (
+    <div className="h-screen flex items-center justify-center p-4">
+       <div className="text-center">
+          <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4"/>
+          <h1 className="text-2xl font-bold mb-2">Paiement Réussi !</h1>
+          <p className="mb-6">Commande {orderDetails?.orderNumber}</p>
+          <Button onClick={() => navigate(createPageUrl('Orders'))} className="bg-black text-white w-full">Voir mes commandes</Button>
+       </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <XCircle className="w-10 h-10 text-red-600" />
-        </div>
-        <h1 className="text-xl font-bold uppercase mb-2">Paiement Échoué</h1>
-        <p className="text-red-600 bg-red-50 p-3 rounded mb-6 text-sm">{error}</p>
-        <Button onClick={() => navigate(createPageUrl('Cart'))} className="w-full bg-black text-white">
-          Retourner au panier
-        </Button>
-      </div>
+    <div className="h-screen flex items-center justify-center p-4">
+       <div className="text-center">
+          <XCircle className="w-16 h-16 text-red-600 mx-auto mb-4"/>
+          <h1 className="text-2xl font-bold mb-2">Erreur</h1>
+          <p className="text-red-500 mb-6">{error}</p>
+          <Button onClick={() => navigate(createPageUrl('Cart'))} className="bg-black text-white w-full">Retour au panier</Button>
+       </div>
     </div>
   );
 }
