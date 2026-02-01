@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // S'assurer que le montant est un nombre pur
+    // S'assurer que le montant est un nombre entier (MonCash n'accepte pas les décimales)
     const cleanAmount = typeof amount === 'string' 
       ? parseFloat(amount.replace(/[^0-9.]/g, ''))
       : parseFloat(amount);
@@ -70,19 +70,21 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    console.log('✅ Clean amount:', cleanAmount, 'HTG');
+    // MonCash exige un montant ENTIER (pas de décimales)
+    const integerAmount = Math.round(cleanAmount);
+    console.log('✅ Integer amount:', integerAmount, 'HTG');
 
-    // Générer un ID unique avec timestamp pour éviter les doublons
-    const uniqueOrderId = `${orderId}_${Date.now()}`;
-    console.log('📋 Unique Order ID:', uniqueOrderId);
+    // OrderId simple: max 15 caractères alphanumériques uniquement
+    const simpleOrderId = orderId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15);
+    console.log('📋 Clean Order ID:', simpleOrderId);
 
     const accessToken = await getMoncashAccessToken();
     console.log('✅ Access token obtained');
     
-    // Payload MonCash - MONTANT PUR, PAS DE SYMBOLE
+    // Payload MonCash - MONTANT ENTIER, ORDER ID SIMPLE
     const paymentPayload = {
-      amount: cleanAmount,
-      orderId: uniqueOrderId
+      amount: integerAmount,
+      orderId: simpleOrderId
     };
     
     console.log('📦 Payment Payload (JSON):', JSON.stringify(paymentPayload, null, 2));
@@ -140,7 +142,7 @@ Deno.serve(async (req) => {
       success: true,
       paymentUrl: paymentUrl,
       transactionId: paymentData.payment_token.token,
-      orderId: uniqueOrderId
+      orderId: simpleOrderId
     });
 
   } catch (error) {
