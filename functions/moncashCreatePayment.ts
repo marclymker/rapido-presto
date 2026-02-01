@@ -1,12 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// Fonction pour obtenir le token d'accès MonCash
 async function getMoncashAccessToken() {
   const clientId = Deno.env.get("MONCASH_CLIENT_ID");
   const clientSecret = Deno.env.get("MONCASH_CLIENT_SECRET");
   
+  if (!clientId || !clientSecret) {
+    throw new Error("Configuration MonCash manquante (CLIENT_ID ou CLIENT_SECRET)");
+  }
+  
   const authString = btoa(`${clientId}:${clientSecret}`);
   
+  // URL SANDBOX (Changer pour LIVE en production)
   const response = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/oauth/token', {
     method: 'POST',
     headers: {
@@ -17,6 +21,10 @@ async function getMoncashAccessToken() {
   });
   
   const data = await response.json();
+  if (!data.access_token) {
+    console.error("Erreur Token:", data);
+    throw new Error("Impossible d'obtenir le token Moncash");
+  }
   return data.access_token;
 }
 
@@ -24,33 +32,32 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Vérifier l'authentification
+    // 1. Auth Check
     const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { orderId, amount, description } = body;
+    const { orderId, amount } = body;
     
-    console.log('MonCash payment request:', { orderId, amount, description });
-    
-    if (!orderId || !amount) {
-      return Response.json({ error: 'Missing orderId or amount' }, { status: 400 });
+    // 2. Nettoyage (CRITIQUE POUR MONCASH)
+    // On force un entier (pas de centimes) et on s'assure que c'est un nombre
+    const cleanAmount = Math.floor(Number(amount));
+
+    if (!orderId || !cleanAmount || cleanAmount < 1) {
+      return Response.json({ error: 'Montant ou ID invalide' }, { status: 400 });
     }
 
-    // Obtenir le token d'accès
+    console.log(`Processing Moncash: Order ${orderId} for ${cleanAmount} HTG`);
+
+    // 3. Appel API Moncash
     const accessToken = await getMoncashAccessToken();
-    console.log('Access token obtained:', accessToken ? 'Yes' : 'No');
     
-    // Créer le paiement MonCash
     const paymentPayload = {
-      amount: amount,
+      amount: cleanAmount,
       orderId: orderId
     };
     
-    console.log('Payment payload:', paymentPayload);
-    
+    // URL SANDBOX (Changer pour LIVE en production)
     const paymentResponse = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/v1/CreatePayment', {
       method: 'POST',
       headers: {
@@ -61,33 +68,29 @@ Deno.serve(async (req) => {
     });
 
     const paymentData = await paymentResponse.json();
-    console.log('MonCash response:', paymentData);
     
-    if (!paymentResponse.ok) {
-      console.error('MonCash error:', paymentData);
+    if (!paymentResponse.ok || !paymentData.payment_token) {
+      console.error('MonCash API Error:', paymentData);
       return Response.json({ 
         success: false, 
-        error: paymentData.message || 'Erreur lors de la création du paiement',
+        error: paymentData.message || 'Erreur API MonCash',
         details: paymentData
       }, { status: 400 });
     }
 
-    // Retourner l'URL de paiement avec l'orderId en paramètre pour le callback
-    const callbackUrl = `${Deno.env.get('BASE_URL') || 'https://your-domain.com'}/PaymentCallback?transactionId=${paymentData.payment_token.token}&orderId=${orderId}`;
-    const paymentUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=${paymentData.payment_token.token}`;
-    
-    console.log('Payment URL generated:', paymentUrl);
-    console.log('Callback URL:', callbackUrl);
+    // 4. Génération du lien
+    // URL SANDBOX (Changer pour LIVE en production)
+    const redirectUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=${paymentData.payment_token.token}`;
     
     return Response.json({
       success: true,
-      paymentUrl: paymentUrl,
-      transactionId: paymentData.payment_token.token,
+      redirect_url: redirectUrl, // Clé standardisée pour le frontend
+      token: paymentData.payment_token.token,
       orderId: orderId
     });
 
   } catch (error) {
-    console.error('MonCash payment creation error:', error);
+    console.error('SERVER ERROR:', error);
     return Response.json({ 
       success: false, 
       error: error.message 
