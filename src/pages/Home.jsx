@@ -216,9 +216,8 @@ export default function Home() {
 
 
 
-  // Fonction pour changer de catégorie via URL
-
-  const navigateToCategory = (category, subcategory = null) => {
+  // ⚡ useCallback pour éviter re-création
+  const navigateToCategory = React.useCallback((category, subcategory = null) => {
 
     const catSlug = categoryToSlug(category);
 
@@ -246,7 +245,7 @@ export default function Home() {
 
     trackCategoryView(category);
 
-  };
+  }, [navigate, trackCategoryView]);
 
 
 
@@ -260,7 +259,7 @@ export default function Home() {
 
     setShowAdvancedSearch(true);
 
-  };
+  }, []);
 
 
 
@@ -648,10 +647,9 @@ export default function Home() {
 
 
 
-  const filteredProducts = products.filter(p => 
-
-    p.name?.toLowerCase().includes(searchQuery.toLowerCase())
-
+  const filteredProducts = React.useMemo(() => 
+    products.filter(p => p.name?.toLowerCase().includes(debouncedSearch.toLowerCase())),
+    [products, debouncedSearch]
   );
 
 
@@ -1485,13 +1483,13 @@ export default function Home() {
 
         
 
-        {searchQuery.trim() ? (
+        {debouncedSearch.trim() ? (
 
           <div className="bg-white p-4 rounded shadow-sm">
 
             <h2 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
 
-              Résultats pour "{searchQuery}"
+              Résultats pour "{debouncedSearch}"
 
             </h2>
 
@@ -1499,7 +1497,9 @@ export default function Home() {
 
               {allProducts
 
-                .filter(p => p.is_available !== false && p.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+                .filter(p => p.is_available !== false && p.name?.toLowerCase().includes(debouncedSearch.toLowerCase()))
+
+                .slice(0, 20)
 
                 .map(product => {
 
@@ -1901,7 +1901,7 @@ export default function Home() {
 
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 
-                            {products.map(product => (
+                            {products.slice(0, 20).map(product => (
 
                                 <ProductCard
 
@@ -1964,7 +1964,7 @@ export default function Home() {
 
                                                  {weddingProductsBySubCategory[selectedSubCategory]?.length > 0 ? (
 
-                                                     weddingProductsBySubCategory[selectedSubCategory].map(product => {
+                                                     weddingProductsBySubCategory[selectedSubCategory].slice(0, 20).map(product => {
 
                                                     const shop = shops.find(s => s.id === product.shop_id);
 
@@ -2170,7 +2170,7 @@ export default function Home() {
 
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 
-                                            {products.slice(0, 4).map(product => (
+                                            {products.slice(0, 8).map(product => (
 
                                                 <div key={product.id}>
 
