@@ -27,17 +27,12 @@ import { useGuestCart } from '@/components/cart/useGuestCart';
 import WeddingCreditBanner from '@/components/home/WeddingCreditBanner';
 import { useBackButton } from '@/components/navigation/useBackButton';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
-import CreditBanner from '@/components/home/CreditBanner';
 import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
-import FloatingMerchantBanner from '@/components/home/FloatingMerchantBanner';
 import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
 import FlashBanner from '@/components/home/FlashBanner';
-import FlowersBanner from '@/components/home/FlowersBanner';
-import GiftBanner from '@/components/home/GiftBanner';
 import AdvancedSearch from '@/components/search/AdvancedSearch';
 import SearchResults from '@/components/search/SearchResults';
-import NewMessagesBanner from '@/components/home/NewMessagesBanner';
 import FreeShippingBanner from '@/components/home/FreeShippingBanner';
 
 // --- CONFIGURATION DES SOUS-CATÉGORIES MARIAGE ---
@@ -512,7 +507,6 @@ export default function Home() {
       
       <div className="max-w-[1500px] mx-auto">
         <RecruitmentBanner />
-        <FloatingMerchantBanner user={user} />
         <MerchantProfileAlert user={user} />
       </div>
 
@@ -840,18 +834,9 @@ export default function Home() {
             
             <div className="grid gap-4">
                 <FlashBanner />
-                <div className="hidden md:grid grid-cols-2 gap-4">
-                    <FlowersBanner />
-                    <GiftBanner />
-                </div>
             </div>
 
             <SmallStories onCategorySelect={(c) => navigateToCategory(c)} />
-            
-            {/* Bannière intermédiaire */}
-            <FreeShippingBanner />
-            
-            <CreditBanner />
 
             {/* MEILLEURES VENTES MODIFIÉ */}
             <div className="bg-white p-4 relative rounded-sm">
