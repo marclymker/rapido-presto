@@ -1831,6 +1831,10 @@ export default function Home() {
 
               getClientPrice={getClientPrice}
 
+              shopsLoading={shopsLoading}
+
+              productsLoading={productsLoading}
+
             />
 
           </div>
@@ -2521,15 +2525,15 @@ export default function Home() {
 
 // Carousel Recommandations
 
-function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice }) {
+function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice, shopsLoading, productsLoading }) {
 
   const rowContainers = [useRef(null), useRef(null), useRef(null)];
 
 
 
   const productRows = React.useMemo(() => {
-    // 🔒 Protection: Vérifier que les données sont disponibles (pas besoin de shopsLoading ici)
-    if (!shops.length || !allProducts.length) {
+    // 🔒 Protection: Vérifier que les données sont disponibles
+    if (shopsLoading || productsLoading || !shops.length || !allProducts.length) {
       return [[], [], []];
     }
 
@@ -2576,7 +2580,7 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
 
     return rows;
 
-  }, [allProducts, shops]);
+  }, [allProducts, shops, shopsLoading, productsLoading]);
 
 
 
