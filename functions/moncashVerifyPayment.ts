@@ -44,14 +44,16 @@ Deno.serve(async (req) => {
     
     // SANDBOX URL pour tests
     const verifyResponse = await fetch(
-      `https://sandbox.moncashbutton.digicelgroup.com/Api/v1/RetrieveTransactionPayment?transactionId=${transactionId}`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
+     `https://sandbox.moncashbutton.digicelgroup.com/Api/v1/RetrieveTransactionPayment?transactionId=${transactionId}`,
+     {
+       method: 'GET',
+       headers: {
+         'Authorization': `Bearer ${accessToken}`,
+         'Content-Type': 'application/json',
+         'Accept': 'application/json'
+       },
+       timeout: 15000
+     }
     );
 
     const paymentData = await verifyResponse.json();

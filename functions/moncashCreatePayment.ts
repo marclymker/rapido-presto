@@ -74,9 +74,10 @@ Deno.serve(async (req) => {
     const integerAmount = Math.round(cleanAmount);
     console.log('✅ Integer amount:', integerAmount, 'HTG');
 
-    // OrderId simple: max 15 caractères alphanumériques uniquement
-    const simpleOrderId = orderId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15);
-    console.log('📋 Clean Order ID:', simpleOrderId);
+    // OrderId UNIQUE: max 15 caractères alphanumériques + timestamp pour éviter les doublons
+    const timestamp = Date.now().toString().slice(-6);
+    const simpleOrderId = (orderId.replace(/[^a-zA-Z0-9]/g, '') + timestamp).slice(0, 15);
+    console.log('📋 Clean Order ID (Unique):', simpleOrderId);
 
     const accessToken = await getMoncashAccessToken();
     console.log('✅ Access token obtained');
@@ -100,7 +101,8 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify(paymentPayload)
+      body: JSON.stringify(paymentPayload),
+      timeout: 15000
     });
 
     console.log('📡 MonCash Response Status:', paymentResponse.status);
