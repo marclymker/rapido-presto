@@ -6,7 +6,8 @@ async function getMoncashAccessToken() {
   
   const authString = btoa(`${clientId}:${clientSecret}`);
   
-  const response = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/oauth/token', {
+  // PRODUCTION URL
+  const response = await fetch('https://moncashbutton.digicelgroup.com/Api/oauth/token', {
     method: 'POST',
     headers: {
       'Authorization': `Basic ${authString}`,
@@ -14,6 +15,10 @@ async function getMoncashAccessToken() {
     },
     body: 'grant_type=client_credentials&scope=read,write'
   });
+  
+  if (!response.ok) {
+    throw new Error(`OAuth failed: ${response.status}`);
+  }
   
   const data = await response.json();
   return data.access_token;
@@ -37,8 +42,9 @@ Deno.serve(async (req) => {
 
     const accessToken = await getMoncashAccessToken();
     
+    // PRODUCTION URL
     const verifyResponse = await fetch(
-      `https://sandbox.moncashbutton.digicelgroup.com/Api/v1/RetrieveTransactionPayment?transactionId=${transactionId}`,
+      `https://moncashbutton.digicelgroup.com/Api/v1/RetrieveTransactionPayment?transactionId=${transactionId}`,
       {
         method: 'GET',
         headers: {

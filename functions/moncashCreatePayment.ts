@@ -6,7 +6,8 @@ async function getMoncashAccessToken() {
   
   const authString = btoa(`${clientId}:${clientSecret}`);
   
-  const response = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/oauth/token', {
+  // PRODUCTION URL - Enlevé sandbox
+  const response = await fetch('https://moncashbutton.digicelgroup.com/Api/oauth/token', {
     method: 'POST',
     headers: {
       'Authorization': `Basic ${authString}`,
@@ -15,7 +16,16 @@ async function getMoncashAccessToken() {
     body: 'grant_type=client_credentials&scope=read,write'
   });
   
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('MonCash OAuth error:', response.status, errorText);
+    throw new Error(`OAuth failed: ${response.status}`);
+  }
+  
   const data = await response.json();
+  if (!data.access_token) {
+    throw new Error('No access token received');
+  }
   return data.access_token;
 }
 
@@ -47,7 +57,8 @@ Deno.serve(async (req) => {
     
     console.log('Payment payload:', paymentPayload);
     
-    const paymentResponse = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/v1/CreatePayment', {
+    // PRODUCTION URL - Enlevé sandbox
+    const paymentResponse = await fetch('https://moncashbutton.digicelgroup.com/Api/v1/CreatePayment', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -56,19 +67,30 @@ Deno.serve(async (req) => {
       body: JSON.stringify(paymentPayload)
     });
 
+    if (!paymentResponse.ok) {
+      const errorText = await paymentResponse.text();
+      console.error('MonCash CreatePayment error:', paymentResponse.status, errorText);
+      return Response.json({ 
+        success: false, 
+        error: `Erreur MonCash: ${paymentResponse.status}`,
+        details: errorText
+      }, { status: 400 });
+    }
+
     const paymentData = await paymentResponse.json();
     console.log('MonCash response:', paymentData);
     
-    if (!paymentResponse.ok) {
-      console.error('MonCash error:', paymentData);
+    if (!paymentData.payment_token?.token) {
+      console.error('No payment token in response:', paymentData);
       return Response.json({ 
         success: false, 
-        error: paymentData.message || 'Erreur lors de la création du paiement',
+        error: 'Token de paiement manquant',
         details: paymentData
       }, { status: 400 });
     }
 
-    const paymentUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=${paymentData.payment_token.token}`;
+    // PRODUCTION URL - Enlevé sandbox
+    const paymentUrl = `https://moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=${paymentData.payment_token.token}`;
     
     console.log('Payment URL generated:', paymentUrl);
     
