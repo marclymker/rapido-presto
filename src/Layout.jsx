@@ -124,16 +124,7 @@ export default function Layout({ children, currentPageName }) {
     !['delivered', 'cancelled'].includes(o.status)
   ).length;
 
-  // Fetch unread messages count
-  const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['unread-count', user?.id],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('chatService', { action: 'unread-count' });
-      return response.data.unreadCount;
-    },
-    enabled: !!user?.id,
-    refetchInterval: 30000
-  });
+
 
   const getNavItems = () => {
     const currentProfile = user?.current_profile || user?.profiles?.client?.is_active ? 'client' : null;

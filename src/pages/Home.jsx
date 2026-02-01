@@ -212,14 +212,16 @@ export default function Home() {
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
-    refetchInterval: 60000
+    staleTime: 120000,
+    refetchInterval: 120000
   });
 
   const { data: allProducts = [] } = useQuery({
     queryKey: ['all-products'],
     queryFn: () => base44.entities.Product.list(),
     enabled: !selectedShop,
-    refetchInterval: 60000
+    staleTime: 120000, // Cache 2 minutes
+    refetchInterval: 120000 // Réduit la fréquence de refetch
   });
 
   const filteredProductsByType = React.useMemo(() => {
@@ -385,7 +387,7 @@ export default function Home() {
     const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     
-    const TOTAL_BESTSELLERS = 100;
+    const TOTAL_BESTSELLERS = 50; // Réduit de 100 à 50 pour performance
     const MAKARIOS_COUNT = Math.max(1, Math.floor(TOTAL_BESTSELLERS * 0.3));
     const OTHERS_COUNT = TOTAL_BESTSELLERS - MAKARIOS_COUNT;
 
@@ -1241,7 +1243,7 @@ export default function Home() {
         </div>
       )}
 
-      <NewMessagesBanner user={user} />
+
 
       <ProductDetailModal
         product={selectedProduct}
@@ -1275,12 +1277,12 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
     const makariosProducts = productsWithPhotos.filter(p => shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     const otherProducts = productsWithPhotos.filter(p => !shops.find(s => s.id === p.shop_id)?.company_name?.toLowerCase().includes('makarios'));
     
-    const ITEMS_PER_ROW = 16;
+    const ITEMS_PER_ROW = 12; // Réduit de 16 à 12 pour performance
     const MAKARIOS_COUNT = Math.floor(ITEMS_PER_ROW * 0.3);
     const OTHERS_COUNT = ITEMS_PER_ROW - MAKARIOS_COUNT;
 
     const rows = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) { // Réduit de 3 à 2 rangées
         const selected = [
           ...makariosProducts.sort(() => Math.random() - 0.5).slice(0, MAKARIOS_COUNT),
           ...otherProducts.sort(() => Math.random() - 0.5).slice(0, OTHERS_COUNT)

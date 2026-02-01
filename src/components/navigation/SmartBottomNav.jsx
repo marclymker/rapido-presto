@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Package, User, MessageCircle, ShoppingBag } from 'lucide-react';
+import { Home, Package, User, ShoppingBag } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 
 export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 }) {
   const [isVisible, setIsVisible] = useState(true);
@@ -26,33 +24,12 @@ export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 })
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Fetch unread messages
-  const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['unread-count'],
-    queryFn: async () => {
-      try {
-        const response = await base44.functions.invoke('chatService', { action: 'unread-count' });
-        return response.data.unreadCount;
-      } catch {
-        return 0;
-      }
-    },
-    refetchInterval: 30000
-  });
-
   const navItems = [
     { 
       id: 'home', 
       label: 'Accueil', 
       icon: Home, 
       page: 'Home'
-    },
-    { 
-      id: 'chat', 
-      label: 'Chat', 
-      icon: MessageCircle, 
-      page: 'Chat',
-      badge: unreadCount
     },
     { 
       id: 'cart', 
