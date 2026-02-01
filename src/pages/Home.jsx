@@ -56,19 +56,15 @@ import { useBackButton } from '@/components/navigation/useBackButton';
 
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 
+import CreditBanner from '@/components/home/CreditBanner';
+
 import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 
-import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
-
-import AdvancedSearch from '@/components/search/AdvancedSearch';
-
-import SearchResults from '@/components/search/SearchResults';
-
-import FreeShippingBanner from '@/components/home/FreeShippingBanner';
-
 import FloatingMerchantBanner from '@/components/home/FloatingMerchantBanner';
+
+import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
 
 import FlashBanner from '@/components/home/FlashBanner';
 
@@ -76,7 +72,13 @@ import FlowersBanner from '@/components/home/FlowersBanner';
 
 import GiftBanner from '@/components/home/GiftBanner';
 
-import CreditBanner from '@/components/home/CreditBanner';
+import AdvancedSearch from '@/components/search/AdvancedSearch';
+
+import SearchResults from '@/components/search/SearchResults';
+
+import NewMessagesBanner from '@/components/home/NewMessagesBanner';
+
+import FreeShippingBanner from '@/components/home/FreeShippingBanner';
 
 
 
@@ -437,22 +439,28 @@ export default function Home() {
 
 
   const filteredProductsByType = React.useMemo(() => {
+    // 🔒 Attendre que les données soient chargées
+    if (shopsLoading || productsLoading) return [];
+
     if (selectedCategory === 'Tout') return allProducts;
 
     return allProducts.filter(p => p.category === selectedCategory && p.is_available !== false);
 
-  }, [allProducts, selectedCategory]);
+  }, [allProducts, selectedCategory, shopsLoading, productsLoading]);
 
 
 
   const shopsWithProducts = React.useMemo(() => {
+    // 🔒 Attendre que les données soient chargées
+    if (shopsLoading || productsLoading) return [];
+
     if (selectedCategory === 'Tout') return shops;
 
     const shopIds = new Set(filteredProductsByType.map(p => p.shop_id));
 
     return shops.filter(s => shopIds.has(s.id));
 
-  }, [shops, filteredProductsByType, selectedCategory]);
+  }, [shops, filteredProductsByType, selectedCategory, shopsLoading, productsLoading]);
 
 
 
@@ -487,7 +495,12 @@ export default function Home() {
 
 
   const productsByShopInCategory = React.useMemo(() => {
+    // 🔒 Attendre que les données soient chargées
+    if (shopsLoading || productsLoading) return [];
+
     if (selectedCategory === 'Tout' || selectedShop || selectedCategory === 'Mariage') return [];
+
+
 
     return shopsWithProducts.map(shop => {
 
@@ -505,11 +518,14 @@ export default function Home() {
 
     }).filter(group => group.products.length > 0);
 
-  }, [selectedCategory, selectedShop, shopsWithProducts, allProducts]);
+  }, [selectedCategory, selectedShop, shopsWithProducts, allProducts, shopsLoading, productsLoading]);
 
 
 
   const weddingProductsBySubCategory = React.useMemo(() => {
+    // 🔒 Attendre que les données soient chargées
+    if (shopsLoading || productsLoading) return {};
+
     if (selectedCategory !== 'Mariage') return {};
 
     const weddingProducts = allProducts.filter(p => p.category === 'Mariage' && p.is_available !== false);
@@ -558,7 +574,7 @@ export default function Home() {
 
     return grouped;
 
-  }, [allProducts, selectedCategory]);
+  }, [allProducts, selectedCategory, shopsLoading, productsLoading]);
 
 
 
@@ -745,8 +761,8 @@ export default function Home() {
 
 
   const bestSellers = React.useMemo(() => {
-    // 🔒 Protection 1: Attendre qu'il y ait des données
-    if (!shops.length || !allProducts.length) {
+    // 🔒 Protection 1: Attendre que les queries soient terminées ET qu'il y ait des données
+    if (shopsLoading || productsLoading || !shops.length || !allProducts.length) {
       console.warn('⚠️ Données en cours de chargement ou vides');
       return [];
     }
@@ -781,7 +797,7 @@ export default function Home() {
     ];
 
     return selected.sort(() => Math.random() - 0.5);
-  }, [allProducts, shops, shopsLoading, productsLoading]);
+  }, [allProducts, shops]);
 
 
 
@@ -1841,10 +1857,6 @@ export default function Home() {
 
               getClientPrice={getClientPrice}
 
-              shopsLoading={shopsLoading}
-
-              productsLoading={productsLoading}
-
             />
 
           </div>
@@ -2487,6 +2499,12 @@ export default function Home() {
 
       )}
 
+
+
+      <NewMessagesBanner user={user} />
+
+
+
       <ProductDetailModal
 
         product={selectedProduct}
@@ -2535,14 +2553,14 @@ export default function Home() {
 
 // Carousel Recommandations
 
-function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice, shopsLoading, productsLoading }) {
+function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice }) {
 
   const rowContainers = [useRef(null), useRef(null), useRef(null)];
 
 
 
   const productRows = React.useMemo(() => {
-    // 🔒 Protection: Vérifier que les données sont disponibles
+    // 🔒 Protection: Attendre que les queries soient terminées ET qu'il y ait des données
     if (shopsLoading || productsLoading || !shops.length || !allProducts.length) {
       return [[], [], []];
     }
