@@ -196,6 +196,7 @@ export default function Cart() {
 
       // Si MonCash
       if (paymentMethod === 'moncash') {
+        console.log('🔵 DÉBUT PAIEMENT MONCASH');
         const orderNum = 'RP' + Date.now().toString().slice(-6);
         
         const createdOrders = [];
@@ -240,19 +241,35 @@ export default function Cart() {
           createdOrders.push({ orderId: order.id, code, orderNum: order.order_number });
         }
 
-        await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+        console.log('✅ Commandes créées:', createdOrders.length);
 
+        await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+        console.log('✅ Panier vidé');
+
+        console.log('📞 Appel API MonCash avec montant:', totalAmount, 'HTG');
+        
         const response = await base44.functions.invoke('moncashCreatePayment', {
           orderId: orderNum,
           amount: totalAmount,
           description: `Commande ${orderNum}`
         });
 
-        const paymentData = response.data;
+        console.log('📥 Réponse MonCash:', response);
 
-        if (!paymentData?.success || !paymentData?.paymentUrl) {
-          throw new Error(paymentData?.error || 'Erreur MonCash');
+        const paymentData = response.data;
+        console.log('📦 Payment Data:', paymentData);
+
+        if (!paymentData?.success) {
+          console.error('❌ Erreur MonCash:', paymentData?.error);
+          throw new Error(paymentData?.error || 'Erreur MonCash: Échec de création du paiement');
         }
+
+        if (!paymentData?.paymentUrl) {
+          console.error('❌ URL de paiement manquante:', paymentData);
+          throw new Error('URL de redirection MonCash manquante');
+        }
+
+        console.log('✅ URL MonCash reçue:', paymentData.paymentUrl);
 
         for (const order of createdOrders) {
           await base44.entities.Order.update(order.orderId, {
@@ -260,20 +277,26 @@ export default function Cart() {
           });
         }
 
-        return {
-          orderNum,
-          codes: createdOrders.map(o => o.code),
-          moncashUrl: paymentData.paymentUrl,
-          transactionId: paymentData.transactionId,
-          redirecting: true
-        };
+        console.log('✅ Transaction ID enregistrée');
+
+        // Redirection immédiate
+        console.log('🚀 REDIRECTION vers:', paymentData.paymentUrl);
+        window.location.href = paymentData.paymentUrl;
+        
+        // Ne pas retourner de données, la redirection est déjà effectuée
+        return new Promise(() => {}); // Promise qui ne se résout jamais (redirection en cours)
       }
     },
     onSuccess: (data) => {
-      if (data.redirecting && data.moncashUrl) {
-        window.location.href = data.moncashUrl;
+      // Pour MonCash, la redirection est déjà faite dans mutationFn
+      // Cette fonction ne sera appelée que pour les paiements Square
+      console.log('✅ Mutation success:', data);
+      
+      if (!data) {
+        // MonCash: redirection déjà effectuée
         return;
       }
+      
       queryClient.invalidateQueries(['cart']);
       setOrderNumber(data.orderNum);
       setConfirmCode(data.code);
@@ -281,6 +304,7 @@ export default function Cart() {
       toast.success('Commande confirmée!');
     },
     onError: (error) => {
+      console.error('❌ Erreur mutation:', error);
       toast.error(error.message || 'Erreur lors de la création de la commande');
     }
   });
@@ -653,16 +677,26 @@ export default function Cart() {
                   Retour
                 </Button>
                 <Button
+                  type="button"
                   className="flex-1 bg-orange-500 hover:bg-orange-600"
-                  onClick={() => createOrderMutation.mutate()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('🔘 Clic sur bouton confirmation');
+                    console.log('💳 Méthode de paiement:', paymentMethod);
+                    console.log('💰 Montant total:', total, 'HTG');
+                    createOrderMutation.mutate();
+                  }}
                   disabled={
                     createOrderMutation.isPending ||
                     redirectingToMoncash ||
                     (paymentMethod === 'card' && !squareToken)
                   }
                 >
-                  {redirectingToMoncash ? 'Redirection MonCash...' :
-                  createOrderMutation.isPending ? 'Traitement...' : 'Confirmer le paiement'}
+                  {createOrderMutation.isPending ? (
+                    paymentMethod === 'moncash' ? 'Redirection MonCash...' : 'Traitement...'
+                  ) : (
+                    'Confirmer le paiement'
+                  )}
                 </Button>
               </div>
             </motion.div>
