@@ -42,9 +42,9 @@ Deno.serve(async (req) => {
 
     const accessToken = await getMoncashAccessToken();
     
-    // PRODUCTION URL
+    // SANDBOX URL pour tests
     const verifyResponse = await fetch(
-      `https://moncashbutton.digicelgroup.com/Api/v1/RetrieveTransactionPayment?transactionId=${transactionId}`,
+      `https://sandbox.moncashbutton.digicelgroup.com/Api/v1/RetrieveTransactionPayment?transactionId=${transactionId}`,
       {
         method: 'GET',
         headers: {
