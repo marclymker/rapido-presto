@@ -13,6 +13,7 @@ import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { useBackButton } from '@/components/navigation/useBackButton';
 import ChatButton from '@/components/chat/ChatButton';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
+import { createPageUrl } from '@/utils';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
@@ -424,7 +425,12 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
           <Button
             className="w-full py-6 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl shadow-lg"
-            onClick={() => {
+            onClick={async () => {
+              if (!user) {
+                base44.auth.redirectToLogin(window.location.pathname);
+                return;
+              }
+
               // Track InitiateCheckout
               trackMetaEvent('InitiateCheckout', {
                 content_ids: [product.id],
@@ -434,26 +440,22 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                 currency: 'HTG',
               });
 
-              // Rediriger vers la page de paiement avec les données du produit
-              const checkoutData = {
-                items: [{
-                  product_id: product.id,
-                  product_name: product.name,
-                  product_image: product.image_url,
-                  quantity: quantity,
-                  unit_price: price,
-                  shop_id: shop?.id,
-                  shop_name: shop?.company_name,
-                  shop_region: shop?.region
-                }],
-                total: price * quantity,
-                fromBuyNow: true
-              };
+              // Track AddToCart
+              trackMetaEvent('AddToCart', {
+                content_ids: [product.id],
+                content_type: 'product',
+                content_name: product.name,
+                value: price * quantity,
+                currency: 'HTG',
+              });
+
+              // Ajouter au panier d'abord
+              await onAddToCart(product, quantity);
               
-              // Stocker temporairement dans sessionStorage
-              sessionStorage.setItem('quick_checkout', JSON.stringify(checkoutData));
+              // Fermer la modale
+              onClose();
               
-              // Rediriger vers le panier (qui détectera le quick checkout)
+              // Rediriger vers le panier
               window.location.href = createPageUrl('Cart');
             }}
           >
