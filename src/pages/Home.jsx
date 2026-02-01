@@ -62,21 +62,11 @@ import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 
-import FloatingMerchantBanner from '@/components/home/FloatingMerchantBanner';
-
 import MerchantProfileAlert from '@/components/home/MerchantProfileAlert';
-
-import FlashBanner from '@/components/home/FlashBanner';
-
-import FlowersBanner from '@/components/home/FlowersBanner';
-
-import GiftBanner from '@/components/home/GiftBanner';
 
 import AdvancedSearch from '@/components/search/AdvancedSearch';
 
 import SearchResults from '@/components/search/SearchResults';
-
-import NewMessagesBanner from '@/components/home/NewMessagesBanner';
 
 import FreeShippingBanner from '@/components/home/FreeShippingBanner';
 
@@ -2498,10 +2488,6 @@ export default function Home() {
         </div>
 
       )}
-
-
-
-      <NewMessagesBanner user={user} />
 
 
 
