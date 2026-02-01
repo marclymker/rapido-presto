@@ -56,8 +56,6 @@ import { useBackButton } from '@/components/navigation/useBackButton';
 
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 
-import CreditBanner from '@/components/home/CreditBanner';
-
 import RecruitmentBanner from '@/components/home/RecruitmentBanner';
 
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
@@ -2488,8 +2486,6 @@ export default function Home() {
         </div>
 
       )}
-
-
 
       <ProductDetailModal
 
