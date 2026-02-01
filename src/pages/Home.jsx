@@ -68,6 +68,16 @@ import SearchResults from '@/components/search/SearchResults';
 
 import FreeShippingBanner from '@/components/home/FreeShippingBanner';
 
+import FloatingMerchantBanner from '@/components/home/FloatingMerchantBanner';
+
+import FlashBanner from '@/components/home/FlashBanner';
+
+import FlowersBanner from '@/components/home/FlowersBanner';
+
+import GiftBanner from '@/components/home/GiftBanner';
+
+import CreditBanner from '@/components/home/CreditBanner';
+
 
 
 // --- CONFIGURATION DES SOUS-CATÉGORIES MARIAGE ---
