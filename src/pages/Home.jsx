@@ -397,12 +397,11 @@ export default function Home() {
     } else if (!productSlug && selectedProduct) {
       setSelectedProduct(null);
     }
-  }, [productSlug, allProducts]);
+  }, [productSlug, allProducts, selectedProduct]);
 
   // Gérer le bouton retour natif
   useBackButton(() => {
     if (productSlug) {
-      // Retirer le produit de l'URL
       const params = new URLSearchParams(location.search);
       params.delete('product');
       const queryString = params.toString();
