@@ -279,24 +279,27 @@ export default function Cart() {
 
         console.log('✅ Transaction ID enregistrée');
 
-        // Redirection immédiate
-        console.log('🚀 REDIRECTION vers:', paymentData.paymentUrl);
-        window.location.href = paymentData.paymentUrl;
-        
-        // Ne pas retourner de données, la redirection est déjà effectuée
-        return new Promise(() => {}); // Promise qui ne se résout jamais (redirection en cours)
+        // Retourner les données pour déclencher onSuccess PUIS rediriger
+        return {
+          redirectToMoncash: true,
+          paymentUrl: paymentData.paymentUrl,
+          orderNum: createdOrders[0].orderNum
+        };
       }
     },
     onSuccess: (data) => {
-      // Pour MonCash, la redirection est déjà faite dans mutationFn
-      // Cette fonction ne sera appelée que pour les paiements Square
       console.log('✅ Mutation success:', data);
       
-      if (!data) {
-        // MonCash: redirection déjà effectuée
+      if (!data) return;
+      
+      // MonCash: redirection immédiate
+      if (data.redirectToMoncash && data.paymentUrl) {
+        console.log('🚀 REDIRECTION MonCash vers:', data.paymentUrl);
+        window.location.href = data.paymentUrl;
         return;
       }
       
+      // Square: afficher confirmation
       queryClient.invalidateQueries(['cart']);
       setOrderNumber(data.orderNum);
       setConfirmCode(data.code);
