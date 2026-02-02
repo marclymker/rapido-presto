@@ -43,6 +43,10 @@ Deno.serve(async (req) => {
     const accessToken = await getMoncashAccessToken();
     
     // SANDBOX URL pour tests
+    // AbortController pour timeout de 15 secondes
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     const verifyResponse = await fetch(
      `https://sandbox.moncashbutton.digicelgroup.com/Api/v1/RetrieveTransactionPayment?transactionId=${transactionId}`,
      {
@@ -52,9 +56,11 @@ Deno.serve(async (req) => {
          'Content-Type': 'application/json',
          'Accept': 'application/json'
        },
-       timeout: 15000
+       signal: controller.signal
      }
     );
+
+    clearTimeout(timeoutId);
 
     const paymentData = await verifyResponse.json();
     console.log('MonCash verification response:', paymentData);

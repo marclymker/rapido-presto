@@ -82,32 +82,45 @@ Deno.serve(async (req) => {
     const accessToken = await getMoncashAccessToken();
     console.log('✅ Access token obtained');
     
-    // Payload MonCash - MONTANT ENTIER, ORDER ID SIMPLE
+    // CRITICAL: returnUrl pour redirection après paiement
+    const appUrl = Deno.env.get("APP_URL") || "https://rapido.base44.app";
+    const returnUrl = `${appUrl}/PaymentCallback`;
+    
+    // Payload MonCash - MONTANT ENTIER, ORDER ID SIMPLE, RETURN URL
     const paymentPayload = {
       amount: integerAmount,
-      orderId: simpleOrderId
+      orderId: simpleOrderId,
+      returnUrl: returnUrl
     };
     
     console.log('📦 Payment Payload (JSON):', JSON.stringify(paymentPayload, null, 2));
+    console.log('🔙 Return URL:', returnUrl);
     
     // SANDBOX URL pour tests
     const createPaymentUrl = 'https://sandbox.moncashbutton.digicelgroup.com/Api/v1/CreatePayment';
     console.log('🌐 POST:', createPaymentUrl);
     
-    const paymentResponse = await fetch(createPaymentUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(paymentPayload),
-      timeout: 15000
-    });
+    // AbortController pour timeout de 20 secondes
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    
+    try {
+      const paymentResponse = await fetch(createPaymentUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(paymentPayload),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
 
-    console.log('📡 MonCash Response Status:', paymentResponse.status);
+      console.log('📡 MonCash Response Status:', paymentResponse.status);
 
-    if (!paymentResponse.ok) {
+      if (!paymentResponse.ok) {
       const errorText = await paymentResponse.text();
       console.error('❌ MonCash CreatePayment Error:', {
         status: paymentResponse.status,
@@ -146,6 +159,18 @@ Deno.serve(async (req) => {
       transactionId: paymentData.payment_token.token,
       orderId: simpleOrderId
     });
+
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.error('❌ MonCash Timeout: Pas de réponse en 20 secondes');
+        return Response.json({ 
+          success: false, 
+          error: 'Timeout MonCash: Le serveur ne répond pas. Vérifiez vos identifiants.',
+        }, { status: 504 });
+      }
+      throw fetchError;
+    }
 
   } catch (error) {
     console.error('❌ Exception in MonCash payment:', error);
