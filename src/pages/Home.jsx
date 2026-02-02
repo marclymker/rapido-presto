@@ -37,6 +37,7 @@ import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 
 // ⚡ Lazy Loading - Composants lourds chargés à la demande
 const SmallStories = lazy(() => import('@/components/home/SmallStories'));
+const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
 const AdvancedSearch = lazy(() => import('@/components/search/AdvancedSearch'));
 const SearchResults = lazy(() => import('@/components/search/SearchResults'));
 
@@ -950,6 +951,12 @@ export default function Home() {
 
 
 
+
+      <div className="max-w-[1500px] mx-auto">
+        <Suspense fallback={<div className="h-16" />}>
+          <MerchantProfileAlert user={user} />
+        </Suspense>
+      </div>
 
       <SEO 
 
