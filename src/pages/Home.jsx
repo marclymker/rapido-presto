@@ -466,8 +466,29 @@ export default function Home() {
 
 
     const classifyProduct = (product) => {
+      // 🔥 PRIORITÉ 1: Utiliser le champ subcategory s'il existe
+      if (product.subcategory && product.subcategory.trim()) {
+        // Vérifier si c'est une sous-catégorie valide
+        for (const group of WEDDING_STRUCTURE) {
+          if (group.subtypes) {
+            for (const subtype of group.subtypes) {
+              if (product.subcategory.toLowerCase() === subtype.toLowerCase() || 
+                  product.subcategory.toLowerCase().includes(subtype.toLowerCase())) {
+                return subtype;
+              }
+            }
+          }
+          if (product.subcategory.toLowerCase() === group.title.toLowerCase() ||
+              product.subcategory.toLowerCase().includes(group.title.toLowerCase())) {
+            return group.title;
+          }
+        }
+        // Si subcategory existe mais ne match aucune structure, le retourner tel quel
+        return product.subcategory;
+      }
 
-      const textToSearch = `${product.name} ${product.subcategory || ''} ${product.description || ''}`.toLowerCase();
+      // 🔥 PRIORITÉ 2: Recherche textuelle dans nom et description
+      const textToSearch = `${product.name} ${product.description || ''}`.toLowerCase();
 
       for (const group of WEDDING_STRUCTURE) {
 
