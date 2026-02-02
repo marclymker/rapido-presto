@@ -356,7 +356,7 @@ export default function Home() {
 
 
   // ⚡ Optimisation: Charger shops en premier (priorité)
-  const { data: shops = [] } = useQuery({
+  const { data: shops = [], isLoading: shopsLoading } = useQuery({
     queryKey: ['shops'],
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
     staleTime: 5 * 60 * 1000, // ⚡ 5 min cache
@@ -364,7 +364,7 @@ export default function Home() {
   });
 
   // ⚡ Optimisation: Charger produits APRÈS shops (évite race condition)
-  const { data: allProducts = [] } = useQuery({
+  const { data: allProducts = [], isLoading: productsLoading } = useQuery({
     queryKey: ['all-products'],
     queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200), // ⚡ Limite 200 + tri
     enabled: !selectedShop && shops.length > 0, // ⚡ Attendre shops
@@ -372,19 +372,26 @@ export default function Home() {
     refetchInterval: 300000 // ⚡ 5 min auto-refresh
   });
 
+  // Fonction getter sécurisée pour allProducts
+  const getSafeProducts = React.useCallback(() => {
+    return Array.isArray(allProducts) ? allProducts : [];
+  }, [allProducts]);
+
 
 
   // ⚡ Optimisation: Fusionner les filtres en un seul calcul
   const { filteredProductsByType, shopsWithProducts } = React.useMemo(() => {
+    const safeProducts = getSafeProducts();
+    
     if (selectedCategory === 'Tout') {
       return {
-        filteredProductsByType: allProducts,
+        filteredProductsByType: safeProducts,
         shopsWithProducts: shops
       };
     }
     
     // Un seul .filter() au lieu de deux chaînés
-    const filtered = allProducts.filter(p => 
+    const filtered = safeProducts.filter(p => 
       p.category === selectedCategory && p.is_available !== false
     );
     
@@ -395,7 +402,7 @@ export default function Home() {
       filteredProductsByType: filtered,
       shopsWithProducts: activeShops
     };
-  }, [allProducts, shops, selectedCategory]);
+  }, [getSafeProducts, shops, selectedCategory]);
 
 
 
@@ -530,7 +537,7 @@ export default function Home() {
 
     return grouped;
 
-  }, [allProducts, selectedCategory]);
+    }, [getSafeProducts, selectedCategory]);
 
 
 
@@ -709,10 +716,11 @@ export default function Home() {
 
 
   const bestSellers = React.useMemo(() => {
-    if (!shops.length || !allProducts.length) return [];
+    const safeProducts = getSafeProducts();
+    if (!shops.length || !safeProducts.length) return [];
 
     const shopsMap = new Map(shops.map(s => [s.id, s]));
-    const productsWithPhotos = allProducts.filter(p => 
+    const productsWithPhotos = safeProducts.filter(p => 
       p.image_url && p.is_available !== false && shopsMap.has(p.shop_id)
     );
 
@@ -747,7 +755,7 @@ export default function Home() {
       [finalShuffled[i], finalShuffled[j]] = [finalShuffled[j], finalShuffled[i]];
     }
     return finalShuffled;
-  }, [allProducts, shops]);
+  }, [getSafeProducts, shops]);
 
 
 
@@ -2463,7 +2471,7 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
     const makariosProducts = [];
     const otherProducts = [];
     
-    for (const p of allProducts) {
+    for (const p of safeProducts) {
       if (!p.image_url || p.is_available === false) continue;
       const shop = shopsMap.get(p.shop_id);
       if (!shop) continue;
@@ -2497,7 +2505,7 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
       ]);
     }
     return rows;
-  }, [allProducts, shops]);
+  }, [getSafeProducts, shops]);
 
 
 
