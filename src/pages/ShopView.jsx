@@ -229,11 +229,12 @@ export default function ShopView() {
 
   // Get selected product for meta tags
   const selectedProductForMeta = selectedProduct || (productSlug && allProducts.find(p => p.slug === productSlug));
+  const productPrice = selectedProductForMeta ? getClientPrice(selectedProductForMeta) : null;
   const pageTitle = selectedProductForMeta 
-    ? `${selectedProductForMeta.name} - ${shop.company_name}` 
+    ? `${selectedProductForMeta.name} - ${productPrice?.toLocaleString()} HTG` 
     : `${shop.company_name}`;
   const pageDescription = selectedProductForMeta 
-    ? `${selectedProductForMeta.description || selectedProductForMeta.name} - ${getClientPrice(selectedProductForMeta)} Gourdes` 
+    ? `${selectedProductForMeta.description || selectedProductForMeta.name} - Prix: ${productPrice?.toLocaleString()} Gourdes | ${shop.company_name}` 
     : `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`;
   const pageImage = selectedProductForMeta?.image_url || shop.company_logo_url;
   const pageUrl = selectedProductForMeta 
@@ -257,12 +258,30 @@ export default function ShopView() {
         {pageImage && <meta property="og:image:height" content="630" />}
         {pageImage && <meta property="og:image:alt" content={pageTitle} />}
         <meta property="og:url" content={pageUrl} />
+        <meta property="og:locale" content="fr_HT" />
+        
+        {/* Product-specific Open Graph */}
+        {selectedProductForMeta && (
+          <>
+            <meta property="product:price:amount" content={productPrice} />
+            <meta property="product:price:currency" content="HTG" />
+            <meta property="product:availability" content="in stock" />
+            <meta property="product:brand" content={shop.company_name} />
+            <meta property="product:condition" content="new" />
+            <meta property="product:retailer_item_id" content={selectedProductForMeta.id} />
+          </>
+        )}
         
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@RapidoPrestoHT" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         {pageImage && <meta name="twitter:image" content={pageImage} />}
+        {pageImage && <meta name="twitter:image:alt" content={pageTitle} />}
+        
+        {/* WhatsApp specific */}
+        {pageImage && <meta property="og:image:type" content="image/jpeg" />}
       </Helmet>
 
       {/* Header */}
