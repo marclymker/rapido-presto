@@ -122,13 +122,15 @@ export default function Home() {
 
 
 
-  // Lire catégorie et sous-catégorie depuis l'URL
+  // Lire catégorie, sous-catégorie ET produit depuis l'URL
 
   const urlParams = new URLSearchParams(location.search);
 
   const categorySlug = urlParams.get('category') || '';
 
   const subcategorySlug = urlParams.get('sub') || '';
+
+  const productSlug = urlParams.get('product') || '';
 
   
 
@@ -138,13 +140,26 @@ export default function Home() {
 
 
 
+  // Synchroniser selectedProduct avec l'URL
+  useEffect(() => {
+    if (productSlug && allProducts.length > 0 && !selectedProduct) {
+      const product = allProducts.find(p => p.slug === productSlug || p.id === productSlug);
+      if (product) setSelectedProduct(product);
+    } else if (!productSlug && selectedProduct) {
+      setSelectedProduct(null);
+    }
+  }, [productSlug, allProducts, selectedProduct]);
+
   // Gérer le bouton retour natif
 
   useBackButton(() => {
 
-    if (selectedProduct) {
-
-      setSelectedProduct(null);
+    if (productSlug) {
+      // Retirer le produit de l'URL
+      const params = new URLSearchParams(location.search);
+      params.delete('product');
+      const queryString = params.toString();
+      navigate(queryString ? `?${queryString}` : '/', { replace: true });
 
     } else if (selectedShop) {
 
@@ -160,7 +175,7 @@ export default function Home() {
 
     }
 
-  }, selectedProduct || selectedShop || selectedSubCategory || selectedCategory !== 'Tout');
+  }, productSlug || selectedShop || selectedSubCategory || selectedCategory !== 'Tout');
 
 
 
@@ -1981,8 +1996,10 @@ export default function Home() {
                                                               if (shop?.slug && product.slug) {
                                                                 window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
                                                               } else {
-                                                                // Ne pas setter selectedShop en sous-catégorie
-                                                                setSelectedProduct(product);
+                                                                // Ajouter le produit à l'URL pour garder le contexte de sous-catégorie
+                                                                const params = new URLSearchParams(location.search);
+                                                                params.set('product', product.slug || product.id);
+                                                                navigate(`?${params.toString()}`, { replace: true });
                                                               }
                                                             }}
 
@@ -2053,8 +2070,10 @@ export default function Home() {
                                                                   if (shop?.slug && product.slug) {
                                                                     window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
                                                                   } else {
-                                                                    // Ne pas setter selectedShop en sous-catégorie
-                                                                    setSelectedProduct(product);
+                                                                    // Ajouter le produit à l'URL pour garder le contexte de sous-catégorie
+                                                                    const params = new URLSearchParams(location.search);
+                                                                    params.set('product', product.slug || product.id);
+                                                                    navigate(`?${params.toString()}`, { replace: true });
                                                                   }
                                                                 }}
 
@@ -2386,7 +2405,13 @@ export default function Home() {
 
         open={!!selectedProduct}
 
-        onClose={() => setSelectedProduct(null)}
+        onClose={() => {
+          // Retirer le produit de l'URL au lieu de juste fermer
+          const params = new URLSearchParams(location.search);
+          params.delete('product');
+          const queryString = params.toString();
+          navigate(queryString ? `?${queryString}` : '/', { replace: true });
+        }}
 
         onAddToCart={handleAddToCart}
 
@@ -2395,9 +2420,10 @@ export default function Home() {
         similarProducts={[]}
 
         onProductChange={(newProduct) => {
-          // Ne pas changer selectedShop pour rester dans la sous-catégorie
-          setSelectedProduct(newProduct);
-
+          // Changer le produit dans l'URL
+          const params = new URLSearchParams(location.search);
+          params.set('product', newProduct.slug || newProduct.id);
+          navigate(`?${params.toString()}`, { replace: true });
         }}
 
       />
