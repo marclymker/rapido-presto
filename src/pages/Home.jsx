@@ -387,7 +387,7 @@ export default function Home() {
     refetchInterval: 300000 // ⚡ 5 min auto-refresh
   });
 
-  // Synchroniser selectedProduct avec l'URL
+  // Synchroniser selectedProduct avec l'URL (APRÈS allProducts)
   useEffect(() => {
     if (productSlug && allProducts.length > 0 && !selectedProduct) {
       const product = allProducts.find(p => p.slug === productSlug || p.id === productSlug);
