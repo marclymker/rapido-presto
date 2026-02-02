@@ -49,9 +49,10 @@ export const subcategoryToSlug = (subcategory) => {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Supprimer les accents
-    .replace(/['']/g, '-')
+    .replace(/['']/g, '') // Supprimer apostrophes sans les remplacer
     .replace(/\s+/g, '-')
-    .replace(/[()]/g, '');
+    .replace(/[()]/g, '')
+    .replace(/--+/g, '-'); // Éviter doubles tirets
 };
 
 // Conversion des slugs en sous-catégories
