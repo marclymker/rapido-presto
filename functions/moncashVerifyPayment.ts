@@ -6,8 +6,8 @@ async function getMoncashAccessToken() {
   
   const authString = btoa(`${clientId}:${clientSecret}`);
   
-  // SANDBOX URL pour tests
-  const response = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/oauth/token', {
+  // PRODUCTION URL
+  const response = await fetch('https://moncashbutton.digicelgroup.com/Api/oauth/token', {
     method: 'POST',
     headers: {
       'Authorization': `Basic ${authString}`,
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     const verifyResponse = await fetch(
-     `https://sandbox.moncashbutton.digicelgroup.com/Api/v1/RetrieveTransactionPayment?transactionId=${transactionId}`,
+      `https://moncashbutton.digicelgroup.com/Api/v1/RetrieveTransactionPayment?transactionId=${transactionId}`,
      {
        method: 'GET',
        headers: {
