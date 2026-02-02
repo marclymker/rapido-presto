@@ -59,7 +59,14 @@ Deno.serve(async (req) => {
         ? `${product.description || product.name} - Prix: ${productPrice?.toLocaleString()} Gourdes | ${shop.company_name}`
         : `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`;
       
-      const pageImage = product?.image_url || shop.company_logo_url || '';
+      // Construire URL absolue pour l'image (critique pour WhatsApp)
+      let pageImage = product?.image_url || shop.company_logo_url || '';
+      
+      // S'assurer que l'image est une URL absolue
+      if (pageImage && !pageImage.startsWith('http')) {
+        pageImage = `${url.origin}${pageImage}`;
+      }
+      
       const pageUrl = product
         ? `${url.origin}/shop-view?slug=${shopSlug}&product=${productSlug}`
         : `${url.origin}/shop-view?slug=${shopSlug}`;
