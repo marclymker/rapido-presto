@@ -366,7 +366,7 @@ export default function Home() {
   // ⚡ Optimisation: Charger produits APRÈS shops (évite race condition)
   const { data: allProducts = [], isLoading: productsLoading } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200), // ⚡ Limite 200 + tri
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 1000), // ⚡ Limite augmentée à 1000
     enabled: !selectedShop && shops.length > 0, // ⚡ Attendre shops
     staleTime: 5 * 60 * 1000, // ⚡ 5 min cache
     refetchInterval: 300000 // ⚡ 5 min auto-refresh
