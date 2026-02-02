@@ -444,7 +444,7 @@ export default function Home() {
 
     return shopsWithProducts.map(shop => {
 
-      const shopProducts = allProducts.filter(p => 
+      const shopProducts = getSafeProducts().filter(p => 
 
         p.shop_id === shop.id && 
 
@@ -458,7 +458,7 @@ export default function Home() {
 
     }).filter(group => group.products.length > 0);
 
-  }, [selectedCategory, selectedShop, shopsWithProducts, allProducts]);
+  }, [selectedCategory, selectedShop, shopsWithProducts, getSafeProducts]);
 
 
 
@@ -466,7 +466,7 @@ export default function Home() {
 
     if (selectedCategory !== 'Mariage') return {};
 
-    const weddingProducts = allProducts.filter(p => p.category === 'Mariage' && p.is_available !== false);
+    const weddingProducts = getSafeProducts().filter(p => p.category === 'Mariage' && p.is_available !== false);
 
     const grouped = {};
 
@@ -1047,7 +1047,7 @@ export default function Home() {
             <Suspense fallback={<div className="h-64 bg-white rounded animate-pulse" />}>
               <AdvancedSearch
                 onSearch={handleSearchResults}
-                allProducts={allProducts}
+                allProducts={getSafeProducts()}
                 shops={shops}
                 initialQuery={searchQuery}
               />
@@ -1525,7 +1525,7 @@ export default function Home() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
 
-              {allProducts
+              {getSafeProducts()
 
                 .filter(p => p.is_available !== false && p.name?.toLowerCase().includes(debouncedSearch.toLowerCase()))
 
@@ -1737,7 +1737,7 @@ export default function Home() {
 
             <Suspense fallback={<div className="h-64 bg-white rounded animate-pulse" />}>
               <RecommendedSection 
-                allProducts={allProducts} 
+                allProducts={getSafeProducts()} 
                 shops={shops}
                 user={user}
                 setSelectedShop={setSelectedShop}
@@ -2419,7 +2419,10 @@ export default function Home() {
 
         open={!!selectedProduct}
 
-        onClose={() => setSelectedProduct(null)}
+        onClose={() => {
+          setSelectedProduct(null);
+          // Ne pas recharger - juste fermer la modal et rester sur la page actuelle
+        }}
 
         onAddToCart={handleAddToCart}
 
@@ -2430,7 +2433,6 @@ export default function Home() {
         onProductChange={(newProduct) => {
           // Ne pas changer selectedShop pour rester dans la sous-catégorie
           setSelectedProduct(newProduct);
-
         }}
 
       />
@@ -2459,10 +2461,13 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
 
   const rowContainers = [useRef(null), useRef(null), useRef(null)];
 
-
+  const getSafeProducts = React.useCallback(() => {
+    return Array.isArray(allProducts) ? allProducts : [];
+  }, [allProducts]);
 
   const productRows = React.useMemo(() => {
-    if (!shops.length || !allProducts.length) return [[], [], []];
+    const safeProducts = getSafeProducts();
+    if (!shops.length || !safeProducts.length) return [[], [], []];
 
     // ⚡ Optimisation: Map pour lookup O(1)
     const shopsMap = new Map(shops.map(s => [s.id, s]));
