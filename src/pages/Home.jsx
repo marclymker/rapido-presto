@@ -122,15 +122,13 @@ export default function Home() {
 
 
 
-  // Lire catégorie, sous-catégorie ET produit depuis l'URL
+  // Lire catégorie et sous-catégorie depuis l'URL
 
   const urlParams = new URLSearchParams(location.search);
 
   const categorySlug = urlParams.get('category') || '';
 
   const subcategorySlug = urlParams.get('sub') || '';
-
-  const productSlug = urlParams.get('product') || '';
 
   
 
@@ -140,26 +138,13 @@ export default function Home() {
 
 
 
-  // Synchroniser selectedProduct avec l'URL
-  useEffect(() => {
-    if (productSlug && allProducts.length > 0 && !selectedProduct) {
-      const product = allProducts.find(p => p.slug === productSlug || p.id === productSlug);
-      if (product) setSelectedProduct(product);
-    } else if (!productSlug && selectedProduct) {
-      setSelectedProduct(null);
-    }
-  }, [productSlug, allProducts, selectedProduct]);
-
   // Gérer le bouton retour natif
 
   useBackButton(() => {
 
-    if (productSlug) {
-      // Retirer le produit de l'URL
-      const params = new URLSearchParams(location.search);
-      params.delete('product');
-      const queryString = params.toString();
-      navigate(queryString ? `?${queryString}` : '/', { replace: true });
+    if (selectedProduct) {
+
+      setSelectedProduct(null);
 
     } else if (selectedShop) {
 
@@ -175,7 +160,7 @@ export default function Home() {
 
     }
 
-  }, productSlug || selectedShop || selectedSubCategory || selectedCategory !== 'Tout');
+  }, selectedProduct || selectedShop || selectedSubCategory || selectedCategory !== 'Tout');
 
 
 
@@ -387,43 +372,10 @@ export default function Home() {
     refetchInterval: 300000 // ⚡ 5 min auto-refresh
   });
 
-  // Synchroniser selectedProduct avec l'URL (APRÈS allProducts)
-  useEffect(() => {
-    if (!allProducts || allProducts.length === 0) return; // Sécurité: attendre le chargement
-    
-    if (productSlug && !selectedProduct) {
-      const product = allProducts.find(p => p.slug === productSlug || p.id === productSlug);
-      if (product) setSelectedProduct(product);
-    } else if (!productSlug && selectedProduct) {
-      setSelectedProduct(null);
-    }
-  }, [productSlug, allProducts, selectedProduct]);
-
-  // Gérer le bouton retour natif
-  useBackButton(() => {
-    if (productSlug) {
-      const params = new URLSearchParams(location.search);
-      params.delete('product');
-      const queryString = params.toString();
-      navigate(queryString ? `?${queryString}` : '/', { replace: true });
-    } else if (selectedShop) {
-      setSelectedShop(null);
-    } else if (selectedSubCategory) {
-      navigateToCategory(selectedCategory);
-    } else if (selectedCategory !== 'Tout') {
-      navigate('/', { replace: true });
-    }
-  }, productSlug || selectedShop || selectedSubCategory || selectedCategory !== 'Tout');
-
 
 
   // ⚡ Optimisation: Fusionner les filtres en un seul calcul
   const { filteredProductsByType, shopsWithProducts } = React.useMemo(() => {
-    // Sécurité: vérifier que les données sont chargées
-    if (!allProducts || !shops) {
-      return { filteredProductsByType: [], shopsWithProducts: [] };
-    }
-    
     if (selectedCategory === 'Tout') {
       return {
         filteredProductsByType: allProducts,
@@ -478,26 +430,34 @@ export default function Home() {
 
 
   const productsByShopInCategory = React.useMemo(() => {
-    // Sécurité: vérifier que les données sont chargées
-    if (!allProducts || !shopsWithProducts) return [];
+
     if (selectedCategory === 'Tout' || selectedShop || selectedCategory === 'Mariage') return [];
 
+
+
     return shopsWithProducts.map(shop => {
+
       const shopProducts = allProducts.filter(p => 
+
         p.shop_id === shop.id && 
+
         p.category === selectedCategory && 
+
         p.is_available !== false
+
       );
+
       return { shop, products: shopProducts };
+
     }).filter(group => group.products.length > 0);
+
   }, [selectedCategory, selectedShop, shopsWithProducts, allProducts]);
 
 
 
   const weddingProductsBySubCategory = React.useMemo(() => {
+
     if (selectedCategory !== 'Mariage') return {};
-    // Sécurité: vérifier que les données sont chargées
-    if (!allProducts || allProducts.length === 0) return {};
 
     const weddingProducts = allProducts.filter(p => p.category === 'Mariage' && p.is_available !== false);
 
@@ -724,8 +684,7 @@ export default function Home() {
 
 
   const bestSellers = React.useMemo(() => {
-    // Sécurité: vérifier que les données sont chargées
-    if (!shops || !allProducts || shops.length === 0 || allProducts.length === 0) return [];
+    if (!shops.length || !allProducts.length) return [];
 
     const shopsMap = new Map(shops.map(s => [s.id, s]));
     const productsWithPhotos = allProducts.filter(p => 
@@ -2022,10 +1981,8 @@ export default function Home() {
                                                               if (shop?.slug && product.slug) {
                                                                 window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
                                                               } else {
-                                                                // Ajouter le produit à l'URL pour garder le contexte de sous-catégorie
-                                                                const params = new URLSearchParams(location.search);
-                                                                params.set('product', product.slug || product.id);
-                                                                navigate(`?${params.toString()}`, { replace: true });
+                                                                // Ne pas setter selectedShop en sous-catégorie
+                                                                setSelectedProduct(product);
                                                               }
                                                             }}
 
@@ -2096,10 +2053,8 @@ export default function Home() {
                                                                   if (shop?.slug && product.slug) {
                                                                     window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
                                                                   } else {
-                                                                    // Ajouter le produit à l'URL pour garder le contexte de sous-catégorie
-                                                                    const params = new URLSearchParams(location.search);
-                                                                    params.set('product', product.slug || product.id);
-                                                                    navigate(`?${params.toString()}`, { replace: true });
+                                                                    // Ne pas setter selectedShop en sous-catégorie
+                                                                    setSelectedProduct(product);
                                                                   }
                                                                 }}
 
@@ -2431,13 +2386,7 @@ export default function Home() {
 
         open={!!selectedProduct}
 
-        onClose={() => {
-          // Retirer le produit de l'URL au lieu de juste fermer
-          const params = new URLSearchParams(location.search);
-          params.delete('product');
-          const queryString = params.toString();
-          navigate(queryString ? `?${queryString}` : '/', { replace: true });
-        }}
+        onClose={() => setSelectedProduct(null)}
 
         onAddToCart={handleAddToCart}
 
@@ -2446,10 +2395,9 @@ export default function Home() {
         similarProducts={[]}
 
         onProductChange={(newProduct) => {
-          // Changer le produit dans l'URL
-          const params = new URLSearchParams(location.search);
-          params.set('product', newProduct.slug || newProduct.id);
-          navigate(`?${params.toString()}`, { replace: true });
+          // Ne pas changer selectedShop pour rester dans la sous-catégorie
+          setSelectedProduct(newProduct);
+
         }}
 
       />
