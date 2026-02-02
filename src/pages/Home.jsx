@@ -47,7 +47,7 @@ const FlowersBanner = lazy(() => import('@/components/home/FlowersBanner'));
 const GiftBanner = lazy(() => import('@/components/home/GiftBanner'));
 const AdvancedSearch = lazy(() => import('@/components/search/AdvancedSearch'));
 const SearchResults = lazy(() => import('@/components/search/SearchResults'));
-const NewMessagesBanner = lazy(() => import('@/components/home/NewMessagesBanner'));
+
 const FreeShippingBanner = lazy(() => import('@/components/home/FreeShippingBanner'));
 
 
@@ -2374,9 +2374,7 @@ export default function Home() {
 
 
 
-      <Suspense fallback={null}>
-        <NewMessagesBanner user={user} />
-      </Suspense>
+
 
 
 
