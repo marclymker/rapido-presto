@@ -33,9 +33,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
   // Gérer le bouton retour natif pour fermer la modale
   useBackButton(() => {
-    if (open) {
-      onClose();
-    }
+    onClose();
   }, open);
 
   // Récupérer la boutique de l'utilisateur si c'est un vendeur
@@ -255,7 +253,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <DialogContent className="max-w-md p-0 overflow-hidden bg-white flex flex-col max-h-[92vh] sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl border-none">
         <div className="overflow-y-auto flex-1 custom-scrollbar">
           <div 
