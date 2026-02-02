@@ -538,7 +538,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             <Button 
               onClick={() => {
                 const productUrl = shop?.slug && product.slug 
-                  ? `${window.location.origin}/shop-view?slug=${shop.slug}&product=${product.slug}`
+                  ? `${window.location.origin}${createPageUrl('ShopView')}?slug=${shop.slug}&product=${product.slug}`
                   : `${window.location.origin}${window.location.pathname}?product=${product.id}`;
                 
                 const message = `Je Suis Interessé par Cet article\n${productUrl}`;
