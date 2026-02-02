@@ -55,11 +55,9 @@ const FreeShippingBanner = lazy(() => import('@/components/home/FreeShippingBann
 
 const WEDDING_STRUCTURE = [
 
-  { title: "Robe de Mariage", subtypes: ["Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe Civil"] },
+  { title: "Robe de Mariage", subtypes: ["Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe de Cérémonie"] },
 
   { title: "Demoiselle d'honneur" },
-
-  { title: "Annonceuse" },
 
   { title: "Témoins" },
 
@@ -1221,7 +1219,7 @@ export default function Home() {
 
               <button
 
-                onClick={() => navigateToCategory(selectedCategory, 'Robe Civil')}
+                onClick={() => navigateToCategory(selectedCategory, 'Robe de Cérémonie')}
 
                 className="flex-shrink-0 flex flex-col items-center gap-1"
 
@@ -1229,7 +1227,7 @@ export default function Home() {
 
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
 
-                  selectedSubCategory === 'Robe Civil'
+                  selectedSubCategory === 'Robe de Cérémonie'
 
                     ? 'bg-orange-500 text-white shadow-md'
 
@@ -1243,9 +1241,9 @@ export default function Home() {
 
                 <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
 
-                  selectedSubCategory === 'Robe Civil' ? 'text-orange-500' : 'text-gray-600'
+                  selectedSubCategory === 'Robe de Cérémonie' ? 'text-orange-500' : 'text-gray-600'
 
-                }`}>Civil</span>
+                }`}>Cérémonie</span>
 
               </button>
 
@@ -1278,38 +1276,6 @@ export default function Home() {
                   selectedSubCategory === "Demoiselle d'honneur" ? 'text-orange-500' : 'text-gray-600'
 
                 }`}>Demoiselle</span>
-
-              </button>
-
-              
-
-              <button
-
-                onClick={() => navigateToCategory(selectedCategory, 'Annonceuse')}
-
-                className="flex-shrink-0 flex flex-col items-center gap-1"
-
-              >
-
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
-
-                  selectedSubCategory === 'Annonceuse'
-
-                    ? 'bg-orange-500 text-white shadow-md'
-
-                    : 'bg-gray-100 hover:bg-gray-200'
-
-                }`}>
-
-                  🌸
-
-                </div>
-
-                <span className={`text-[9px] font-medium text-center leading-tight w-14 ${
-
-                  selectedSubCategory === 'Annonceuse' ? 'text-orange-500' : 'text-gray-600'
-
-                }`}>Annonceuse</span>
 
               </button>
 
