@@ -468,23 +468,27 @@ export default function Home() {
     const classifyProduct = (product) => {
       // 🔥 PRIORITÉ 1: Utiliser le champ subcategory s'il existe
       if (product.subcategory && product.subcategory.trim()) {
-        // Vérifier si c'est une sous-catégorie valide
+        const normalizedSubcat = product.subcategory.toLowerCase().trim();
+        
+        // Parcourir WEDDING_STRUCTURE et retourner la valeur EXACTE de la structure
         for (const group of WEDDING_STRUCTURE) {
           if (group.subtypes) {
             for (const subtype of group.subtypes) {
-              if (product.subcategory.toLowerCase() === subtype.toLowerCase() || 
-                  product.subcategory.toLowerCase().includes(subtype.toLowerCase())) {
-                return subtype;
+              const normalizedSubtype = subtype.toLowerCase().trim();
+              if (normalizedSubcat === normalizedSubtype || 
+                  normalizedSubcat.includes(normalizedSubtype) ||
+                  normalizedSubtype.includes(normalizedSubcat)) {
+                return subtype; // ⚡ Retourner la valeur EXACTE de WEDDING_STRUCTURE
               }
             }
           }
-          if (product.subcategory.toLowerCase() === group.title.toLowerCase() ||
-              product.subcategory.toLowerCase().includes(group.title.toLowerCase())) {
-            return group.title;
+          const normalizedTitle = group.title.toLowerCase().trim();
+          if (normalizedSubcat === normalizedTitle ||
+              normalizedSubcat.includes(normalizedTitle) ||
+              normalizedTitle.includes(normalizedSubcat)) {
+            return group.title; // ⚡ Retourner la valeur EXACTE de WEDDING_STRUCTURE
           }
         }
-        // Si subcategory existe mais ne match aucune structure, le retourner tel quel
-        return product.subcategory;
       }
 
       // 🔥 PRIORITÉ 2: Recherche textuelle dans nom et description
