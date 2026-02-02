@@ -30,6 +30,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [showCreateProductModal, setShowCreateProductModal] = useState(false);
   const [userShop, setUserShop] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Gérer le bouton retour natif pour fermer la modale
   useBackButton(() => {
@@ -107,8 +108,21 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
       setZoom(1);
       setPosition({ x: 0, y: 0 });
       setImageLoaded(false);
+      setCurrentImageIndex(0);
     }
   }, [product?.id, open]);
+
+  // Liste complète des images (principale + additionnelles)
+  const allImages = React.useMemo(() => {
+    if (!product) return [];
+    const images = [product.image_url];
+    if (product.additional_images && Array.isArray(product.additional_images)) {
+      images.push(...product.additional_images);
+    }
+    return images;
+  }, [product]);
+
+  const currentImage = allImages[currentImageIndex] || product?.image_url;
 
   const fetchSimilarProducts = async () => {
     setLoadingSimilar(true);
@@ -147,10 +161,10 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   };
 
   const handleDownloadImage = async () => {
-    if (!product.image_url) return;
+    if (!currentImage) return;
     setDownloading(true);
     try {
-      const response = await fetch(product.image_url, { mode: 'cors' });
+      const response = await fetch(currentImage, { mode: 'cors' });
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -167,7 +181,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
     } catch (error) {
       console.error('Download error:', error);
       // Fallback: ouvrir dans un nouvel onglet
-      window.open(product.image_url, '_blank');
+      window.open(currentImage, '_blank');
       toast.info("Image ouverte dans un nouvel onglet");
     } finally {
       setDownloading(false);
@@ -258,8 +272,19 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
         <div className="overflow-y-auto flex-1 custom-scrollbar">
           <div 
             ref={containerRef}
-            className="relative aspect-[4/3] sm:aspect-square w-full bg-slate-100 overflow-hidden cursor-move"
+            className="relative aspect-[4/3] sm:aspect-square w-full bg-slate-100 overflow-hidden cursor-move touch-pan-x"
             onMouseDown={handleMouseDown}
+            onTouchStart={(e) => {
+              const touch = e.touches[0];
+              setStartPos({ x: touch.clientX - position.x, y: touch.clientY - position.y });
+            }}
+            onTouchMove={(e) => {
+              if (zoom <= 1.5) return;
+              const touch = e.touches[0];
+              const newX = touch.clientX - startPos.x;
+              const newY = touch.clientY - startPos.y;
+              setPosition({ x: newX, y: newY });
+            }}
           >
             {/* Logo MonCash en bas à gauche */}
             {imageLoaded && (
@@ -278,7 +303,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             >
               <img 
                 ref={imageRef}
-                src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=800&q=85`} 
+                src={`${currentImage}${currentImage?.includes('?') ? '&' : '?'}w=800&q=85`} 
                 alt={product.name} 
                 className="max-w-full max-h-full object-contain transition-opacity duration-300"
                 style={{ opacity: imageLoaded ? 1 : 0 }}
@@ -321,6 +346,39 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               <button onClick={handleZoomIn} disabled={zoom >= 3} className="p-2 rounded-full text-white hover:bg-white/20 disabled:opacity-40"><ZoomIn size={18} /></button>
             </div>
           </div>
+
+          {/* Miniatures des photos sous l'image principale */}
+          {allImages.length > 1 && (
+            <div className="px-4 py-3 bg-white border-t">
+              <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                {allImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setCurrentImageIndex(idx);
+                      setImageLoaded(false);
+                      setZoom(1);
+                      setPosition({ x: 0, y: 0 });
+                    }}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      currentImageIndex === idx 
+                        ? 'border-orange-500 ring-2 ring-orange-200' 
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <img 
+                      src={`${img}${img?.includes('?') ? '&' : '?'}w=100&q=75`}
+                      alt={`Photo ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400 text-center mt-2">
+                {currentImageIndex + 1} / {allImages.length}
+              </p>
+            </div>
+          )}
 
           <div className="p-5 space-y-4">
             <div className="space-y-2">
