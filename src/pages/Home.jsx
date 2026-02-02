@@ -389,13 +389,15 @@ export default function Home() {
 
   // Synchroniser selectedProduct avec l'URL (APRÈS allProducts)
   useEffect(() => {
-    if (productSlug && allProducts.length > 0 && !selectedProduct) {
+    if (!allProducts || allProducts.length === 0) return; // Sécurité: attendre le chargement
+    
+    if (productSlug && !selectedProduct) {
       const product = allProducts.find(p => p.slug === productSlug || p.id === productSlug);
       if (product) setSelectedProduct(product);
     } else if (!productSlug && selectedProduct) {
       setSelectedProduct(null);
     }
-  }, [productSlug, allProducts, selectedProduct]);
+  }, [productSlug, allProducts]);
 
   // Gérer le bouton retour natif
   useBackButton(() => {
@@ -418,6 +420,11 @@ export default function Home() {
 
   // ⚡ Optimisation: Fusionner les filtres en un seul calcul
   const { filteredProductsByType, shopsWithProducts } = React.useMemo(() => {
+    // Sécurité: vérifier que les données sont chargées
+    if (!allProducts || !shops) {
+      return { filteredProductsByType: [], shopsWithProducts: [] };
+    }
+    
     if (selectedCategory === 'Tout') {
       return {
         filteredProductsByType: allProducts,
@@ -472,34 +479,26 @@ export default function Home() {
 
 
   const productsByShopInCategory = React.useMemo(() => {
-
+    // Sécurité: vérifier que les données sont chargées
+    if (!allProducts || !shopsWithProducts) return [];
     if (selectedCategory === 'Tout' || selectedShop || selectedCategory === 'Mariage') return [];
 
-
-
     return shopsWithProducts.map(shop => {
-
       const shopProducts = allProducts.filter(p => 
-
         p.shop_id === shop.id && 
-
         p.category === selectedCategory && 
-
         p.is_available !== false
-
       );
-
       return { shop, products: shopProducts };
-
     }).filter(group => group.products.length > 0);
-
   }, [selectedCategory, selectedShop, shopsWithProducts, allProducts]);
 
 
 
   const weddingProductsBySubCategory = React.useMemo(() => {
-
     if (selectedCategory !== 'Mariage') return {};
+    // Sécurité: vérifier que les données sont chargées
+    if (!allProducts || allProducts.length === 0) return {};
 
     const weddingProducts = allProducts.filter(p => p.category === 'Mariage' && p.is_available !== false);
 
@@ -726,7 +725,8 @@ export default function Home() {
 
 
   const bestSellers = React.useMemo(() => {
-    if (!shops.length || !allProducts.length) return [];
+    // Sécurité: vérifier que les données sont chargées
+    if (!shops || !allProducts || shops.length === 0 || allProducts.length === 0) return [];
 
     const shopsMap = new Map(shops.map(s => [s.id, s]));
     const productsWithPhotos = allProducts.filter(p => 
