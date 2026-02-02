@@ -83,8 +83,8 @@ Deno.serve(async (req) => {
     console.log('✅ Access token obtained');
     
     // CRITICAL: returnUrl pour redirection après paiement
-    const appUrl = Deno.env.get("APP_URL") || "https://rapido.base44.app";
-    const returnUrl = `${appUrl}/PaymentCallback`;
+    const appUrl = Deno.env.get("APP_URL") || "https://rapido-presto.base44.app";
+    const returnUrl = `${appUrl}/payment/callback`;
     
     // Payload MonCash - MONTANT ENTIER, ORDER ID SIMPLE, RETURN URL
     const paymentPayload = {
