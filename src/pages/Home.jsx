@@ -37,18 +37,8 @@ import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 
 // ⚡ Lazy Loading - Composants lourds chargés à la demande
 const SmallStories = lazy(() => import('@/components/home/SmallStories'));
-const WeddingCreditBanner = lazy(() => import('@/components/home/WeddingCreditBanner'));
-const CreditBanner = lazy(() => import('@/components/home/CreditBanner'));
-const RecruitmentBanner = lazy(() => import('@/components/home/RecruitmentBanner'));
-const FloatingMerchantBanner = lazy(() => import('@/components/home/FloatingMerchantBanner'));
-const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
-const FlashBanner = lazy(() => import('@/components/home/FlashBanner'));
-const FlowersBanner = lazy(() => import('@/components/home/FlowersBanner'));
-const GiftBanner = lazy(() => import('@/components/home/GiftBanner'));
 const AdvancedSearch = lazy(() => import('@/components/search/AdvancedSearch'));
 const SearchResults = lazy(() => import('@/components/search/SearchResults'));
-
-const FreeShippingBanner = lazy(() => import('@/components/home/FreeShippingBanner'));
 
 
 
@@ -957,13 +947,7 @@ export default function Home() {
 
       
 
-      <div className="max-w-[1500px] mx-auto">
-        <Suspense fallback={<div className="h-16" />}>
-          <RecruitmentBanner />
-          <FloatingMerchantBanner user={user} />
-          <MerchantProfileAlert user={user} />
-        </Suspense>
-      </div>
+
 
 
 
@@ -987,24 +971,7 @@ export default function Home() {
 
         
 
-        {/* Bannière Livraison Gratuite - Tout en haut */}
 
-        {!selectedShop && (
-          <Suspense fallback={<div className="h-20 bg-white rounded animate-pulse" />}>
-            <FreeShippingBanner />
-          </Suspense>
-        )}
-
-        
-
-        {/* Wedding Credit Banner - Entre hero et contenu principal */}
-        {selectedCategory === 'Mariage' && !selectedShop && (
-          <div className="mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4">
-            <Suspense fallback={<div className="h-32 bg-white rounded animate-pulse" />}>
-              <WeddingCreditBanner />
-            </Suspense>
-          </div>
-        )}
 
 
 
@@ -1542,19 +1509,6 @@ export default function Home() {
 
           <div className="space-y-6">
 
-            
-
-            <Suspense fallback={<div className="h-32 bg-white rounded animate-pulse" />}>
-              <FlashBanner />
-            </Suspense>
-
-            <Suspense fallback={<div className="h-32 bg-white rounded animate-pulse" />}>
-              <div className="hidden md:grid grid-cols-2 gap-4">
-                <FlowersBanner />
-                <GiftBanner />
-              </div>
-            </Suspense>
-
             <Suspense fallback={<div className="h-24 bg-white rounded animate-pulse" />}>
               <SmallStories onCategorySelect={(c) => navigateToCategory(c)} />
             </Suspense>
@@ -1933,19 +1887,6 @@ export default function Home() {
                                 {selectedSubCategory ? (
 
                                     <div className="bg-white p-4 rounded-lg shadow-sm">
-
-                                        {weddingProductsBySubCategory[selectedSubCategory]?.slice(0, 8).length > 0 && (
-
-                                          <div className="mb-8 col-span-full">
-                                            <Suspense fallback={<div className="h-32 bg-white rounded animate-pulse" />}>
-                                              <WeddingCreditBanner />
-                                            </Suspense>
-
-                                          </div>
-
-                                        )}
-
-
 
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 
