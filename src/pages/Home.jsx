@@ -397,6 +397,23 @@ export default function Home() {
     }
   }, [productSlug, allProducts, selectedProduct]);
 
+  // Gérer le bouton retour natif
+  useBackButton(() => {
+    if (productSlug) {
+      // Retirer le produit de l'URL
+      const params = new URLSearchParams(location.search);
+      params.delete('product');
+      const queryString = params.toString();
+      navigate(queryString ? `?${queryString}` : '/', { replace: true });
+    } else if (selectedShop) {
+      setSelectedShop(null);
+    } else if (selectedSubCategory) {
+      navigateToCategory(selectedCategory);
+    } else if (selectedCategory !== 'Tout') {
+      navigate('/', { replace: true });
+    }
+  }, productSlug || selectedShop || selectedSubCategory || selectedCategory !== 'Tout');
+
 
 
   // ⚡ Optimisation: Fusionner les filtres en un seul calcul
