@@ -534,7 +534,14 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             Payer Maintenant
           </Button>
 
-
+          {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') && (
+            <Button 
+              onClick={() => window.open('https://wa.me/c/50948690366', '_blank')} 
+              className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl"
+            >
+              WhatsApp
+            </Button>
+          )}
           
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-slate-100 rounded-xl p-1">
