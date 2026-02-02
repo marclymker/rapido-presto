@@ -196,9 +196,9 @@ export default function Layout({ children, currentPageName }) {
         <meta name="google-site-verification" content="TGLvYzGeMnDhLk5dxXLxm-_9a3zAAgAt-BBTDzQehUM" />
         <meta name="google-site-verification" content="google2665276976d944ab" />
 
-        {/* Google Analytics 4 - FIRST */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-JHEWLB2WTT"></script>
-        <script>{`
+        {/* ⚡ OPTIMISÉ: Scripts tracking différés après le contenu */}
+        <script defer src="https://www.googletagmanager.com/gtag/js?id=G-JHEWLB2WTT"></script>
+        <script defer>{`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
@@ -206,39 +206,39 @@ export default function Layout({ children, currentPageName }) {
         `}</script>
 
         {/* Google Tag Manager - Merchant Center */}
-        <script>{`
+        <script defer>{`
           (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
           new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.defer=true;j.src=
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
           })(window,document,'script','dataLayer','GTM-TGFJJPR4');
         `}</script>
 
         {/* Google Tag Manager */}
-        <script>{`
+        <script defer>{`
           (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
           new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.defer=true;j.src=
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
           })(window,document,'script','dataLayer','GTM-TR6B9PMQ');
         `}</script>
 
         {/* Google Tag Manager - Second Container */}
-        <script>{`
+        <script defer>{`
           (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
           new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.defer=true;j.src=
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
           })(window,document,'script','dataLayer','GTM-P7C42MMP');
         `}</script>
 
         {/* Meta Pixel Code */}
-        <script>{`
+        <script defer>{`
           !function(f,b,e,v,n,t,s)
           {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
           n.callMethod.apply(n,arguments):n.queue.push(arguments)};
           if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-          n.queue=[];t=b.createElement(e);t.async=!0;
+          n.queue=[];t=b.createElement(e);t.async=!0;t.defer=true;
           t.src=v;s=b.getElementsByTagName(e)[0];
           s.parentNode.insertBefore(t,s)}(window, document,'script',
           'https://connect.facebook.net/en_US/fbevents.js');

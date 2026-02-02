@@ -24,7 +24,8 @@ import { Helmet } from 'react-helmet-async';
 
 // Composants critiques (chargés immédiatement)
 import ProductCard from '@/components/ui/ProductCard';
-import ProductDetailModal from '@/components/modals/ProductDetailModal';
+// ⚡ OPTIMISÉ: ProductDetailModal lazy loadé uniquement quand nécessaire
+const ProductDetailModal = lazy(() => import('@/components/modals/ProductDetailModal'));
 import { useAutoRefresh } from '@/components/realtime/useWebSocket';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import ProfileCompletionModal from '@/components/modals/ProfileCompletionModal';
@@ -190,27 +191,8 @@ export default function Home() {
 
 
 
-  useAutoRefresh({ 
-
-    queryKey: ['shops'], 
-
-    refetchInterval: 300000, // ⚡ 5 minutes au lieu de 1 minute
-
-    enabled: !selectedShop 
-
-  });
-
-  
-
-  useAutoRefresh({ 
-
-    queryKey: ['products'], 
-
-    refetchInterval: 300000, // ⚡ 5 minutes au lieu de 1 minute
-
-    enabled: !!selectedShop 
-
-  });
+  // ⚡ OPTIMISÉ: Auto-refresh désactivé sur page d'accueil (performances)
+  // Réactivé uniquement sur pages commandes/suivi en temps réel
 
 
 
@@ -357,17 +339,17 @@ export default function Home() {
   const { data: shops = [], isLoading: shopsLoading } = useQuery({
     queryKey: ['shops'],
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
-    staleTime: 5 * 60 * 1000, // ⚡ 5 min cache
-    refetchInterval: 300000 // ⚡ 5 min auto-refresh
+    staleTime: 10 * 60 * 1000, // ⚡ 10 min cache
+    refetchInterval: false // ⚡ OPTIMISÉ: Pas d'auto-refresh sur accueil
   });
 
   // ⚡ Optimisation: Charger produits APRÈS shops (évite race condition)
   const { data: allProducts = [], isLoading: productsLoading } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 1000), // ⚡ Limite augmentée à 1000
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200), // ⚡ OPTIMISÉ: 200 au lieu de 1000
     enabled: !selectedShop && shops.length > 0, // ⚡ Attendre shops
-    staleTime: 5 * 60 * 1000, // ⚡ 5 min cache
-    refetchInterval: 300000 // ⚡ 5 min auto-refresh
+    staleTime: 10 * 60 * 1000, // ⚡ 10 min cache (doublé)
+    refetchInterval: false // ⚡ OPTIMISÉ: Pas d'auto-refresh sur accueil
   });
 
   // Fonction getter sécurisée pour allProducts
@@ -2398,34 +2380,36 @@ export default function Home() {
 
 
 
-      <ProductDetailModal
+      <Suspense fallback={null}>
+        <ProductDetailModal
 
-        product={selectedProduct}
+          product={selectedProduct}
 
-        shop={selectedProduct ? shops.find(s => s.id === selectedProduct.shop_id) : null}
+          shop={selectedProduct ? shops.find(s => s.id === selectedProduct.shop_id) : null}
 
-        open={!!selectedProduct}
+          open={!!selectedProduct}
 
-        onClose={() => {
-          // ⚡ Nettoyage complet de l'état
-          setSelectedProduct(null);
-        }}
+          onClose={() => {
+            // ⚡ Nettoyage complet de l'état
+            setSelectedProduct(null);
+          }}
 
-        onAddToCart={handleAddToCart}
+          onAddToCart={handleAddToCart}
 
-        user={user}
+          user={user}
 
-        similarProducts={[]}
+          similarProducts={[]}
 
-        onProductChange={(newProduct) => {
-          // ⚡ Identification par ID unique avant changement
-          const targetProduct = getSafeProducts().find(p => p.id === newProduct.id);
-          if (targetProduct) {
-            setSelectedProduct(targetProduct);
-          }
-        }}
+          onProductChange={(newProduct) => {
+            // ⚡ Identification par ID unique avant changement
+            const targetProduct = getSafeProducts().find(p => p.id === newProduct.id);
+            if (targetProduct) {
+              setSelectedProduct(targetProduct);
+            }
+          }}
 
-      />
+        />
+      </Suspense>
 
       <ProfileCompletionModal
 
