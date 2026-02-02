@@ -109,8 +109,15 @@ Deno.serve(async (req) => {
   <meta name="twitter:image:alt" content="${pageTitle}">
   ` : ''}
   
-  <!-- Redirect humans to React app -->
-  <meta http-equiv="refresh" content="0; url=${pageUrl}">
+  <!-- Redirect humans to React app after 2 seconds -->
+  <script>
+    // Rediriger seulement les vrais utilisateurs, pas les crawlers
+    setTimeout(function() {
+      if (!/facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Slackbot/i.test(navigator.userAgent)) {
+        window.location.href = '${pageUrl}';
+      }
+    }, 100);
+  </script>
 </head>
 <body>
   <div style="text-align: center; padding: 50px; font-family: system-ui;">

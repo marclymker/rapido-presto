@@ -56,6 +56,19 @@ export default function ShopView() {
   const shopSlug = urlParams.get('slug');
   const productSlug = urlParams.get('product');
 
+  // 🔥 Pour les crawlers : rediriger vers la fonction backend avec meta tags statiques
+  React.useEffect(() => {
+    const userAgent = navigator.userAgent || '';
+    const isCrawler = /facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Slackbot/i.test(userAgent);
+    
+    if (isCrawler && shopSlug) {
+      const backendUrl = productSlug 
+        ? `/functions/ogMetaTags?slug=${shopSlug}&product=${productSlug}`
+        : `/functions/ogMetaTags?slug=${shopSlug}`;
+      window.location.href = backendUrl;
+    }
+  }, [shopSlug, productSlug]);
+
   // Fetch shop by slug
   const { data: shops = [], isLoading: loadingShop } = useQuery({
     queryKey: ['shop', shopSlug],
