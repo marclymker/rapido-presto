@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Minus, Plus, Store, MessageSquare, Loader2, MapPin, X, 
   ChevronRight, ZoomIn, ZoomOut, Download, RotateCcw, 
-  Share2, Plus as PlusIcon, Truck
+  Share2, Plus as PlusIcon, Truck, ChevronLeft
 } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { base44 } from '@/api/base44Client';
@@ -30,6 +30,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [showCreateProductModal, setShowCreateProductModal] = useState(false);
   const [userShop, setUserShop] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Gérer le bouton retour natif pour fermer la modale
   useBackButton(() => {
@@ -107,6 +108,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
       setZoom(1);
       setPosition({ x: 0, y: 0 });
       setImageLoaded(false);
+      setCurrentImageIndex(0);
     }
   }, [product?.id, open]);
 
@@ -214,6 +216,27 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   if (!product) return null;
   
   const price = applyClientMargin(product.promo_price || product.price);
+  
+  // Construire la liste complète des images
+  const allImages = [
+    product.image_url,
+    ...(product.additional_images || [])
+  ].filter(Boolean);
+  
+  const currentImage = allImages[currentImageIndex] || product.image_url;
+  const hasMultipleImages = allImages.length > 1;
+  
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
+  };
+  
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
+  };
 
   const handleContactVendor = async () => {
     if (!user) return base44.auth.redirectToLogin(window.location.pathname);
@@ -278,7 +301,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             >
               <img 
                 ref={imageRef}
-                src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=800&q=85`} 
+                src={`${currentImage}${currentImage?.includes('?') ? '&' : '?'}w=800&q=85`} 
                 alt={product.name} 
                 className="max-w-full max-h-full object-contain transition-opacity duration-300"
                 style={{ opacity: imageLoaded ? 1 : 0 }}
@@ -290,6 +313,24 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                 </div>
               )}
             </div>
+
+            {/* Boutons de navigation - uniquement si plusieurs images */}
+            {hasMultipleImages && (
+              <>
+                <button
+                  onClick={handlePrevImage}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 backdrop-blur-md rounded-full text-white hover:bg-black/70 transition-colors z-10"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={handleNextImage}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 backdrop-blur-md rounded-full text-white hover:bg-black/70 transition-colors z-10"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )}
 
             <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-black/40 transition-colors z-10">
               <X size={20} />
@@ -321,6 +362,35 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               <button onClick={handleZoomIn} disabled={zoom >= 3} className="p-2 rounded-full text-white hover:bg-white/20 disabled:opacity-40"><ZoomIn size={18} /></button>
             </div>
           </div>
+
+          {/* Liste de miniatures - uniquement si plusieurs images */}
+          {hasMultipleImages && (
+            <div className="px-5 py-3 bg-white border-t border-slate-100">
+              <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                {allImages.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setCurrentImageIndex(index);
+                      setZoom(1);
+                      setPosition({ x: 0, y: 0 });
+                    }}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      currentImageIndex === index
+                        ? 'border-orange-500 scale-105 shadow-md'
+                        : 'border-slate-200 opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img
+                      src={`${img}${img?.includes('?') ? '&' : '?'}w=100&q=75`}
+                      alt={`Vue ${index + 1}`}
+                      className="w-full h-full object-contain bg-slate-50"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="p-5 space-y-4">
             <div className="space-y-2">
