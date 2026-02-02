@@ -236,7 +236,13 @@ export default function ShopView() {
   const pageDescription = selectedProductForMeta 
     ? `${selectedProductForMeta.description || selectedProductForMeta.name} - Prix: ${productPrice?.toLocaleString()} Gourdes | ${shop.company_name}` 
     : `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`;
-  const pageImage = selectedProductForMeta?.image_url || shop.company_logo_url;
+  // Assurer URL absolue pour l'image (requise par WhatsApp/Facebook)
+  const ensureAbsoluteUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${window.location.origin}${url}`;
+  };
+  const pageImage = ensureAbsoluteUrl(selectedProductForMeta?.image_url || shop.company_logo_url);
   const pageUrl = selectedProductForMeta 
     ? `${window.location.origin}${createPageUrl('ShopView')}?slug=${shopSlug}&product=${selectedProductForMeta.slug || selectedProductForMeta.id}`
     : window.location.href;
