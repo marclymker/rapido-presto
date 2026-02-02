@@ -1556,22 +1556,25 @@ export default function Home() {
                           }}
 
                           onClick={() => {
+                             // ⚡ Identification par ID unique
+                             const targetProduct = getSafeProducts().find(p => p.id === product.id);
+                             if (!targetProduct) return;
 
-                              const shop = shops.find(s => s.id === product.shop_id);
+                             const shop = shops.find(s => s.id === targetProduct.shop_id);
 
-                              trackProductView(product, shop);
+                             trackProductView(targetProduct, shop);
 
-                              if (shop?.slug && product.slug) {
+                             if (shop?.slug && targetProduct.slug) {
 
-                                window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                               window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
 
-                              } else if (shop) {
+                             } else if (shop) {
 
-                                setSelectedShop(shop);
+                               setSelectedShop(shop);
 
-                                setSelectedProduct(product);
+                               setSelectedProduct(targetProduct);
 
-                              }
+                             }
 
                           }}
 
@@ -1637,6 +1640,13 @@ export default function Home() {
                       key={product.id}
 
                       onClick={() => {
+                        // ⚡ Identification par ID unique
+                        const targetProduct = getSafeProducts().find(p => p.id === product.id);
+                        if (!targetProduct) {
+                          console.error('❌ Produit non trouvé');
+                          return;
+                        }
+
                         // 🔒 Protection 4: Double vérification avant redirection
                         if (!shop) {
                           console.error('❌ Clic sur produit sans boutique');
@@ -1644,15 +1654,15 @@ export default function Home() {
                           return;
                         }
 
-                        if (shop.slug && product.slug) {
+                        if (shop.slug && targetProduct.slug) {
 
-                          window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                          window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
 
                         } else if (shop) {
 
                           setSelectedShop(shop);
 
-                          setSelectedProduct(product);
+                          setSelectedProduct(targetProduct);
 
                         }
 
@@ -2010,13 +2020,17 @@ export default function Home() {
                                                             onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
 
                                                             onClick={() => { 
-                                                              trackProductView(product, shop);
-                                                              if (shop?.slug && product.slug) {
-                                                                window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
-                                                              } else {
-                                                                // Ne pas setter selectedShop en sous-catégorie
-                                                                setSelectedProduct(product);
-                                                              }
+                                                             // ⚡ Identification par ID unique
+                                                             const targetProduct = getSafeProducts().find(p => p.id === product.id);
+                                                             if (!targetProduct) return;
+
+                                                             trackProductView(targetProduct, shop);
+                                                             if (shop?.slug && targetProduct.slug) {
+                                                               window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
+                                                             } else {
+                                                               // Ne pas setter selectedShop en sous-catégorie
+                                                               setSelectedProduct(targetProduct);
+                                                             }
                                                             }}
 
                                                         />
@@ -2082,12 +2096,16 @@ export default function Home() {
                                                                 onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
 
                                                                 onClick={() => { 
-                                                                  trackProductView(product, shop);
-                                                                  if (shop?.slug && product.slug) {
-                                                                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                                                                  // ⚡ Identification par ID unique
+                                                                  const targetProduct = getSafeProducts().find(p => p.id === product.id);
+                                                                  if (!targetProduct) return;
+                                                                  
+                                                                  trackProductView(targetProduct, shop);
+                                                                  if (shop?.slug && targetProduct.slug) {
+                                                                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
                                                                   } else {
                                                                     // Ne pas setter selectedShop en sous-catégorie
-                                                                    setSelectedProduct(product);
+                                                                    setSelectedProduct(targetProduct);
                                                                   }
                                                                 }}
 
@@ -2236,26 +2254,29 @@ export default function Home() {
                                                        }}
 
                                                        onClick={() => {
+                                                           // ⚡ Identification par ID unique
+                                                           const targetProduct = getSafeProducts().find(p => p.id === product.id);
+                                                           if (!targetProduct) return;
 
-                                                                  trackProductView(product, shop);
+                                                           trackProductView(targetProduct, shop);
 
-                                                                  if (shop?.slug && product.slug) {
+                                                           if (shop?.slug && targetProduct.slug) {
 
-                                                                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                                                             window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
 
-                                                                  } else if (shop?.slug) {
+                                                           } else if (shop?.slug) {
 
-                                                                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
+                                                             window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
 
-                                                                  } else {
+                                                           } else {
 
-                                                                    setSelectedShop(shop);
+                                                             setSelectedShop(shop);
 
-                                                                    setSelectedProduct(product);
+                                                             setSelectedProduct(targetProduct);
 
-                                                                  }
+                                                           }
 
-                                                              }}
+                                                       }}
 
                                                     />
 
@@ -2420,8 +2441,8 @@ export default function Home() {
         open={!!selectedProduct}
 
         onClose={() => {
+          // ⚡ Nettoyage complet de l'état
           setSelectedProduct(null);
-          // Ne pas recharger - juste fermer la modal et rester sur la page actuelle
         }}
 
         onAddToCart={handleAddToCart}
@@ -2431,8 +2452,11 @@ export default function Home() {
         similarProducts={[]}
 
         onProductChange={(newProduct) => {
-          // Ne pas changer selectedShop pour rester dans la sous-catégorie
-          setSelectedProduct(newProduct);
+          // ⚡ Identification par ID unique avant changement
+          const targetProduct = getSafeProducts().find(p => p.id === newProduct.id);
+          if (targetProduct) {
+            setSelectedProduct(targetProduct);
+          }
         }}
 
       />
@@ -2578,6 +2602,13 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
 
                        if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                        
+                       // ⚡ Identification par ID unique
+                       const targetProduct = getSafeProducts().find(p => p.id === product.id);
+                       if (!targetProduct) {
+                         console.error('❌ Produit non trouvé');
+                         return;
+                       }
+                       
                        // 🔒 Double vérification avant redirection
                        if (!shop) {
                          console.error('❌ Clic sur produit sans boutique');
@@ -2585,15 +2616,15 @@ function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSele
                          return;
                        }
 
-                       if (shop.slug && product.slug) {
+                       if (shop.slug && targetProduct.slug) {
 
-                         window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                         window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
 
                        } else if (shop) {
 
                          setSelectedShop(shop);
 
-                         setSelectedProduct(product);
+                         setSelectedProduct(targetProduct);
 
                        }
 
