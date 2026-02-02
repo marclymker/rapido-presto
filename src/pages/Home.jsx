@@ -1960,7 +1960,7 @@ export default function Home() {
 
                                                  {weddingProductsBySubCategory[selectedSubCategory]?.length > 0 ? (
 
-                                                     weddingProductsBySubCategory[selectedSubCategory].slice(0, 20).map(product => {
+                                                     weddingProductsBySubCategory[selectedSubCategory].map(product => {
 
                                                     const shop = shops.find(s => s.id === product.shop_id);
 
