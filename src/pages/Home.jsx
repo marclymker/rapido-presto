@@ -1976,7 +1976,15 @@ export default function Home() {
 
                                                             onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
 
-                                                            onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
+                                                            onClick={() => { 
+                                                              trackProductView(product, shop);
+                                                              if (shop?.slug && product.slug) {
+                                                                window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                                                              } else {
+                                                                // Ne pas setter selectedShop en sous-catégorie
+                                                                setSelectedProduct(product);
+                                                              }
+                                                            }}
 
                                                         />
 
@@ -2040,7 +2048,15 @@ export default function Home() {
 
                                                                 onAdd={(p) => { setSelectedShop(shop); handleAddToCart(p); }}
 
-                                                                onClick={() => { setSelectedShop(shop); setSelectedProduct(product); }}
+                                                                onClick={() => { 
+                                                                  trackProductView(product, shop);
+                                                                  if (shop?.slug && product.slug) {
+                                                                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                                                                  } else {
+                                                                    // Ne pas setter selectedShop en sous-catégorie
+                                                                    setSelectedProduct(product);
+                                                                  }
+                                                                }}
 
                                                             />
 
@@ -2379,11 +2395,7 @@ export default function Home() {
         similarProducts={[]}
 
         onProductChange={(newProduct) => {
-
-          const newShop = shops.find(s => s.id === newProduct.shop_id);
-
-          if (newShop) setSelectedShop(newShop);
-
+          // Ne pas changer selectedShop pour rester dans la sous-catégorie
           setSelectedProduct(newProduct);
 
         }}
