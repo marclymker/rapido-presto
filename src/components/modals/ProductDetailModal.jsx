@@ -14,6 +14,7 @@ import { useBackButton } from '@/components/navigation/useBackButton';
 import ChatButton from '@/components/chat/ChatButton';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { createPageUrl } from '@/utils';
+import ShareProductButton from '@/components/share/ShareProductButton';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
@@ -50,41 +51,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
     }
   }, [user?.id, open]);
 
-  // --- LOGIQUE DE PARTAGE ---
-  const handleShare = async () => {
-    // Utiliser le slug si disponible, sinon l'ID
-    const productIdentifier = product.slug || product.id;
-    const shopSlug = shop?.slug || '';
-    
-    // Construction du lien avec slugs
-    let shareUrl;
-    if (shopSlug && product.slug) {
-      shareUrl = `${window.location.origin}/shop/${shopSlug}/product/${product.slug}`;
-    } else {
-      shareUrl = `${window.location.origin}${window.location.pathname}?product=${productIdentifier}`;
-    }
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: product.name,
-          text: `Regarde ce produit sur notre boutique : ${product.name}`,
-          url: shareUrl,
-        });
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error('Erreur de partage:', error);
-        }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success("Lien copié dans le presse-papier !");
-      } catch (err) {
-        toast.error("Impossible de copier le lien");
-      }
-    }
-  };
+
 
   useEffect(() => {
     if (open && product) {
@@ -344,10 +311,10 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               {downloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
             </button>
 
-            {/* BOUTON PARTAGE */}
-             <button onClick={handleShare} className="absolute top-4 left-16 p-2 bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-black/40 transition-colors z-10">
-               <Share2 size={20} />
-             </button>
+            {/* BOUTON PARTAGE optimisé pour preview */}
+            <div className="absolute top-4 left-16">
+              <ShareProductButton product={product} shop={shop} className="p-2 bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-black/40 transition-colors border-none" />
+            </div>
 
              {/* BOUTON CRÉER ARTICLE - pour vendeurs/clients */}
              {user && (
