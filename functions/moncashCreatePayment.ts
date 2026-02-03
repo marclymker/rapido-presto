@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { checkRateLimit, rateLimitResponse, PAYMENT_MAX_REQUESTS } from './rateLimiter.js';
 
 async function getMoncashAccessToken() {
   const clientId = Deno.env.get("MONCASH_CLIENT_ID");
@@ -31,6 +32,12 @@ async function getMoncashAccessToken() {
 
 Deno.serve(async (req) => {
   try {
+    // SÉCURITÉ: Rate limiting sur les paiements
+    const rateLimit = checkRateLimit(req, 'moncash-payment', PAYMENT_MAX_REQUESTS);
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.retryAfter);
+    }
+
     const base44 = createClientFromRequest(req);
     
     const user = await base44.auth.me();

@@ -1,7 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { checkRateLimit, rateLimitResponse } from './rateLimiter.js';
 
 Deno.serve(async (req) => {
   try {
+    // SÉCURITÉ: Rate limiting
+    const rateLimit = checkRateLimit(req, 'cancel-order', 10);
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.retryAfter);
+    }
+
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
@@ -19,7 +26,7 @@ Deno.serve(async (req) => {
       percent
     } = await req.json();
 
-    // Get order details
+    // SÉCURITÉ: Utiliser entities normal (pas asServiceRole) pour vérifier propriété
     const order = await base44.entities.Order.filter({ id: orderId });
     if (!order || order.length === 0) {
       return Response.json({ error: 'Commande introuvable' }, { status: 404 });
@@ -27,8 +34,9 @@ Deno.serve(async (req) => {
 
     const orderData = order[0];
 
-    // Verify user owns this order
+    // SÉCURITÉ: Vérification stricte de propriété
     if (orderData.client_id !== user.id) {
+      console.error(`Unauthorized cancellation attempt: User ${user.id} tried to cancel order ${orderId} owned by ${orderData.client_id}`);
       return Response.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
@@ -65,9 +73,10 @@ Deno.serve(async (req) => {
 
     // Handle refund based on payment method
     if (orderData.payment_method === 'CASH' && fee > 0) {
-      // Add fee to user's pending balance
-      const currentBalance = user.pending_balance || 0;
-      await base44.asServiceRole.auth.updateMe({
+      // SÉCURITÉ: Utiliser asServiceRole uniquement pour MAJ de balance (cas légitime)
+      const freshUser = await base44.asServiceRole.entities.User.filter({ id: user.id });
+      const currentBalance = freshUser[0]?.pending_balance || 0;
+      await base44.asServiceRole.entities.User.update(user.id, {
         pending_balance: currentBalance + fee
       });
     } else if (orderData.payment_method !== 'CASH' && refund > 0) {
