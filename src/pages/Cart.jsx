@@ -104,18 +104,11 @@ export default function Cart() {
         try {
           const createdOrders = [];
           for (const shopId of shopIds) {
-            const shopItems = itemsByShop[shopId];
-            const shopSubtotal = shopItems.reduce((sum, item) => {
-              const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
-              return sum + itemTotal;
-            }, 0);
-            const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
-            const orderNum = 'RP' + Date.now().toString().slice(-6) + '-' + shopId.slice(-4);
-            const code = generateConfirmationCode();
-
             // Utiliser les prix VALIDÉS côté serveur
             const validatedItems = itemsByShop[shopId].items;
             const shopSubtotal = validatedItems.reduce((sum, item) => sum + item.verified_total, 0);
+            const orderNum = 'RP' + Date.now().toString().slice(-6) + '-' + shopId.slice(-4);
+            const code = generateConfirmationCode();
 
             const order = await base44.entities.Order.create({
               order_number: orderNum,
@@ -193,12 +186,9 @@ export default function Cart() {
         
         const createdOrders = [];
         for (const shopId of shopIds) {
-          const shopItems = itemsByShop[shopId];
-          const shopSubtotal = shopItems.reduce((sum, item) => {
-            const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
-            return sum + itemTotal;
-          }, 0);
-          const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
+          // Utiliser les prix VALIDÉS côté serveur
+          const validatedItems = itemsByShop[shopId].items;
+          const shopSubtotal = validatedItems.reduce((sum, item) => sum + item.verified_total, 0);
           const code = generateConfirmationCode();
 
           const order = await base44.entities.Order.create({
@@ -209,19 +199,19 @@ export default function Cart() {
             client_address: user.address || '',
             client_region: user.region,
             shop_id: shopId,
-            shop_name: shopItems[0].shop_name,
-            shop_region: shopItems[0].shop_region,
-            items: shopItems.map(item => ({
+            shop_name: validatedItems[0].shop_name,
+            shop_region: validatedItems[0].shop_region,
+            items: validatedItems.map(item => ({
               product_id: item.product_id,
               name: item.product_name,
               quantity: item.quantity,
-              unit_price: item.unit_price + (item.total_customization_price || 0),
-              total: (item.unit_price + (item.total_customization_price || 0)) * item.quantity,
+              unit_price: item.verified_price + item.verified_customization_price,
+              total: item.verified_total,
               customization: item.customization
             })),
             subtotal: shopSubtotal,
-            delivery_fee: shopDeliveryFee,
-            total: shopSubtotal + shopDeliveryFee,
+            delivery_fee: validation.deliveryFee / shopIds.length,
+            total: shopSubtotal + (validation.deliveryFee / shopIds.length),
             payment_method: 'moncash',
             payment_split: paymentSplit,
             status: 'pending',
