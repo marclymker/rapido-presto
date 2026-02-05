@@ -17,6 +17,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    const body = await req.json();
+    
+    // SÉCURITÉ: Validation Zod des entrées (champs de base)
+    const basicValidation = validateInput(cancelOrderSchema, {
+      orderId: body.orderId,
+      reasonId: body.reason_id,
+      reasonLabel: body.reason_label,
+      reasonDetails: body.reason_details
+    });
+    
+    if (!basicValidation.success) {
+      return Response.json({ error: basicValidation.error, details: basicValidation.details }, { status: 400 });
+    }
+
     const {
       orderId,
       reason_id,
@@ -25,7 +39,7 @@ Deno.serve(async (req) => {
       fee,
       refund,
       percent
-    } = await req.json();
+    } = body;
 
     // SÉCURITÉ: Utiliser entities normal (pas asServiceRole) pour vérifier propriété
     const order = await base44.entities.Order.filter({ id: orderId });
