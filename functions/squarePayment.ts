@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { Client, Environment } from 'npm:square';
 import { checkRateLimit, rateLimitResponse, PAYMENT_MAX_REQUESTS } from './rateLimiter.js';
 import { validateInput, squarePaymentSchema } from './validationSchemas.js';
+import { verifyCSRF } from './csrfProtection.js';
 
 Deno.serve(async (req) => {
   // SÉCURITÉ: CORS restreint à l'origine de l'app
@@ -19,6 +20,12 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // SÉCURITÉ: Protection CSRF
+    const csrfCheck = verifyCSRF(req);
+    if (!csrfCheck.valid) {
+      return Response.json({ error: 'CSRF validation failed' }, { status: 403, headers });
+    }
+
     // SÉCURITÉ: Rate limiting sur les paiements
     const rateLimit = checkRateLimit(req, 'square-payment', PAYMENT_MAX_REQUESTS);
     if (!rateLimit.allowed) {

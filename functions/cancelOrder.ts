@@ -5,6 +5,12 @@ import { verifyCSRF } from './csrfProtection.js';
 
 Deno.serve(async (req) => {
   try {
+    // SÉCURITÉ: Protection CSRF
+    const csrfCheck = verifyCSRF(req);
+    if (!csrfCheck.valid) {
+      return Response.json({ error: 'CSRF validation failed' }, { status: 403 });
+    }
+
     // SÉCURITÉ: Rate limiting
     const rateLimit = checkRateLimit(req, 'cancel-order', 10);
     if (!rateLimit.allowed) {
@@ -60,7 +66,22 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Cette commande ne peut pas être annulée' }, { status: 400 });
     }
 
-    // Create cancellation log
+    // SÉCURITÉ: Recalculer les frais d'annulation côté serveur (politique stricte)
+    const statusFeeMap = {
+      'pending': 0,
+      'accepted': 0.10,
+      'preparing': 0.20,
+      'ready': 0.30,
+      'searching_driver': 0.30,
+      'driver_assigned': 0.50,
+      'in_delivery': 1.0
+    };
+
+    const feePercent = statusFeeMap[orderData.status] || 0;
+    const cancelFee = Math.round(orderData.total * feePercent);
+    const refundAmount = orderData.total - cancelFee;
+
+    // Create cancellation log avec montants RECALCULÉS
     await base44.asServiceRole.entities.CancellationLog.create({
       order_id: orderId,
       order_number: orderData.order_number,
@@ -74,11 +95,11 @@ Deno.serve(async (req) => {
       reason_details: reason_details || '',
       order_status_at_cancellation: orderData.status,
       order_total: orderData.total,
-      cancellation_fee: fee,
-      refund_amount: refund,
-      fee_percentage: percent,
+      cancellation_fee: cancelFee,
+      refund_amount: refundAmount,
+      fee_percentage: feePercent,
       payment_method: orderData.payment_method,
-      refund_status: orderData.payment_method === 'CASH' && fee > 0 ? 'added_to_balance' : 'pending'
+      refund_status: orderData.payment_method === 'CASH' && cancelFee > 0 ? 'added_to_balance' : 'pending'
     });
 
     // Update order status
@@ -86,19 +107,19 @@ Deno.serve(async (req) => {
       status: 'cancelled'
     });
 
-    // Handle refund based on payment method
-    if (orderData.payment_method === 'CASH' && fee > 0) {
+    // Handle refund based on payment method (utiliser montants RECALCULÉS)
+    if (orderData.payment_method === 'CASH' && cancelFee > 0) {
       // SÉCURITÉ: Utiliser asServiceRole uniquement pour MAJ de balance (cas légitime)
       const freshUser = await base44.asServiceRole.entities.User.filter({ id: user.id });
       const currentBalance = freshUser[0]?.pending_balance || 0;
       await base44.asServiceRole.entities.User.update(user.id, {
-        pending_balance: currentBalance + fee
+        pending_balance: currentBalance + cancelFee
       });
-    } else if (orderData.payment_method !== 'CASH' && refund > 0) {
+    } else if (orderData.payment_method !== 'CASH' && refundAmount > 0) {
       // For digital payments, initiate refund process
       // This would integrate with Moncash/NatCash APIs
       // For now, we just log it
-      console.log(`Refund of ${refund} HTG should be processed for order ${orderData.order_number}`);
+      console.log(`Refund of ${refundAmount} HTG should be processed for order ${orderData.order_number}`);
     }
 
     // Send notifications to shop and driver
@@ -115,9 +136,9 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       message: 'Commande annulée avec succès',
-      refund_amount: refund,
-      cancellation_fee: fee,
-      balance_updated: orderData.payment_method === 'CASH' && fee > 0
+      refund_amount: refundAmount,
+      cancellation_fee: cancelFee,
+      balance_updated: orderData.payment_method === 'CASH' && cancelFee > 0
     });
 
   } catch (error) {

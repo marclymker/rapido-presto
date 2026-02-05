@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { checkRateLimit, rateLimitResponse, PAYMENT_MAX_REQUESTS } from './rateLimiter.js';
 import { validateInput, moncashPaymentSchema } from './validationSchemas.js';
+import { verifyCSRF } from './csrfProtection.js';
 
 async function getMoncashAccessToken() {
   const clientId = Deno.env.get("MONCASH_CLIENT_ID");
@@ -33,6 +34,12 @@ async function getMoncashAccessToken() {
 
 Deno.serve(async (req) => {
   try {
+    // SÉCURITÉ: Protection CSRF
+    const csrfCheck = verifyCSRF(req);
+    if (!csrfCheck.valid) {
+      return Response.json({ error: 'CSRF validation failed' }, { status: 403 });
+    }
+
     // SÉCURITÉ: Rate limiting sur les paiements
     const rateLimit = checkRateLimit(req, 'moncash-payment', PAYMENT_MAX_REQUESTS);
     if (!rateLimit.allowed) {
