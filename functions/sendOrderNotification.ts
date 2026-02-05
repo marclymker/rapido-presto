@@ -99,8 +99,23 @@ Deno.serve(async (req) => {
         break;
     }
 
-    // 4. Envoi au Client (Temps réel seulement)
+    // 4. Envoi au Client - OneSignal (push native) + Pusher (temps réel)
     if (notificationTitle) {
+      // OneSignal - notification push NATIVE avec son
+      try {
+        await base44.asServiceRole.functions.invoke('sendOrderNotificationOneSignal', {
+          userId: order.client_id,
+          title: notificationTitle,
+          message: notificationMessage,
+          orderId: order.id,
+          url: `${Deno.env.get('APP_URL') || ''}/orders`
+        });
+        console.log('✅ OneSignal envoyé');
+      } catch (err) {
+        console.error('❌ OneSignal error:', err);
+      }
+
+      // Pusher - temps réel dans l'app
       await sendRealtimeUpdate(`user-${order.client_id}`, 'order-status-update', {
         orderId: order.id,
         status: status,
@@ -109,7 +124,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return Response.json({ success: true, provider: 'pusher-only' });
+    return Response.json({ success: true, provider: 'onesignal+pusher' });
     
   } catch (error) {
     console.error('Erreur Globale:', error);
