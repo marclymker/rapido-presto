@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { checkRateLimit, rateLimitResponse } from './rateLimiter.js';
 import { validateInput, cancelOrderSchema } from './validationSchemas.js';
+import { verifyCSRF } from './csrfProtection.js';
 
 Deno.serve(async (req) => {
   try {

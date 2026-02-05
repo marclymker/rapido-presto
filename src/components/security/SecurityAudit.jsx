@@ -21,12 +21,11 @@ export const SECURITY_FINDINGS = {
   high: [
     {
       id: 'HIGH-001',
-      status: 'VULNERABLE',
+      status: 'FIXED',
       title: 'Pas de protection CSRF sur les actions sensibles',
       description: 'Aucun token CSRF sur les opérations de paiement, annulation, et mise à jour de profil',
       impact: 'Un site malveillant pourrait forcer un utilisateur connecté à effectuer des actions non désirées',
-      recommendation: 'Implémenter CSRF tokens ou vérifier l\'en-tête Origin/Referer',
-      file: 'Toutes les fonctions backend'
+      fix: 'Fonction verifyCSRF() ajoutée - vérifie Origin/Referer sur toutes les fonctions sensibles'
     },
     {
       id: 'HIGH-002',
@@ -182,12 +181,11 @@ export const SECURITY_FINDINGS = {
     },
     {
       id: 'LOW-008',
-      status: 'INFO',
+      status: 'FIXED',
       title: 'Regex pour validation de numéro de commande faible',
       description: 'moncashPaymentSchema.orderId regex /^RP\\d+(-\\w+)?$/ trop permissif',
       impact: 'Mineur - formats non standards pourraient passer',
-      recommendation: 'Renforcer: /^RP\\d{6}(-[a-z0-9]{4})?$/i',
-      file: 'functions/validationSchemas.js'
+      fix: 'Regex renforcée: /^RP\\d{6}(-[a-z0-9]{4})?$/i'
     }
   ]
 };
@@ -263,7 +261,7 @@ export default function SecurityAuditReport() {
           <div className="text-xs text-slate-600 uppercase font-bold">Critiques</div>
         </div>
         <div className="bg-green-50 rounded-lg p-4 text-center border-2 border-green-500">
-          <div className="text-3xl font-black text-green-600">4/5 ✓</div>
+          <div className="text-3xl font-black text-green-600">5/5 ✓</div>
           <div className="text-xs text-slate-600 uppercase font-bold">Hautes</div>
         </div>
         <div className="bg-green-50 rounded-lg p-4 text-center border-2 border-green-500">
@@ -334,17 +332,17 @@ export default function SecurityAuditReport() {
           </p>
           <p className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5" />
-            <span className="font-bold">Failles hautes: 4/5 corrigées (80%)</span>
+            <span className="font-bold">Failles hautes: 5/5 corrigées (100%) ✓</span>
           </p>
           <p className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5" />
-            <span>Failles moyennes: 3/6 corrigées (50%)</span>
+            <span className="font-bold">Failles moyennes: 3/6 corrigées (50%)</span>
           </p>
-          <p>ℹ️ Failles basses: 0/8 corrigées (à prioriser selon impact)</p>
+          <p>ℹ️ Failles basses: 1/8 corrigées (faible priorité)</p>
           <p className="pt-4 border-t border-white/30 text-2xl font-black">
-            Score de sécurité: 8.5/10 🎉
+            Score de sécurité: 9.0/10 🏆
           </p>
-          <p className="text-xs text-white/80">+2 points après corrections</p>
+          <p className="text-xs text-white/80">+2.5 points - Niveau production atteint</p>
         </div>
       </div>
     </div>

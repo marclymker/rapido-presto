@@ -13,7 +13,7 @@ export const validateOrderPriceSchema = z.object({
 
 // Validation pour MonCash payment
 export const moncashPaymentSchema = z.object({
-  orderId: z.string().min(5).max(50).regex(/^RP\d+(-\w+)?$/),
+  orderId: z.string().min(5).max(50).regex(/^RP\d{6}(-[a-z0-9]{4})?$/i), // SÉCURITÉ: Regex renforcée
   amount: z.number().positive().int().min(50).max(1000000),
   description: z.string().max(200).optional()
 });
