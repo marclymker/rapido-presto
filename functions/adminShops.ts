@@ -19,7 +19,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 403 });
     }
 
-    const { action, data, shopId } = await req.json();
+    const body = await req.json();
+    
+    // SÉCURITÉ: Validation Zod des entrées (action de base)
+    const validation = validateInput(adminShopActionSchema, {
+      action: body.action,
+      shopId: body.shopId
+    });
+    
+    if (!validation.success) {
+      return Response.json({ error: validation.error, details: validation.details }, { status: 400 });
+    }
+
+    const { action, data, shopId } = body;
 
     switch (action) {
       case 'list':
