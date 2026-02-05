@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { validateInput, validateOrderPriceSchema } from './validationSchemas.js';
 
 /**
  * SÉCURITÉ CRITIQUE: Validation des prix côté serveur
@@ -34,11 +35,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { cartItemIds, paymentSplit } = await req.json();
-
-    if (!cartItemIds || !Array.isArray(cartItemIds) || cartItemIds.length === 0) {
-      return Response.json({ error: 'Invalid cart items' }, { status: 400 });
+    const body = await req.json();
+    
+    // SÉCURITÉ: Validation Zod des entrées
+    const validation = validateInput(validateOrderPriceSchema, body);
+    if (!validation.success) {
+      return Response.json({ error: validation.error, details: validation.details }, { status: 400 });
     }
+
+    const { cartItemIds, paymentSplit } = validation.data;
 
     // Récupérer les articles du panier depuis la base de données
     const cartItems = await Promise.all(

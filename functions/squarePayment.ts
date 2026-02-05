@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { Client, Environment } from 'npm:square';
 import { checkRateLimit, rateLimitResponse, PAYMENT_MAX_REQUESTS } from './rateLimiter.js';
+import { validateInput, squarePaymentSchema } from './validationSchemas.js';
 
 Deno.serve(async (req) => {
   // SÉCURITÉ: CORS restreint à l'origine de l'app
@@ -31,10 +32,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401, headers });
     }
 
-    // SÉCURITÉ: Validation du montant
-    if (!user || typeof amount !== 'number' || amount <= 0 || amount > 1000000) {
-      return Response.json({ error: 'Montant invalide' }, { status: 400, headers });
+    const body = await req.json();
+    
+    // SÉCURITÉ: Validation Zod des entrées
+    const validation = validateInput(squarePaymentSchema, body);
+    if (!validation.success) {
+      return Response.json({ error: validation.error, details: validation.details }, { status: 400, headers });
     }
+
+    const { sourceId, amount, orderId } = validation.data;
 
     const body = await req.json();
     const { sourceId, amount, orderId } = body;
