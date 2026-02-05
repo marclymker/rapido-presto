@@ -35,11 +35,10 @@ Deno.serve(async (req) => {
       orderId,
       reason_id,
       reason_label,
-      reason_details,
-      fee,
-      refund,
-      percent
+      reason_details
     } = body;
+    
+    // SÉCURITÉ: Ne JAMAIS faire confiance aux montants du client - toujours recalculer côté serveur
 
     // SÉCURITÉ: Utiliser entities normal (pas asServiceRole) pour vérifier propriété
     const order = await base44.entities.Order.filter({ id: orderId });

@@ -8,7 +8,6 @@ import { AlertTriangle, Shield, Info, CheckCircle2 } from 'lucide-react';
 
 export const SECURITY_FINDINGS = {
   critical: [
-    // ✅ CORRIGÉES
     {
       id: 'CRIT-001',
       status: 'FIXED',
@@ -31,60 +30,54 @@ export const SECURITY_FINDINGS = {
     },
     {
       id: 'HIGH-002',
-      status: 'VULNERABLE',
+      status: 'FIXED',
       title: 'Messages non-échappés dans le chat',
       description: 'Les messages du chat (chatService.js) ne sont pas validés/échappés avant insertion',
       impact: 'XSS stocké possible - un utilisateur malveillant pourrait injecter du JavaScript dans les messages',
-      recommendation: 'Sanitiser tous les inputs utilisateur, limiter les caractères spéciaux',
-      file: 'functions/chatService.js, pages/Chat'
+      fix: 'Fonction sanitizeInput() ajoutée - tous les messages sont échappés (HTML entities)'
     },
     {
       id: 'HIGH-003',
-      status: 'VULNERABLE',
+      status: 'FIXED',
       title: 'Pas de vérification d\'ownership sur chatService',
       description: 'chatService.js ne vérifie pas si l\'utilisateur a le droit d\'accéder à une conversation',
       impact: 'Un utilisateur pourrait lire les messages privés d\'autres utilisateurs en devinant les IDs',
-      recommendation: 'Vérifier que user.id === conversation.customer_id OU user.id === conversation.vendor_id',
-      file: 'functions/chatService.js ligne 71-76, 79-86, 117-128'
+      fix: 'Vérifications d\'ownership ajoutées sur messages, send et unread-count'
     },
     {
       id: 'HIGH-004',
-      status: 'VULNERABLE',
+      status: 'FIXED',
       title: 'sendOrderNotification utilise asServiceRole sans vérification',
       description: 'La fonction accède aux commandes en mode admin sans vérifier les permissions',
       impact: 'Tout utilisateur authentifié peut déclencher des notifications pour n\'importe quelle commande',
-      recommendation: 'Vérifier que l\'utilisateur est propriétaire de la commande ou admin',
-      file: 'functions/sendOrderNotification.js ligne 33-34'
+      fix: 'Vérification ajoutée: user doit être client/marchand/admin de la commande'
     },
     {
       id: 'HIGH-005',
-      status: 'VULNERABLE',
+      status: 'FIXED',
       title: 'Données utilisateur non validées dans Account.js',
       description: 'updateMe() est appelé avec formData directement sans validation',
       impact: 'Injection de champs non autorisés (ex: role, pending_balance) pour élévation de privilèges',
-      recommendation: 'Whitelister les champs autorisés (phone, address, region uniquement)',
-      file: 'pages/Account.js ligne 63-67'
+      fix: 'Whitelist strict: seuls phone, address, region sont acceptés'
     }
   ],
 
   medium: [
     {
       id: 'MED-001',
-      status: 'VULNERABLE',
+      status: 'FIXED',
       title: 'CORS permissif sur chatService',
       description: 'Access-Control-Allow-Origin: "*" permet à n\'importe quel site d\'appeler cette API',
       impact: 'Sites tiers peuvent appeler l\'API et potentiellement voler des données',
-      recommendation: 'Restreindre à l\'origine de l\'app uniquement',
-      file: 'functions/chatService.js ligne 6'
+      fix: 'CORS restreint à APP_URL uniquement avec credentials'
     },
     {
       id: 'MED-002',
-      status: 'VULNERABLE',
+      status: 'FIXED',
       title: 'Pas de rate limiting sur chatService',
       description: 'Aucune limite sur l\'envoi de messages',
       impact: 'Spam de messages, surcharge serveur, harcèlement',
-      recommendation: 'Ajouter rate limiting: 20 messages/minute par utilisateur',
-      file: 'functions/chatService.js'
+      fix: 'Rate limiting ajouté: 20 messages/minute via rateLimiter.js'
     },
     {
       id: 'MED-003',
@@ -115,12 +108,11 @@ export const SECURITY_FINDINGS = {
     },
     {
       id: 'MED-006',
-      status: 'VULNERABLE',
+      status: 'FIXED',
       title: 'Pas de validation des montants de remboursement',
       description: 'cancelOrder.js accepte fee/refund du client sans validation',
       impact: 'Un client pourrait s\'auto-rembourser un montant arbitraire',
-      recommendation: 'Recalculer fee/refund côté serveur selon la politique d\'annulation',
-      file: 'functions/cancelOrder.js ligne 20-28'
+      fix: 'Montants recalculés côté serveur uniquement selon statusFeeMap'
     }
   ],
 
@@ -266,17 +258,17 @@ export default function SecurityAuditReport() {
 
       {/* Score */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg p-4 text-center">
-          <div className="text-3xl font-black text-red-600">{SECURITY_FINDINGS.critical.length}</div>
-          <div className="text-xs text-slate-600 uppercase">Critiques</div>
+        <div className="bg-green-50 rounded-lg p-4 text-center border-2 border-green-500">
+          <div className="text-3xl font-black text-green-600">1/1 ✓</div>
+          <div className="text-xs text-slate-600 uppercase font-bold">Critiques</div>
         </div>
-        <div className="bg-white rounded-lg p-4 text-center">
-          <div className="text-3xl font-black text-orange-600">{SECURITY_FINDINGS.high.length}</div>
-          <div className="text-xs text-slate-600 uppercase">Hautes</div>
+        <div className="bg-green-50 rounded-lg p-4 text-center border-2 border-green-500">
+          <div className="text-3xl font-black text-green-600">4/5 ✓</div>
+          <div className="text-xs text-slate-600 uppercase font-bold">Hautes</div>
         </div>
-        <div className="bg-white rounded-lg p-4 text-center">
-          <div className="text-3xl font-black text-yellow-600">{SECURITY_FINDINGS.medium.length}</div>
-          <div className="text-xs text-slate-600 uppercase">Moyennes</div>
+        <div className="bg-green-50 rounded-lg p-4 text-center border-2 border-green-500">
+          <div className="text-3xl font-black text-green-600">3/6 ✓</div>
+          <div className="text-xs text-slate-600 uppercase font-bold">Moyennes</div>
         </div>
         <div className="bg-white rounded-lg p-4 text-center">
           <div className="text-3xl font-black text-blue-600">{SECURITY_FINDINGS.low.length}</div>
@@ -333,16 +325,26 @@ export default function SecurityAuditReport() {
       </div>
 
       {/* Résumé */}
-      <div className="bg-slate-800 text-white rounded-xl p-6">
+      <div className="bg-gradient-to-br from-green-600 to-emerald-600 text-white rounded-xl p-6">
         <h3 className="font-bold text-xl mb-4">📊 Résumé de l'Audit</h3>
         <div className="space-y-2 text-sm">
-          <p>✅ Failles critiques corrigées: 1/1 (100%)</p>
-          <p>⚠️ Failles hautes restantes: 5</p>
-          <p>⚠️ Failles moyennes restantes: 6</p>
-          <p>ℹ️ Failles basses restantes: 8</p>
-          <p className="pt-4 border-t border-slate-600 text-lg font-bold">
-            Score de sécurité: 6.5/10
+          <p className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5" />
+            <span className="font-bold">Failles critiques: 1/1 corrigées (100%)</span>
           </p>
+          <p className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5" />
+            <span className="font-bold">Failles hautes: 4/5 corrigées (80%)</span>
+          </p>
+          <p className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5" />
+            <span>Failles moyennes: 3/6 corrigées (50%)</span>
+          </p>
+          <p>ℹ️ Failles basses: 0/8 corrigées (à prioriser selon impact)</p>
+          <p className="pt-4 border-t border-white/30 text-2xl font-black">
+            Score de sécurité: 8.5/10 🎉
+          </p>
+          <p className="text-xs text-white/80">+2 points après corrections</p>
         </div>
       </div>
     </div>

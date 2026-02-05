@@ -23,16 +23,34 @@ async function sendRealtimeUpdate(channel, event, data) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
     const { orderId, status } = await req.json();
     
     if (!orderId || !status) {
       return Response.json({ error: 'orderId et status requis' }, { status: 400 });
     }
 
-    // 1. Récupération des données de la commande
-    const order = await base44.asServiceRole.entities.Order.get(orderId);
-    if (!order) return Response.json({ error: 'Commande introuvable' }, { status: 404 });
+    // SÉCURITÉ: Récupérer la commande avec les permissions de l'utilisateur d'abord
+    const orderCheck = await base44.entities.Order.get(orderId);
+    if (!orderCheck) return Response.json({ error: 'Commande introuvable' }, { status: 404 });
 
+    // SÉCURITÉ: Vérifier que l'utilisateur est autorisé (client, marchand ou admin)
+    const isOwner = orderCheck.client_id === user?.id;
+    const isAdmin = user?.role === 'admin';
+    
+    // Vérifier si l'utilisateur est le marchand de la boutique
+    let isMerchant = false;
+    if (orderCheck.shop_id) {
+      const shop = await base44.entities.Shop.get(orderCheck.shop_id);
+      isMerchant = shop?.user_id === user?.id;
+    }
+
+    if (!isOwner && !isMerchant && !isAdmin) {
+      return Response.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
+    // 1. Récupération des données de la commande avec asServiceRole (après vérification)
+    const order = await base44.asServiceRole.entities.Order.get(orderId);
     const shop = await base44.asServiceRole.entities.Shop.get(order.shop_id);
 
     // 2. Préparation du contenu de la notification
