@@ -48,22 +48,21 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { orderId, amount, description } = body;
     
-    console.log('🔵 MonCash Payment Request:', { 
-      orderId, 
-      amount: typeof amount, 
-      amountValue: amount, 
-      description 
-    });
-    
-    if (!orderId || !amount) {
-      console.error('❌ Missing parameters:', { orderId: !!orderId, amount: !!amount });
+    // SÉCURITÉ: Validation Zod des entrées
+    const validation = validateInput(moncashPaymentSchema, body);
+    if (!validation.success) {
+      console.error('❌ Validation error:', validation);
       return Response.json({ 
-        success: false,
-        error: 'Missing orderId or amount' 
+        success: false, 
+        error: validation.error, 
+        details: validation.details 
       }, { status: 400 });
     }
+
+    const { orderId, amount, description } = validation.data;
+    
+    console.log('✅ Validated MonCash Request:', { orderId, amount, description });
 
     // S'assurer que le montant est un nombre entier (MonCash n'accepte pas les décimales)
     const cleanAmount = typeof amount === 'string' 
