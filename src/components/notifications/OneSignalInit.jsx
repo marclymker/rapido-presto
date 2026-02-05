@@ -32,14 +32,19 @@ export default function OneSignalInit({ user }) {
               appId: data.appId,
               allowLocalhostAsSecureOrigin: true,
               notifyButton: { enable: false },
-              // ⚡ ACTIVER SON PAR DÉFAUT
               notificationClickHandlerMatch: 'origin',
               notificationClickHandlerAction: 'navigate',
+              serviceWorkerParam: { scope: '/' },
+              serviceWorkerPath: '/OneSignalSDKWorker.js'
             });
 
-            // ⚡ FORCER ACTIVATION DU SON DES NOTIFICATIONS
+            // Demander permission immédiatement si pas encore accordée
+            const permission = await OneSignal.Notifications.permission;
+            if (!permission) {
+              await OneSignal.Notifications.requestPermission();
+            }
+            
             await OneSignal.Notifications.setDefaultNotificationUrl(window.location.origin);
-            OneSignal.Notifications.requestPermission();
 
             // Identification
             await OneSignal.login(user.id);
