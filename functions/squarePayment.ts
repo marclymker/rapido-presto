@@ -42,9 +42,6 @@ Deno.serve(async (req) => {
 
     const { sourceId, amount, orderId } = validation.data;
 
-    const body = await req.json();
-    const { sourceId, amount, orderId } = body;
-
     // Initialize Square client
     const client = new Client({
       accessToken: Deno.env.get('SQUARE_ACCESS_TOKEN'),
