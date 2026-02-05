@@ -74,6 +74,7 @@ import Products from './pages/Products';
 import ProfileSetup from './pages/ProfileSetup';
 import ShopView from './pages/ShopView';
 import UpdateProducts from './pages/UpdateProducts';
+import TestNotifications from './pages/TestNotifications';
 import __Layout from './Layout.jsx';
 
 
@@ -105,6 +106,7 @@ export const PAGES = {
     "ProfileSetup": ProfileSetup,
     "ShopView": ShopView,
     "UpdateProducts": UpdateProducts,
+    "TestNotifications": TestNotifications,
 }
 
 export const pagesConfig = {
