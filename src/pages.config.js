@@ -73,8 +73,11 @@ import Product from './pages/Product';
 import Products from './pages/Products';
 import ProfileSetup from './pages/ProfileSetup';
 import ShopView from './pages/ShopView';
-import UpdateProducts from './pages/UpdateProducts';
 import TestNotifications from './pages/TestNotifications';
+import UpdateProducts from './pages/UpdateProducts';
+import ProductPage from './pages/ProductPage';
+import CategoryPage from './pages/CategoryPage';
+import ShopPage from './pages/ShopPage';
 import __Layout from './Layout.jsx';
 
 
@@ -105,8 +108,11 @@ export const PAGES = {
     "Products": Products,
     "ProfileSetup": ProfileSetup,
     "ShopView": ShopView,
-    "UpdateProducts": UpdateProducts,
     "TestNotifications": TestNotifications,
+    "UpdateProducts": UpdateProducts,
+    "ProductPage": ProductPage,
+    "CategoryPage": CategoryPage,
+    "ShopPage": ShopPage,
 }
 
 export const pagesConfig = {
