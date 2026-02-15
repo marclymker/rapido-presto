@@ -78,6 +78,9 @@ import UpdateProducts from './pages/UpdateProducts';
 import ProductPage from './pages/ProductPage';
 import CategoryPage from './pages/CategoryPage';
 import ShopPage from './pages/ShopPage';
+import RobeDeMariageHaiti from './pages/RobeDeMariageHaiti';
+import WeddingPlannerHaiti from './pages/WeddingPlannerHaiti';
+import EventPlannerHaiti from './pages/EventPlannerHaiti';
 import __Layout from './Layout.jsx';
 
 
@@ -113,6 +116,9 @@ export const PAGES = {
     "ProductPage": ProductPage,
     "CategoryPage": CategoryPage,
     "ShopPage": ShopPage,
+    "RobeDeMariageHaiti": RobeDeMariageHaiti,
+    "WeddingPlannerHaiti": WeddingPlannerHaiti,
+    "EventPlannerHaiti": EventPlannerHaiti,
 }
 
 export const pagesConfig = {
