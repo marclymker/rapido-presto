@@ -61,15 +61,8 @@ export default function Account() {
 
   const handleSave = async () => {
     try {
-      // SÉCURITÉ: Whitelister les champs autorisés uniquement
-      const allowedFields = {
-        phone: formData.phone,
-        address: formData.address,
-        region: formData.region
-      };
-      
-      await base44.auth.updateMe(allowedFields);
-      setUser({ ...user, ...allowedFields });
+      await base44.auth.updateMe(formData);
+      setUser({ ...user, ...formData });
       setEditMode(false);
       toast.success('Informations mises à jour');
     } catch (error) {

@@ -126,7 +126,6 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     subcategory: '',
     stock_quantity: 0,
     image_url: '',
-    image_alt: '',
     additional_images: [],
     taille_emballage: 'Moyen',
     delivery_time: '30-45 minutes',
@@ -166,7 +165,6 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         subcategory: '',
         stock_quantity: 0,
         image_url: '',
-        image_alt: '',
         additional_images: [],
         taille_emballage: 'Moyen',
         delivery_time: '30-45 minutes',
@@ -202,7 +200,6 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         subcategory: product.subcategory || product.subCategory || '',
         stock_quantity: product.stock_quantity || 0,
         image_url: product.image_url || '',
-        image_alt: product.image_alt || product.name || '',
         additional_images: product.additional_images || [],
         taille_emballage: product.taille_emballage || 'Moyen',
         delivery_time: product.delivery_time || '30-45 minutes',
@@ -237,13 +234,6 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
       handleGenerateWithAI();
     }
   }, [formData.name, formData.image_url, aiGenerated, aiLoading, showForm]);
-
-  // Auto-fill image_alt from name
-  useEffect(() => {
-    if (formData.name && !formData.image_alt) {
-      setFormData(prev => ({ ...prev, image_alt: prev.name }));
-    }
-  }, [formData.name]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -484,21 +474,6 @@ Répondez au format JSON strict.`,
                     </div>
 
                     {formData.image_url && (
-                        <div className="mt-3 w-full">
-                          <Label className="text-xs text-slate-500 mb-1 block flex items-center gap-1">
-                            <Tag className="w-3 h-3" /> Texte alternatif (Alt)
-                          </Label>
-                          <Input
-                            value={formData.image_alt}
-                            onChange={(e) => setFormData({ ...formData, image_alt: e.target.value })}
-                            placeholder="Description de l'image pour le SEO..."
-                            className="h-8 text-sm bg-white"
-                          />
-                          <p className="text-[10px] text-slate-400 mt-0.5">Autofill depuis le titre · Modifiable</p>
-                        </div>
-                    )}
-
-                    {formData.image_url && (
                         <div className="mt-4 flex justify-center">
                             <Button
                               type="button"
@@ -609,7 +584,6 @@ Répondez au format JSON strict.`,
                       <SelectItem value="Bébé">👶 Bébé</SelectItem>
                       <SelectItem value="Outils">🔧 Outils</SelectItem>
                       <SelectItem value="Bijoux">💎 Bijoux</SelectItem>
-                      <SelectItem value="Matériels Décor">🎀 Matériels Décor</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

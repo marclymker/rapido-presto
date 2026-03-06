@@ -1,7 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { checkRateLimit, rateLimitResponse, PAYMENT_MAX_REQUESTS } from './rateLimiter.js';
-import { validateInput, moncashPaymentSchema } from './validationSchemas.js';
-import { verifyCSRF } from './csrfProtection.js';
 
 async function getMoncashAccessToken() {
   const clientId = Deno.env.get("MONCASH_CLIENT_ID");
@@ -34,18 +31,6 @@ async function getMoncashAccessToken() {
 
 Deno.serve(async (req) => {
   try {
-    // SÉCURITÉ: Protection CSRF
-    const csrfCheck = verifyCSRF(req);
-    if (!csrfCheck.valid) {
-      return Response.json({ error: 'CSRF validation failed' }, { status: 403 });
-    }
-
-    // SÉCURITÉ: Rate limiting sur les paiements
-    const rateLimit = checkRateLimit(req, 'moncash-payment', PAYMENT_MAX_REQUESTS);
-    if (!rateLimit.allowed) {
-      return rateLimitResponse(rateLimit.retryAfter);
-    }
-
     const base44 = createClientFromRequest(req);
     
     const user = await base44.auth.me();
@@ -55,21 +40,22 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
+    const { orderId, amount, description } = body;
     
-    // SÉCURITÉ: Validation Zod des entrées
-    const validation = validateInput(moncashPaymentSchema, body);
-    if (!validation.success) {
-      console.error('❌ Validation error:', validation);
+    console.log('🔵 MonCash Payment Request:', { 
+      orderId, 
+      amount: typeof amount, 
+      amountValue: amount, 
+      description 
+    });
+    
+    if (!orderId || !amount) {
+      console.error('❌ Missing parameters:', { orderId: !!orderId, amount: !!amount });
       return Response.json({ 
-        success: false, 
-        error: validation.error, 
-        details: validation.details 
+        success: false,
+        error: 'Missing orderId or amount' 
       }, { status: 400 });
     }
-
-    const { orderId, amount, description } = validation.data;
-    
-    console.log('✅ Validated MonCash Request:', { orderId, amount, description });
 
     // S'assurer que le montant est un nombre entier (MonCash n'accepte pas les décimales)
     const cleanAmount = typeof amount === 'string' 

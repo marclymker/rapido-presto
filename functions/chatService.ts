@@ -1,37 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { checkRateLimit, rateLimitResponse } from './rateLimiter.js';
-
-// SÉCURITÉ: Fonction de sanitisation XSS
-function sanitizeInput(text) {
-  if (!text || typeof text !== 'string') return '';
-  return text
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .slice(0, 2000); // Max 2000 caractères
-}
 
 Deno.serve(async (req) => {
-  // SÉCURITÉ: CORS restreint à l'origine de l'app
-  const origin = req.headers.get('origin') || '';
-  const allowedOrigin = Deno.env.get('APP_URL') || origin;
-  
+  // Gestion du CORS pour autoriser les appels depuis le navigateur
   const headers = {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-id, x-client-secret",
-    "Access-Control-Allow-Credentials": "true"
   };
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers });
-  }
-
-  // SÉCURITÉ: Rate limiting 20 messages/minute
-  const rateLimit = checkRateLimit(req, 'chat-messages', 20);
-  if (!rateLimit.allowed) {
-    return rateLimitResponse(rateLimit.retryAfter);
   }
 
   try {
@@ -56,9 +34,6 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify(existing[0]), { headers });
       }
 
-      // SÉCURITÉ: Sanitiser le message initial
-      const sanitizedMessage = sanitizeInput(initial_message);
-
       const conversation = await base44.entities.Conversation.create({
         customer_id: user.id,
         customer_name: user.full_name || 'Client',
@@ -66,7 +41,7 @@ Deno.serve(async (req) => {
         shop_id: shop_id,
         shop_name: shop_name || 'Boutique',
         shop_logo: shop_logo || '',
-        last_message: sanitizedMessage,
+        last_message: initial_message,
         last_message_date: new Date().toISOString(),
         product_context_id: product_id
       });
@@ -75,7 +50,7 @@ Deno.serve(async (req) => {
         conversation_id: conversation.id,
         sender_id: user.id,
         sender_name: user.full_name || 'Client',
-        content: sanitizedMessage,
+        content: initial_message,
         type: 'text',
         is_read: false
       });
@@ -93,12 +68,6 @@ Deno.serve(async (req) => {
 
     // --- LOGIQUE MESSAGES ---
     if (action === 'messages') {
-      // SÉCURITÉ: Vérifier que l'utilisateur a accès à cette conversation
-      const conversation = await base44.entities.Conversation.get(body.convId);
-      if (!conversation || (conversation.customer_id !== user.id && conversation.vendor_id !== user.id)) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
-      }
-
       const msgs = await base44.entities.ChatMessage.filter(
         { conversation_id: body.convId },
         'created_date' // Tri ascendant: plus ancien en haut
@@ -108,29 +77,21 @@ Deno.serve(async (req) => {
 
     // --- LOGIQUE ENVOI ---
     if (action === 'send') {
-      // SÉCURITÉ: Vérifier que l'utilisateur a accès à cette conversation
-      const conversation = await base44.entities.Conversation.get(body.conversation_id);
-      if (!conversation || (conversation.customer_id !== user.id && conversation.vendor_id !== user.id)) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
-      }
-
-      // SÉCURITÉ: Sanitiser le contenu du message
-      const sanitizedContent = sanitizeInput(body.content);
-
       const message = await base44.entities.ChatMessage.create({
         conversation_id: body.conversation_id,
         sender_id: user.id,
         sender_name: user.full_name || 'Utilisateur',
-        content: sanitizedContent,
+        content: body.content,
         type: 'text'
       });
       await base44.asServiceRole.entities.Conversation.update(body.conversation_id, {
-        last_message: sanitizedContent,
+        last_message: body.content,
         last_message_date: new Date().toISOString()
       });
 
       // Déclencher la réponse IA automatique si c'est le client qui envoie
-      if (conversation.customer_id === user.id && body.enable_ai !== false) {
+      const conversation = await base44.entities.Conversation.get(body.conversation_id);
+      if (conversation && conversation.customer_id === user.id && body.enable_ai !== false) {
         try {
           // Récupérer le contexte produit si disponible
           let productContext = null;
@@ -138,10 +99,10 @@ Deno.serve(async (req) => {
             productContext = await base44.entities.Product.get(conversation.product_context_id);
           }
 
-          // Appeler l'IA (sans attendre la réponse) avec le contenu sanitisé
+          // Appeler l'IA (sans attendre la réponse)
           base44.functions.invoke('aiChatAssistant', {
             conversation_id: body.conversation_id,
-            customer_message: sanitizedContent,
+            customer_message: body.content,
             product_context: productContext
           }).catch(err => console.error('AI response failed:', err));
         } catch (err) {
@@ -154,7 +115,6 @@ Deno.serve(async (req) => {
 
     // --- LOGIQUE COMPTAGE NON LUS ---
     if (action === 'unread-count') {
-      // SÉCURITÉ: L'utilisateur ne peut voir que ses propres conversations
       const conversations = await base44.entities.Conversation.filter({
         $or: [{ customer_id: user.id }, { vendor_id: user.id }]
       });

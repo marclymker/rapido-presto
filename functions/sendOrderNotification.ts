@@ -23,34 +23,16 @@ async function sendRealtimeUpdate(channel, event, data) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
     const { orderId, status } = await req.json();
     
     if (!orderId || !status) {
       return Response.json({ error: 'orderId et status requis' }, { status: 400 });
     }
 
-    // SÉCURITÉ: Récupérer la commande avec les permissions de l'utilisateur d'abord
-    const orderCheck = await base44.entities.Order.get(orderId);
-    if (!orderCheck) return Response.json({ error: 'Commande introuvable' }, { status: 404 });
-
-    // SÉCURITÉ: Vérifier que l'utilisateur est autorisé (client, marchand ou admin)
-    const isOwner = orderCheck.client_id === user?.id;
-    const isAdmin = user?.role === 'admin';
-    
-    // Vérifier si l'utilisateur est le marchand de la boutique
-    let isMerchant = false;
-    if (orderCheck.shop_id) {
-      const shop = await base44.entities.Shop.get(orderCheck.shop_id);
-      isMerchant = shop?.user_id === user?.id;
-    }
-
-    if (!isOwner && !isMerchant && !isAdmin) {
-      return Response.json({ error: 'Non autorisé' }, { status: 403 });
-    }
-
-    // 1. Récupération des données de la commande avec asServiceRole (après vérification)
+    // 1. Récupération des données de la commande
     const order = await base44.asServiceRole.entities.Order.get(orderId);
+    if (!order) return Response.json({ error: 'Commande introuvable' }, { status: 404 });
+
     const shop = await base44.asServiceRole.entities.Shop.get(order.shop_id);
 
     // 2. Préparation du contenu de la notification
@@ -99,23 +81,8 @@ Deno.serve(async (req) => {
         break;
     }
 
-    // 4. Envoi au Client - OneSignal (push native) + Pusher (temps réel)
+    // 4. Envoi au Client (Temps réel seulement)
     if (notificationTitle) {
-      // OneSignal - notification push NATIVE avec son
-      try {
-        await base44.asServiceRole.functions.invoke('sendOrderNotificationOneSignal', {
-          userId: order.client_id,
-          title: notificationTitle,
-          message: notificationMessage,
-          orderId: order.id,
-          url: `${Deno.env.get('APP_URL') || ''}/orders`
-        });
-        console.log('✅ OneSignal envoyé');
-      } catch (err) {
-        console.error('❌ OneSignal error:', err);
-      }
-
-      // Pusher - temps réel dans l'app
       await sendRealtimeUpdate(`user-${order.client_id}`, 'order-status-update', {
         orderId: order.id,
         status: status,
@@ -124,7 +91,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return Response.json({ success: true, provider: 'onesignal+pusher' });
+    return Response.json({ success: true, provider: 'pusher-only' });
     
   } catch (error) {
     console.error('Erreur Globale:', error);

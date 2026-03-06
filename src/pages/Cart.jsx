@@ -80,20 +80,32 @@ export default function Cart() {
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
-      // SÉCURITÉ: Valider les prix côté serveur AVANT de créer la commande
-      const cartItemIds = cartItems.map(item => item.id);
-      const priceValidation = await base44.functions.invoke('validateOrderPrice', {
-        cartItemIds,
-        paymentSplit
-      });
+      const itemsByShop = cartItems.reduce((acc, item) => {
+        if (!acc[item.shop_id]) {
+          acc[item.shop_id] = [];
+        }
+        acc[item.shop_id].push(item);
+        return acc;
+      }, {});
 
-      if (!priceValidation.data?.success) {
-        throw new Error(priceValidation.data?.error || 'Validation des prix échouée');
-      }
-
-      const { validation } = priceValidation.data;
-      const { itemsByShop, finalTotal: totalAmount } = validation;
       const shopIds = Object.keys(itemsByShop);
+      const subtotal = cartItems.reduce((sum, item) => {
+        const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+        return sum + itemTotal;
+      }, 0);
+      
+      let totalDeliveryFee = 0;
+      
+      // Livraison gratuite si sous-total >= 3000 HTG
+      if (subtotal < 3000) {
+        for (const shopId of shopIds) {
+          const shopRegion = itemsByShop[shopId][0].shop_region;
+          totalDeliveryFee += calculateDeliveryFee(user.region, shopRegion);
+        }
+      }
+      
+      const baseAmount = subtotal + totalDeliveryFee + (user?.pending_balance || 0);
+      const totalAmount = paymentSplit === 'split' ? baseAmount / 2 : baseAmount;
 
       // Si Square, traiter le paiement par carte
       if (paymentMethod === 'card') {
@@ -104,9 +116,12 @@ export default function Cart() {
         try {
           const createdOrders = [];
           for (const shopId of shopIds) {
-            // Utiliser les prix VALIDÉS côté serveur
-            const validatedItems = itemsByShop[shopId].items;
-            const shopSubtotal = validatedItems.reduce((sum, item) => sum + item.verified_total, 0);
+            const shopItems = itemsByShop[shopId];
+            const shopSubtotal = shopItems.reduce((sum, item) => {
+              const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+              return sum + itemTotal;
+            }, 0);
+            const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
             const orderNum = 'RP' + Date.now().toString().slice(-6) + '-' + shopId.slice(-4);
             const code = generateConfirmationCode();
 
@@ -118,19 +133,19 @@ export default function Cart() {
               client_address: user.address || '',
               client_region: user.region,
               shop_id: shopId,
-              shop_name: validatedItems[0].shop_name,
-              shop_region: validatedItems[0].shop_region,
-              items: validatedItems.map(item => ({
+              shop_name: shopItems[0].shop_name,
+              shop_region: shopItems[0].shop_region,
+              items: shopItems.map(item => ({
                 product_id: item.product_id,
                 name: item.product_name,
                 quantity: item.quantity,
-                unit_price: item.verified_price + item.verified_customization_price,
-                total: item.verified_total,
+                unit_price: item.unit_price + (item.total_customization_price || 0),
+                total: (item.unit_price + (item.total_customization_price || 0)) * item.quantity,
                 customization: item.customization
               })),
               subtotal: shopSubtotal,
-              delivery_fee: validation.deliveryFee / shopIds.length,
-              total: shopSubtotal + (validation.deliveryFee / shopIds.length),
+              delivery_fee: shopDeliveryFee,
+              total: shopSubtotal + shopDeliveryFee,
               payment_method: 'card',
               payment_split: paymentSplit,
               status: 'pending',
@@ -186,9 +201,12 @@ export default function Cart() {
         
         const createdOrders = [];
         for (const shopId of shopIds) {
-          // Utiliser les prix VALIDÉS côté serveur
-          const validatedItems = itemsByShop[shopId].items;
-          const shopSubtotal = validatedItems.reduce((sum, item) => sum + item.verified_total, 0);
+          const shopItems = itemsByShop[shopId];
+          const shopSubtotal = shopItems.reduce((sum, item) => {
+            const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+            return sum + itemTotal;
+          }, 0);
+          const shopDeliveryFee = calculateDeliveryFee(user.region, shopItems[0].shop_region);
           const code = generateConfirmationCode();
 
           const order = await base44.entities.Order.create({
@@ -199,19 +217,19 @@ export default function Cart() {
             client_address: user.address || '',
             client_region: user.region,
             shop_id: shopId,
-            shop_name: validatedItems[0].shop_name,
-            shop_region: validatedItems[0].shop_region,
-            items: validatedItems.map(item => ({
+            shop_name: shopItems[0].shop_name,
+            shop_region: shopItems[0].shop_region,
+            items: shopItems.map(item => ({
               product_id: item.product_id,
               name: item.product_name,
               quantity: item.quantity,
-              unit_price: item.verified_price + item.verified_customization_price,
-              total: item.verified_total,
+              unit_price: item.unit_price + (item.total_customization_price || 0),
+              total: (item.unit_price + (item.total_customization_price || 0)) * item.quantity,
               customization: item.customization
             })),
             subtotal: shopSubtotal,
-            delivery_fee: validation.deliveryFee / shopIds.length,
-            total: shopSubtotal + (validation.deliveryFee / shopIds.length),
+            delivery_fee: shopDeliveryFee,
+            total: shopSubtotal + shopDeliveryFee,
             payment_method: 'moncash',
             payment_split: paymentSplit,
             status: 'pending',
