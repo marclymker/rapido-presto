@@ -64,6 +64,37 @@ export default function AdminProducts() {
     setShowForm(true);
   };
 
+  // Generate alt text for all products missing it
+  const handleGenerateAllAltTexts = async () => {
+    // Fetch ALL products (not just current shop)
+    setGeneratingAlt(true);
+    try {
+      const allProducts = await base44.entities.Product.list();
+      const missing = allProducts.filter(p => !p.image_alt && p.name);
+      setAltProgress({ done: 0, total: missing.length });
+
+      if (missing.length === 0) {
+        toast.info('Tous les articles ont déjà un Alt Text !');
+        setGeneratingAlt(false);
+        return;
+      }
+
+      for (let i = 0; i < missing.length; i++) {
+        const p = missing[i];
+        const alt = [p.name, p.category, p.subcategory].filter(Boolean).join(' - ') + ' Haiti';
+        await base44.entities.Product.update(p.id, { image_alt: alt });
+        setAltProgress({ done: i + 1, total: missing.length });
+      }
+
+      queryClient.invalidateQueries(['admin-products']);
+      toast.success(`Alt Text généré pour ${missing.length} articles !`);
+    } catch (err) {
+      toast.error('Erreur lors de la génération');
+    }
+    setGeneratingAlt(false);
+    setAltProgress({ done: 0, total: 0 });
+  };
+
   if (!user) return null;
 
   return (
