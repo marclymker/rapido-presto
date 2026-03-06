@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Package, Trash2, Edit, Store } from 'lucide-react';
+import { Plus, Package, Trash2, Edit, Store, ImageIcon, Loader2 } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 
 export default function AdminProducts() {
