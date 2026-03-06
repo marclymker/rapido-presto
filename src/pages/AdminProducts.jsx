@@ -13,6 +13,8 @@ export default function AdminProducts() {
   const [selectedShop, setSelectedShop] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [generatingAlt, setGeneratingAlt] = useState(false);
+  const [altProgress, setAltProgress] = useState({ done: 0, total: 0 });
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
