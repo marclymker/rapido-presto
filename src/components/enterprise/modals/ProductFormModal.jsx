@@ -584,7 +584,6 @@ Répondez au format JSON strict.`,
                       <SelectItem value="Bébé">👶 Bébé</SelectItem>
                       <SelectItem value="Outils">🔧 Outils</SelectItem>
                       <SelectItem value="Bijoux">💎 Bijoux</SelectItem>
-                      <SelectItem value="Matériels Décor">🎀 Matériels Décor</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
