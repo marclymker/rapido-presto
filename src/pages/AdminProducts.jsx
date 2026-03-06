@@ -4,8 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Package, Trash2, Edit, Store, ImageIcon, Loader2 } from 'lucide-react';
-import { Badge } from "@/components/ui/badge";
+import { Plus, Package, Trash2, Edit, Store } from 'lucide-react';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 
 export default function AdminProducts() {
@@ -13,8 +12,6 @@ export default function AdminProducts() {
   const [selectedShop, setSelectedShop] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [generatingAlt, setGeneratingAlt] = useState(false);
-  const [altProgress, setAltProgress] = useState({ done: 0, total: 0 });
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
@@ -64,62 +61,13 @@ export default function AdminProducts() {
     setShowForm(true);
   };
 
-  // Generate alt text for all products missing it
-  const handleGenerateAllAltTexts = async () => {
-    // Fetch ALL products (not just current shop)
-    setGeneratingAlt(true);
-    try {
-      const allProducts = await base44.entities.Product.list();
-      const missing = allProducts.filter(p => !p.image_alt && p.name);
-      setAltProgress({ done: 0, total: missing.length });
-
-      if (missing.length === 0) {
-        toast.info('Tous les articles ont déjà un Alt Text !');
-        setGeneratingAlt(false);
-        return;
-      }
-
-      for (let i = 0; i < missing.length; i++) {
-        const p = missing[i];
-        const alt = [p.name, p.category, p.subcategory].filter(Boolean).join(' - ') + ' Haiti';
-        await base44.entities.Product.update(p.id, { image_alt: alt });
-        setAltProgress({ done: i + 1, total: missing.length });
-      }
-
-      queryClient.invalidateQueries(['admin-products']);
-      toast.success(`Alt Text généré pour ${missing.length} articles !`);
-    } catch (err) {
-      toast.error('Erreur lors de la génération');
-    }
-    setGeneratingAlt(false);
-    setAltProgress({ done: 0, total: 0 });
-  };
-
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
+        <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-slate-800">Gestion des Articles</h1>
-          <Button
-            variant="outline"
-            onClick={handleGenerateAllAltTexts}
-            disabled={generatingAlt}
-            className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-50"
-          >
-            {generatingAlt ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                {altProgress.total > 0 ? `${altProgress.done}/${altProgress.total}` : 'Chargement...'}
-              </>
-            ) : (
-              <>
-                <ImageIcon className="w-4 h-4" />
-                Générer Alt Text (tous les articles)
-              </>
-            )}
-          </Button>
         </div>
 
         {!selectedShop ? (
