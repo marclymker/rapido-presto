@@ -238,6 +238,13 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     }
   }, [formData.name, formData.image_url, aiGenerated, aiLoading, showForm]);
 
+  // Auto-fill image_alt from name
+  useEffect(() => {
+    if (formData.name && !formData.image_alt) {
+      setFormData(prev => ({ ...prev, image_alt: prev.name }));
+    }
+  }, [formData.name]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
      
