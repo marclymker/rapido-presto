@@ -176,11 +176,9 @@ export default function Home() {
 
     { id: 'Bébé', name: 'Bébé', icon: '👶' },
 
-    { id: 'Outils', name: 'Outils', icon: '🔧' }
-
+    { id: 'Outils', name: 'Outils', icon: '🔧' },
+    { id: 'Matériels Décor', name: 'Décoration', icon: '🎀' }
   ];
-
-
 
   // ⚡ OPTIMISÉ: Auto-refresh désactivé sur page d'accueil (performances)
   // Réactivé uniquement sur pages commandes/suivi en temps réel
