@@ -100,8 +100,26 @@ export default function AdminProducts() {
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
           <h1 className="text-2xl font-bold text-slate-800">Gestion des Articles</h1>
+          <Button
+            variant="outline"
+            onClick={handleGenerateAllAltTexts}
+            disabled={generatingAlt}
+            className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-50"
+          >
+            {generatingAlt ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {altProgress.total > 0 ? `${altProgress.done}/${altProgress.total}` : 'Chargement...'}
+              </>
+            ) : (
+              <>
+                <ImageIcon className="w-4 h-4" />
+                Générer Alt Text (tous les articles)
+              </>
+            )}
+          </Button>
         </div>
 
         {!selectedShop ? (
