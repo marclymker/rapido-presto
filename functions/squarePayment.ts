@@ -1,12 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { Client, Environment } from 'npm:square';
+import { checkRateLimit, rateLimitResponse, PAYMENT_MAX_REQUESTS } from './rateLimiter.js';
+import { validateInput, squarePaymentSchema } from './validationSchemas.js';
+import { verifyCSRF } from './csrfProtection.js';
 
 Deno.serve(async (req) => {
+  // SÉCURITÉ: CORS restreint à l'origine de l'app
+  const allowedOrigin = Deno.env.get('APP_URL') || 'https://rapido-presto.base44.app';
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Credentials': 'true'
   };
 
   if (req.method === 'OPTIONS') {
@@ -14,6 +20,18 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // SÉCURITÉ: Protection CSRF
+    const csrfCheck = verifyCSRF(req);
+    if (!csrfCheck.valid) {
+      return Response.json({ error: 'CSRF validation failed' }, { status: 403, headers });
+    }
+
+    // SÉCURITÉ: Rate limiting sur les paiements
+    const rateLimit = checkRateLimit(req, 'square-payment', PAYMENT_MAX_REQUESTS);
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.retryAfter);
+    }
+
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
@@ -22,7 +40,14 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { sourceId, amount, orderId } = body;
+    
+    // SÉCURITÉ: Validation Zod des entrées
+    const validation = validateInput(squarePaymentSchema, body);
+    if (!validation.success) {
+      return Response.json({ error: validation.error, details: validation.details }, { status: 400, headers });
+    }
+
+    const { sourceId, amount, orderId } = validation.data;
 
     // Initialize Square client
     const client = new Client({
