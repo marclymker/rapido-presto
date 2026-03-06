@@ -484,6 +484,21 @@ Répondez au format JSON strict.`,
                     </div>
 
                     {formData.image_url && (
+                        <div className="mt-3 w-full">
+                          <Label className="text-xs text-slate-500 mb-1 block flex items-center gap-1">
+                            <Tag className="w-3 h-3" /> Texte alternatif (Alt)
+                          </Label>
+                          <Input
+                            value={formData.image_alt}
+                            onChange={(e) => setFormData({ ...formData, image_alt: e.target.value })}
+                            placeholder="Description de l'image pour le SEO..."
+                            className="h-8 text-sm bg-white"
+                          />
+                          <p className="text-[10px] text-slate-400 mt-0.5">Autofill depuis le titre · Modifiable</p>
+                        </div>
+                    )}
+
+                    {formData.image_url && (
                         <div className="mt-4 flex justify-center">
                             <Button
                               type="button"
