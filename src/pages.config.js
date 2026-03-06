@@ -58,29 +58,29 @@ import AgentCommissions from './pages/AgentCommissions';
 import AgentDashboard from './pages/AgentDashboard';
 import AllOrdersAdmin from './pages/AllOrdersAdmin';
 import Cart from './pages/Cart';
+import CategoryPage from './pages/CategoryPage';
 import Chat from './pages/Chat';
 import Dashboard from './pages/Dashboard';
 import DriverAccount from './pages/DriverAccount';
 import DriverDashboard from './pages/DriverDashboard';
 import EnterpriseAccount from './pages/EnterpriseAccount';
 import EnterpriseDashboard from './pages/EnterpriseDashboard';
+import EventPlannerHaiti from './pages/EventPlannerHaiti';
 import Home from './pages/Home';
 import ManageProfiles from './pages/ManageProfiles';
 import Orders from './pages/Orders';
 import PaymentCallback from './pages/PaymentCallback';
 import Pricing from './pages/Pricing';
 import Product from './pages/Product';
+import ProductPage from './pages/ProductPage';
 import Products from './pages/Products';
 import ProfileSetup from './pages/ProfileSetup';
+import RobeDeMariageHaiti from './pages/RobeDeMariageHaiti';
+import ShopPage from './pages/ShopPage';
 import ShopView from './pages/ShopView';
 import TestNotifications from './pages/TestNotifications';
 import UpdateProducts from './pages/UpdateProducts';
-import ProductPage from './pages/ProductPage';
-import CategoryPage from './pages/CategoryPage';
-import ShopPage from './pages/ShopPage';
-import RobeDeMariageHaiti from './pages/RobeDeMariageHaiti';
 import WeddingPlannerHaiti from './pages/WeddingPlannerHaiti';
-import EventPlannerHaiti from './pages/EventPlannerHaiti';
 import __Layout from './Layout.jsx';
 
 
@@ -96,29 +96,29 @@ export const PAGES = {
     "AgentDashboard": AgentDashboard,
     "AllOrdersAdmin": AllOrdersAdmin,
     "Cart": Cart,
+    "CategoryPage": CategoryPage,
     "Chat": Chat,
     "Dashboard": Dashboard,
     "DriverAccount": DriverAccount,
     "DriverDashboard": DriverDashboard,
     "EnterpriseAccount": EnterpriseAccount,
     "EnterpriseDashboard": EnterpriseDashboard,
+    "EventPlannerHaiti": EventPlannerHaiti,
     "Home": Home,
     "ManageProfiles": ManageProfiles,
     "Orders": Orders,
     "PaymentCallback": PaymentCallback,
     "Pricing": Pricing,
     "Product": Product,
+    "ProductPage": ProductPage,
     "Products": Products,
     "ProfileSetup": ProfileSetup,
+    "RobeDeMariageHaiti": RobeDeMariageHaiti,
+    "ShopPage": ShopPage,
     "ShopView": ShopView,
     "TestNotifications": TestNotifications,
     "UpdateProducts": UpdateProducts,
-    "ProductPage": ProductPage,
-    "CategoryPage": CategoryPage,
-    "ShopPage": ShopPage,
-    "RobeDeMariageHaiti": RobeDeMariageHaiti,
     "WeddingPlannerHaiti": WeddingPlannerHaiti,
-    "EventPlannerHaiti": EventPlannerHaiti,
 }
 
 export const pagesConfig = {
