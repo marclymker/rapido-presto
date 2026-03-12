@@ -26,15 +26,17 @@ export const trackGA4Purchase = (order) => {
 
 export const trackGA4AddToCart = (product, quantity = 1) => {
   if (window.gtag) {
+    const price = parseFloat(product.promo_price || product.price || 0);
     window.gtag('event', 'add_to_cart', {
       currency: 'HTG',
-      value: product.price * quantity,
+      value: price * quantity,
       items: [{
         item_id: product.id,
         item_name: product.name,
-        price: product.price,
+        price: price,
         quantity: quantity,
-        item_category: product.category
+        item_category: product.category,
+        item_brand: product.shop_name || ''
       }]
     });
   }
@@ -42,14 +44,16 @@ export const trackGA4AddToCart = (product, quantity = 1) => {
 
 export const trackGA4ViewItem = (product) => {
   if (window.gtag) {
+    const price = parseFloat(product.promo_price || product.price || 0);
     window.gtag('event', 'view_item', {
       currency: 'HTG',
-      value: product.price,
+      value: price,
       items: [{
         item_id: product.id,
         item_name: product.name,
-        price: product.price,
-        item_category: product.category
+        price: price,
+        item_category: product.category,
+        item_brand: product.shop_name || ''
       }]
     });
   }

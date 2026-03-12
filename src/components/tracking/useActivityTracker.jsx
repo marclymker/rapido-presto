@@ -1,5 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/components/auth/useAuth';
+import { trackGA4ViewItem, trackGA4AddToCart, trackGA4BeginCheckout, trackGA4Purchase } from '@/components/tracking/GA4Tracker';
 
 export function useActivityTracker() {
   const { user } = useAuth();
@@ -21,28 +22,31 @@ export function useActivityTracker() {
         user_id: userId,
         ...activityData
       });
-
-      // Track avec Meta Pixel aussi
-      if (window.fbq) {
-        if (activityData.activity_type === 'product_view') {
-          window.fbq('track', 'ViewContent', {
-            content_ids: [activityData.product_id],
-            content_name: activityData.product_name,
-            content_category: activityData.category
-          });
-        } else if (activityData.activity_type === 'add_to_cart') {
-          window.fbq('track', 'AddToCart', {
-            content_ids: [activityData.product_id],
-            content_name: activityData.product_name
-          });
-        }
-      }
     } catch (error) {
-      console.log('Tracking error:', error);
+      // Tracking errors are non-blocking
     }
   };
 
+  // 🎯 TRACKING PRODUIT VU (ViewContent)
   const trackProductView = (product, shop) => {
+    const price = product.promo_price || product.price || 0;
+    
+    // Meta Pixel - CORRIGÉ: content_type requis pour Dynamic Product Ads
+    if (window.fbq) {
+      window.fbq('track', 'ViewContent', {
+        content_ids: [product.id],
+        content_type: 'product',        // ✅ REQUIS pour Dynamic Product Ads
+        content_name: product.name,
+        content_category: product.category,
+        value: parseFloat(price),
+        currency: 'HTG'
+      });
+    }
+
+    // GA4 eCommerce
+    trackGA4ViewItem(product);
+
+    // Activité interne
     trackActivity({
       activity_type: 'product_view',
       product_id: product.id,
@@ -52,11 +56,70 @@ export function useActivityTracker() {
     });
   };
 
-  const trackCategoryView = (category) => {
+  // 🛒 TRACKING AJOUT PANIER (AddToCart)
+  const trackAddToCart = (product, quantity = 1) => {
+    const price = product.promo_price || product.price || 0;
+    const totalValue = parseFloat(price) * quantity;
+
+    // Meta Pixel - CORRIGÉ: content_type + value requis pour DPA
+    if (window.fbq) {
+      window.fbq('track', 'AddToCart', {
+        content_ids: [product.id],
+        content_type: 'product',        // ✅ REQUIS pour Dynamic Product Ads
+        content_name: product.name,
+        content_category: product.category,
+        value: totalValue,
+        currency: 'HTG'
+      });
+    }
+
+    // GA4 eCommerce
+    trackGA4AddToCart(product, quantity);
+
+    // Activité interne
     trackActivity({
-      activity_type: 'category_view',
-      category: category
+      activity_type: 'add_to_cart',
+      product_id: product.id,
+      product_name: product.name,
+      category: product.category
     });
+  };
+
+  // 💳 TRACKING DÉBUT CHECKOUT (InitiateCheckout)
+  const trackInitiateCheckout = (cartItems, total) => {
+    if (window.fbq) {
+      window.fbq('track', 'InitiateCheckout', {
+        content_ids: cartItems.map(item => item.product_id),
+        content_type: 'product',
+        num_items: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+        value: parseFloat(total),
+        currency: 'HTG'
+      });
+    }
+
+    // GA4 eCommerce
+    trackGA4BeginCheckout(cartItems, total);
+  };
+
+  // ✅ TRACKING ACHAT COMPLÉTÉ (Purchase)
+  const trackPurchase = (order) => {
+    if (window.fbq) {
+      window.fbq('track', 'Purchase', {
+        content_ids: order.items?.map(item => item.product_id) || [],
+        content_type: 'product',
+        num_items: order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0,
+        value: parseFloat(order.total),
+        currency: 'HTG',
+        order_id: order.order_number
+      });
+    }
+
+    // GA4 eCommerce
+    trackGA4Purchase(order);
+  };
+
+  const trackCategoryView = (category) => {
+    trackActivity({ activity_type: 'category_view', category });
   };
 
   const trackShopView = (shop) => {
@@ -68,26 +131,16 @@ export function useActivityTracker() {
   };
 
   const trackSearch = (query) => {
-    trackActivity({
-      activity_type: 'search',
-      search_query: query
-    });
-  };
-
-  const trackAddToCart = (product) => {
-    trackActivity({
-      activity_type: 'add_to_cart',
-      product_id: product.id,
-      product_name: product.name,
-      category: product.category
-    });
+    trackActivity({ activity_type: 'search', search_query: query });
   };
 
   return {
     trackProductView,
+    trackAddToCart,
+    trackInitiateCheckout,
+    trackPurchase,
     trackCategoryView,
     trackShopView,
-    trackSearch,
-    trackAddToCart
+    trackSearch
   };
 }

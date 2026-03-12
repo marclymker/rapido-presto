@@ -19,10 +19,9 @@ import { useBackButton } from '@/components/navigation/useBackButton';
 const WEDDING_STRUCTURE = [
   {
     title: "Robe de Mariage",
-    subtypes: ["Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe Civil"]
+    subtypes: ["Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe de Cérémonie"]
   },
   { title: "Demoiselle d'honneur" },
-  { title: "Annonceuse" },
   { title: "Témoins" },
   { title: "Bague de Mariage" },
   { title: "Bague" },

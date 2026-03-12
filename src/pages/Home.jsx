@@ -787,11 +787,8 @@ export default function Home() {
               ) : (
 
                 <div className="flex flex-col leading-tight cursor-pointer" onClick={() => window.location.reload()}>
-
-                    <span className="text-xl font-bold tracking-tight">Rapido</span>
-
+                    <h1 className="text-xl font-bold tracking-tight leading-none m-0 p-0">Rapido</h1>
                     <span className="text-sm text-orange-400 -mt-1 ml-4">Presto</span>
-
                 </div>
 
               )}
