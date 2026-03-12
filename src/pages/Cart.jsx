@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
 import { getHaitiTime } from '@/components/utils/dateFormat';
 import SquarePaymentForm from '@/components/payment/SquarePaymentForm';
+import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 
 function calculateDeliveryFee(clientCommune, shopCommune) {
   const hour = getHaitiTime().getHours();
@@ -34,6 +35,7 @@ function generateConfirmationCode() {
 }
 
 export default function Cart() {
+  const { trackInitiateCheckout, trackPurchase } = useActivityTracker();
   const [user, setUser] = useState(null);
   const [step, setStep] = useState('cart');
   const [paymentMethod, setPaymentMethod] = useState('moncash');
@@ -281,12 +283,23 @@ export default function Cart() {
         return;
       }
       
-      // Square: afficher confirmation
+      // Square: afficher confirmation + tracking Purchase
       queryClient.invalidateQueries(['cart']);
       setOrderNumber(data.orderNum);
       setConfirmCode(data.code);
       setStep('confirmed');
       toast.success('Commande confirmée!');
+      // Track achat GA4 + Meta Pixel
+      trackPurchase({
+        order_number: data.orderNum,
+        total: baseTotal,
+        items: cartItems.map(item => ({
+          product_id: item.product_id,
+          name: item.product_name,
+          quantity: item.quantity,
+          unit_price: item.unit_price
+        }))
+      });
     },
     onError: (error) => {
       console.error('❌ Erreur mutation:', error);
@@ -499,7 +512,10 @@ export default function Cart() {
 
               <Button
                 className="w-full mt-4 bg-orange-500 hover:bg-orange-600 h-12 text-lg"
-                onClick={() => setStep('checkout')}
+                onClick={() => {
+                  trackInitiateCheckout(cartItems, baseTotal);
+                  setStep('checkout');
+                }}
               >
                 Confirmer la commande
               </Button>
