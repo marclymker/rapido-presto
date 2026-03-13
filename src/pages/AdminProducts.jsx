@@ -4,13 +4,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Package, Trash2, Edit, Store } from 'lucide-react';
+import { Plus, Package, Trash2, Edit, Store, UploadCloud } from 'lucide-react';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
+import BulkUploadModal from '@/components/admin/BulkUploadModal';
 
 export default function AdminProducts() {
   const [user, setUser] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const queryClient = useQueryClient();
 
@@ -116,16 +118,26 @@ export default function AdminProducts() {
                   </div>
                 </div>
               </div>
-              <Button 
-                onClick={() => { 
-                  setEditingProduct(null); 
-                  setShowForm(true);
-                }} 
-                className="bg-orange-500 hover:bg-orange-600"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Ajouter un article
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBulkUpload(true)}
+                  className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                >
+                  <UploadCloud className="w-4 h-4 mr-2" />
+                  Ajout en masse
+                </Button>
+                <Button 
+                  onClick={() => { 
+                    setEditingProduct(null); 
+                    setShowForm(true);
+                  }} 
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter un article
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -192,6 +204,17 @@ export default function AdminProducts() {
           </div>
         )}
       </div>
+
+      <BulkUploadModal
+        open={showBulkUpload}
+        onClose={() => setShowBulkUpload(false)}
+        shopId={selectedShop?.id}
+        shopName={selectedShop?.company_name}
+        onSuccess={() => {
+          queryClient.invalidateQueries(['admin-products']);
+          setShowBulkUpload(false);
+        }}
+      />
 
       <ProductFormModal
         product={editingProduct}
