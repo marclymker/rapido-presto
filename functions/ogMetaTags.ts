@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-const APP_URL = Deno.env.get('APP_URL') || 'https://rapido-presto.base44.app';
+// APP_URL doit correspondre exactement au domaine public de l'app
+const APP_URL = (Deno.env.get('APP_URL') || 'https://rapido-presto.base44.app').replace(/\/$/, '');
 
 function getOptimizedImageUrl(imageUrl) {
   if (!imageUrl) return '';
