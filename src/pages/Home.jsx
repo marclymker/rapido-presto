@@ -732,7 +732,6 @@ export default function Home() {
 
   return (
 
-    <PullToRefresh onRefresh={async () => { queryClient.invalidateQueries(['all-products']); queryClient.invalidateQueries(['shops']); }}>
     <div className="min-h-screen pb-20 font-sans" style={{ backgroundColor: theme.bgGray }}>
 
       <Helmet>
@@ -972,6 +971,7 @@ export default function Home() {
 
 
 
+      <PullToRefresh onRefresh={async () => { queryClient.invalidateQueries(['all-products']); queryClient.invalidateQueries(['shops']); }}>
       <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-32">
 
         
@@ -1828,8 +1828,7 @@ export default function Home() {
         )}
 
       </main>
-
-
+      </PullToRefresh>
 
       {user && cartCount > 0 && (
 
@@ -1979,7 +1978,6 @@ export default function Home() {
       />
 
     </div>
-    </PullToRefresh>
 
   );
 
