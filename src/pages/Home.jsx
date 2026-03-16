@@ -2367,7 +2367,3 @@ export default function Home() {
   );
 
 }
-
-
-
-// RecommendedSection is now in components/home/RecommendedSection.jsx
