@@ -35,6 +35,8 @@ import { useGuestCart } from '@/components/cart/useGuestCart';
 import { useBackButton } from '@/components/navigation/useBackButton';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
+import RecommendedSection from '@/components/home/RecommendedSection';
+import WeddingSubcategoryTabs from '@/components/home/WeddingSubcategoryTabs';
 // ⚡ Lazy Loading - Composants lourds chargés à la demande
 const SmallStories = lazy(() => import('@/components/home/SmallStories'));
 const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
