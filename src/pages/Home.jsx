@@ -34,7 +34,7 @@ import { useAuth } from '@/components/auth/useAuth';
 import { useGuestCart } from '@/components/cart/useGuestCart';
 import { useBackButton } from '@/components/navigation/useBackButton';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
-
+import PullToRefresh from '@/components/mobile/PullToRefresh';
 // ⚡ Lazy Loading - Composants lourds chargés à la demande
 const SmallStories = lazy(() => import('@/components/home/SmallStories'));
 const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
