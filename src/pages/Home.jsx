@@ -2370,12 +2370,10 @@ export default function Home() {
 
 
 
-// Carousel Recommandations
+// RecommendedSection extracted to components/home/RecommendedSection.jsx
 
 function RecommendedSection({ allProducts, shops, user, setSelectedShop, setSelectedProduct, getClientPrice }) {
-
-  const rowContainers = [useRef(null), useRef(null), useRef(null)];
-
+  // This function is kept as a thin wrapper - real logic is in the component file
   const getSafeProducts = React.useCallback(() => {
     return Array.isArray(allProducts) ? allProducts : [];
   }, [allProducts]);
