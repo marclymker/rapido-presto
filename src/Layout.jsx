@@ -20,6 +20,7 @@ import InstallPrompt from '@/components/pwa/InstallPrompt';
 import SessionValidator from '@/components/auth/SessionValidator';
 import GA4Tracker from '@/components/tracking/GA4Tracker';
 import OfflineIndicator from '@/components/offline/OfflineIndicator';
+import ThemeProvider from '@/components/theme/ThemeProvider';
 import { useServiceWorker } from '@/components/offline/useServiceWorker';
 import { useCacheManager } from '@/components/offline/useCacheManager';
 
@@ -301,6 +302,7 @@ export default function Layout({ children, currentPageName }) {
         <SessionValidator user={user} />
         <GA4Tracker />
         <OfflineIndicator />
+        <ThemeProvider />
         
 
       
