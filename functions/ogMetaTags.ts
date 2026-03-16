@@ -120,6 +120,7 @@ Deno.serve(async (req) => {
   <meta name="description" content="${pageDescription}">
 
   <!-- Open Graph / WhatsApp / Facebook -->
+  <meta property="fb:app_id" content="1346505637253912" />
   <meta property="og:type" content="${product ? 'product' : 'website'}" />
   <meta property="og:site_name" content="Rapido Presto" />
   <meta property="og:title" content="${pageTitle}" />
