@@ -732,6 +732,7 @@ export default function Home() {
 
   return (
 
+    <PullToRefresh onRefresh={async () => { queryClient.invalidateQueries(['all-products']); queryClient.invalidateQueries(['shops']); }}>
     <div className="min-h-screen pb-20 font-sans" style={{ backgroundColor: theme.bgGray }}>
 
       <Helmet>
