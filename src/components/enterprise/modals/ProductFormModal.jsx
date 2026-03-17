@@ -270,7 +270,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         .replace(/^-+|-+$/g, '')
         .substring(0, 60);
 
-      const dataWithSlug = { ...formData, slug: slug || undefined };
+      const dataWithSlug = { ...formData, slug: slug || undefined, image_alt: formData.image_alt || formData.name };
 
       if (product) {
         await base44.entities.Product.update(product.id, dataWithSlug);
