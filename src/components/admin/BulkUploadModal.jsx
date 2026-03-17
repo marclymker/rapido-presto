@@ -377,7 +377,7 @@ Répondez en JSON strict.`,
                         value={row.sale_price}
                         onChange={e => updateRow(row.id, { sale_price: e.target.value })}
                         placeholder="0"
-                        className="h-8 text-xs border-slate-200"
+                        className="h-8 text-xs text-slate-900 placeholder:text-slate-400 border-slate-200"
                       />
                     </td>
 
