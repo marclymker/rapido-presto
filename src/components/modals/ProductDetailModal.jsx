@@ -15,7 +15,6 @@ import ChatButton from '@/components/chat/ChatButton';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { createPageUrl } from '@/utils';
 import ShareProductButton from '@/components/share/ShareProductButton';
-import { useProductOGLink } from '@/hooks/useProductOGLink';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
