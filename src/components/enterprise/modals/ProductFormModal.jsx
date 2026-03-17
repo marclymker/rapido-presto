@@ -658,17 +658,17 @@ Répondez au format JSON strict.`,
               </div>
           </div>
 
-          {/* Section 3: Catégorisation Facebook */}
+          {/* Section 3: Catégorisation Interne + Facebook */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
               <div className="flex items-center gap-2 mb-2 pb-2 border-b">
                  <Layers className="w-4 h-4 text-slate-500" />
-                 <h3 className="font-semibold text-slate-700">Catégorie Facebook</h3>
-                 <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Marketplace</span>
+                 <h3 className="font-semibold text-slate-700">Catégorisation Produit</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Catégories Internes (Rapido) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
                  <div>
-                   <Label className="mb-1.5">Catégorie principale</Label>
+                   <Label className="mb-1.5 text-xs font-semibold text-slate-600">🏪 Catégorie Rapido</Label>
                    <Select 
                      value={formData.category} 
                      onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: '' })}
@@ -688,7 +688,7 @@ Répondez au format JSON strict.`,
 
                  {activeSubCategories.length > 0 && (
                    <div className="animate-in fade-in slide-in-from-top-2">
-                     <Label className="mb-1.5">Sous-catégorie</Label>
+                     <Label className="mb-1.5 text-xs font-semibold text-slate-600">📌 Sous-catégorie Rapido</Label>
                      <Select 
                        value={formData.subcategory} 
                        onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
@@ -702,6 +702,49 @@ Répondez au format JSON strict.`,
                          ))}
                        </SelectContent>
                      </Select>
+                   </div>
+                 )}
+             </div>
+
+             {/* Catégories Facebook (Génération IA automatique) */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-blue-50/40 rounded-lg border border-blue-200">
+                 <div>
+                   <Label className="mb-1.5 text-xs font-semibold text-blue-700">📱 Catégorie Facebook ✨</Label>
+                   <Select 
+                     value={formData.facebook_category} 
+                     onValueChange={(v) => setFormData({ ...formData, facebook_category: v, facebook_subcategory: '' })}
+                   >
+                     <SelectTrigger className="h-11 border-blue-300 bg-white">
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                       {Object.keys(FB_CATEGORIES).map((cat) => (
+                         <SelectItem key={cat} value={cat}>
+                           {FB_CATEGORY_ICONS[cat]} {cat}
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                   <p className="text-xs text-blue-600 mt-1">⚡ Générée automatiquement par l'IA</p>
+                 </div>
+
+                 {formData.facebook_category && FB_CATEGORIES[formData.facebook_category]?.length > 0 && (
+                   <div className="animate-in fade-in slide-in-from-top-2">
+                     <Label className="mb-1.5 text-xs font-semibold text-blue-700">🎯 Sous-catégorie Facebook ✨</Label>
+                     <Select 
+                       value={formData.facebook_subcategory} 
+                       onValueChange={(v) => setFormData({ ...formData, facebook_subcategory: v })}
+                     >
+                       <SelectTrigger className="h-11 border-blue-300 bg-white">
+                         <SelectValue placeholder="Générée par IA..." />
+                       </SelectTrigger>
+                       <SelectContent>
+                         {FB_CATEGORIES[formData.facebook_category]?.map((sub) => (
+                           <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                         ))}
+                       </SelectContent>
+                     </Select>
+                     <p className="text-xs text-blue-600 mt-1">⚡ Sélection automatique recommandée</p>
                    </div>
                  )}
              </div>
