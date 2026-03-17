@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 
 import { base44 } from '@/api/base44Client';
+import { FACEBOOK_CATEGORIES_COMPLETE, getAllFacebookSubcategories } from '@/lib/facebookCatalogConfig';
 
 const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
   if (!open) return null;
