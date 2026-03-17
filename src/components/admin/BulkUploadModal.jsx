@@ -42,6 +42,7 @@ const generateSlug = (name) =>
 const createEmptyRow = () => ({
   id: Date.now() + Math.random(),
   image_url: '',
+  image_alt: '',
   name: '',
   description: '',
   price: '',
