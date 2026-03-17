@@ -63,8 +63,10 @@ export default function ProductPage() {
   useEffect(() => {
     if (product) {
       setSelectedImage(0);
+      // Track ViewContent pour Meta Pixel + GA4
+      trackProductView(product, shop);
     }
-  }, [product]);
+  }, [product?.id]);
 
   const handleAddToCart = async () => {
     if (!user) {
