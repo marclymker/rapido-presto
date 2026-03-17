@@ -587,7 +587,6 @@ Répondez en JSON strict.`,
       </DialogContent>
     </Dialog>
 
-    {/* Image Picker Modal */}
     {showImagePicker && (
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
