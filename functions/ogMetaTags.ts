@@ -35,14 +35,25 @@ Deno.serve(async (req) => {
     let product = null;
 
     if (base44) {
-      const shops = await base44.asServiceRole.entities.Shop.filter({ slug: shopSlug });
+      // Chercher la boutique par slug ou ID
+      let shops = await base44.asServiceRole.entities.Shop.filter({ slug: shopParam });
+      if (!shops.length) {
+        shops = await base44.asServiceRole.entities.Shop.filter({ id: shopParam });
+      }
       shop = shops[0];
       
-      if (shop && productSlug) {
-        const products = await base44.asServiceRole.entities.Product.filter({ 
+      if (shop && productParam) {
+        // Chercher le produit par slug ou ID
+        let products = await base44.asServiceRole.entities.Product.filter({ 
           shop_id: shop.id, 
-          slug: productSlug 
+          slug: productParam 
         });
+        if (!products.length) {
+          products = await base44.asServiceRole.entities.Product.filter({ 
+            shop_id: shop.id, 
+            id: productParam 
+          });
+        }
         product = products[0];
       }
     }
