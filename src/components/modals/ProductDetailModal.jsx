@@ -501,22 +501,24 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             Payer Maintenant
           </Button>
 
-          <Button 
-            onClick={() => {
-              // Lien optimisé pour preview WhatsApp via fonction backend
-              const productUrl = shop?.slug && product.slug 
-                ? `${window.location.origin}/functions/ogMetaTags?slug=${shop.slug}&product=${product.slug}`
-                : `${window.location.origin}/functions/ogMetaTags?product=${product.id}`;
+          {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') && (
+            <Button 
+              onClick={() => {
+                // Lien optimisé pour preview WhatsApp via fonction backend
+                const productUrl = shop?.slug && product.slug 
+                  ? `${window.location.origin}/functions/ogMetaTags?slug=${shop.slug}&product=${product.slug}`
+                  : `${window.location.origin}/functions/ogMetaTags?product=${product.id}`;
 
-              const message = `Je suis intéressé par cet article\n${productUrl}`;
-              const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
+                const message = `Je Suis Interessé par Cet article\n${productUrl}`;
+                const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
 
-              window.open(whatsappUrl, '_blank');
-            }} 
-            className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl"
-          >
-            WhatsApp
-          </Button>
+                window.open(whatsappUrl, '_blank');
+              }} 
+              className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl"
+            >
+              WhatsApp
+            </Button>
+          )}
           
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-slate-100 rounded-xl p-1">

@@ -11,7 +11,6 @@ import ProductCard from '@/components/ui/ProductCard';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
 import { createPageUrl } from '@/utils';
-import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 
 /**
  * PAGE PRODUIT INDIVIDUELLE - SEO OPTIMISÉE
@@ -28,7 +27,6 @@ export default function ProductPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { trackProductView, trackAddToCart } = useActivityTracker();
   const [selectedImage, setSelectedImage] = useState(0);
 
   // Récupérer le produit par slug
@@ -63,10 +61,8 @@ export default function ProductPage() {
   useEffect(() => {
     if (product) {
       setSelectedImage(0);
-      // Track ViewContent pour Meta Pixel + GA4
-      trackProductView(product, shop);
     }
-  }, [product?.id]);
+  }, [product]);
 
   const handleAddToCart = async () => {
     if (!user) {
@@ -96,8 +92,6 @@ export default function ProductPage() {
         });
       }
       toast.success('Ajouté au panier');
-      // Track AddToCart Meta Pixel + GA4
-      trackAddToCart(product, 1);
     } catch (e) {
       toast.error('Erreur');
     }

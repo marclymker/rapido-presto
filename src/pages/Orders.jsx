@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import ReactPixel from 'react-facebook-pixel';
 import CancelOrderModal from '@/components/modals/CancelOrderModal';
 import { useMutation } from '@tanstack/react-query';
+import PullToRefresh from '@/components/mobile/PullToRefresh';
 
 export default function Orders() {
   const [user, setUser] = useState(null);
@@ -224,10 +225,14 @@ export default function Orders() {
     );
   }
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries(['orders']);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white sticky top-0 z-40 border-b">
+      <header className="bg-white sticky top-0 z-40 border-b shrink-0">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Link to={createPageUrl('Home')}>
@@ -240,7 +245,8 @@ export default function Orders() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <PullToRefresh onRefresh={handleRefresh}>
+      <main className="max-w-2xl mx-auto px-4 py-6 w-full">
         <Tabs defaultValue="active" className="w-full">
           <TabsList className="w-full bg-white">
             <TabsTrigger value="active" className="flex-1 gap-2">
@@ -290,6 +296,7 @@ export default function Orders() {
           </TabsContent>
         </Tabs>
       </main>
+      </PullToRefresh>
 
       {selectedOrder && ['driver_assigned', 'in_delivery'].includes(selectedOrder.status) ? (
         <div className={`fixed inset-0 z-50 ${selectedOrder ? 'block' : 'hidden'}`}>

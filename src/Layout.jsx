@@ -19,6 +19,7 @@ import InstallPrompt from '@/components/pwa/InstallPrompt';
 import SessionValidator from '@/components/auth/SessionValidator';
 import GA4Tracker from '@/components/tracking/GA4Tracker';
 import OfflineIndicator from '@/components/offline/OfflineIndicator';
+import ThemeProvider from '@/components/theme/ThemeProvider';
 import { useServiceWorker } from '@/components/offline/useServiceWorker';
 import { useCacheManager } from '@/components/offline/useCacheManager';
 
@@ -115,9 +116,6 @@ export default function Layout({ children, currentPageName }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Rapido" />
-        <link rel="alternate" hreflang="fr-HT" href="https://rapidopresto.shop" />
-        <link rel="alternate" hreflang="fr" href="https://rapidopresto.shop" />
-        <link rel="alternate" hreflang="x-default" href="https://rapidopresto.shop" />
         <link rel="dns-prefetch" href="https://qtrypzzcjebvfcihiynt.supabase.co" />
         <link rel="preconnect" href="https://qtrypzzcjebvfcihiynt.supabase.co" crossOrigin="anonymous" />
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
@@ -187,6 +185,7 @@ export default function Layout({ children, currentPageName }) {
 
       <div className="min-h-screen bg-slate-50 pb-20">
         <Toaster position="top-center" />
+        <ThemeProvider />
         <OneSignalInit user={user} />
         <NotificationPermission />
         <InstallPrompt />
@@ -202,7 +201,7 @@ export default function Layout({ children, currentPageName }) {
 
         {children}
 
-        {!noNavPages.includes(currentPageName) && (
+        {user && !noNavPages.includes(currentPageName) && (
           <SmartBottomNav
             cartCount={cartCount}
             activeOrdersCount={activeOrdersCount}
