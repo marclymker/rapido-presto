@@ -42,11 +42,6 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* OG Meta Tags preview route - redirige vers la fonction backend */}
-      <Route path="/og" element={
-        <OGMetaTagsRedirect />
-      } />
-      
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
           <MainPage />
