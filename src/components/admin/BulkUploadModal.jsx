@@ -271,24 +271,40 @@ Répondez en JSON strict.`,
 
                     {/* Image */}
                     <td className={colClass}>
-                      {row.image_url ? (
-                        <div className="relative w-12 h-12 rounded border overflow-hidden group">
-                          <img src={row.image_url} alt="" className="w-full h-full object-cover" />
+                      <div
+                        onDragOver={e => { e.preventDefault(); setDraggingOver(row.id); }}
+                        onDragLeave={() => setDraggingOver(null)}
+                        onDrop={e => handleDrop(e, row.id)}
+                      >
+                        {row.image_url ? (
+                          <div className={`relative w-16 h-16 rounded border-2 overflow-hidden group ${draggingOver === row.id ? 'border-blue-400 border-dashed' : 'border-transparent'}`}>
+                            <img src={row.image_url} alt="" className="w-full h-full object-cover" />
+                            <button
+                              onClick={() => updateRow(row.id, { image_url: '', aiDone: false })}
+                              className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                            >
+                              <X className="w-3 h-3 text-white" />
+                            </button>
+                          </div>
+                        ) : (
                           <button
-                            onClick={() => updateRow(row.id, { image_url: '', aiDone: false })}
-                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                            onClick={() => fileInputRefs.current[row.id]?.click()}
+                            className={`w-16 h-16 rounded border-2 border-dashed flex flex-col items-center justify-center transition-colors text-center gap-0.5
+                              ${draggingOver === row.id
+                                ? 'border-blue-500 bg-blue-50 scale-105'
+                                : 'border-slate-300 hover:border-blue-400 hover:bg-blue-50'
+                              }`}
                           >
-                            <X className="w-3 h-3 text-white" />
+                            {row.uploading
+                              ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                              : <>
+                                  <ImagePlus className="w-4 h-4 text-slate-400" />
+                                  <span className="text-[8px] text-slate-400 leading-tight">Glisser<br/>ou cliquer</span>
+                                </>
+                            }
                           </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => fileInputRefs.current[row.id]?.click()}
-                          className="w-12 h-12 rounded border-2 border-dashed border-slate-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-50 transition-colors"
-                        >
-                          {row.uploading ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" /> : <ImagePlus className="w-4 h-4 text-slate-300" />}
-                        </button>
-                      )}
+                        )}
+                      </div>
                       <input
                         type="file" accept="image/*" className="hidden"
                         ref={el => fileInputRefs.current[row.id] = el}
