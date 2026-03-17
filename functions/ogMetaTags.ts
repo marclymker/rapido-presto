@@ -8,11 +8,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
-    const shopSlug = url.searchParams.get('slug');
-    const productSlug = url.searchParams.get('product');
+    const shopParam = url.searchParams.get('slug'); // peut être slug ou ID
+    const productParam = url.searchParams.get('product'); // peut être slug ou ID
     
-    if (!shopSlug) {
-      return new Response('Shop slug required', { status: 400 });
+    if (!shopParam) {
+      return new Response('Shop slug or ID required', { status: 400 });
     }
 
     // Détecter les crawlers sociaux
