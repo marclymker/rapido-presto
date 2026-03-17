@@ -87,6 +87,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
 
   const handleImageUpload = async (rowId, file) => {
     if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Fichier image requis'); return; }
     updateRow(rowId, { uploading: true });
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -95,6 +96,13 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
       updateRow(rowId, { uploading: false });
       toast.error('Erreur upload image');
     }
+  };
+
+  const handleDrop = (e, rowId) => {
+    e.preventDefault();
+    setDraggingOver(null);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleImageUpload(rowId, file);
   };
 
   const handleMagieAI = async (rowId) => {
