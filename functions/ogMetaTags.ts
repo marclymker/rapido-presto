@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-      console.log(`[OG] Serving crawler HTML for ${shopSlug}/${productSlug || 'shop'}`);
+      console.log(`[OG] Serving crawler HTML for ${shopParam}/${productParam || 'shop'}`);
       
       return new Response(html, {
         status: 200,
