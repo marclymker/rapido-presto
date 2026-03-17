@@ -34,7 +34,8 @@ Deno.serve(async (req) => {
       const link = p.slug ? `https://rapido-presto.base44.app/product?slug=${p.slug}` : `https://rapido-presto.base44.app/product?id=${p.id}`;
       const image_link = p.image_url || "https://rapido-presto.base44.app/logo.png";
       const brand = escapeCSV(p.shop_name || "Rapido Presto");
-      
+      const google_product_category = escapeCSV(p.product_attributes?.fb_category || '');
+
       // Attributs produits (standards Facebook/Google Shopping)
       const color = escapeCSV(attrs.color || '');
       const size = escapeCSV(attrs.size || '');
