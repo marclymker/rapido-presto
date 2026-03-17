@@ -131,6 +131,13 @@ export function useActivityTracker() {
   };
 
   const trackSearch = (query) => {
+    // Meta Pixel Search event
+    if (window.fbq && query?.trim()) {
+      window.fbq('track', 'Search', {
+        search_string: query,
+        content_type: 'product'
+      });
+    }
     trackActivity({ activity_type: 'search', search_query: query });
   };
 
