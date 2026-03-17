@@ -509,9 +509,9 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                 try {
                   // Construire directement le lien OG
                   const appUrl = window.location.origin;
-                  const ogLink = product.slug && shop.slug
-                    ? `${appUrl}/functions/ogMetaTags?slug=${shop.slug}&product=${product.slug}`
-                    : `${appUrl}/functions/ogMetaTags?slug=${shop.slug}&product=${product.id}`;
+                  const shopParam = shop.slug || shop.id;
+                  const productParam = product.slug || product.id;
+                  const ogLink = `${appUrl}/functions/ogMetaTags?slug=${shopParam}&product=${productParam}`;
 
                   const message = `Je Suis Intéressé par Cet Article 👇\n${ogLink}`;
                   const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
