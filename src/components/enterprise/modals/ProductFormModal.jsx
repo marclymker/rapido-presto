@@ -126,7 +126,6 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     subcategory: '',
     stock_quantity: 0,
     image_url: '',
-    image_alt: '',
     additional_images: [],
     taille_emballage: 'Moyen',
     delivery_time: '30-45 minutes',
@@ -201,7 +200,6 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         subcategory: product.subcategory || product.subCategory || '',
         stock_quantity: product.stock_quantity || 0,
         image_url: product.image_url || '',
-        image_alt: product.image_alt || '',
         additional_images: product.additional_images || [],
         taille_emballage: product.taille_emballage || 'Moyen',
         delivery_time: product.delivery_time || '30-45 minutes',
@@ -270,7 +268,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         .replace(/^-+|-+$/g, '')
         .substring(0, 60);
 
-      const dataWithSlug = { ...formData, slug: slug || undefined, image_alt: formData.image_alt || formData.name };
+      const dataWithSlug = { ...formData, slug: slug || undefined };
 
       if (product) {
         await base44.entities.Product.update(product.id, dataWithSlug);
@@ -325,17 +323,11 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
 
 Générez en français:
 1. Une description marketing attractive et détaillée (2-3 phrases)
-2. La catégorie exacte parmi les catégories Facebook Marketplace officielles:
-   "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté",
-   "Épicerie", "Loisirs", "Jardin et extérieur", "Fournitures de bureau", "Véhicules",
-   "Mariage", "Restauration", "Pharmacie et santé"
-3. La sous-catégorie la plus précise correspondant à la catégorie choisie. Exemples:
-   - Habillement: "Vêtements pour femmes", "Chaussures", "Bijoux et accessoires", "Robes"...
-   - Électronique: "Téléphones portables", "Ordinateurs", "Audio"...
-   - Mariage: "Robe Sirène", "Robe Catalina", "Bague de Mariage", "Accessoires"...
-   - Santé et beauté: "Soins de la peau", "Maquillage", "Perruques et extensions"...
+2. La catégorie exacte parmi: Fastfood, Restaurants, Boutique Fleurs, Pharmacie, Mariage, Epicerie, Café, Pour Femme, Electronics, Pour homme, Maison, Bébé, Outils, Bijoux
+3. Si catégorie = "Mariage", déterminez aussi la sous-catégorie parmi:
+   - Pour les robes de mariée: "Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe de Cérémonie"
+   - Pour autres articles mariage: "Demoiselle d'honneur", "Témoins", "Bague de Mariage", "Bague", "Accessoires", "Carte et programmation", "Matériels Décor"
 4. 5-7 tags SEO pertinents en français (mots-clés de recherche)
-5. Un texte ALT pour l'image (15-20 mots max, décrivant précisément l'image pour Google Images et l'accessibilité, en français)
 
 Répondez au format JSON strict.`,
         file_urls: [formData.image_url],
@@ -345,10 +337,9 @@ Répondez au format JSON strict.`,
             description: { type: "string" },
             category: { type: "string" },
             subcategory: { type: "string" },
-            seo_tags: { type: "array", items: { type: "string" } },
-            image_alt: { type: "string" }
+            seo_tags: { type: "array", items: { type: "string" } }
           },
-          required: ["description", "category", "seo_tags", "image_alt"]
+          required: ["description", "category", "seo_tags"]
         }
       });
 
@@ -357,8 +348,7 @@ Répondez au format JSON strict.`,
         description: result.description || formData.description,
         category: result.category || formData.category,
         subcategory: result.category === 'Mariage' ? (result.subcategory || formData.subcategory) : formData.subcategory,
-        seo_tags: result.seo_tags || formData.seo_tags,
-        image_alt: result.image_alt || formData.image_alt
+        seo_tags: result.seo_tags || formData.seo_tags
       });
       
       setAiGenerated(true);
@@ -382,75 +372,7 @@ Répondez au format JSON strict.`,
     setFormData({ ...formData, seo_tags: formData.seo_tags.filter(t => t !== tag) });
   };
 
-  // --- CATEGORIES FACEBOOK MARKETPLACE OFFICIELLES ---
-  const FB_CATEGORIES = {
-    'Habillement et accessoires': [
-      'Vêtements pour femmes', 'Vêtements pour hommes', 'Chaussures',
-      'Sacs et bagages', 'Bijoux et accessoires', 'Robes', 'Costumes', 'Vêtements bébé'
-    ],
-    'Électronique': [
-      'Téléphones portables', 'Ordinateurs', 'Électronique grand public',
-      'Audio', 'Caméras', 'Accessoires informatiques'
-    ],
-    'Maison': [
-      'Meubles', 'Décoration intérieure', 'Articles ménagers',
-      'Jardin', 'Outils', 'Décoration de fête', 'Fleurs et plantes artificielles'
-    ],
-    'Famille': [
-      'Articles pour bébés et enfants', 'Jouets et jeux', 'Puériculture', 'Poussettes'
-    ],
-    'Santé et beauté': [
-      'Soins de la peau', 'Maquillage', 'Soins capillaires',
-      'Bain et corps', 'Parfums', 'Perruques et extensions'
-    ],
-    'Épicerie': [
-      'Boissons', 'Nourriture', 'Produits frais', 'Café', 'Paniers-cadeaux', 'Chocolats'
-    ],
-    'Loisirs': [
-      'Articles de sport', 'Instruments de musique', 'Livres', 'Artisanat', 'Films et musique'
-    ],
-    'Jardin et extérieur': [
-      'Meubles de jardin', 'Barbecue', 'Plantes', 'Fleurs naturelles'
-    ],
-    'Fournitures de bureau': [
-      'Équipement de bureau', 'Papeterie', 'Fournitures scolaires'
-    ],
-    'Véhicules': [
-      'Voitures et camions', 'Motos', 'Pièces de véhicules', 'Accessoires auto'
-    ],
-    'Mariage': [
-      'Robe Sirène', 'Robe Catalina', 'Robe Ponpon (Princesse)', 'Robe de Cérémonie',
-      'Demoiselle d\'honneur', 'Témoins', 'Bague de Mariage', 'Bague',
-      'Accessoires', 'Carte et programmation', 'Matériels Décor'
-    ],
-    'Restauration': [
-      'Fastfood', 'Restaurant', 'Café', 'Épicerie fine', 'Traiteur'
-    ],
-    'Pharmacie et santé': [
-      'Médicaments sans ordonnance', 'Compléments alimentaires', 'Matériel médical'
-    ],
-  };
-
-  const FB_CATEGORY_ICONS = {
-    'Habillement et accessoires': '👗',
-    'Électronique': '📱',
-    'Maison': '🏠',
-    'Famille': '👶',
-    'Santé et beauté': '💄',
-    'Épicerie': '🛒',
-    'Loisirs': '🎸',
-    'Jardin et extérieur': '🌿',
-    'Fournitures de bureau': '📋',
-    'Véhicules': '🚗',
-    'Mariage': '💍',
-    'Restauration': '🍽️',
-    'Pharmacie et santé': '💊',
-  };
-
-  // Sous-catégories actives selon la catégorie choisie
-  const activeSubCategories = FB_CATEGORIES[formData.category] || [];
-
-  // --- CORRECTION ET AJOUT DES SOUS-CATEGORIES MARIAGE (legacy) ---
+  // --- CORRECTION ET AJOUT DES SOUS-CATEGORIES MARIAGE ---
   const weddingGeneralCategories = [
     'Demoiselle d\'honneur',
     'Témoins',
@@ -575,23 +497,6 @@ Répondez au format JSON strict.`,
                   placeholder="Décrivez votre produit... (ou laissez l'IA le faire)"
                 />
               </div>
-
-              <div>
-                <Label className="mb-1.5 flex items-center gap-2">
-                  Texte ALT de l'image
-                  <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">SEO · Google Images · Accessibilité</span>
-                </Label>
-                <Input
-                  value={formData.image_alt}
-                  onChange={(e) => setFormData({ ...formData, image_alt: e.target.value })}
-                  placeholder="Ex: Robe de mariée sirène blanche avec traîne, vue de face — généré par IA"
-                  className="bg-slate-50"
-                  maxLength={150}
-                />
-                {formData.image_alt && (
-                  <p className="text-xs text-slate-400 mt-1">{formData.image_alt.length}/150 caractères</p>
-                )}
-              </div>
           </div>
 
           {/* Section 2: Prix et Stock */}
@@ -641,53 +546,82 @@ Répondez au format JSON strict.`,
               </div>
           </div>
 
-          {/* Section 3: Catégorisation Facebook */}
+          {/* Section 3: Catégorisation */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
               <div className="flex items-center gap-2 mb-2 pb-2 border-b">
                  <Layers className="w-4 h-4 text-slate-500" />
-                 <h3 className="font-semibold text-slate-700">Catégorie Facebook</h3>
-                 <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Marketplace</span>
+                 <h3 className="font-semibold text-slate-700">Catégorisation</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div>
-                   <Label className="mb-1.5">Catégorie principale</Label>
-                   <Select 
-                     value={formData.category} 
-                     onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: '' })}
-                   >
-                     <SelectTrigger className="h-11">
-                       <SelectValue />
-                     </SelectTrigger>
-                     <SelectContent>
-                       {Object.keys(FB_CATEGORIES).map((cat) => (
-                         <SelectItem key={cat} value={cat}>
-                           {FB_CATEGORY_ICONS[cat]} {cat}
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                 </div>
+                <div>
+                  <Label className="mb-1.5">Type d'article</Label>
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: v === 'Mariage' ? formData.subcategory : '' })}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Fastfood">🍔 Fastfood</SelectItem>
+                      <SelectItem value="Restaurants">🍽️ Restaurants</SelectItem>
+                      <SelectItem value="Boutique Fleurs">💐 Boutique Fleurs</SelectItem>
+                      <SelectItem value="Pharmacie">💊 Pharmacie</SelectItem>
+                      <SelectItem value="Mariage">💍 Mariage</SelectItem>
+                      <SelectItem value="Epicerie">🛒 Épicerie</SelectItem>
+                      <SelectItem value="Café">☕ Café</SelectItem>
+                      <SelectItem value="Pour Femme">👗 Pour Femme</SelectItem>
+                      <SelectItem value="Electronics">📱 Electronics</SelectItem>
+                      <SelectItem value="Pour homme">👔 Pour homme</SelectItem>
+                      <SelectItem value="Maison">🏠 Maison</SelectItem>
+                      <SelectItem value="Bébé">👶 Bébé</SelectItem>
+                      <SelectItem value="Outils">🔧 Outils</SelectItem>
+                      <SelectItem value="Bijoux">💎 Bijoux</SelectItem>
+                      <SelectItem value="Matériels Décor">🎀 Matériels Décor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                 {activeSubCategories.length > 0 && (
-                   <div className="animate-in fade-in slide-in-from-top-2">
-                     <Label className="mb-1.5">Sous-catégorie</Label>
-                     <Select 
-                       value={formData.subcategory} 
-                       onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
-                     >
-                       <SelectTrigger className="h-11 border-blue-200 bg-blue-50/30">
-                         <SelectValue placeholder="Sélectionner..." />
-                       </SelectTrigger>
-                       <SelectContent>
-                         {activeSubCategories.map((sub) => (
-                           <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                         ))}
-                       </SelectContent>
-                     </Select>
-                   </div>
-                 )}
-             </div>
+                {/* Sous-catégorie pour Mariage - MODIFIÉ POUR SUPPORTER LES TYPES DE ROBES */}
+                {formData.category === 'Mariage' && (
+                  <div className="animate-in fade-in slide-in-from-top-2">
+                    <Label className="mb-1.5">Sous-catégorie Mariage</Label>
+                    <Select 
+                      value={formData.subcategory} 
+                      onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
+                    >
+                      <SelectTrigger className="h-11 border-purple-200 bg-purple-50/50">
+                        <SelectValue placeholder="Sélectionner..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {/* Groupe : Robes de mariée */}
+                        <SelectGroup>
+                            <SelectLabel className="text-purple-600 font-bold bg-purple-50">Robe de Mariage</SelectLabel>
+                            {weddingDressCategories.map((dress) => (
+                                <SelectItem key={dress} value={dress}>
+                                    👗 {dress}
+                                </SelectItem>
+                            ))}
+                        </SelectGroup>
+                        
+                        {/* Séparateur visuel */}
+                        <div className="h-px bg-slate-100 my-1" />
+
+                        {/* Groupe : Autres catégories mariage */}
+                        <SelectGroup>
+                            <SelectLabel className="text-slate-500 font-bold">Autres Articles</SelectLabel>
+                            {weddingGeneralCategories.map((subCat) => (
+                              <SelectItem key={subCat} value={subCat}>
+                                {subCat}
+                              </SelectItem>
+                            ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+            </div>
           </div>
 
           {/* Section 4: Logistique */}

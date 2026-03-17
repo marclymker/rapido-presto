@@ -6,583 +6,473 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Save, X, ImagePlus, Loader2, Sparkles, Upload } from 'lucide-react';
+import { Plus, Trash2, Upload, Eye, Save, X, ImagePlus, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
+// Catégories officielles Facebook Product Catalog
 const FB_CATEGORIES = [
-  { value: "Apparel & Accessories > Women's Clothing", label: "Vêtements Femme", appCat: "Habillement et accessoires" },
-  { value: "Apparel & Accessories > Men's Clothing", label: "Vêtements Homme", appCat: "Habillement et accessoires" },
-  { value: "Apparel & Accessories > Shoes", label: "Chaussures", appCat: "Habillement et accessoires" },
-  { value: "Apparel & Accessories > Jewelry", label: "Bijoux & Accessoires", appCat: "Habillement et accessoires" },
-  { value: "Apparel & Accessories > Handbags", label: "Sacs & Bagages", appCat: "Habillement et accessoires" },
-  { value: "Apparel & Accessories > Wedding", label: "Mariage & Robes", appCat: "Mariage" },
-  { value: "Electronics > Mobile Phones", label: "Téléphones portables", appCat: "Électronique" },
-  { value: "Electronics > Computers", label: "Ordinateurs", appCat: "Électronique" },
-  { value: "Electronics > Audio", label: "Audio", appCat: "Électronique" },
-  { value: "Electronics > Cameras", label: "Caméras", appCat: "Électronique" },
-  { value: "Health & Beauty > Skin Care", label: "Soins de la peau", appCat: "Santé et beauté" },
-  { value: "Health & Beauty > Makeup", label: "Maquillage", appCat: "Santé et beauté" },
-  { value: "Health & Beauty > Hair Care", label: "Soins capillaires", appCat: "Santé et beauté" },
-  { value: "Health & Beauty > Fragrances", label: "Parfums", appCat: "Santé et beauté" },
-  { value: "Home & Garden > Furniture", label: "Mobilier", appCat: "Maison" },
-  { value: "Home & Garden > Decor", label: "Décoration intérieure", appCat: "Maison" },
-  { value: "Home & Garden > Kitchen", label: "Articles ménagers", appCat: "Maison" },
-  { value: "Home & Garden > Plants", label: "Plantes & Fleurs", appCat: "Maison" },
-  { value: "Food & Beverages > Groceries", label: "Épicerie", appCat: "Épicerie" },
-  { value: "Food & Beverages > Beverages", label: "Boissons", appCat: "Épicerie" },
-  { value: "Toys & Games > Baby", label: "Articles bébé & enfants", appCat: "Famille" },
-  { value: "Sporting Goods", label: "Articles de sport", appCat: "Loisirs" },
-  { value: "Hardware > Tools", label: "Outils & Quincaillerie", appCat: "Maison" },
-  { value: "Food & Beverages > Restaurant", label: "Restauration", appCat: "Restauration" },
-  { value: "Health > Pharmacy", label: "Pharmacie", appCat: "Pharmacie et santé" },
+  { value: "Apparel & Accessories", label: "Vêtements & Accessoires", subs: ["Chaussures", "Sacs & Bagages", "Bijoux", "Montres", "Vêtements Femme", "Vêtements Homme", "Vêtements Enfant"] },
+  { value: "Arts & Entertainment", label: "Arts & Divertissement", subs: ["Livres", "Musique", "Films & TV"] },
+  { value: "Baby & Toddler", label: "Bébé & Nourrisson", subs: ["Vêtements Bébé", "Jouets Bébé", "Alimentation Bébé"] },
+  { value: "Beauty & Personal Care", label: "Beauté & Soins", subs: ["Maquillage", "Soins Peau", "Parfums", "Soins Cheveux"] },
+  { value: "Electronics", label: "Électronique", subs: ["Téléphones", "Ordinateurs", "Tablettes", "Accessoires Audio", "Caméras"] },
+  { value: "Food, Beverages & Tobacco", label: "Alimentation & Boissons", subs: ["Épicerie", "Boissons", "Snacks"] },
+  { value: "Furniture", label: "Mobilier", subs: ["Chambre", "Salon", "Cuisine", "Bureau"] },
+  { value: "Hardware", label: "Quincaillerie & Outils", subs: ["Outils", "Matériaux Construction"] },
+  { value: "Health & Beauty", label: "Santé & Beauté", subs: ["Vitamines", "Médicaments", "Équipement Médical"] },
+  { value: "Home & Garden", label: "Maison & Jardin", subs: ["Décoration", "Jardin", "Cuisine & Table", "Literie"] },
+  { value: "Jewelry", label: "Bijouterie", subs: ["Colliers", "Bagues", "Bracelets", "Boucles d'oreilles"] },
+  { value: "Sporting Goods", label: "Articles de Sport", subs: ["Fitness", "Sports Plein Air", "Sports Aquatiques"] },
+  { value: "Toys & Games", label: "Jouets & Jeux", subs: ["Jouets Enfants", "Jeux de Société", "Jeux Vidéo"] },
+  { value: "Vehicles & Parts", label: "Véhicules & Pièces", subs: ["Pièces Auto", "Accessoires Moto"] },
+  { value: "Wedding", label: "Mariage & Événements", subs: ["Robes de Mariée", "Décoration Mariage", "Fleurs", "Accessoires Mariage", "Faire-part"] },
+  { value: "Flowers & Plants", label: "Fleurs & Plantes", subs: ["Bouquets", "Plantes d'Intérieur", "Arrangements Floraux"] },
 ];
 
-const generateSlug = (name) =>
-  name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 60);
+const CONDITIONS = ["new", "refurbished", "used"];
+const CONDITION_LABELS = { new: "Neuf", refurbished: "Reconditionné", used: "Occasion" };
+
+const APP_CATEGORIES = [
+  "Fastfood", "Restaurants", "Boutique Fleurs", "Pharmacie", "Mariage",
+  "Epicerie", "Café", "Pour Femme", "Electronics", "Pour homme",
+  "Maison", "Bébé", "Outils", "Bijoux", "Matériels Décor"
+];
 
 const createEmptyRow = () => ({
   id: Date.now() + Math.random(),
-  image_url: '',
-  image_alt: '',
+  images: [],
   name: '',
-  description: '',
   price: '',
-  sale_price: '',
-  fb_category: '',
+  promo_price: '',
   category: '',
+  fb_category: '',
+  fb_subcategory: '',
   condition: 'new',
-  availability: 'in stock',
-  status: 'active',
+  stock_quantity: '',
+  is_available: true,
   brand: '',
-  seo_tags: [],
-  uploading: false,
-  aiLoading: false,
-  aiDone: false,
   errors: {},
+  uploading: false,
 });
 
-const validateRow = (row) => {
-  const errors = {};
-  if (!row.name.trim()) errors.name = 'Requis';
-  if (!row.price || isNaN(row.price) || Number(row.price) <= 0) errors.price = 'Invalide';
-  return errors;
-};
-
 export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuccess }) {
-  const [rows, setRows] = useState(() => Array.from({ length: 6 }, createEmptyRow));
+  const [rows, setRows] = useState([createEmptyRow()]);
   const [saving, setSaving] = useState(false);
-  const [draggingOver, setDraggingOver] = useState(null);
+  const [previewMode, setPreviewMode] = useState(false);
   const fileInputRefs = useRef({});
-  const multiUploadRef = useRef(null);
 
-  const updateRow = (id, fields) => {
+  const updateRow = (id, field, value) => {
     setRows(prev => prev.map(r => {
       if (r.id !== id) return r;
-      const updated = { ...r, ...fields };
+      const updated = { ...r, [field]: value };
+      // Réinitialiser sous-catégorie si catégorie FB change
+      if (field === 'fb_category') updated.fb_subcategory = '';
+      // Validation en temps réel
       updated.errors = validateRow(updated);
       return updated;
     }));
   };
 
+  const validateRow = (row) => {
+    const errors = {};
+    if (!row.name.trim()) errors.name = 'Nom requis';
+    if (!row.price || isNaN(row.price) || Number(row.price) <= 0) errors.price = 'Prix invalide';
+    if (row.promo_price && (isNaN(row.promo_price) || Number(row.promo_price) >= Number(row.price))) {
+      errors.promo_price = 'Prix promo doit être < prix normal';
+    }
+    if (!row.category) errors.category = 'Catégorie requise';
+    return errors;
+  };
+
   const addRow = () => setRows(prev => [...prev, createEmptyRow()]);
-  const removeRow = (id) => setRows(prev => prev.filter(r => r.id !== id));
 
-  const handleImageUpload = async (rowId, file) => {
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { toast.error('Fichier image requis'); return; }
-    updateRow(rowId, { uploading: true });
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      updateRow(rowId, { image_url: file_url, uploading: false });
-    } catch {
-      updateRow(rowId, { uploading: false });
-      toast.error('Erreur upload image');
-    }
+  const removeRow = (id) => {
+    if (rows.length === 1) return;
+    setRows(prev => prev.filter(r => r.id !== id));
   };
 
-  const handleMultipleImages = async (files) => {
+  const handleImageUpload = async (rowId, files) => {
     if (!files || files.length === 0) return;
-    const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
-    if (imageFiles.length === 0) return;
-
-    // Find empty rows to fill first, then create new ones
-    setRows(prev => {
-      const emptyRows = prev.filter(r => !r.image_url && !r.name.trim());
-      const filledRows = prev.filter(r => r.image_url || r.name.trim());
-      const newRowsNeeded = Math.max(0, imageFiles.length - emptyRows.length);
-      const newRows = Array.from({ length: newRowsNeeded }, createEmptyRow);
-      const targetRows = [...emptyRows, ...newRows];
-
-      // Mark all target rows as uploading
-      const updatedTargets = targetRows.map((r, i) =>
-        i < imageFiles.length ? { ...r, uploading: true } : r
-      );
-
-      return [...filledRows, ...updatedTargets];
-    });
-
-    // Upload all files in parallel
-    toast.info(`📸 Upload de ${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''}...`);
-
-    const uploads = await Promise.all(
-      imageFiles.map(async (file) => {
-        try {
-          const { file_url } = await base44.integrations.Core.UploadFile({ file });
-          return { file_url, name: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') };
-        } catch {
-          return { file_url: null, name: file.name };
-        }
-      })
-    );
-
-    // Assign uploaded URLs to the target rows
-    setRows(prev => {
-      const updated = [...prev];
-      let uploadIdx = 0;
-      for (let i = 0; i < updated.length && uploadIdx < uploads.length; i++) {
-        if (updated[i].uploading) {
-          const upload = uploads[uploadIdx++];
-          updated[i] = {
-            ...updated[i],
-            image_url: upload.file_url || '',
-            name: updated[i].name.trim() || upload.name,
-            uploading: false,
-            errors: validateRow({ ...updated[i], image_url: upload.file_url || '' }),
-          };
-        }
-      }
-      return updated;
-    });
-
-    const successCount = uploads.filter(u => u.file_url).length;
-    toast.success(`✅ ${successCount}/${imageFiles.length} images uploadées`);
-  };
-
-  const handleDrop = (e, rowId) => {
-    e.preventDefault();
-    setDraggingOver(null);
-    const files = e.dataTransfer.files;
-    if (files.length > 1) {
-      handleMultipleImages(files);
-    } else if (files.length === 1) {
-      handleImageUpload(rowId, files[0]);
+    setRows(prev => prev.map(r => r.id === rowId ? { ...r, uploading: true } : r));
+    
+    const uploadedUrls = [];
+    for (const file of Array.from(files)) {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      uploadedUrls.push(file_url);
     }
+
+    setRows(prev => prev.map(r => {
+      if (r.id !== rowId) return r;
+      const newImages = [...r.images, ...uploadedUrls].slice(0, 5); // max 5 images
+      return { ...r, images: newImages, uploading: false };
+    }));
   };
 
-  const handleMagieAI = async (rowId) => {
-    const row = rows.find(r => r.id === rowId);
-    if (!row.name.trim()) { toast.error('Ajoutez un titre d\'abord'); return; }
-    if (!row.image_url) { toast.error('Ajoutez une image d\'abord'); return; }
-
-    updateRow(rowId, { aiLoading: true });
-    try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analysez ce produit à partir du titre "${row.name}" et de l'image fournie.
-
-Générez en français:
-1. Une description marketing puissante et détaillée (2-3 phrases percutantes)
-2. La catégorie Facebook la plus précise parmi: ${FB_CATEGORIES.map(c => c.value).join(', ')}
-3. La catégorie app correspondante parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
-4. 7 à 10 tags SEO ultra-pertinents en français et créole haïtien pour maximiser la visibilité (mots-clés de recherche, synonymes, termes locaux haïtiens)
-5. La marque si identifiable (sinon laisser vide)
-6. Un texte ALT pour l'image (15-20 mots max, décrivant précisément l'image pour Google Images et l'accessibilité, en français)
-
-Répondez en JSON strict.`,
-        file_urls: [row.image_url],
-        response_json_schema: {
-          type: "object",
-          properties: {
-            description: { type: "string" },
-            fb_category: { type: "string" },
-            category: { type: "string" },
-            seo_tags: { type: "array", items: { type: "string" } },
-            brand: { type: "string" },
-            image_alt: { type: "string" }
-          },
-          required: ["description", "fb_category", "category", "seo_tags", "image_alt"]
-        }
-      });
-
-      updateRow(rowId, {
-        description: result.description || row.description,
-        fb_category: result.fb_category || row.fb_category,
-        category: result.category || row.category,
-        seo_tags: result.seo_tags || row.seo_tags,
-        brand: result.brand || row.brand,
-        image_alt: result.image_alt || row.image_alt,
-        aiLoading: false,
-        aiDone: true,
-      });
-      toast.success('✨ IA terminée pour cet article');
-    } catch (error) {
-      updateRow(rowId, { aiLoading: false });
-      toast.error('Erreur IA: ' + error.message);
-    }
+  const removeImage = (rowId, imgIdx) => {
+    setRows(prev => prev.map(r => {
+      if (r.id !== rowId) return r;
+      return { ...r, images: r.images.filter((_, i) => i !== imgIdx) };
+    }));
   };
 
-  const filledRows = rows.filter(r => r.name.trim() && r.price);
-  const validCount = filledRows.filter(r => Object.keys(validateRow(r)).length === 0).length;
+  const isValid = rows.every(r => Object.keys(validateRow(r)).length === 0);
 
   const handleSave = async () => {
-    const toSave = rows.filter(r => r.name.trim() && r.price);
-    if (!toSave.length) { toast.error('Aucun article à sauvegarder'); return; }
-    const invalid = toSave.some(r => Object.keys(validateRow(r)).length > 0);
-    if (invalid) { toast.error('Corrigez les erreurs d\'abord'); return; }
+    // Valider toutes les lignes
+    const validatedRows = rows.map(r => ({ ...r, errors: validateRow(r) }));
+    setRows(validatedRows);
+    if (!isValid) {
+      toast.error('Corrigez les erreurs avant de sauvegarder');
+      return;
+    }
 
     setSaving(true);
     let saved = 0;
-    for (const row of toSave) {
-      const slug = generateSlug(row.name) + '-' + Date.now().toString(36);
+    for (const row of rows) {
+      const fbCat = FB_CATEGORIES.find(c => c.value === row.fb_category);
       await base44.entities.Product.create({
         name: row.name.trim(),
-        slug,
-        description: row.description || '',
         price: Number(row.price),
-        promo_price: row.sale_price ? Number(row.sale_price) : undefined,
-        category: row.category || 'Habillement et accessoires',
-        is_available: row.availability === 'in stock',
-        image_url: row.image_url || '',
-        image_alt: row.image_alt || row.name,
+        promo_price: row.promo_price ? Number(row.promo_price) : undefined,
+        category: row.category,
+        stock_quantity: row.stock_quantity ? Number(row.stock_quantity) : 0,
+        is_available: row.is_available,
+        image_url: row.images[0] || '',
+        additional_images: row.images.slice(1),
         shop_id: shopId,
-        seo_tags: row.seo_tags || [],
         product_attributes: {
           condition: row.condition,
-          custom_labels: { label_0: row.brand || '' }
+          custom_labels: {
+            label_0: row.brand || '',
+            label_1: row.fb_category || '',
+            label_2: row.fb_subcategory || '',
+          }
         },
+        seo_tags: [row.brand, row.fb_subcategory || fbCat?.label].filter(Boolean),
       });
       saved++;
     }
 
     setSaving(false);
-    toast.success(`${saved} article${saved > 1 ? 's' : ''} créé${saved > 1 ? 's' : ''} !`);
+    toast.success(`${saved} article${saved > 1 ? 's' : ''} créé${saved > 1 ? 's' : ''} avec succès !`);
     onSuccess();
-
-    // Supprimer les lignes publiées, garder les vides + ajouter 3 nouvelles lignes pour continuer
-    const savedIds = new Set(toSave.map(r => r.id));
-    setRows(prev => {
-      const remaining = prev.filter(r => !savedIds.has(r.id));
-      const empties = Array.from({ length: 3 }, createEmptyRow);
-      return [...remaining, ...empties];
-    });
+    onClose();
   };
 
-  const colClass = "px-3 py-2 border-r border-slate-100 bg-white align-top";
-  const inputClass = "h-8 text-xs border-slate-200 text-slate-900 placeholder:text-slate-400";
+  const fbSubcategories = (fbCat) => FB_CATEGORIES.find(c => c.value === fbCat)?.subs || [];
+
+  const validCount = rows.filter(r => Object.keys(validateRow(r)).length === 0 && r.name).length;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[99vw] w-full max-h-[96vh] overflow-hidden flex flex-col p-0 rounded-xl">
-        {/* Header */}
-        <DialogHeader className="px-6 pt-4 pb-3 border-b shrink-0 bg-white">
+      <DialogContent className="max-w-[98vw] w-full max-h-[96vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 pt-5 pb-3 border-b shrink-0">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-lg font-bold text-slate-800">Ajout en masse — Facebook Shop</DialogTitle>
-              <p className="text-xs text-slate-500 mt-0.5">{shopName} · {filledRows.length} article{filledRows.length !== 1 ? 's' : ''} rempli{filledRows.length !== 1 ? 's' : ''}</p>
+              <DialogTitle className="text-xl font-bold">Ajout en masse d'articles</DialogTitle>
+              <p className="text-sm text-slate-500 mt-0.5">Boutique : <span className="font-medium text-slate-700">{shopName}</span></p>
             </div>
             <div className="flex items-center gap-2">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                ref={multiUploadRef}
-                onChange={e => handleMultipleImages(e.target.files)}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => multiUploadRef.current?.click()}
-                className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs gap-1.5"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                Importer plusieurs photos
-              </Button>
-              <Badge className={validCount === filledRows.length && filledRows.length > 0 ? "bg-green-100 text-green-700 border-green-200" : "bg-slate-100 text-slate-600"}>
-                {validCount}/{filledRows.length} valides
+              <Badge variant={validCount === rows.length && rows[0].name ? "default" : "secondary"} className="text-xs">
+                {validCount}/{rows.length} valides
               </Badge>
+              <Button variant="outline" size="sm" onClick={() => setPreviewMode(!previewMode)}>
+                <Eye className="w-4 h-4 mr-1" />
+                {previewMode ? 'Éditer' : 'Aperçu'}
+              </Button>
             </div>
           </div>
         </DialogHeader>
 
-        {/* Table */}
-        <div className="flex-1 overflow-auto">
-          <table className="w-full text-xs border-collapse" style={{ minWidth: 1100 }}>
-            <thead className="sticky top-0 z-20">
-              <tr className="bg-slate-50 border-b-2 border-slate-200">
-                <th className="w-8 px-2 py-3 border-r border-slate-200"></th>
-                <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Image <span className="text-red-500">*</span>
-                </th>
-                <th className="w-44 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Titre <span className="text-red-500">*</span>
-                </th>
-                <th className="w-20 px-3 py-3 text-center font-semibold text-slate-600 border-r border-slate-200">
-                  <div className="flex items-center justify-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-                    <span>Magie AI</span>
-                  </div>
-                </th>
-                <th className="w-56 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Description <span className="text-slate-400 font-normal">· via IA</span>
-                </th>
-                <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Prix (HTG) <span className="text-red-500">*</span>
-                </th>
-                <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Prix promo <span className="text-slate-400 font-normal">· Optionnel</span>
-                </th>
-                <th className="w-44 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Catégorie Facebook <span className="text-slate-400 font-normal">· via IA</span>
-                </th>
-                <th className="w-36 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Catégorie app <span className="text-slate-400 font-normal">· via IA</span>
-                </th>
-                <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Condition</th>
-                <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Disponibilité</th>
-                <th className="w-24 px-3 py-3 text-left font-semibold text-slate-600">Statut</th>
-              </tr>
-            </thead>
+        <div className="flex-1 overflow-auto px-4 py-4">
+          {previewMode ? (
+            <PreviewGrid rows={rows} />
+          ) : (
+            <div className="space-y-3">
+              {rows.map((row, idx) => (
+                <RowEditor
+                  key={row.id}
+                  row={row}
+                  idx={idx}
+                  fbCategories={FB_CATEGORIES}
+                  fbSubcategories={fbSubcategories}
+                  appCategories={APP_CATEGORIES}
+                  conditions={CONDITIONS}
+                  conditionLabels={CONDITION_LABELS}
+                  onUpdate={updateRow}
+                  onRemove={removeRow}
+                  onImageUpload={handleImageUpload}
+                  onImageRemove={removeImage}
+                  canRemove={rows.length > 1}
+                  fileInputRef={el => fileInputRefs.current[row.id] = el}
+                />
+              ))}
 
-            <tbody>
-              {rows.map((row) => {
-                const hasError = Object.keys(row.errors).length > 0 && row.name;
-                return (
-                  <tr key={row.id} className={`border-b border-slate-100 transition-colors ${hasError ? 'bg-red-50/60' : 'hover:bg-blue-50/20'}`}>
-                    {/* Remove */}
-                    <td className="w-8 px-2 text-center border-r border-slate-100 align-middle">
-                      <button
-                        onClick={() => rows.length > 1 && removeRow(row.id)}
-                        className="text-slate-300 hover:text-red-400 transition-colors"
-                        disabled={rows.length === 1}
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-
-                    {/* Image */}
-                    <td className={colClass}>
-                      <div
-                        onDragOver={e => { e.preventDefault(); setDraggingOver(row.id); }}
-                        onDragLeave={() => setDraggingOver(null)}
-                        onDrop={e => handleDrop(e, row.id)}
-                      >
-                        {row.image_url ? (
-                          <div className={`relative w-16 h-16 rounded border-2 overflow-hidden group ${draggingOver === row.id ? 'border-blue-400 border-dashed' : 'border-transparent'}`}>
-                            <img src={row.image_url} alt="" className="w-full h-full object-cover" />
-                            <button
-                              onClick={() => updateRow(row.id, { image_url: '', aiDone: false })}
-                              className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center"
-                            >
-                              <X className="w-3 h-3 text-white" />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => fileInputRefs.current[row.id]?.click()}
-                            className={`w-16 h-16 rounded border-2 border-dashed flex flex-col items-center justify-center transition-colors text-center gap-0.5
-                              ${draggingOver === row.id
-                                ? 'border-blue-500 bg-blue-50 scale-105'
-                                : 'border-slate-300 hover:border-blue-400 hover:bg-blue-50'
-                              }`}
-                          >
-                            {row.uploading
-                              ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-                              : <>
-                                  <ImagePlus className="w-4 h-4 text-slate-400" />
-                                  <span className="text-[8px] text-slate-400 leading-tight">Glisser<br/>ou cliquer</span>
-                                </>
-                            }
-                          </button>
-                        )}
-                      </div>
-                      <input
-                        type="file" accept="image/*" multiple className="hidden"
-                        ref={el => fileInputRefs.current[row.id] = el}
-                        onChange={e => {
-                          const files = e.target.files;
-                          if (files.length > 1) handleMultipleImages(files);
-                          else handleImageUpload(row.id, files?.[0]);
-                        }}
-                      />
-                    </td>
-
-                    {/* Title */}
-                    <td className={colClass}>
-                      <Input
-                        value={row.name}
-                        onChange={e => updateRow(row.id, { name: e.target.value })}
-                        placeholder="Titre de l'article"
-                        className={`h-8 text-xs text-slate-900 placeholder:text-slate-400 border-slate-200 ${row.errors.name ? 'border-red-400 focus-visible:ring-red-300' : ''}`}
-                      />
-                    </td>
-
-                    {/* Magie AI */}
-                    <td className="px-2 py-2 border-r border-slate-100 bg-white text-center align-middle">
-                      <Button
-                        size="sm"
-                        disabled={row.aiLoading || !row.name.trim() || !row.image_url}
-                        onClick={() => handleMagieAI(row.id)}
-                        className={`h-8 px-2 text-xs ${row.aiDone ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-300' : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'}`}
-                        title={!row.name.trim() || !row.image_url ? 'Ajoutez titre et image' : 'Générer avec IA'}
-                      >
-                        {row.aiLoading ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : row.aiDone ? (
-                          <span>✓ Fait</span>
-                        ) : (
-                          <Sparkles className="w-3.5 h-3.5" />
-                        )}
-                      </Button>
-                    </td>
-
-                    {/* Description */}
-                    <td className={colClass}>
-                      <Input
-                        value={row.description}
-                        onChange={e => updateRow(row.id, { description: e.target.value })}
-                        placeholder={row.aiDone ? '' : 'Générée par IA ✨'}
-                        className="h-8 text-xs text-slate-900 placeholder:text-slate-400 border-slate-200"
-                      />
-                      {row.seo_tags?.length > 0 && (
-                        <div className="flex flex-wrap gap-0.5 mt-1">
-                          {row.seo_tags.slice(0, 3).map(t => (
-                            <span key={t} className="text-[9px] bg-purple-50 text-purple-600 px-1 rounded">{t}</span>
-                          ))}
-                          {row.seo_tags.length > 3 && <span className="text-[9px] text-slate-400">+{row.seo_tags.length - 3}</span>}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Price */}
-                    <td className={colClass}>
-                      <Input
-                        type="number"
-                        value={row.price}
-                        onChange={e => updateRow(row.id, { price: e.target.value })}
-                        placeholder="0"
-                        className={`h-8 text-xs text-slate-900 placeholder:text-slate-400 border-slate-200 ${row.errors.price ? 'border-red-400' : ''}`}
-                      />
-                    </td>
-
-                    {/* Sale price */}
-                    <td className={colClass}>
-                      <Input
-                        type="number"
-                        value={row.sale_price}
-                        onChange={e => updateRow(row.id, { sale_price: e.target.value })}
-                        placeholder="0"
-                        className="h-8 text-xs text-slate-900 placeholder:text-slate-400 border-slate-200"
-                      />
-                    </td>
-
-                    {/* FB Category */}
-                    <td className={colClass}>
-                      <Select value={row.fb_category} onValueChange={v => updateRow(row.id, { fb_category: v })}>
-                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
-                          <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {FB_CATEGORIES.map(c => (
-                            <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
-
-                    {/* App Category */}
-                    <td className={colClass}>
-                      <Select value={row.category} onValueChange={v => updateRow(row.id, { category: v })}>
-                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
-                          <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {["Habillement et accessoires","Électronique","Maison","Famille","Santé et beauté","Épicerie","Loisirs","Jardin et extérieur","Mariage","Restauration","Pharmacie et santé"].map(c => (
-                            <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
-
-                    {/* Condition */}
-                    <td className={colClass}>
-                      <Select value={row.condition} onValueChange={v => updateRow(row.id, { condition: v })}>
-                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="new" className="text-xs">Neuf</SelectItem>
-                          <SelectItem value="refurbished" className="text-xs">Reconditionné</SelectItem>
-                          <SelectItem value="used" className="text-xs">Occasion</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </td>
-
-                    {/* Availability */}
-                    <td className={colClass}>
-                      <Select value={row.availability} onValueChange={v => updateRow(row.id, { availability: v })}>
-                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="in stock" className="text-xs">En stock</SelectItem>
-                          <SelectItem value="out of stock" className="text-xs">Hors stock</SelectItem>
-                          <SelectItem value="preorder" className="text-xs">Précommande</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-3 py-2 bg-white align-top">
-                      <Select value={row.status} onValueChange={v => updateRow(row.id, { status: v })}>
-                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active" className="text-xs">
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-green-500 rounded-full inline-block" />Actif</span>
-                          </SelectItem>
-                          <SelectItem value="inactive" className="text-xs">
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-slate-300 rounded-full inline-block" />Inactif</span>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-
-          {/* Add row */}
-          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50">
-            <Button variant="outline" size="sm" onClick={addRow} className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs">
-              <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Nouvelle ligne
-            </Button>
-          </div>
+              <Button variant="outline" onClick={addRow} className="w-full border-dashed border-2 h-12 text-slate-500 hover:text-slate-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter une ligne
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="border-t px-6 py-3 flex items-center justify-between shrink-0 bg-white">
-          <p className="text-xs text-slate-500">
-            <span className="font-semibold text-slate-700">{filledRows.length}</span> article{filledRows.length !== 1 ? 's' : ''} · <span className="text-green-600 font-semibold">{validCount}</span> valide{validCount !== 1 ? 's' : ''} · Le slug et l'ID sont générés automatiquement
-          </p>
+        <div className="border-t px-6 py-4 flex items-center justify-between shrink-0 bg-white">
+          <div className="text-sm text-slate-500">
+            {rows.length} article{rows.length > 1 ? 's' : ''} en attente
+          </div>
           <div className="flex gap-3">
-            <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
+            <Button variant="outline" onClick={onClose}>Annuler</Button>
             <Button
               onClick={handleSave}
-              disabled={saving || filledRows.length === 0}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
+              disabled={saving || !isValid || !rows[0].name}
+              className="bg-orange-500 hover:bg-orange-600 min-w-[160px]"
             >
               {saving ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sauvegarde...</>
               ) : (
-                <><Save className="w-4 h-4 mr-2" />Publier {filledRows.length} article{filledRows.length !== 1 ? 's' : ''}</>
+                <><Save className="w-4 h-4 mr-2" />Publier {rows.length} article{rows.length > 1 ? 's' : ''}</>
               )}
             </Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function RowEditor({ row, idx, fbCategories, fbSubcategories, appCategories, conditions, conditionLabels, onUpdate, onRemove, onImageUpload, onImageRemove, canRemove, fileInputRef }) {
+  const hasErrors = Object.keys(row.errors).length > 0 && row.name;
+  const isComplete = Object.keys(row.errors).length === 0 && row.name;
+
+  return (
+    <div className={`bg-white border-2 rounded-xl p-4 transition-colors ${hasErrors ? 'border-red-200' : isComplete ? 'border-green-200' : 'border-slate-200'}`}>
+      <div className="flex items-center gap-2 mb-3">
+        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${isComplete ? 'bg-green-100 text-green-700' : hasErrors ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'}`}>
+          {isComplete ? <CheckCircle2 className="w-4 h-4" /> : hasErrors ? <AlertCircle className="w-4 h-4" /> : idx + 1}
+        </div>
+        <span className="text-sm font-medium text-slate-600 flex-1">{row.name || `Article ${idx + 1}`}</span>
+        {canRemove && (
+          <Button variant="ghost" size="icon" onClick={() => onRemove(row.id)} className="text-red-400 hover:text-red-600 h-7 w-7">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9 gap-3">
+        {/* Images */}
+        <div className="col-span-2 md:col-span-1">
+          <label className="text-xs font-medium text-slate-500 mb-1 block">Images</label>
+          <div className="flex flex-wrap gap-1">
+            {row.images.map((img, i) => (
+              <div key={i} className="relative w-12 h-12 rounded border overflow-hidden group">
+                <img src={img} alt="" className="w-full h-full object-cover" />
+                <button onClick={() => onImageRemove(row.id, i)} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center">
+                  <X className="w-3 h-3 text-white" />
+                </button>
+                {i === 0 && <div className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[8px] text-center">Principale</div>}
+              </div>
+            ))}
+            {row.images.length < 5 && (
+              <button
+                onClick={() => fileInputRef?.click()}
+                className="w-12 h-12 rounded border-2 border-dashed border-slate-300 flex items-center justify-center hover:border-orange-400 hover:bg-orange-50 transition-colors"
+              >
+                {row.uploading ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" /> : <ImagePlus className="w-4 h-4 text-slate-400" />}
+              </button>
+            )}
+          </div>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            ref={fileInputRef}
+            onChange={(e) => onImageUpload(row.id, e.target.files)}
+          />
+        </div>
+
+        {/* Nom */}
+        <div className="col-span-2">
+          <label className="text-xs font-medium text-slate-500 mb-1 block">Nom *</label>
+          <Input
+            value={row.name}
+            onChange={(e) => onUpdate(row.id, 'name', e.target.value)}
+            placeholder="Nom de l'article"
+            className={`h-9 text-sm ${row.errors.name ? 'border-red-400' : ''}`}
+          />
+          {row.errors.name && <p className="text-xs text-red-500 mt-0.5">{row.errors.name}</p>}
+        </div>
+
+        {/* Prix */}
+        <div>
+          <label className="text-xs font-medium text-slate-500 mb-1 block">Prix HTG *</label>
+          <Input
+            type="number"
+            value={row.price}
+            onChange={(e) => onUpdate(row.id, 'price', e.target.value)}
+            placeholder="0"
+            className={`h-9 text-sm ${row.errors.price ? 'border-red-400' : ''}`}
+          />
+          {row.errors.price && <p className="text-xs text-red-500 mt-0.5">{row.errors.price}</p>}
+        </div>
+
+        {/* Prix Promo */}
+        <div>
+          <label className="text-xs font-medium text-slate-500 mb-1 block">Prix Vente</label>
+          <Input
+            type="number"
+            value={row.promo_price}
+            onChange={(e) => onUpdate(row.id, 'promo_price', e.target.value)}
+            placeholder="Optionnel"
+            className={`h-9 text-sm ${row.errors.promo_price ? 'border-red-400' : ''}`}
+          />
+          {row.errors.promo_price && <p className="text-xs text-red-500 mt-0.5">{row.errors.promo_price}</p>}
+        </div>
+
+        {/* Catégorie App */}
+        <div>
+          <label className="text-xs font-medium text-slate-500 mb-1 block">Catégorie *</label>
+          <Select value={row.category} onValueChange={(v) => onUpdate(row.id, 'category', v)}>
+            <SelectTrigger className={`h-9 text-sm ${row.errors.category ? 'border-red-400' : ''}`}>
+              <SelectValue placeholder="Catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              {appCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* FB Category */}
+        <div>
+          <label className="text-xs font-medium text-slate-500 mb-1 block">Catégorie Facebook</label>
+          <Select value={row.fb_category} onValueChange={(v) => onUpdate(row.id, 'fb_category', v)}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="FB Cat." />
+            </SelectTrigger>
+            <SelectContent>
+              {fbCategories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* FB Sub-category */}
+        {row.fb_category && (
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-1 block">Sous-catégorie FB</label>
+            <Select value={row.fb_subcategory} onValueChange={(v) => onUpdate(row.id, 'fb_subcategory', v)}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Sous-cat." />
+              </SelectTrigger>
+              <SelectContent>
+                {fbSubcategories(row.fb_category).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Condition */}
+        <div>
+          <label className="text-xs font-medium text-slate-500 mb-1 block">Condition</label>
+          <Select value={row.condition} onValueChange={(v) => onUpdate(row.id, 'condition', v)}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {conditions.map(c => <SelectItem key={c} value={c}>{conditionLabels[c]}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Stock */}
+        <div>
+          <label className="text-xs font-medium text-slate-500 mb-1 block">Stock</label>
+          <Input
+            type="number"
+            value={row.stock_quantity}
+            onChange={(e) => onUpdate(row.id, 'stock_quantity', e.target.value)}
+            placeholder="0"
+            className="h-9 text-sm"
+          />
+        </div>
+
+        {/* Statut */}
+        <div>
+          <label className="text-xs font-medium text-slate-500 mb-1 block">Statut</label>
+          <Select value={row.is_available ? 'true' : 'false'} onValueChange={(v) => onUpdate(row.id, 'is_available', v === 'true')}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Disponible</SelectItem>
+              <SelectItem value="false">Indisponible</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Marque */}
+        <div>
+          <label className="text-xs font-medium text-slate-500 mb-1 block">Marque</label>
+          <Input
+            value={row.brand}
+            onChange={(e) => onUpdate(row.id, 'brand', e.target.value)}
+            placeholder="Marque"
+            className="h-9 text-sm"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PreviewGrid({ rows }) {
+  const validRows = rows.filter(r => r.name && r.price);
+  if (!validRows.length) {
+    return <div className="text-center py-20 text-slate-400">Aucun article valide à prévisualiser</div>;
+  }
+  return (
+    <div>
+      <p className="text-sm text-slate-500 mb-4">{validRows.length} article{validRows.length > 1 ? 's' : ''} prêt{validRows.length > 1 ? 's' : ''} à publier</p>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        {validRows.map((row, i) => (
+          <div key={i} className="bg-white rounded-xl border shadow-sm overflow-hidden">
+            <div className="aspect-square bg-slate-100 relative">
+              {row.images[0] ? (
+                <img src={row.images[0]} alt={row.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-3xl">📦</div>
+              )}
+              {row.images.length > 1 && (
+                <div className="absolute top-1 right-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                  +{row.images.length - 1}
+                </div>
+              )}
+              <div className={`absolute top-1 left-1 text-[9px] px-1.5 py-0.5 rounded-full font-medium ${row.is_available ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                {row.is_available ? 'Dispo' : 'Indispo'}
+              </div>
+            </div>
+            <div className="p-2">
+              <p className="text-xs font-semibold text-slate-800 truncate">{row.name}</p>
+              {row.brand && <p className="text-[10px] text-slate-400">{row.brand}</p>}
+              <div className="mt-1 flex items-baseline gap-1">
+                {row.promo_price ? (
+                  <>
+                    <span className="text-sm font-bold text-orange-500">{Number(row.promo_price).toLocaleString()} HTG</span>
+                    <span className="text-[10px] text-slate-400 line-through">{Number(row.price).toLocaleString()}</span>
+                  </>
+                ) : (
+                  <span className="text-sm font-bold text-slate-800">{Number(row.price).toLocaleString()} HTG</span>
+                )}
+              </div>
+              {row.fb_category && (
+                <p className="text-[9px] text-blue-600 mt-0.5 truncate">FB: {row.fb_subcategory || row.fb_category}</p>
+              )}
+              <div className="flex items-center gap-1 mt-1">
+                <span className="text-[9px] bg-slate-100 px-1 rounded">{CONDITION_LABELS[row.condition] || row.condition}</span>
+                {row.stock_quantity && <span className="text-[9px] text-slate-500">Stock: {row.stock_quantity}</span>}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

@@ -9,11 +9,6 @@ export default function OneSignalInit({ user }) {
 
     const initOneSignal = async () => {
       try {
-        // Ne pas initialiser sur les domaines preview/sandbox
-        const hostname = window.location.hostname;
-        const isPreview = hostname.includes('preview') || hostname.includes('sandbox') || hostname.includes('localhost');
-        if (isPreview) return;
-
         // Récupération de l'App ID depuis Supabase/Backend
         const { data } = await base44.functions.invoke('getOneSignalAppId');
         if (!data?.appId) return;
