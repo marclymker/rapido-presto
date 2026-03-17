@@ -586,5 +586,50 @@ Répondez en JSON strict.`,
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Image Picker Modal */}
+    {showImagePicker && (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b">
+            <h3 className="font-semibold text-slate-800 text-base">Ajouter des images</h3>
+            <button onClick={() => setShowImagePicker(false)} className="text-slate-400 hover:text-slate-600">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Drop zone */}
+          <div
+            className={`mx-5 my-6 rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center py-12 cursor-pointer
+              ${pickerDragging ? 'border-blue-500 bg-blue-50 scale-[1.02]' : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50'}`}
+            onDragOver={e => { e.preventDefault(); setPickerDragging(true); }}
+            onDragLeave={() => setPickerDragging(false)}
+            onDrop={e => {
+              e.preventDefault();
+              setPickerDragging(false);
+              handleMultipleImages(e.dataTransfer.files);
+              setShowImagePicker(false);
+            }}
+            onClick={() => multiUploadRef.current?.click()}
+          >
+            <FolderOpen className={`w-16 h-16 mb-3 transition-colors ${pickerDragging ? 'text-blue-500' : 'text-blue-300'}`} />
+            <p className="font-semibold text-slate-700 text-sm">Glisser-déposer les fichiers</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Ou <span className="text-blue-600 underline cursor-pointer">choisir sur votre appareil</span>
+            </p>
+            <p className="text-[10px] text-slate-400 mt-3">PNG, JPG, WEBP · Plusieurs fichiers acceptés</p>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-2 px-5 py-3 border-t bg-slate-50">
+            <Button variant="outline" size="sm" onClick={() => setShowImagePicker(false)}>Annuler</Button>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => multiUploadRef.current?.click()}>
+              Choisir des fichiers
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
