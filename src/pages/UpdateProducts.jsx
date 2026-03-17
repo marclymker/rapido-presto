@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { base44 } from '@/api/base44Client';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import GenerateAltTextsModal from '@/components/admin/GenerateAltTextsModal';
+import MigrateFbCategoriesModal from '@/components/admin/MigrateFbCategoriesModal';
 
 export default function UpdateProducts() {
   const [loading, setLoading] = useState(false);
