@@ -96,6 +96,8 @@ export default function ProductPage() {
         });
       }
       toast.success('Ajouté au panier');
+      // Track AddToCart Meta Pixel + GA4
+      trackAddToCart(product, 1);
     } catch (e) {
       toast.error('Erreur');
     }
