@@ -614,82 +614,53 @@ Répondez au format JSON strict.`,
               </div>
           </div>
 
-          {/* Section 3: Catégorisation */}
+          {/* Section 3: Catégorisation Facebook */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
               <div className="flex items-center gap-2 mb-2 pb-2 border-b">
                  <Layers className="w-4 h-4 text-slate-500" />
-                 <h3 className="font-semibold text-slate-700">Catégorisation</h3>
+                 <h3 className="font-semibold text-slate-700">Catégorie Facebook</h3>
+                 <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Marketplace</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="mb-1.5">Type d'article</Label>
-                  <Select 
-                    value={formData.category} 
-                    onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: v === 'Mariage' ? formData.subcategory : '' })}
-                  >
-                    <SelectTrigger className="h-11">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Fastfood">🍔 Fastfood</SelectItem>
-                      <SelectItem value="Restaurants">🍽️ Restaurants</SelectItem>
-                      <SelectItem value="Boutique Fleurs">💐 Boutique Fleurs</SelectItem>
-                      <SelectItem value="Pharmacie">💊 Pharmacie</SelectItem>
-                      <SelectItem value="Mariage">💍 Mariage</SelectItem>
-                      <SelectItem value="Epicerie">🛒 Épicerie</SelectItem>
-                      <SelectItem value="Café">☕ Café</SelectItem>
-                      <SelectItem value="Pour Femme">👗 Pour Femme</SelectItem>
-                      <SelectItem value="Electronics">📱 Electronics</SelectItem>
-                      <SelectItem value="Pour homme">👔 Pour homme</SelectItem>
-                      <SelectItem value="Maison">🏠 Maison</SelectItem>
-                      <SelectItem value="Bébé">👶 Bébé</SelectItem>
-                      <SelectItem value="Outils">🔧 Outils</SelectItem>
-                      <SelectItem value="Bijoux">💎 Bijoux</SelectItem>
-                      <SelectItem value="Matériels Décor">🎀 Matériels Décor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                 <div>
+                   <Label className="mb-1.5">Catégorie principale</Label>
+                   <Select 
+                     value={formData.category} 
+                     onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: '' })}
+                   >
+                     <SelectTrigger className="h-11">
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                       {Object.keys(FB_CATEGORIES).map((cat) => (
+                         <SelectItem key={cat} value={cat}>
+                           {FB_CATEGORY_ICONS[cat]} {cat}
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                 </div>
 
-                {/* Sous-catégorie pour Mariage - MODIFIÉ POUR SUPPORTER LES TYPES DE ROBES */}
-                {formData.category === 'Mariage' && (
-                  <div className="animate-in fade-in slide-in-from-top-2">
-                    <Label className="mb-1.5">Sous-catégorie Mariage</Label>
-                    <Select 
-                      value={formData.subcategory} 
-                      onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
-                    >
-                      <SelectTrigger className="h-11 border-purple-200 bg-purple-50/50">
-                        <SelectValue placeholder="Sélectionner..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {/* Groupe : Robes de mariée */}
-                        <SelectGroup>
-                            <SelectLabel className="text-purple-600 font-bold bg-purple-50">Robe de Mariage</SelectLabel>
-                            {weddingDressCategories.map((dress) => (
-                                <SelectItem key={dress} value={dress}>
-                                    👗 {dress}
-                                </SelectItem>
-                            ))}
-                        </SelectGroup>
-                        
-                        {/* Séparateur visuel */}
-                        <div className="h-px bg-slate-100 my-1" />
-
-                        {/* Groupe : Autres catégories mariage */}
-                        <SelectGroup>
-                            <SelectLabel className="text-slate-500 font-bold">Autres Articles</SelectLabel>
-                            {weddingGeneralCategories.map((subCat) => (
-                              <SelectItem key={subCat} value={subCat}>
-                                {subCat}
-                              </SelectItem>
-                            ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-            </div>
+                 {activeSubCategories.length > 0 && (
+                   <div className="animate-in fade-in slide-in-from-top-2">
+                     <Label className="mb-1.5">Sous-catégorie</Label>
+                     <Select 
+                       value={formData.subcategory} 
+                       onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
+                     >
+                       <SelectTrigger className="h-11 border-blue-200 bg-blue-50/30">
+                         <SelectValue placeholder="Sélectionner..." />
+                       </SelectTrigger>
+                       <SelectContent>
+                         {activeSubCategories.map((sub) => (
+                           <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                         ))}
+                       </SelectContent>
+                     </Select>
+                   </div>
+                 )}
+             </div>
           </div>
 
           {/* Section 4: Logistique */}
