@@ -506,7 +506,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
           {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') && (
             <Button 
               onClick={async () => {
-                // Générer le lien OG optimisé
+                // Générer le lien OG optimisé (appel direct à /functions/ogMetaTags)
                 const ogLink = await generateOGLink(product.id, shop.id);
                 
                 if (!ogLink) {
@@ -517,9 +517,6 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                 const message = `Je Suis Intéressé par Cet Article 👇\n${ogLink}`;
                 const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
 
-                // Copier le lien dans le presse-papiers
-                navigator.clipboard.writeText(ogLink).catch(err => console.log('Copy failed:', err));
-                
                 window.open(whatsappUrl, '_blank');
               }} 
               disabled={generatingOGLink}
