@@ -278,9 +278,28 @@ Répondez en JSON strict.`,
               <DialogTitle className="text-lg font-bold text-slate-800">Ajout en masse — Facebook Shop</DialogTitle>
               <p className="text-xs text-slate-500 mt-0.5">{shopName} · {filledRows.length} article{filledRows.length !== 1 ? 's' : ''} rempli{filledRows.length !== 1 ? 's' : ''}</p>
             </div>
-            <Badge className={validCount === filledRows.length && filledRows.length > 0 ? "bg-green-100 text-green-700 border-green-200" : "bg-slate-100 text-slate-600"}>
-              {validCount}/{filledRows.length} valides
-            </Badge>
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                ref={multiUploadRef}
+                onChange={e => handleMultipleImages(e.target.files)}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => multiUploadRef.current?.click()}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs gap-1.5"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Importer plusieurs photos
+              </Button>
+              <Badge className={validCount === filledRows.length && filledRows.length > 0 ? "bg-green-100 text-green-700 border-green-200" : "bg-slate-100 text-slate-600"}>
+                {validCount}/{filledRows.length} valides
+              </Badge>
+            </div>
           </div>
         </DialogHeader>
 
