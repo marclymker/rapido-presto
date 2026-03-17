@@ -176,16 +176,27 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
 
     updateRow(rowId, { aiLoading: true });
     try {
+      // Construire la liste complète des sous-catégories Facebook
+      const fbCategoriesStr = Object.entries(FACEBOOK_CATEGORIES_COMPLETE)
+        .map(([key, data]) => `${data.label}: ${data.subcategories?.join(', ') || key}`)
+        .join('\n');
+
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `Analysez ce produit à partir du titre "${row.name}" et de l'image fournie.
 
+TÂCHE CRITIQUE: Choisir la sous-catégorie Facebook EXACTE la plus appropriée.
+
+Catégories Facebook Marketplace officielles avec sous-catégories:
+${fbCategoriesStr}
+
 Générez en français:
 1. Une description marketing puissante et détaillée (2-3 phrases percutantes)
-2. La catégorie Facebook la plus précise parmi: ${FB_CATEGORIES.map(c => c.value).join(', ')}
-3. La catégorie app correspondante parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
-4. 7 à 10 tags SEO ultra-pertinents en français et créole haïtien pour maximiser la visibilité (mots-clés de recherche, synonymes, termes locaux haïtiens)
+2. La sous-catégorie Facebook EXACTE la plus précise (format complet: "Parent > Child > SubChild").
+   IMPORTANT: Doit correspondre EXACTEMENT à une des listes ci-dessus.
+3. La catégorie app Rapido Presto correspondante
+4. 7 à 10 tags SEO ultra-pertinents en français et créole haïtien (mots-clés, synonymes, termes locaux haïtiens)
 5. La marque si identifiable (sinon laisser vide)
-6. Un texte ALT pour l'image (15-20 mots max, décrivant précisément l'image pour Google Images et l'accessibilité, en français)
+6. Un texte ALT pour l'image (15-20 mots max, Google Images et accessibilité, français)
 
 Répondez en JSON strict.`,
         file_urls: [row.image_url],
@@ -193,8 +204,8 @@ Répondez en JSON strict.`,
           type: "object",
           properties: {
             description: { type: "string" },
-            fb_category: { type: "string" },
-            category: { type: "string" },
+            fb_category: { type: "string", description: "Chemin complet sous-catégorie Facebook" },
+            category: { type: "string", description: "Catégorie app Rapido Presto" },
             seo_tags: { type: "array", items: { type: "string" } },
             brand: { type: "string" },
             image_alt: { type: "string" }
