@@ -78,9 +78,8 @@ export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 })
             <Link
               key={item.id}
               to={createPageUrl(item.page)}
-              onClick={(e) => {
+              onClick={() => {
                 if (active) {
-                  e.preventDefault();
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
