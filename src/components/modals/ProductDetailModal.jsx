@@ -507,18 +507,32 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
           {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') && (
             <Button 
               onClick={async () => {
-                // Générer le lien OG optimisé (appel direct à /functions/ogMetaTags)
-                const ogLink = await generateOGLink(product.id, shop.id);
-                
-                if (!ogLink) {
-                  toast.error("Impossible de générer le lien");
-                  return;
+                try {
+                  // ⚡ OPTIMISATION OG TAGS
+                  injectOGMetaTags(product, shop);
+                  
+                  // Générer le lien OG optimisé avec cache-bust
+                  const baseOgLink = await generateOGLink(product.id, shop.id);
+                  
+                  if (!baseOgLink) {
+                    toast.error("Impossible de générer le lien");
+                    return;
+                  }
+
+                  // Ajouter cache-bust pour forcer WhatsApp à rafraîchir l'aperçu
+                  const ogLink = generateShareLinkWithCacheBust(baseOgLink);
+                  
+                  // Assurer HTTPS complet
+                  const secureLink = ensureHttpsAndCompress(ogLink);
+
+                  const message = `Je Suis Intéressé par Cet Article 👇\n${secureLink}`;
+                  const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
+
+                  window.open(whatsappUrl, '_blank');
+                } catch (error) {
+                  console.error('❌ Erreur WhatsApp:', error);
+                  toast.error("Erreur lors de la génération du lien");
                 }
-
-                const message = `Je Suis Intéressé par Cet Article 👇\n${ogLink}`;
-                const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
-
-                window.open(whatsappUrl, '_blank');
               }} 
               disabled={generatingOGLink}
               className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] disabled:bg-[#1ebd57]/50 text-white rounded-2xl font-bold"
