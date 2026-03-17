@@ -23,11 +23,11 @@ const PageTransitionWrapper = ({ children }) => {
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={location.pathname}
-        initial={{ x: '100%', opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: '-30%', opacity: 0 }}
-        transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
-        style={{ willChange: 'transform, opacity', width: '100%', minHeight: '100vh' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+        style={{ width: '100%' }}
       >
         {children}
       </motion.div>
