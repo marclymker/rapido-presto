@@ -575,6 +575,23 @@ Répondez au format JSON strict.`,
                   placeholder="Décrivez votre produit... (ou laissez l'IA le faire)"
                 />
               </div>
+
+              <div>
+                <Label className="mb-1.5 flex items-center gap-2">
+                  Texte ALT de l'image
+                  <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">SEO · Google Images · Accessibilité</span>
+                </Label>
+                <Input
+                  value={formData.image_alt}
+                  onChange={(e) => setFormData({ ...formData, image_alt: e.target.value })}
+                  placeholder="Ex: Robe de mariée sirène blanche avec traîne, vue de face — généré par IA"
+                  className="bg-slate-50"
+                  maxLength={150}
+                />
+                {formData.image_alt && (
+                  <p className="text-xs text-slate-400 mt-1">{formData.image_alt.length}/150 caractères</p>
+                )}
+              </div>
           </div>
 
           {/* Section 2: Prix et Stock */}
