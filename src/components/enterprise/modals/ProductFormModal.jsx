@@ -345,9 +345,10 @@ Répondez au format JSON strict.`,
             description: { type: "string" },
             category: { type: "string" },
             subcategory: { type: "string" },
-            seo_tags: { type: "array", items: { type: "string" } }
+            seo_tags: { type: "array", items: { type: "string" } },
+            image_alt: { type: "string" }
           },
-          required: ["description", "category", "seo_tags"]
+          required: ["description", "category", "seo_tags", "image_alt"]
         }
       });
 
