@@ -71,22 +71,7 @@ export default function AdminProducts() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-slate-800">Gestion des Articles</h1>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setShowAltTexts(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              <ImageIcon className="w-4 h-4 mr-2" />
-              Générer ALT texts
-            </Button>
-            <Button
-              onClick={() => setShowFbMigration(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Layers className="w-4 h-4 mr-2" />
-              Migrer catégories Facebook
-            </Button>
-          </div>
+          
         </div>
 
         {!selectedShop ? (
@@ -233,17 +218,7 @@ export default function AdminProducts() {
         }}
       />
 
-      <MigrateFbCategoriesModal
-        open={showFbMigration}
-        onClose={() => setShowFbMigration(false)}
-      />
-
-      <GenerateAltTextsModal
-        open={showAltTexts}
-        onClose={() => setShowAltTexts(false)}
-        shopId={selectedShop?.id}
-        shopName={selectedShop?.company_name}
-      />
+      
 
       <ProductFormModal
         product={editingProduct}
