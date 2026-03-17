@@ -166,6 +166,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         subcategory: '',
         stock_quantity: 0,
         image_url: '',
+        image_alt: '',
         additional_images: [],
         taille_emballage: 'Moyen',
         delivery_time: '30-45 minutes',
