@@ -732,7 +732,7 @@ export default function Home() {
 
   return (
 
-    <div className="min-h-screen pb-20 font-sans" style={{ backgroundColor: theme.bgGray }}>
+    <div className="min-h-screen pb-24 font-sans overflow-y-auto" style={{ backgroundColor: theme.bgGray }}>
 
       <Helmet>
         {/* ⚡ Préchargement critique */}
@@ -972,7 +972,7 @@ export default function Home() {
 
 
       <PullToRefresh onRefresh={async () => { queryClient.invalidateQueries(['all-products']); queryClient.invalidateQueries(['shops']); }}>
-      <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-20">
+      <main className="max-w-[1500px] mx-auto p-2 md:p-4">
 
         
 
