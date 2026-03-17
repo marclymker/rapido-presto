@@ -522,36 +522,37 @@ export default function Product() {
           </div>
 
           {/* Zoom Modal */}
-      {isZoomed && (
-        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
-          <Button variant="ghost" size="icon" onClick={() => setIsZoomed(false)} className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full h-12 w-12">
-            <X className="w-8 h-8" />
-          </Button>
-          <img src={activeImage} alt="Zoom" className="max-w-full max-h-full object-contain" />
-        </div>
-      )}
+          {isZoomed && (
+            <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
+              <Button variant="ghost" size="icon" onClick={() => setIsZoomed(false)} className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full h-12 w-12">
+                <X className="w-8 h-8" />
+              </Button>
+              <img src={activeImage} alt="Zoom" className="max-w-full max-h-full object-contain" />
+            </div>
+          )}
 
-      {/* Sticky Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] p-3 pb-6 z-40">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
-          <div className="flex items-center bg-slate-100 rounded-full px-1 h-12">
-            <Button variant="ghost" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="rounded-full h-10 w-10">
-              <Minus className="w-4 h-4" />
-            </Button>
-            <span className="w-8 text-center font-bold text-sm">{quantity}</span>
-            <Button variant="ghost" size="icon" onClick={() => setQuantity(quantity + 1)} className="rounded-full h-10 w-10">
-              <Plus className="w-4 h-4" />
-            </Button>
+          {/* Sticky Bottom Bar */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] p-3 pb-6 z-40">
+            <div className="max-w-lg mx-auto flex items-center gap-3">
+              <div className="flex items-center bg-slate-100 rounded-full px-1 h-12">
+                <Button variant="ghost" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="rounded-full h-10 w-10">
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <span className="w-8 text-center font-bold text-sm">{quantity}</span>
+                <Button variant="ghost" size="icon" onClick={() => setQuantity(quantity + 1)} className="rounded-full h-10 w-10">
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              <Button onClick={handleAddToCart} disabled={!product.is_available} className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white h-12 rounded-full font-bold shadow-lg shadow-orange-500/25">
+                <div className="flex flex-col items-start leading-none gap-0.5">
+                  <span className="text-sm">Acheter maintenant</span>
+                  <span className="text-[10px] font-normal opacity-90">Total: {calculateTotalPrice().toLocaleString()} HTG</span>
+                </div>
+                <ShoppingCart className="w-5 h-5 ml-auto" />
+              </Button>
+            </div>
           </div>
-          <Button onClick={handleAddToCart} disabled={!product.is_available} className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white h-12 rounded-full font-bold shadow-lg shadow-orange-500/25">
-             <div className="flex flex-col items-start leading-none gap-0.5">
-                <span className="text-sm">Acheter maintenant</span>
-                <span className="text-[10px] font-normal opacity-90">Total: {calculateTotalPrice().toLocaleString()} HTG</span>
-             </div>
-             <ShoppingCart className="w-5 h-5 ml-auto" />
-          </Button>
-        </div>
-      </div>
-    </>
-  );
+          </div>
+          </>
+          );
 }
