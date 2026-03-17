@@ -384,7 +384,7 @@ Répondez en JSON strict.`,
                     {/* FB Category */}
                     <td className={colClass}>
                       <Select value={row.fb_category} onValueChange={v => updateRow(row.id, { fb_category: v })}>
-                        <SelectTrigger className="h-8 text-xs border-slate-200">
+                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
                           <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
                         </SelectTrigger>
                         <SelectContent>
