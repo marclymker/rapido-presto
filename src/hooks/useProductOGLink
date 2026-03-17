@@ -16,11 +16,11 @@ export function useProductOGLink() {
       const response = await base44.functions.invoke('generateOGLink', {
         product_id: productId,
         shop_id: shopId
-      });
+      }, { method: 'GET' });
       
       return response?.data?.ogLink || null;
     } catch (error) {
-      console.error('Error generating OG link:', error);
+      console.error('❌ Error generating OG link:', error);
       return null;
     } finally {
       setLoading(false);
