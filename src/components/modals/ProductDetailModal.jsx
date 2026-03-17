@@ -15,6 +15,7 @@ import ChatButton from '@/components/chat/ChatButton';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { createPageUrl } from '@/utils';
 import ShareProductButton from '@/components/share/ShareProductButton';
+import { useProductOGLink } from '@/hooks/useProductOGLink';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
@@ -32,7 +33,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   const [showCreateProductModal, setShowCreateProductModal] = useState(false);
   const [userShop, setUserShop] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [generatingOGLink, setGeneratingOGLink] = useState(false);
+  const { generateLink: generateOGLink, loading: generatingOGLink } = useProductOGLink();
 
   // Gérer le bouton retour natif pour fermer la modale
   useBackButton(() => {
@@ -505,23 +506,18 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
           {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') && (
             <Button 
               onClick={async () => {
-                setGeneratingOGLink(true);
-                try {
-                  // Construire directement le lien OG
-                  const appUrl = window.location.origin;
-                  const shopParam = shop.slug || shop.id;
-                  const productParam = product.slug || product.id;
-                  const ogLink = `${appUrl}/functions/ogMetaTags?slug=${shopParam}&product=${productParam}`;
-
-                  const message = `Je Suis Intéressé par Cet Article 👇\n${ogLink}`;
-                  const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
-
-                  window.open(whatsappUrl, '_blank');
-                } catch (error) {
-                  toast.error("Erreur lors du partage");
-                } finally {
-                  setGeneratingOGLink(false);
+                // Générer le lien OG optimisé (appel direct à /functions/ogMetaTags)
+                const ogLink = await generateOGLink(product.id, shop.id);
+                
+                if (!ogLink) {
+                  toast.error("Impossible de générer le lien");
+                  return;
                 }
+
+                const message = `Je Suis Intéressé par Cet Article 👇\n${ogLink}`;
+                const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
+
+                window.open(whatsappUrl, '_blank');
               }} 
               disabled={generatingOGLink}
               className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] disabled:bg-[#1ebd57]/50 text-white rounded-2xl font-bold"

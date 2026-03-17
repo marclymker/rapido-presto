@@ -48,7 +48,6 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import Account from './pages/Account';
-import AdminBlog from './pages/AdminBlog';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminProducts from './pages/AdminProducts';
 import AdminShops from './pages/AdminShops';
@@ -58,8 +57,6 @@ import AgentClients from './pages/AgentClients';
 import AgentCommissions from './pages/AgentCommissions';
 import AgentDashboard from './pages/AgentDashboard';
 import AllOrdersAdmin from './pages/AllOrdersAdmin';
-import Blog from './pages/Blog';
-import BlogArticle from './pages/BlogArticle';
 import Cart from './pages/Cart';
 import CategoryPage from './pages/CategoryPage';
 import Chat from './pages/Chat';
@@ -89,7 +86,6 @@ import __Layout from './Layout.jsx';
 
 export const PAGES = {
     "Account": Account,
-    "AdminBlog": AdminBlog,
     "AdminDashboard": AdminDashboard,
     "AdminProducts": AdminProducts,
     "AdminShops": AdminShops,
@@ -99,8 +95,6 @@ export const PAGES = {
     "AgentCommissions": AgentCommissions,
     "AgentDashboard": AgentDashboard,
     "AllOrdersAdmin": AllOrdersAdmin,
-    "Blog": Blog,
-    "BlogArticle": BlogArticle,
     "Cart": Cart,
     "CategoryPage": CategoryPage,
     "Chat": Chat,
