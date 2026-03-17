@@ -60,16 +60,24 @@ Deno.serve(async (req) => {
         : shop.company_name;
       
       const pageDescription = product
-        ? `${product.description || product.name} - Prix: ${productPrice?.toLocaleString()} Gourdes | ${shop.company_name}`
-        : `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`;
+        ? (product.description || product.name).substring(0, 160)
+        : `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`.substring(0, 160);
       
-      // Construire URL absolue pour l'image (critique pour WhatsApp)
+      // Optimiser l'image pour WhatsApp (< 300 Ko, dimensions 1200x630)
       let pageImage = product?.image_url || shop.company_logo_url || '';
       
-      // S'assurer que l'image est une URL absolue
+      // S'assurer que l'image est une URL absolue avec paramètres d'optimisation
       if (pageImage && !pageImage.startsWith('http')) {
         pageImage = `${url.origin}${pageImage}`;
       }
+      
+      // Ajouter paramètres de compression et redimensionnement
+      if (pageImage) {
+        const separator = pageImage.includes('?') ? '&' : '?';
+        pageImage = `${pageImage}${separator}w=1200&h=630&q=75&fit=crop`;
+      }
+      
+      console.log(`[OG Meta Tags] Image optimisée: ${pageImage?.substring(0, 100)}`);
       
       const pageUrl = product
         ? `${url.origin}/shop-view?slug=${shopSlug}&product=${productSlug}`
