@@ -606,10 +606,10 @@ Réponds en JSON strict.`,
                 <div>
                   <Label className="mb-1.5 text-xs uppercase tracking-wide text-slate-900">Prix (HTG) <span className="text-red-500">*</span></Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-900 font-bold">$</span>
                     <Input
                       type="number"
-                      className="pl-7 font-semibold"
+                      className="pl-7 font-semibold text-slate-900"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || '' })}
                       required
