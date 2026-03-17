@@ -335,19 +335,18 @@ export default function Product() {
         {/* ✅ CANONICAL URL */}
         <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
       </Helmet>
-      
+
       <div className="min-h-screen bg-white pb-32 font-sans text-slate-900">
-      
-      {/* 1. AMAZON STYLE BREADCRUMBS */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-sm z-40 border-b border-slate-100">
-         <div className="px-4 py-2 text-xs text-slate-500 flex items-center gap-1 max-w-lg mx-auto">
+        {/* 1. AMAZON STYLE BREADCRUMBS */}
+        <div className="sticky top-0 bg-white/95 backdrop-blur-sm z-40 border-b border-slate-100">
+          <div className="px-4 py-2 text-xs text-slate-500 flex items-center gap-1 max-w-lg mx-auto">
             <span>Accueil</span> <ChevronRight className="w-3 h-3" />
             <span>{product.category}</span> <ChevronRight className="w-3 h-3" />
             <span className="text-slate-800 truncate font-medium">{product.name}</span>
-         </div>
-      </div>
+          </div>
+        </div>
 
-      <div className="max-w-lg mx-auto">
+        <div className="max-w-lg mx-auto">
         
         {/* Header Navigation */}
         <div className="absolute top-10 left-4 z-30">
