@@ -45,7 +45,7 @@ const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, s
             <img
               src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=300&q=75`}
               className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-              alt={product.name}
+              alt={product.image_alt || product.name}
               loading="lazy"
               decoding="async"
               fetchpriority="low"
