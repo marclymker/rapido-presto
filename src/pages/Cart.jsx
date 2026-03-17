@@ -345,7 +345,7 @@ export default function Cart() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white sticky top-0 z-40 border-b">
+      <header className="bg-white sticky top-0 z-40 border-b" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Link to={createPageUrl('Home')}>

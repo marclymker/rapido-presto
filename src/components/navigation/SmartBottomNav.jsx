@@ -76,6 +76,11 @@ export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 })
             <Link
               key={item.id}
               to={createPageUrl(item.page)}
+              onClick={() => {
+                if (active) {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
               className="flex flex-col items-center justify-center w-full h-full gap-1 group relative"
             >
               <div className="relative">
