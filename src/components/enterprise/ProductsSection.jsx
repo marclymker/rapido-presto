@@ -45,6 +45,14 @@ export default function ProductsSection({ shopId }) {
               className="w-full bg-gray-100 rounded-full pl-12 pr-6 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
             />
           </div>
+          <Button
+            onClick={() => setShowBulkModal(true)}
+            variant="outline"
+            className="px-4 py-3 rounded-full font-bold border-2 border-blue-200 text-blue-600 hover:bg-blue-50"
+          >
+            <Layers className="w-5 h-5 mr-2" />
+            Bulk
+          </Button>
           <Button 
             onClick={() => {
               setSelectedProduct(null);
