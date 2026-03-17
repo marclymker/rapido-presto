@@ -4,9 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Package, Trash2, Edit, Store, UploadCloud } from 'lucide-react';
+import { Plus, Package, Trash2, Edit, Store, UploadCloud, Layers } from 'lucide-react';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import BulkUploadModal from '@/components/admin/BulkUploadModal';
+import MigrateFbCategoriesModal from '@/components/admin/MigrateFbCategoriesModal';
 
 export default function AdminProducts() {
   const [user, setUser] = useState(null);
