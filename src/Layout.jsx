@@ -185,9 +185,8 @@ export default function Layout({ children, currentPageName }) {
 
       <CookieConsent onAccept={handleCookieAccept} onReject={handleCookieReject} />
 
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 pb-20">
         <Toaster position="top-center" />
-        <ThemeProvider />
         <OneSignalInit user={user} />
         <NotificationPermission />
         <InstallPrompt />
