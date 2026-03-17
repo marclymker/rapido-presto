@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { base44 } from '@/api/base44Client';
+import { ensureHttpsAndCompress } from '@/components/utils/ogMetaTagsManager';
 import { 
   ArrowLeft, 
   ShoppingCart, 
