@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
     }
 
     // En-tête avec tous les champs standards Facebook/Google Shopping + attributs personnalisés
-    let csv = 'id,title,description,availability,condition,price,link,image_link,brand,color,size,material,gender,age_group,pattern,custom_label_0,custom_label_1,custom_label_2,custom_label_3,custom_label_4,additional_image_link\n';
+    let csv = 'id,title,description,availability,condition,price,link,image_link,google_product_category,brand,color,size,material,gender,age_group,pattern,custom_label_0,custom_label_1,custom_label_2,custom_label_3,custom_label_4,additional_image_link\n';
 
     const escapeCSV = (str) => {
       if (!str) return '';
