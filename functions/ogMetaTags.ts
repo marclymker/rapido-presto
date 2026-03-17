@@ -19,9 +19,13 @@ Deno.serve(async (req) => {
       return new Response('Shop slug required', { status: 400 });
     }
 
-    // Détecter les crawlers sociaux
+    // Détecter les crawlers sociaux (WhatsApp, Facebook, etc.)
     const userAgent = req.headers.get('user-agent') || '';
-    const isCrawler = /facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Slackbot/i.test(userAgent);
+    const isCrawler = /facebookexternalhit|whatsapp|twitterbot|telegrambot|linkedinbot|slackbot|pinterest|vkshare|iframely/i.test(userAgent);
+    
+    // Log pour débogage
+    console.log(`[OG Meta Tags] User-Agent: ${userAgent.substring(0, 100)}`);
+    console.log(`[OG Meta Tags] Is Crawler: ${isCrawler}, Shop: ${shopSlug}, Product: ${productSlug}`);
 
     // Charger les données de la boutique
     const shops = await base44.asServiceRole.entities.Shop.filter({ slug: shopSlug });
