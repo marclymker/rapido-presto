@@ -365,13 +365,13 @@ Répondez au format JSON strict.`,
         ...formData,
         description: result.description || formData.description,
         category: result.category || formData.category,
-        subcategory: result.category === 'Mariage' ? (result.subcategory || formData.subcategory) : formData.subcategory,
+        subcategory: result.facebook_subcategory || result.subcategory || formData.subcategory,
         seo_tags: result.seo_tags || formData.seo_tags,
         image_alt: result.image_alt || formData.image_alt
       });
       
       setAiGenerated(true);
-      toast.success('✨ Description, catégorie et tags générés par IA');
+      toast.success('✨ Description, catégorie Facebook et tags générés par IA');
     } catch (error) {
       toast.error('Erreur IA: ' + error.message);
       setAiGenerated(true); // Mark as attempted even on error
