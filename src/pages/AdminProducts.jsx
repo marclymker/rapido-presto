@@ -4,16 +4,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Package, Trash2, Edit, Store, UploadCloud } from 'lucide-react';
+import { Plus, Package, Trash2, Edit, Store, UploadCloud, Layers } from 'lucide-react';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import BulkUploadModal from '@/components/admin/BulkUploadModal';
+import MigrateFbCategoriesModal from '@/components/admin/MigrateFbCategoriesModal';
 
 export default function AdminProducts() {
   const [user, setUser] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
-  
+  const [showFbMigration, setShowFbMigration] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const queryClient = useQueryClient();
 
@@ -71,7 +72,13 @@ export default function AdminProducts() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-slate-800">Gestion des Articles</h1>
-          
+          <Button
+            onClick={() => setShowFbMigration(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Layers className="w-4 h-4 mr-2" />
+            Migrer catégories Facebook
+          </Button>
         </div>
 
         {!selectedShop ? (
@@ -218,7 +225,10 @@ export default function AdminProducts() {
         }}
       />
 
-      
+      <MigrateFbCategoriesModal
+        open={showFbMigration}
+        onClose={() => setShowFbMigration(false)}
+      />
 
       <ProductFormModal
         product={editingProduct}

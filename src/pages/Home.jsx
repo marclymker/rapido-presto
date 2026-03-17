@@ -331,8 +331,7 @@ export default function Home() {
     queryKey: ['shops'],
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
     staleTime: 10 * 60 * 1000, // ⚡ 10 min cache
-    refetchInterval: false, // ⚡ OPTIMISÉ: Pas d'auto-refresh sur accueil
-    gcTime: 30 * 60 * 1000 // Cache 30 min avant purge
+    refetchInterval: false // ⚡ OPTIMISÉ: Pas d'auto-refresh sur accueil
   });
 
   // ⚡ Optimisation: Charger produits APRÈS shops (évite race condition)
@@ -341,8 +340,7 @@ export default function Home() {
     queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200), // ⚡ OPTIMISÉ: 200 au lieu de 1000
     enabled: !selectedShop && shops.length > 0, // ⚡ Attendre shops
     staleTime: 10 * 60 * 1000, // ⚡ 10 min cache (doublé)
-    refetchInterval: false, // ⚡ OPTIMISÉ: Pas d'auto-refresh sur accueil
-    gcTime: 30 * 60 * 1000 // Cache 30 min avant purge
+    refetchInterval: false // ⚡ OPTIMISÉ: Pas d'auto-refresh sur accueil
   });
 
   // Fonction getter sécurisée pour allProducts
@@ -653,8 +651,8 @@ export default function Home() {
 
 
   const filteredProducts = React.useMemo(() => 
-    filteredProductsByType.filter(p => p.name?.toLowerCase().includes(debouncedSearch.toLowerCase())),
-    [filteredProductsByType, debouncedSearch]
+    products.filter(p => p.name?.toLowerCase().includes(debouncedSearch.toLowerCase())),
+    [products, debouncedSearch]
   );
 
 
@@ -734,7 +732,7 @@ export default function Home() {
 
   return (
 
-    <div className="min-h-screen pb-32 font-sans" style={{ backgroundColor: theme.bgGray }}>
+    <div className="min-h-screen pb-20 font-sans" style={{ backgroundColor: theme.bgGray }}>
 
       <Helmet>
         {/* ⚡ Préchargement critique */}
@@ -746,7 +744,7 @@ export default function Home() {
 
       
 
-      <header className="sticky top-0 z-50 flex flex-col shadow-md" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <header className="sticky top-0 z-50 flex flex-col shadow-md">
 
         <div className="text-white px-4 py-2 flex items-center gap-4" style={{ backgroundColor: theme.darkBlue }}>
 
@@ -974,7 +972,7 @@ export default function Home() {
 
 
       <PullToRefresh onRefresh={async () => { queryClient.invalidateQueries(['all-products']); queryClient.invalidateQueries(['shops']); }}>
-      <main className="max-w-[1500px] mx-auto p-2 md:p-4">
+      <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-32">
 
         
 
@@ -1101,7 +1099,7 @@ export default function Home() {
 
                              if (shop?.slug && targetProduct.slug) {
 
-                               navigate(`/ShopView?slug=${shop.slug}&product=${targetProduct.slug}`);
+                               window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
 
                              } else if (shop) {
 
@@ -1535,10 +1533,10 @@ export default function Home() {
 
                                                              trackProductView(targetProduct, shop);
                                                              if (shop?.slug && targetProduct.slug) {
-                                                                                      navigate(`/ShopView?slug=${shop.slug}&product=${targetProduct.slug}`);
-                                                                                    } else {
-                                                                                      // Ne pas setter selectedShop en sous-catégorie
-                                                                                      setSelectedProduct(targetProduct);
+                                                               window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
+                                                             } else {
+                                                               // Ne pas setter selectedShop en sous-catégorie
+                                                               setSelectedProduct(targetProduct);
                                                              }
                                                             }}
 
@@ -1611,7 +1609,7 @@ export default function Home() {
                                                                   
                                                                   trackProductView(targetProduct, shop);
                                                                   if (shop?.slug && targetProduct.slug) {
-                                                                    navigate(`/ShopView?slug=${shop.slug}&product=${targetProduct.slug}`);
+                                                                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
                                                                   } else {
                                                                     // Ne pas setter selectedShop en sous-catégorie
                                                                     setSelectedProduct(targetProduct);
@@ -1662,7 +1660,7 @@ export default function Home() {
 
                                                     if (shop?.slug) {
 
-                                                        navigate(`/ShopView?slug=${shop.slug}`);
+                                                        window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
 
                                                     } else {
 
@@ -1718,17 +1716,17 @@ export default function Home() {
 
                                                onClick={() => {
 
-                                                    if (shop?.slug) {
+                                                   if (shop?.slug) {
 
-                                                        navigate(`/ShopView?slug=${shop.slug}`);
+                                                       window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
 
-                                                    } else {
+                                                   } else {
 
-                                                        setSelectedShop(shop);
+                                                       setSelectedShop(shop);
 
-                                                    }
+                                                   }
 
-                                                }}
+                                               }}
 
                                             >
 
@@ -1771,17 +1769,17 @@ export default function Home() {
 
                                                            if (shop?.slug && targetProduct.slug) {
 
-                                                                                      navigate(`/ShopView?slug=${shop.slug}&product=${targetProduct.slug}`);
+                                                             window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
 
-                                                                                    } else if (shop?.slug) {
+                                                           } else if (shop?.slug) {
 
-                                                                                      navigate(`/ShopView?slug=${shop.slug}`);
+                                                             window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
 
-                                                                                    } else {
+                                                           } else {
 
-                                                                                      setSelectedShop(shop);
+                                                             setSelectedShop(shop);
 
-                                                                                      setSelectedProduct(targetProduct);
+                                                             setSelectedProduct(targetProduct);
 
                                                            }
 

@@ -116,9 +116,6 @@ export default function Layout({ children, currentPageName }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Rapido" />
-        <link rel="alternate" hreflang="fr-HT" href="https://rapidopresto.shop" />
-        <link rel="alternate" hreflang="fr" href="https://rapidopresto.shop" />
-        <link rel="alternate" hreflang="x-default" href="https://rapidopresto.shop" />
         <link rel="dns-prefetch" href="https://qtrypzzcjebvfcihiynt.supabase.co" />
         <link rel="preconnect" href="https://qtrypzzcjebvfcihiynt.supabase.co" crossOrigin="anonymous" />
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
@@ -186,7 +183,7 @@ export default function Layout({ children, currentPageName }) {
 
       <CookieConsent onAccept={handleCookieAccept} onReject={handleCookieReject} />
 
-      <div className="flex flex-col w-full min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 pb-20">
         <Toaster position="top-center" />
         <ThemeProvider />
         <OneSignalInit user={user} />
@@ -202,23 +199,15 @@ export default function Layout({ children, currentPageName }) {
           </div>
         )}
 
-        <div className="flex-1">
-          {children}
-        </div>
+        {children}
 
-        {!noNavPages.includes(currentPageName) && (
+        {user && !noNavPages.includes(currentPageName) && (
           <SmartBottomNav
             cartCount={cartCount}
             activeOrdersCount={activeOrdersCount}
           />
         )}
       </div>
-      <style>{`
-        html, body, #root {
-          height: auto !important;
-          overflow: visible !important;
-        }
-      `}</style>
     </HelmetProvider>
   );
 }

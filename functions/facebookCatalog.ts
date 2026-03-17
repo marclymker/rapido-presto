@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
     }
 
     // En-tête avec tous les champs standards Facebook/Google Shopping + attributs personnalisés
-    let csv = 'id,title,description,availability,condition,price,link,image_link,google_product_category,brand,color,size,material,gender,age_group,pattern,custom_label_0,custom_label_1,custom_label_2,custom_label_3,custom_label_4,additional_image_link\n';
+    let csv = 'id,title,description,availability,condition,price,link,image_link,brand,color,size,material,gender,age_group,pattern,custom_label_0,custom_label_1,custom_label_2,custom_label_3,custom_label_4,additional_image_link\n';
 
     const escapeCSV = (str) => {
       if (!str) return '';
@@ -34,8 +34,7 @@ Deno.serve(async (req) => {
       const link = p.slug ? `https://rapido-presto.base44.app/product?slug=${p.slug}` : `https://rapido-presto.base44.app/product?id=${p.id}`;
       const image_link = p.image_url || "https://rapido-presto.base44.app/logo.png";
       const brand = escapeCSV(p.shop_name || "Rapido Presto");
-      const google_product_category = escapeCSV(p.product_attributes?.fb_category || '');
-
+      
       // Attributs produits (standards Facebook/Google Shopping)
       const color = escapeCSV(attrs.color || '');
       const size = escapeCSV(attrs.size || '');
@@ -56,7 +55,7 @@ Deno.serve(async (req) => {
         ? escapeCSV(p.additional_images.join(','))
         : '';
 
-      csv += `${id},${title},${description},${availability},${condition},${price},${link},${image_link},${google_product_category},${brand},${color},${size},${material},${gender},${age_group},${pattern},${custom_label_0},${custom_label_1},${custom_label_2},${custom_label_3},${custom_label_4},${additional_images}\n`;
+      csv += `${id},${title},${description},${availability},${condition},${price},${link},${image_link},${brand},${color},${size},${material},${gender},${age_group},${pattern},${custom_label_0},${custom_label_1},${custom_label_2},${custom_label_3},${custom_label_4},${additional_images}\n`;
     });
 
     return new Response(csv, { 

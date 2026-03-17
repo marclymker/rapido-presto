@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Save, X, ImagePlus, Loader2, Sparkles, Upload, FolderOpen } from 'lucide-react';
+import { Plus, Save, X, ImagePlus, Loader2, Sparkles, Upload } from 'lucide-react';
 
 const FB_CATEGORIES = [
   { value: "Apparel & Accessories > Women's Clothing", label: "Vêtements Femme", appCat: "Habillement et accessoires" },
@@ -71,8 +71,6 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
   const [rows, setRows] = useState(() => Array.from({ length: 6 }, createEmptyRow));
   const [saving, setSaving] = useState(false);
   const [draggingOver, setDraggingOver] = useState(null);
-  const [showImagePicker, setShowImagePicker] = useState(false);
-  const [pickerDragging, setPickerDragging] = useState(false);
   const fileInputRefs = useRef({});
   const multiUploadRef = useRef(null);
 
@@ -178,25 +176,17 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
     updateRow(rowId, { aiLoading: true });
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Tu es un Expert SEO Senior et Copywriter E-commerce spécialisé dans le marché haïtien. Tu travailles pour une marketplace multi-boutiques en Haïti (RapidoPresto) qui vend tout type de produits : mode, électronique, alimentation, mariage, fleurs, pharmacie, décoration, etc.
+        prompt: `Analysez ce produit à partir du titre "${row.name}" et de l'image fournie.
 
-À partir du nom du produit "${row.name}" et de l'image fournie, génère une annonce optimisée pour la conversion (Facebook Marketplace/WhatsApp) ET pour le SEO local haïtien.
+Générez en français:
+1. Une description marketing puissante et détaillée (2-3 phrases percutantes)
+2. La catégorie Facebook la plus précise parmi: ${FB_CATEGORIES.map(c => c.value).join(', ')}
+3. La catégorie app correspondante parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
+4. 7 à 10 tags SEO ultra-pertinents en français et créole haïtien pour maximiser la visibilité (mots-clés de recherche, synonymes, termes locaux haïtiens)
+5. La marque si identifiable (sinon laisser vide)
+6. Un texte ALT pour l'image (15-20 mots max, décrivant précisément l'image pour Google Images et l'accessibilité, en français)
 
-RÈGLES STRICTES :
-
-1. DESCRIPTION : Rédige une description de 3-4 lignes MAX avec des emojis, adaptée au TYPE de produit détecté (pas forcément mariage). Axée sur le bénéfice client, l'urgence et un Call-to-Action direct. Intègre naturellement les villes de Delmas, Cap-Haïtien ou Gonaïves pour le référencement local. Ton chaleureux et professionnel. EN FRANÇAIS uniquement.
-
-2. FB_CATEGORY : La catégorie Facebook la plus précise parmi: ${FB_CATEGORIES.map(c => c.value).join(', ')}
-
-3. CATEGORY (app) : Parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
-
-4. SEO_TAGS : Génère 12 à 15 mots-clés ultra-pertinents pour ce produit spécifique. Mélange: synonymes du produit, termes de son écosystème, mots en français + anglais (diaspora) + créole haïtien, fautes d'orthographe courantes, noms de villes haïtiennes (Delmas, Port-au-Prince, Cap-Haïtien, Gonaïves, Pétion-Ville). Maximum de diversité pour dominer le SEO local.
-
-5. BRAND : La marque si identifiable (sinon laisser vide).
-
-6. IMAGE_ALT : Texte ALT de 15-20 mots décrivant précisément l'image pour Google Images et l'accessibilité, en français.
-
-Réponds en JSON strict.`,
+Répondez en JSON strict.`,
         file_urls: [row.image_url],
         response_json_schema: {
           type: "object",
@@ -279,7 +269,6 @@ Réponds en JSON strict.`,
   const inputClass = "h-8 text-xs border-slate-200 text-slate-900 placeholder:text-slate-400";
 
   return (
-    <>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-[99vw] w-full max-h-[96vh] overflow-hidden flex flex-col p-0 rounded-xl">
         {/* Header */}
@@ -296,16 +285,16 @@ Réponds en JSON strict.`,
                 multiple
                 className="hidden"
                 ref={multiUploadRef}
-                onChange={e => { handleMultipleImages(e.target.files); setShowImagePicker(false); }}
+                onChange={e => handleMultipleImages(e.target.files)}
               />
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowImagePicker(true)}
+                onClick={() => multiUploadRef.current?.click()}
                 className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs gap-1.5"
               >
                 <Upload className="w-3.5 h-3.5" />
-                Ajouter des photos
+                Importer plusieurs photos
               </Button>
               <Badge className={validCount === filledRows.length && filledRows.length > 0 ? "bg-green-100 text-green-700 border-green-200" : "bg-slate-100 text-slate-600"}>
                 {validCount}/{filledRows.length} valides
@@ -595,50 +584,5 @@ Réponds en JSON strict.`,
         </div>
       </DialogContent>
     </Dialog>
-
-    {showImagePicker && (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
-        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b">
-            <h3 className="font-semibold text-slate-800 text-base">Ajouter des images</h3>
-            <button onClick={() => setShowImagePicker(false)} className="text-slate-400 hover:text-slate-600">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Drop zone */}
-          <div
-            className={`mx-5 my-6 rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center py-12 cursor-pointer
-              ${pickerDragging ? 'border-blue-500 bg-blue-50 scale-[1.02]' : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50'}`}
-            onDragOver={e => { e.preventDefault(); setPickerDragging(true); }}
-            onDragLeave={() => setPickerDragging(false)}
-            onDrop={e => {
-              e.preventDefault();
-              setPickerDragging(false);
-              handleMultipleImages(e.dataTransfer.files);
-              setShowImagePicker(false);
-            }}
-            onClick={() => multiUploadRef.current?.click()}
-          >
-            <FolderOpen className={`w-16 h-16 mb-3 transition-colors ${pickerDragging ? 'text-blue-500' : 'text-blue-300'}`} />
-            <p className="font-semibold text-slate-700 text-sm">Glisser-déposer les fichiers</p>
-            <p className="text-xs text-slate-500 mt-1">
-              Ou <span className="text-blue-600 underline cursor-pointer">choisir sur votre appareil</span>
-            </p>
-            <p className="text-[10px] text-slate-400 mt-3">PNG, JPG, WEBP · Plusieurs fichiers acceptés</p>
-          </div>
-
-          {/* Footer */}
-          <div className="flex justify-end gap-2 px-5 py-3 border-t bg-slate-50">
-            <Button variant="outline" size="sm" onClick={() => setShowImagePicker(false)}>Annuler</Button>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => multiUploadRef.current?.click()}>
-              Choisir des fichiers
-            </Button>
-          </div>
-        </div>
-      </div>
-    )}
-    </>
   );
 }
