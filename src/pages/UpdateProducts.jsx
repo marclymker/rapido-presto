@@ -13,6 +13,8 @@ export default function UpdateProducts() {
   const [inventoryResult, setInventoryResult] = useState(null);
   const [compressingImages, setCompressingImages] = useState(false);
   const [compressResult, setCompressResult] = useState(null);
+  const [showAltTexts, setShowAltTexts] = useState(false);
+  const [showFbMigration, setShowFbMigration] = useState(false);
 
   const handleUpdate = async () => {
     setLoading(true);
