@@ -10,6 +10,7 @@ export default function ProductsSection({ shopId }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: shop } = useQuery({
