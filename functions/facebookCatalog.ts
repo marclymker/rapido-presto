@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
         ? escapeCSV(p.additional_images.join(','))
         : '';
 
-      csv += `${id},${title},${description},${availability},${condition},${price},${link},${image_link},${brand},${color},${size},${material},${gender},${age_group},${pattern},${custom_label_0},${custom_label_1},${custom_label_2},${custom_label_3},${custom_label_4},${additional_images}\n`;
+      csv += `${id},${title},${description},${availability},${condition},${price},${link},${image_link},${google_product_category},${brand},${color},${size},${material},${gender},${age_group},${pattern},${custom_label_0},${custom_label_1},${custom_label_2},${custom_label_3},${custom_label_4},${additional_images}\n`;
     });
 
     return new Response(csv, { 
