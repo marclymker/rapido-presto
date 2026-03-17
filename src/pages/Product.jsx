@@ -518,10 +518,10 @@ export default function Product() {
               </div>
             </div>
           )}
-        </div>
-      </div>
+          </div>
+          </div>
 
-      {/* Zoom Modal */}
+          {/* Zoom Modal */}
       {isZoomed && (
         <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
           <Button variant="ghost" size="icon" onClick={() => setIsZoomed(false)} className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full h-12 w-12">
