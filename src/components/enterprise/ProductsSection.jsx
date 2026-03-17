@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Layers } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import ProductFormModal from './modals/ProductFormModal';
+import BulkUploadModal from '@/components/admin/BulkUploadModal';
 
 export default function ProductsSection({ shopId }) {
   const [searchQuery, setSearchQuery] = useState('');
