@@ -44,12 +44,12 @@ Deno.serve(async (req) => {
 
     const shop = shops[0];
 
-    // Générer le lien OG
+    // Générer le lien OG - appel DIRECT à la fonction backend
     const appUrl = Deno.env.get('APP_URL') || 'https://rapido-presto.base44.app';
     
     const ogLink = product.slug && shop.slug
-      ? `${appUrl}/og?slug=${shop.slug}&product=${product.slug}`
-      : `${appUrl}/og?slug=${shop.slug}&product=${product.id}`;
+      ? `${appUrl}/functions/ogMetaTags?slug=${shop.slug}&product=${product.slug}`
+      : `${appUrl}/functions/ogMetaTags?slug=${shop.slug}&product=${product.id}`;
 
     return Response.json({
       success: true,
