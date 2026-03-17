@@ -325,17 +325,28 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
 
 Générez en français:
 1. Une description marketing attractive et détaillée (2-3 phrases)
-2. La catégorie exacte parmi les catégories Facebook Marketplace officielles:
+2. La catégorie Facebook Marketplace la PLUS APPROPRIÉE parmi ces options OBLIGATOIRES:
    "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté",
    "Épicerie", "Loisirs", "Jardin et extérieur", "Fournitures de bureau", "Véhicules",
    "Mariage", "Restauration", "Pharmacie et santé"
-3. La sous-catégorie la plus précise correspondant à la catégorie choisie. Exemples:
-   - Habillement: "Vêtements pour femmes", "Chaussures", "Bijoux et accessoires", "Robes"...
-   - Électronique: "Téléphones portables", "Ordinateurs", "Audio"...
-   - Mariage: "Robe Sirène", "Robe Catalina", "Bague de Mariage", "Accessoires"...
-   - Santé et beauté: "Soins de la peau", "Maquillage", "Perruques et extensions"...
+3. La sous-catégorie Facebook PRÉCISE correspondant à la catégorie choisie. Exemples exhaustifs:
+   - Habillement et accessoires: "Vêtements pour femmes", "Vêtements pour hommes", "Chaussures", "Sacs et bagages", "Bijoux et accessoires", "Robes", "Costumes", "Vêtements bébé"
+   - Électronique: "Téléphones portables", "Ordinateurs", "Électronique grand public", "Audio", "Caméras", "Accessoires informatiques"
+   - Maison: "Meubles", "Décoration intérieure", "Articles ménagers", "Jardin", "Outils", "Décoration de fête", "Fleurs et plantes artificielles"
+   - Famille: "Articles pour bébés et enfants", "Jouets et jeux", "Puériculture", "Poussettes"
+   - Santé et beauté: "Soins de la peau", "Maquillage", "Soins capillaires", "Bain et corps", "Parfums", "Perruques et extensions"
+   - Épicerie: "Boissons", "Nourriture", "Produits frais", "Café", "Paniers-cadeaux", "Chocolats"
+   - Loisirs: "Articles de sport", "Instruments de musique", "Livres", "Artisanat", "Films et musique"
+   - Jardin et extérieur: "Meubles de jardin", "Barbecue", "Plantes", "Fleurs naturelles"
+   - Fournitures de bureau: "Équipement de bureau", "Papeterie", "Fournitures scolaires"
+   - Véhicules: "Voitures et camions", "Motos", "Pièces de véhicules", "Accessoires auto"
+   - Mariage: "Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe de Cérémonie", "Demoiselle d'honneur", "Témoins", "Bague de Mariage", "Bague", "Accessoires", "Carte et programmation", "Matériels Décor"
+   - Restauration: "Fastfood", "Restaurant", "Café", "Épicerie fine", "Traiteur"
+   - Pharmacie et santé: "Médicaments sans ordonnance", "Compléments alimentaires", "Matériel médical"
 4. 5-7 tags SEO pertinents en français (mots-clés de recherche)
 5. Un texte ALT pour l'image (15-20 mots max, décrivant précisément l'image pour Google Images et l'accessibilité, en français)
+
+IMPORTANT: Retournez EXACTEMENT les valeurs Facebook énumérées ci-dessus (respectez la casse et les espaces).
 
 Répondez au format JSON strict.`,
         file_urls: [formData.image_url],
@@ -343,29 +354,29 @@ Répondez au format JSON strict.`,
           type: "object",
           properties: {
             description: { type: "string" },
-            category: { type: "string" },
-            subcategory: { type: "string" },
+            facebook_category: { type: "string" },
+            facebook_subcategory: { type: "string" },
             seo_tags: { type: "array", items: { type: "string" } },
             image_alt: { type: "string" }
           },
-          required: ["description", "category", "seo_tags", "image_alt"]
+          required: ["description", "facebook_category", "facebook_subcategory", "seo_tags", "image_alt"]
         }
       });
 
       setFormData({
         ...formData,
         description: result.description || formData.description,
-        category: result.category || formData.category,
-        subcategory: result.category === 'Mariage' ? (result.subcategory || formData.subcategory) : formData.subcategory,
+        facebook_category: result.facebook_category || formData.facebook_category,
+        facebook_subcategory: result.facebook_subcategory || formData.facebook_subcategory,
         seo_tags: result.seo_tags || formData.seo_tags,
         image_alt: result.image_alt || formData.image_alt
       });
       
       setAiGenerated(true);
-      toast.success('✨ Description, catégorie et tags générés par IA');
+      toast.success('✨ Description, catégories Facebook et tags générés par IA');
     } catch (error) {
       toast.error('Erreur IA: ' + error.message);
-      setAiGenerated(true); // Mark as attempted even on error
+      setAiGenerated(true);
     } finally {
       setAiLoading(false);
     }
