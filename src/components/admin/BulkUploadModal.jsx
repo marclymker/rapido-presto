@@ -72,6 +72,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
   const [saving, setSaving] = useState(false);
   const [draggingOver, setDraggingOver] = useState(null);
   const fileInputRefs = useRef({});
+  const multiUploadRef = useRef(null);
 
   const updateRow = (id, fields) => {
     setRows(prev => prev.map(r => {
