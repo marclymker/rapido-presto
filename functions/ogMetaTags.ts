@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
   <meta property="product:price:amount" content="${productPrice}">
   <meta property="product:price:currency" content="HTG">
   <meta property="product:availability" content="in stock">
-  <meta property="product:brand" content="${shop.company_name}">
+  <meta property="product:brand" content="${escapeHtml(shop.company_name)}">
   <meta property="product:condition" content="new">
   <meta property="product:retailer_item_id" content="${product.id}">
   ` : ''}
@@ -134,11 +134,11 @@ Deno.serve(async (req) => {
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@RapidoPrestoHT">
-  <meta name="twitter:title" content="${pageTitle}">
-  <meta name="twitter:description" content="${pageDescription}">
+  <meta name="twitter:title" content="${safeTitle}">
+  <meta name="twitter:description" content="${safeDescription}">
   ${pageImage ? `
   <meta name="twitter:image" content="${pageImage}">
-  <meta name="twitter:image:alt" content="${pageTitle}">
+  <meta name="twitter:image:alt" content="${safeTitle}">
   ` : ''}
   
   <!-- Redirect humans to React app after 2 seconds -->
