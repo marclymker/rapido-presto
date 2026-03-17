@@ -139,7 +139,8 @@ Deno.serve(async (req) => {
       return new Response(html, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'public, max-age=3600'
+          'Cache-Control': 'public, max-age=3600',
+          'base44-app-id': Deno.env.get('BASE44_APP_ID') || ''
         }
       });
     }
