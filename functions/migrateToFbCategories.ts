@@ -189,15 +189,19 @@ Deno.serve(async (req) => {
       }
     }
 
+    const hasMore = (offset + pageSize) < toProcess.length;
     return Response.json({
       success: true,
       dry_run: dryRun,
       total: allProducts.length,
       to_process: toProcess.length,
+      offset,
+      next_offset: hasMore ? offset + pageSize : null,
+      has_more: hasMore,
       processed,
       updated,
       errors,
-      preview: dryRun ? preview : preview.slice(0, 20),
+      preview: preview.slice(0, 20),
     });
 
   } catch (error) {
