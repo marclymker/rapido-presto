@@ -972,7 +972,7 @@ export default function Home() {
 
 
       <PullToRefresh onRefresh={async () => { queryClient.invalidateQueries(['all-products']); queryClient.invalidateQueries(['shops']); }}>
-      <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-32">
+      <main className="max-w-[1500px] mx-auto p-2 md:p-4 pb-20">
 
         
 
