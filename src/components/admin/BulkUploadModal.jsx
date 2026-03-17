@@ -395,9 +395,13 @@ Répondez en JSON strict.`,
                         )}
                       </div>
                       <input
-                        type="file" accept="image/*" className="hidden"
+                        type="file" accept="image/*" multiple className="hidden"
                         ref={el => fileInputRefs.current[row.id] = el}
-                        onChange={e => handleImageUpload(row.id, e.target.files?.[0])}
+                        onChange={e => {
+                          const files = e.target.files;
+                          if (files.length > 1) handleMultipleImages(files);
+                          else handleImageUpload(row.id, files?.[0]);
+                        }}
                       />
                     </td>
 
