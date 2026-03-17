@@ -505,23 +505,34 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
           {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') && (
             <Button 
-              onClick={() => {
-                // Lien optimisé pour preview WhatsApp via fonction backend ogMetaTags
-                const productUrl = shop?.slug && product.slug 
-                  ? `${window.location.origin}/og?slug=${shop.slug}&product=${product.slug}`
-                  : `${window.location.origin}/og?slug=${shop.slug}&product=${product.id}`;
+              onClick={async () => {
+                // Générer le lien OG optimisé
+                const ogLink = await generateOGLink(product.id, shop.id);
+                
+                if (!ogLink) {
+                  toast.error("Impossible de générer le lien");
+                  return;
+                }
 
-                const message = `Je Suis Intéressé par Cet Article 👇\n${productUrl}`;
+                const message = `Je Suis Intéressé par Cet Article 👇\n${ogLink}`;
                 const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
 
-                // Copier le lien dans le presse-papiers en plus
-                navigator.clipboard.writeText(productUrl).catch(err => console.log('Copy failed:', err));
+                // Copier le lien dans le presse-papiers
+                navigator.clipboard.writeText(ogLink).catch(err => console.log('Copy failed:', err));
                 
                 window.open(whatsappUrl, '_blank');
               }} 
-              className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl font-bold"
+              disabled={generatingOGLink}
+              className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] disabled:bg-[#1ebd57]/50 text-white rounded-2xl font-bold"
             >
-              📱 WhatsApp
+              {generatingOGLink ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 inline animate-spin" />
+                  Génération...
+                </>
+              ) : (
+                '📱 WhatsApp'
+              )}
             </Button>
           )}
           
