@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const dryRun = body.dry_run === true;
-    const batchSize = 20;
+    const batchSize = 10;
 
     // Récupérer tous les produits
     const allProducts = await base44.asServiceRole.entities.Product.list('-created_date', 1000);
