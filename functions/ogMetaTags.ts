@@ -84,8 +84,8 @@ Deno.serve(async (req) => {
     }
     
     const pageUrl = product
-      ? `${url.origin}/ShopView?slug=${shopSlug}&product=${productSlug}`
-      : `${url.origin}/ShopView?slug=${shopSlug}`;
+      ? `${url.origin}/ShopView?slug=${shopParam}&product=${productParam}`
+      : `${url.origin}/ShopView?slug=${shopParam}`;
 
     // Échapper les caractères HTML
     const escapeHtml = (str) => {
