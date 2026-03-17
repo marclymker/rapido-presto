@@ -112,6 +112,7 @@ Générez en français:
 3. La catégorie app correspondante parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
 4. 7 à 10 tags SEO ultra-pertinents en français et créole haïtien pour maximiser la visibilité (mots-clés de recherche, synonymes, termes locaux haïtiens)
 5. La marque si identifiable (sinon laisser vide)
+6. Un texte ALT pour l'image (15-20 mots max, décrivant précisément l'image pour Google Images et l'accessibilité, en français)
 
 Répondez en JSON strict.`,
         file_urls: [row.image_url],
@@ -122,9 +123,10 @@ Répondez en JSON strict.`,
             fb_category: { type: "string" },
             category: { type: "string" },
             seo_tags: { type: "array", items: { type: "string" } },
-            brand: { type: "string" }
+            brand: { type: "string" },
+            image_alt: { type: "string" }
           },
-          required: ["description", "fb_category", "category", "seo_tags"]
+          required: ["description", "fb_category", "category", "seo_tags", "image_alt"]
         }
       });
 
