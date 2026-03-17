@@ -241,6 +241,13 @@ export default function AdminProducts() {
         onClose={() => setShowFbMigration(false)}
       />
 
+      <GenerateAltTextsModal
+        open={showAltTexts}
+        onClose={() => setShowAltTexts(false)}
+        shopId={selectedShop?.id}
+        shopName={selectedShop?.company_name}
+      />
+
       <ProductFormModal
         product={editingProduct}
         shopId={selectedShop?.id}
