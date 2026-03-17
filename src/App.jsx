@@ -30,7 +30,7 @@ const PageTransitionWrapper = ({ children }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.15 }}
-        style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}
+        style={{ width: '100%', height: 'auto', display: 'block' }}
       >
         {children}
       </motion.div>
