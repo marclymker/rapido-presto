@@ -196,6 +196,7 @@ Répondez en JSON strict.`,
   };
 
   const colClass = "px-3 py-2 border-r border-slate-100 bg-white align-top";
+  const inputClass = "h-8 text-xs border-slate-200 text-slate-900 placeholder:text-slate-400";
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
