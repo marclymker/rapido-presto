@@ -503,8 +503,8 @@ Réponds en JSON strict.`,
           {/* Section 1: Informations de base */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
               <div className="flex items-center gap-2 mb-2 pb-2 border-b">
-                 <Info className="w-4 h-4 text-slate-500" />
-                 <h3 className="font-semibold text-slate-700">Informations principales</h3>
+                 <Info className="w-4 h-4 text-slate-900" />
+                 <h3 className="font-semibold text-slate-900">Informations principales</h3>
               </div>
 
               <div>
@@ -598,13 +598,13 @@ Réponds en JSON strict.`,
           {/* Section 2: Prix et Stock */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
               <div className="flex items-center gap-2 mb-2 pb-2 border-b">
-                 <DollarSign className="w-4 h-4 text-slate-500" />
-                 <h3 className="font-semibold text-slate-700">Prix & Inventaire</h3>
+                 <DollarSign className="w-4 h-4 text-slate-900" />
+                 <h3 className="font-semibold text-slate-900">Prix & Inventaire</h3>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="mb-1.5 text-xs uppercase tracking-wide text-slate-500">Prix (HTG) <span className="text-red-500">*</span></Label>
+                  <Label className="mb-1.5 text-xs uppercase tracking-wide text-slate-900">Prix (HTG) <span className="text-red-500">*</span></Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                     <Input
@@ -618,9 +618,9 @@ Réponds en JSON strict.`,
                   </div>
                 </div>
                 <div>
-                  <Label className="mb-1.5 text-xs uppercase tracking-wide text-slate-500">Promo (HTG)</Label>
+                  <Label className="mb-1.5 text-xs uppercase tracking-wide text-slate-900">Promo (HTG)</Label>
                   <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-900 font-bold">$</span>
                       <Input
                         type="number"
                         className="pl-7 text-green-600 font-medium"
@@ -645,8 +645,8 @@ Réponds en JSON strict.`,
           {/* Section 3: Catégorisation Facebook */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
               <div className="flex items-center gap-2 mb-2 pb-2 border-b">
-                 <Layers className="w-4 h-4 text-slate-500" />
-                 <h3 className="font-semibold text-slate-700">Catégorie Facebook</h3>
+                 <Layers className="w-4 h-4 text-slate-900" />
+                 <h3 className="font-semibold text-slate-900">Catégorie Facebook</h3>
                  <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Marketplace</span>
               </div>
 
@@ -694,13 +694,13 @@ Réponds en JSON strict.`,
           {/* Section 4: Logistique */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
               <div className="flex items-center gap-2 mb-2 pb-2 border-b">
-                <Truck className="w-4 h-4 text-slate-500" />
-                <h3 className="font-semibold text-slate-700">Logistique</h3>
+                <Truck className="w-4 h-4 text-slate-900" />
+                <h3 className="font-semibold text-slate-900">Logistique</h3>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="mb-1.5 text-xs text-slate-500">Taille colis</Label>
+                  <Label className="mb-1.5 text-xs text-slate-900">Taille colis</Label>
                   <Select value={formData.taille_emballage} onValueChange={(v) => setFormData({ ...formData, taille_emballage: v })}>
                     <SelectTrigger>
                       <SelectValue />
@@ -716,7 +716,7 @@ Réponds en JSON strict.`,
                 </div>
 
                 <div>
-                  <Label className="mb-1.5 text-xs text-slate-500">Livraison estimée</Label>
+                  <Label className="mb-1.5 text-xs text-slate-900">Livraison estimée</Label>
                   <Select value={formData.delivery_time} onValueChange={(v) => setFormData({ ...formData, delivery_time: v })}>
                     <SelectTrigger>
                       <SelectValue />
@@ -800,7 +800,7 @@ Réponds en JSON strict.`,
             <div className="p-4 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-xs text-slate-500 mb-1 flex gap-1"><Palette className="w-3 h-3"/> Couleur</Label>
+                    <Label className="text-xs text-slate-900 mb-1 flex gap-1"><Palette className="w-3 h-3"/> Couleur</Label>
                     <Input
                       className="bg-white h-9"
                       value={formData.product_attributes.color}
@@ -813,7 +813,7 @@ Réponds en JSON strict.`,
                   </div>
                   
                   <div>
-                    <Label className="text-xs text-slate-500 mb-1 flex gap-1"><Ruler className="w-3 h-3"/> Taille</Label>
+                    <Label className="text-xs text-slate-900 mb-1 flex gap-1"><Ruler className="w-3 h-3"/> Taille</Label>
                     <Input
                       className="bg-white h-9"
                       value={formData.product_attributes.size}
@@ -826,7 +826,7 @@ Réponds en JSON strict.`,
                   </div>
                   
                   <div>
-                    <Label className="text-xs text-slate-500 mb-1">Matière</Label>
+                    <Label className="text-xs text-slate-900 mb-1">Matière</Label>
                     <Input
                       className="bg-white h-9"
                       value={formData.product_attributes.material}
@@ -839,7 +839,7 @@ Réponds en JSON strict.`,
                   </div>
                   
                   <div>
-                    <Label className="text-xs text-slate-500 mb-1 flex gap-1"><User className="w-3 h-3"/> Genre</Label>
+                    <Label className="text-xs text-slate-900 mb-1 flex gap-1"><User className="w-3 h-3"/> Genre</Label>
                     <Select 
                       value={formData.product_attributes.gender} 
                       onValueChange={(v) => setFormData({
@@ -860,7 +860,7 @@ Réponds en JSON strict.`,
                   </div>
 
                   <div className="col-span-2">
-                    <Label className="text-xs text-slate-500 mb-1">Groupe d'âge</Label>
+                    <Label className="text-xs text-slate-900 mb-1">Groupe d'âge</Label>
                     <Select 
                       value={formData.product_attributes.age_group} 
                       onValueChange={(v) => setFormData({
