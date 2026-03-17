@@ -160,11 +160,16 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
+      console.log(`[OG Meta Tags] SUCCESS - Serving crawler response for ${shopSlug}/${productSlug || 'shop'}`);
+      
       return new Response(html, {
+        status: 200,
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=3600',
-          'base44-app-id': Deno.env.get('BASE44_APP_ID') || ''
+          'base44-app-id': Deno.env.get('BASE44_APP_ID') || '',
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'SAMEORIGIN'
         }
       });
     }
