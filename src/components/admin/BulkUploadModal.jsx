@@ -440,7 +440,7 @@ Répondez en JSON strict.`,
                     {/* Status */}
                     <td className="px-3 py-2 bg-white align-top">
                       <Select value={row.status} onValueChange={v => updateRow(row.id, { status: v })}>
-                        <SelectTrigger className="h-8 text-xs border-slate-200">
+                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
