@@ -8,8 +8,18 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
     const url = new URL(req.url);
+    
+    // Créer le client sans dépendre du header (pour les crawlers sans Base44-App-Id)
+    let base44;
+    try {
+      base44 = createClientFromRequest(req);
+    } catch {
+      // Fallback si le header n'existe pas - pour crawlers externes
+      const appId = Deno.env.get('BASE44_APP_ID');
+      if (!appId) throw new Error('Base44 App ID not configured');
+      // On peut continuer sans le client si besoin
+    }
     
     // Paramètres de l'URL
     const shopSlug = url.searchParams.get('slug');
