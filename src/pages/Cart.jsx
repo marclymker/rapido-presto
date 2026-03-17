@@ -81,7 +81,7 @@ export default function Cart() {
       return { previous };
     },
     onError: (_, __, ctx) => { if (ctx?.previous) queryClient.setQueryData(['cart', user?.id], ctx.previous); },
-    onSettled: () => queryClient.invalidateQueries(['cart'])
+    onSettled: () => queryClient.invalidateQueries(['cart', user?.id])
   });
 
   const deleteItemMutation = useMutation({
@@ -93,7 +93,7 @@ export default function Cart() {
       return { previous };
     },
     onError: (_, __, ctx) => { if (ctx?.previous) queryClient.setQueryData(['cart', user?.id], ctx.previous); },
-    onSettled: () => queryClient.invalidateQueries(['cart'])
+    onSettled: () => queryClient.invalidateQueries(['cart', user?.id])
   });
 
   const createOrderMutation = useMutation({

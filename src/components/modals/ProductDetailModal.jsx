@@ -526,22 +526,22 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             </div>
             <Button
               className="flex-1 py-6 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-200"
-              onClick={() => { 
-                // Track AddToCart
-                trackMetaEvent('AddToCart', {
-                  content_ids: [product.id],
-                  content_type: 'product',
-                  content_name: product.name,
-                  value: price * quantity,
-                  currency: 'HTG',
-                });
+              onClick={async () => { 
+                  // Track AddToCart
+                  trackMetaEvent('AddToCart', {
+                    content_ids: [product.id],
+                    content_type: 'product',
+                    content_name: product.name,
+                    value: price * quantity,
+                    currency: 'HTG',
+                  });
 
-                onAddToCart(product, quantity); 
-                onClose(); 
-              }}
-            >
-              Ajouter au panier
-            </Button>
+                  await onAddToCart(product, quantity); 
+                  onClose(); 
+                }}
+              >
+                Ajouter au panier
+              </Button>
           </div>
         </div>
       </DialogContent>
