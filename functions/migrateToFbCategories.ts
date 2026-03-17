@@ -128,14 +128,26 @@ Deno.serve(async (req) => {
     const errors = [];
     const preview = [];
 
-    // Traiter par batches
-    for (let i = 0; i < toProcess.length; i += batchSize) {
-      const batch = toProcess.slice(i, i + batchSize);
+    // Limiter à 30 produits par appel pour éviter le timeout (passer offset pour paginer)
+    const offset = body.offset || 0;
+    const pageSize = body.page_size || 30;
+    const page = toProcess.slice(offset, offset + pageSize);
+
+    console.log(`Traitement offset=${offset}, page=${page.length} produits`);
+
+    // Traiter par batches de 10 (AI classification)
+    for (let i = 0; i < page.length; i += batchSize) {
+      const batch = page.slice(i, i + batchSize);
       
       try {
-        const classifications = await classifyBatch(batch);
+        const classifications = dryRun ? [] : await classifyBatch(batch);
         
-        for (const cls of classifications) {
+        // En dry_run, utiliser le mapping manuel rapide
+        const results = dryRun
+          ? batch.map((p, idx) => ({ index: idx, fb_category: APP_TO_FB_HINTS[p.category] || 'Apparel & Accessories' }))
+          : classifications;
+
+        for (const cls of results) {
           const product = batch[cls.index];
           if (!product) continue;
           
@@ -156,41 +168,24 @@ Deno.serve(async (req) => {
               }
             });
             updated++;
-            // Délai entre chaque update pour éviter le rate limit
-            await new Promise(r => setTimeout(r, 600));
           }
           processed++;
         }
       } catch (batchError) {
-        console.error(`Erreur batch ${i}-${i+batchSize}:`, batchError.message);
-        errors.push(`Batch ${i}: ${batchError.message}`);
-        // Fallback: utiliser le mapping manuel
+        console.error(`Erreur batch ${i}:`, batchError.message);
+        errors.push(`Batch ${offset + i}: ${batchError.message}`);
+        // Fallback mapping manuel
         for (const product of batch) {
           const fbCategory = APP_TO_FB_HINTS[product.category] || 'Apparel & Accessories';
-          preview.push({
-            id: product.id,
-            name: product.name,
-            old_category: product.category,
-            new_fb_category: fbCategory,
-            fallback: true
-          });
+          preview.push({ id: product.id, name: product.name, old_category: product.category, new_fb_category: fbCategory, fallback: true });
           if (!dryRun) {
             await base44.asServiceRole.entities.Product.update(product.id, {
-              product_attributes: {
-                ...(product.product_attributes || {}),
-                fb_category: fbCategory,
-              }
+              product_attributes: { ...(product.product_attributes || {}), fb_category: fbCategory }
             });
             updated++;
-            await new Promise(r => setTimeout(r, 600));
           }
           processed++;
         }
-      }
-
-      // Pause entre batches pour éviter rate limit
-      if (i + batchSize < toProcess.length) {
-        await new Promise(r => setTimeout(r, 3000));
       }
     }
 
