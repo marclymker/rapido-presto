@@ -504,19 +504,22 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
           {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') && (
             <Button 
               onClick={() => {
-                // Lien optimisé pour preview WhatsApp via fonction backend
+                // Lien optimisé pour preview WhatsApp via fonction backend ogMetaTags
                 const productUrl = shop?.slug && product.slug 
-                  ? `${window.location.origin}/functions/ogMetaTags?slug=${shop.slug}&product=${product.slug}`
-                  : `${window.location.origin}/functions/ogMetaTags?product=${product.id}`;
+                  ? `${window.location.origin}/og?slug=${shop.slug}&product=${product.slug}`
+                  : `${window.location.origin}/og?slug=${shop.slug}&product=${product.id}`;
 
-                const message = `Je Suis Interessé par Cet article\n${productUrl}`;
+                const message = `Je Suis Intéressé par Cet Article 👇\n${productUrl}`;
                 const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
 
+                // Copier le lien dans le presse-papiers en plus
+                navigator.clipboard.writeText(productUrl).catch(err => console.log('Copy failed:', err));
+                
                 window.open(whatsappUrl, '_blank');
               }} 
-              className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl"
+              className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl font-bold"
             >
-              WhatsApp
+              📱 WhatsApp
             </Button>
           )}
           
