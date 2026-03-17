@@ -125,6 +125,14 @@ export default function ProductsSection({ shopId }) {
         }}
         onSuccess={() => queryClient.invalidateQueries(['shop-products'])}
       />
+
+      <BulkUploadModal
+        open={showBulkModal}
+        onClose={() => setShowBulkModal(false)}
+        shopId={shopId}
+        shopName={shop?.company_name}
+        onSuccess={() => queryClient.invalidateQueries(['shop-products'])}
+      />
     </div>
   );
 }
