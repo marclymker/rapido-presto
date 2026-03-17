@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Save, X, ImagePlus, Loader2, Sparkles, Info } from 'lucide-react';
+import { Plus, Save, X, ImagePlus, Loader2, Sparkles, Upload } from 'lucide-react';
 
 const FB_CATEGORIES = [
   { value: "Apparel & Accessories > Women's Clothing", label: "Vêtements Femme", appCat: "Habillement et accessoires" },
