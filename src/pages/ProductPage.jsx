@@ -28,6 +28,7 @@ export default function ProductPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { trackProductView, trackAddToCart } = useActivityTracker();
   const [selectedImage, setSelectedImage] = useState(0);
 
   // Récupérer le produit par slug
