@@ -18,9 +18,9 @@ Deno.serve(async (req) => {
     // Récupérer les produits (filtrés par boutique ou tous)
     let allProducts;
     if (shopId) {
-      allProducts = await base44.asServiceRole.entities.Product.filter({ shop_id: shopId });
+      allProducts = await base44.asServiceRole.entities.Product.filter({ shop_id: shopId }, '-created_date', 500);
     } else {
-      allProducts = await base44.asServiceRole.entities.Product.list('-created_date', 2000);
+      allProducts = await base44.asServiceRole.entities.Product.list('-created_date', 500);
     }
 
     // Filtrer ceux sans alt text (ou tous si force_all)
