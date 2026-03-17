@@ -61,6 +61,24 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+      
+      {/* Routes Blog */}
+      <Route path="/Blog" element={
+        <LayoutWrapper currentPageName="Blog">
+          <Blog />
+        </LayoutWrapper>
+      } />
+      <Route path="/BlogArticle" element={
+        <LayoutWrapper currentPageName="BlogArticle">
+          <BlogArticle />
+        </LayoutWrapper>
+      } />
+      <Route path="/AdminBlog" element={
+        <LayoutWrapper currentPageName="AdminBlog">
+          <AdminBlog />
+        </LayoutWrapper>
+      } />
+      
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
