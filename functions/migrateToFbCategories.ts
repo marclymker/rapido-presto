@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
               }
             });
             updated++;
-            await new Promise(r => setTimeout(r, 300));
+            await new Promise(r => setTimeout(r, 600));
           }
           processed++;
         }
@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
 
       // Pause entre batches pour éviter rate limit
       if (i + batchSize < toProcess.length) {
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 3000));
       }
     }
 
