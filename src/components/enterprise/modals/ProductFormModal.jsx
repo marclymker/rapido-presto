@@ -335,6 +335,7 @@ Générez en français:
    - Mariage: "Robe Sirène", "Robe Catalina", "Bague de Mariage", "Accessoires"...
    - Santé et beauté: "Soins de la peau", "Maquillage", "Perruques et extensions"...
 4. 5-7 tags SEO pertinents en français (mots-clés de recherche)
+5. Un texte ALT pour l'image (15-20 mots max, décrivant précisément l'image pour Google Images et l'accessibilité, en français)
 
 Répondez au format JSON strict.`,
         file_urls: [formData.image_url],
