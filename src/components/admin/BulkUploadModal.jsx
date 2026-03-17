@@ -98,11 +98,73 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
     }
   };
 
+  const handleMultipleImages = async (files) => {
+    if (!files || files.length === 0) return;
+    const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (imageFiles.length === 0) return;
+
+    // Find empty rows to fill first, then create new ones
+    setRows(prev => {
+      const emptyRows = prev.filter(r => !r.image_url && !r.name.trim());
+      const filledRows = prev.filter(r => r.image_url || r.name.trim());
+      const newRowsNeeded = Math.max(0, imageFiles.length - emptyRows.length);
+      const newRows = Array.from({ length: newRowsNeeded }, createEmptyRow);
+      const targetRows = [...emptyRows, ...newRows];
+
+      // Mark all target rows as uploading
+      const updatedTargets = targetRows.map((r, i) =>
+        i < imageFiles.length ? { ...r, uploading: true } : r
+      );
+
+      return [...filledRows, ...updatedTargets];
+    });
+
+    // Upload all files in parallel
+    toast.info(`📸 Upload de ${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''}...`);
+
+    const uploads = await Promise.all(
+      imageFiles.map(async (file) => {
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          return { file_url, name: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') };
+        } catch {
+          return { file_url: null, name: file.name };
+        }
+      })
+    );
+
+    // Assign uploaded URLs to the target rows
+    setRows(prev => {
+      const updated = [...prev];
+      let uploadIdx = 0;
+      for (let i = 0; i < updated.length && uploadIdx < uploads.length; i++) {
+        if (updated[i].uploading) {
+          const upload = uploads[uploadIdx++];
+          updated[i] = {
+            ...updated[i],
+            image_url: upload.file_url || '',
+            name: updated[i].name.trim() || upload.name,
+            uploading: false,
+            errors: validateRow({ ...updated[i], image_url: upload.file_url || '' }),
+          };
+        }
+      }
+      return updated;
+    });
+
+    const successCount = uploads.filter(u => u.file_url).length;
+    toast.success(`✅ ${successCount}/${imageFiles.length} images uploadées`);
+  };
+
   const handleDrop = (e, rowId) => {
     e.preventDefault();
     setDraggingOver(null);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleImageUpload(rowId, file);
+    const files = e.dataTransfer.files;
+    if (files.length > 1) {
+      handleMultipleImages(files);
+    } else if (files.length === 1) {
+      handleImageUpload(rowId, files[0]);
+    }
   };
 
   const handleMagieAI = async (rowId) => {
