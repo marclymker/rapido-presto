@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 
 import { base44 } from '@/api/base44Client';
+import { FACEBOOK_CATEGORIES_COMPLETE, getAllFacebookSubcategories } from '@/lib/facebookCatalogConfig';
 
 const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
   if (!open) return null;
@@ -320,21 +321,29 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
 
     setAiLoading(true);
     try {
+      // Construire la liste complète des catégories Facebook avec leurs subcatégories
+      const fbCategoriesStr = Object.entries(FACEBOOK_CATEGORIES_COMPLETE)
+        .map(([key, data]) => `${data.label}: ${data.subcategories?.join(', ') || key}`)
+        .join('\n');
+
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `Analysez ce produit à partir du titre "${formData.name}" et de l'image fournie.
 
+TÂCHE CRITIQUE: Choisir la sous-catégorie Facebook EXACTE la plus appropriée.
+
+Catégories Facebook Marketplace officielles avec sous-catégories:
+${fbCategoriesStr}
+
 Générez en français:
 1. Une description marketing attractive et détaillée (2-3 phrases)
-2. La catégorie exacte parmi les catégories Facebook Marketplace officielles:
-   "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté",
-   "Épicerie", "Loisirs", "Jardin et extérieur", "Fournitures de bureau", "Véhicules",
-   "Mariage", "Restauration", "Pharmacie et santé"
-3. La sous-catégorie la plus précise correspondant à la catégorie choisie. Exemples:
-   - Habillement: "Vêtements pour femmes", "Chaussures", "Bijoux et accessoires", "Robes"...
-   - Électronique: "Téléphones portables", "Ordinateurs", "Audio"...
-   - Mariage: "Robe Sirène", "Robe Catalina", "Bague de Mariage", "Accessoires"...
-   - Santé et beauté: "Soins de la peau", "Maquillage", "Perruques et extensions"...
-4. 5-7 tags SEO pertinents en français (mots-clés de recherche)
+2. La sous-catégorie Facebook EXACTE la plus précise (format complet: "Parent > Child > SubChild"). 
+   IMPORTANT: Doit correspondre EXACTEMENT à une des listes ci-dessus.
+   - Pour robes de mariage: "Wedding & Events > Wedding Dresses > Mermaid Dresses" OU "Wedding & Events > Wedding Dresses > Princess Dresses"
+   - Pour bijoux: "Apparel & Accessories > Jewelry > Rings" OU "Apparel & Accessories > Jewelry > Earrings"
+   - Pour téléphones: "Electronics > Phone & Accessories > Phones"
+   - Pour restauration: "Food & Beverage > Prepared Foods"
+3. La catégorie app Rapido Presto correspondante (Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Jardin et extérieur, Fournitures de bureau, Véhicules, Mariage, Restauration, Pharmacie et santé)
+4. 7 à 10 tags SEO ultra-pertinents en français (mots-clés de recherche, synonymes, termes locaux haïtiens si pertinent)
 5. Un texte ALT pour l'image (15-20 mots max, décrivant précisément l'image pour Google Images et l'accessibilité, en français)
 
 Répondez au format JSON strict.`,
@@ -343,12 +352,12 @@ Répondez au format JSON strict.`,
           type: "object",
           properties: {
             description: { type: "string" },
-            category: { type: "string" },
-            subcategory: { type: "string" },
+            facebook_subcategory: { type: "string", description: "Chemin complet de la sous-catégorie Facebook" },
+            category: { type: "string", description: "Catégorie app Rapido Presto" },
             seo_tags: { type: "array", items: { type: "string" } },
             image_alt: { type: "string" }
           },
-          required: ["description", "category", "seo_tags", "image_alt"]
+          required: ["description", "facebook_subcategory", "category", "seo_tags", "image_alt"]
         }
       });
 
