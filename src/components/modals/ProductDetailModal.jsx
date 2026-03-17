@@ -32,7 +32,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   const [showCreateProductModal, setShowCreateProductModal] = useState(false);
   const [userShop, setUserShop] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const { generateLink: generateOGLink, loading: generatingOGLink } = useProductOGLink();
+  const [generatingOGLink, setGeneratingOGLink] = useState(false);
 
   // Gérer le bouton retour natif pour fermer la modale
   useBackButton(() => {
