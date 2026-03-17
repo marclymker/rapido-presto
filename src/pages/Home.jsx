@@ -734,7 +734,7 @@ export default function Home() {
 
   return (
 
-    <div className="min-h-screen pb-24 font-sans" style={{ backgroundColor: theme.bgGray }}>
+    <div className="min-h-screen pb-32 font-sans" style={{ backgroundColor: theme.bgGray }}>
 
       <Helmet>
         {/* ⚡ Préchargement critique */}
