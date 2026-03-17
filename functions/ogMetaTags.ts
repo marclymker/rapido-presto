@@ -1,27 +1,13 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 /**
- * Service de génération de Meta Tags Open Graph pour crawlers sociaux
- * Détecte les bots (WhatsApp, Facebook, Twitter) et sert du HTML statique avec Meta Tags
- * Pour les utilisateurs normaux, retourne une redirection vers l'app React
+ * Génère les meta tags Open Graph pour les produits
+ * Optimisé pour les crawlers sociaux (WhatsApp, Facebook, etc)
  */
 
 Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
-    
-    // Créer le client sans dépendre du header (pour les crawlers sans Base44-App-Id)
-    let base44;
-    try {
-      base44 = createClientFromRequest(req);
-    } catch {
-      // Fallback si le header n'existe pas - pour crawlers externes
-      const appId = Deno.env.get('BASE44_APP_ID');
-      if (!appId) throw new Error('Base44 App ID not configured');
-      // On peut continuer sans le client si besoin
-    }
-    
-    // Paramètres de l'URL
     const shopSlug = url.searchParams.get('slug');
     const productSlug = url.searchParams.get('product');
     
@@ -29,82 +15,83 @@ Deno.serve(async (req) => {
       return new Response('Shop slug required', { status: 400 });
     }
 
-    // Détecter les crawlers sociaux (WhatsApp, Facebook, etc.)
+    // Détecter les crawlers sociaux
     const userAgent = req.headers.get('user-agent') || '';
     const isCrawler = /facebookexternalhit|whatsapp|twitterbot|telegrambot|linkedinbot|slackbot|pinterest|vkshare|iframely/i.test(userAgent);
     
-    // Log pour débogage
-    console.log(`[OG Meta Tags] User-Agent: ${userAgent.substring(0, 100)}`);
-    console.log(`[OG Meta Tags] Is Crawler: ${isCrawler}, Shop: ${shopSlug}, Product: ${productSlug}`);
+    console.log(`[OG] User-Agent: ${userAgent.substring(0, 80)}, isCrawler: ${isCrawler}`);
 
-    // Charger les données de la boutique
-    const shops = await base44.asServiceRole.entities.Shop.filter({ slug: shopSlug });
-    const shop = shops[0];
-    
+    // Initialiser Base44 SDK avec gestion d'erreur
+    let base44;
+    try {
+      base44 = createClientFromRequest(req);
+    } catch (e) {
+      console.log('[OG] Pas de header Base44, crawlers externals détecté');
+      // Continuer même sans le header pour les crawlers
+    }
+
+    // Charger les données en service role si le client est disponible
+    let shop = null;
+    let product = null;
+
+    if (base44) {
+      const shops = await base44.asServiceRole.entities.Shop.filter({ slug: shopSlug });
+      shop = shops[0];
+      
+      if (shop && productSlug) {
+        const products = await base44.asServiceRole.entities.Product.filter({ 
+          shop_id: shop.id, 
+          slug: productSlug 
+        });
+        product = products[0];
+      }
+    }
+
     if (!shop) {
       return new Response('Shop not found', { status: 404 });
     }
 
-    let product = null;
-    let productPrice = null;
-
-    // Charger le produit si spécifié
-    if (productSlug) {
-      const products = await base44.asServiceRole.entities.Product.filter({ 
-        shop_id: shop.id, 
-        slug: productSlug 
-      });
-      product = products[0];
-      
-      if (product) {
-        // Calculer le prix client (avec marge)
-        const basePrice = product.promo_price || product.price;
-        productPrice = Math.round(basePrice * 1.10);
-      }
+    // Préparer les données
+    const pageTitle = product 
+      ? `${product.name} - ${Math.round((product.promo_price || product.price) * 1.10).toLocaleString()} HTG`
+      : shop.company_name;
+    
+    const pageDescription = product
+      ? (product.description || product.name).substring(0, 160)
+      : `Découvrez ${shop.company_name}. ${shop.company_category} à ${shop.region}.`.substring(0, 160);
+    
+    let pageImage = product?.image_url || shop.company_logo_url || '';
+    
+    if (pageImage && !pageImage.startsWith('http')) {
+      pageImage = `${url.origin}${pageImage}`;
     }
+    
+    // Optimiser l'image
+    if (pageImage) {
+      const separator = pageImage.includes('?') ? '&' : '?';
+      pageImage = `${pageImage}${separator}w=1200&h=630&q=75&fit=crop`;
+    }
+    
+    const pageUrl = product
+      ? `${url.origin}/ShopView?slug=${shopSlug}&product=${productSlug}`
+      : `${url.origin}/ShopView?slug=${shopSlug}`;
 
-    // Si crawler détecté, servir HTML statique avec Meta Tags
-    if (isCrawler) {
-      const pageTitle = product 
-        ? `${product.name} - ${productPrice?.toLocaleString()} HTG`
-        : shop.company_name;
-      
-      const pageDescription = product
-        ? (product.description || product.name).substring(0, 160)
-        : `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`.substring(0, 160);
-      
-      // Optimiser l'image pour WhatsApp (< 300 Ko, dimensions 1200x630)
-      let pageImage = product?.image_url || shop.company_logo_url || '';
-      
-      // S'assurer que l'image est une URL absolue avec paramètres d'optimisation
-      if (pageImage && !pageImage.startsWith('http')) {
-        pageImage = `${url.origin}${pageImage}`;
-      }
-      
-      // Ajouter paramètres de compression et redimensionnement
-      if (pageImage) {
-        const separator = pageImage.includes('?') ? '&' : '?';
-        pageImage = `${pageImage}${separator}w=1200&h=630&q=75&fit=crop`;
-      }
-      
-      console.log(`[OG Meta Tags] Image optimisée: ${pageImage?.substring(0, 100)}`);
-      
-      const pageUrl = product
-        ? `${url.origin}/shop-view?slug=${shopSlug}&product=${productSlug}`
-        : `${url.origin}/shop-view?slug=${shopSlug}`;
-
-      // Échapper les caractères spéciaux pour HTML
-      const escapeHtml = (str) => str
+    // Échapper les caractères HTML
+    const escapeHtml = (str) => {
+      if (!str) return '';
+      return str
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#x27;');
-      
-      const safeTitle = escapeHtml(pageTitle);
-      const safeDescription = escapeHtml(pageDescription);
+    };
+    
+    const safeTitle = escapeHtml(pageTitle);
+    const safeDescription = escapeHtml(pageDescription);
 
-      // Générer HTML statique avec Meta Tags optimisés (PRIORITÉ MAXIMALE)
+    // Servir du HTML statique aux crawlers
+    if (isCrawler) {
       const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -112,19 +99,19 @@ Deno.serve(async (req) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${safeTitle}</title>
   
-  <!-- Meta Tags CRITIQUES pour WhatsApp - EN PREMIER -->
+  <!-- Open Graph Meta Tags - PRIORITÉ MAXIMALE -->
   <meta property="og:title" content="${safeTitle}">
   <meta property="og:description" content="${safeDescription}">
   <meta property="og:url" content="${pageUrl}">
   <meta property="og:type" content="${product ? 'product' : 'website'}">
   ${pageImage ? `<meta property="og:image" content="${pageImage}">` : ''}
   
-  <!-- Meta Tags Secondaires -->
+  <!-- Meta Description -->
   <meta name="description" content="${safeDescription}">
   <meta property="og:site_name" content="Rapido Presto">
   <meta property="og:locale" content="fr_HT">
+  
   ${pageImage ? `
-  <meta property="og:image:secure_url" content="${pageImage}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="${safeTitle}">
@@ -132,13 +119,10 @@ Deno.serve(async (req) => {
   ` : ''}
   
   ${product ? `
-  <!-- Product-specific Meta Tags -->
-  <meta property="product:price:amount" content="${productPrice}">
+  <meta property="product:price:amount" content="${Math.round((product.promo_price || product.price) * 1.10)}">
   <meta property="product:price:currency" content="HTG">
   <meta property="product:availability" content="in stock">
   <meta property="product:brand" content="${escapeHtml(shop.company_name)}">
-  <meta property="product:condition" content="new">
-  <meta property="product:retailer_item_id" content="${product.id}">
   ` : ''}
   
   <!-- Twitter Card -->
@@ -146,53 +130,44 @@ Deno.serve(async (req) => {
   <meta name="twitter:site" content="@RapidoPrestoHT">
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="twitter:description" content="${safeDescription}">
-  ${pageImage ? `
-  <meta name="twitter:image" content="${pageImage}">
-  <meta name="twitter:image:alt" content="${safeTitle}">
-  ` : ''}
+  ${pageImage ? `<meta name="twitter:image" content="${pageImage}">` : ''}
   
-  <!-- Redirect humans to React app after 1 second -->
+  <!-- Redirect humains -->
   <script>
     if (typeof navigator !== 'undefined' && !/facebookexternalhit|whatsapp|twitterbot|telegrambot|linkedinbot|slackbot|pinterest|vkshare|iframely/i.test(navigator.userAgent)) {
-      setTimeout(function() {
-        window.location.href = '${pageUrl}';
-      }, 1000);
+      window.location.href = '${pageUrl}';
     }
   </script>
 </head>
-<body style="margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5;">
+<body style="margin: 0; padding: 0; font-family: system-ui; background: #f5f5f5;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px; text-align: center;">
-    <h1 style="margin-top: 20px; color: #333;">${safeTitle}</h1>
-    <p style="color: #666; line-height: 1.6;">${safeDescription}</p>
-    ${pageImage ? `<img src="${pageImage}" alt="${safeTitle}" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 8px;">` : ''}
-    <p style="margin-top: 30px;"><a href="${pageUrl}" style="background: #FF9900; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">Voir sur Rapido Presto</a></p>
+    <h1 style="color: #333;">${safeTitle}</h1>
+    <p style="color: #666;">${safeDescription}</p>
+    ${pageImage ? `<img src="${pageImage}" alt="${safeTitle}" style="max-width: 100%; margin: 20px 0; border-radius: 8px;">` : ''}
+    <a href="${pageUrl}" style="background: #FF9900; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">Voir sur Rapido</a>
   </div>
 </body>
 </html>`;
 
-      console.log(`[OG Meta Tags] SUCCESS - Serving crawler response for ${shopSlug}/${productSlug || 'shop'}`);
+      console.log(`[OG] Serving crawler HTML for ${shopSlug}/${productSlug || 'shop'}`);
       
       return new Response(html, {
         status: 200,
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=3600',
-          'base44-app-id': Deno.env.get('BASE44_APP_ID') || '',
           'X-Content-Type-Options': 'nosniff',
           'X-Frame-Options': 'SAMEORIGIN'
         }
       });
     }
 
-    // Pour les utilisateurs normaux, rediriger vers l'app React
-    const redirectUrl = product
-      ? `/shop-view?slug=${shopSlug}&product=${productSlug}`
-      : `/shop-view?slug=${shopSlug}`;
-    
-    return Response.redirect(new URL(redirectUrl, url.origin), 302);
+    // Pour les utilisateurs normaux, rediriger
+    console.log(`[OG] Redirecting human to ${pageUrl}`);
+    return Response.redirect(pageUrl, 302);
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('[OG] Error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
