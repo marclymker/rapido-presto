@@ -501,26 +501,27 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             Payer Maintenant
           </Button>
 
-          <Button 
-            onClick={() => {
-              // Lien optimisé pour preview WhatsApp/Facebook via fonction backend ogMetaTags
-              const productUrl = shop?.slug && product.slug 
-                ? `${window.location.origin}/og?slug=${shop.slug}&product=${product.slug}`
-                : `${window.location.origin}/og?slug=${shop.slug}&product=${product.id}`;
+          {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') && (
+            <Button 
+              onClick={() => {
+                // Lien optimisé pour preview WhatsApp via fonction backend ogMetaTags
+                const productUrl = shop?.slug && product.slug 
+                  ? `${window.location.origin}/og?slug=${shop.slug}&product=${product.slug}`
+                  : `${window.location.origin}/og?slug=${shop.slug}&product=${product.id}`;
 
-              const shopName = shop?.company_name || 'Rapido Presto';
-              const message = `Je Suis Intéressé par Cet Article 👇\n${shopName}\n${productUrl}`;
-              
-              // Utiliser le numéro du shop si disponible, sinon un numéro générique
-              const whatsappNumber = shop?.phone || '50948690366';
-              const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+                const message = `Je Suis Intéressé par Cet Article 👇\n${productUrl}`;
+                const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
 
-              window.open(whatsappUrl, '_blank');
-            }} 
-            className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl font-bold"
-          >
-            📱 WhatsApp
-          </Button>
+                // Copier le lien dans le presse-papiers en plus
+                navigator.clipboard.writeText(productUrl).catch(err => console.log('Copy failed:', err));
+                
+                window.open(whatsappUrl, '_blank');
+              }} 
+              className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl font-bold"
+            >
+              📱 WhatsApp
+            </Button>
+          )}
           
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-slate-100 rounded-xl p-1">
