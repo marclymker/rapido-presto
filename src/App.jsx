@@ -27,7 +27,7 @@ const PageTransitionWrapper = ({ children }) => {
         animate={{ x: 0, opacity: 1 }}
         exit={{ x: '-30%', opacity: 0 }}
         transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
-        style={{ willChange: 'transform, opacity' }}
+        style={{ willChange: 'transform, opacity', width: '100%', minHeight: '100vh' }}
       >
         {children}
       </motion.div>
