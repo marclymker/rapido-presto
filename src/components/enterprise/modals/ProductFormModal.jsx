@@ -322,23 +322,23 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     setAiLoading(true);
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analysez ce produit à partir du titre "${formData.name}" et de l'image fournie.
+        prompt: `Tu es un Expert SEO Senior, Growth Hacker et Copywriter E-commerce spécialisé dans le marché de l'événementiel et du mariage en Haïti. Tu travailles exclusivement pour la marque de luxe MAKARIOS BRIDAL DREAM (et sa branche logistique RAPIDOPRESTO).
 
-Générez en français:
-1. Une description marketing attractive et détaillée (2-3 phrases)
-2. La catégorie exacte parmi les catégories Facebook Marketplace officielles:
-   "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté",
-   "Épicerie", "Loisirs", "Jardin et extérieur", "Fournitures de bureau", "Véhicules",
-   "Mariage", "Restauration", "Pharmacie et santé"
-3. La sous-catégorie la plus précise correspondant à la catégorie choisie. Exemples:
-   - Habillement: "Vêtements pour femmes", "Chaussures", "Bijoux et accessoires", "Robes"...
-   - Électronique: "Téléphones portables", "Ordinateurs", "Audio"...
-   - Mariage: "Robe Sirène", "Robe Catalina", "Bague de Mariage", "Accessoires"...
-   - Santé et beauté: "Soins de la peau", "Maquillage", "Perruques et extensions"...
-4. 5-7 tags SEO pertinents en français (mots-clés de recherche)
-5. Un texte ALT pour l'image (15-20 mots max, décrivant précisément l'image pour Google Images et l'accessibilité, en français)
+À partir du nom du produit "${formData.name}" et de l'image fournie, génère une annonce hybride optimisée pour la conversion (Facebook Marketplace/WhatsApp) ET pour le SEO local haïtien.
 
-Répondez au format JSON strict.`,
+RÈGLES STRICTES :
+
+1. DESCRIPTION : Rédige une description de 3-4 lignes MAX avec des emojis, axée sur la résolution du problème client, l'urgence et un Call-to-Action direct. Intègre naturellement les villes de Delmas, Cap-Haïtien, Gonaïves et Haïti pour le référencement local. Ton prestige: luxueux, rassurant, excellence. Rédige EN FRANÇAIS uniquement (pas de créole dans ce champ JSON).
+
+2. CATÉGORIE : La catégorie exacte parmi: "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté", "Épicerie", "Loisirs", "Jardin et extérieur", "Fournitures de bureau", "Véhicules", "Mariage", "Restauration", "Pharmacie et santé"
+
+3. SOUS-CATÉGORIE : La plus précise selon la catégorie (ex Mariage: "Robe Sirène", "Robe Catalina", "Bague de Mariage"; Habillement: "Vêtements pour femmes", "Robes", etc.)
+
+4. SEO_TAGS : Génère 10 à 15 mots-clés ultra-pertinents pour saturer le champ lexical et capturer toutes les intentions de recherche. Mélange: synonymes du produit, termes de l'écosystème (ex: si chaise → table, réception, salle), mots en français + anglais (pour la diaspora) + créole haïtien, fautes d'orthographe courantes, noms de villes haïtiennes. Maximum de diversité pour dominer le SEO.
+
+5. IMAGE_ALT : Texte ALT de 15-20 mots décrivant précisément l'image pour Google Images et l'accessibilité, en français.
+
+Réponds en JSON strict.`,
         file_urls: [formData.image_url],
         response_json_schema: {
           type: "object",

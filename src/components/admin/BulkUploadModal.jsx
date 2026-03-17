@@ -178,17 +178,25 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
     updateRow(rowId, { aiLoading: true });
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analysez ce produit à partir du titre "${row.name}" et de l'image fournie.
+        prompt: `Tu es un Expert SEO Senior, Growth Hacker et Copywriter E-commerce spécialisé dans le marché de l'événementiel et du mariage en Haïti. Tu travailles exclusivement pour la marque de luxe MAKARIOS BRIDAL DREAM (et sa branche logistique RAPIDOPRESTO).
 
-Générez en français:
-1. Une description marketing puissante et détaillée (2-3 phrases percutantes)
-2. La catégorie Facebook la plus précise parmi: ${FB_CATEGORIES.map(c => c.value).join(', ')}
-3. La catégorie app correspondante parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
-4. 7 à 10 tags SEO ultra-pertinents en français et créole haïtien pour maximiser la visibilité (mots-clés de recherche, synonymes, termes locaux haïtiens)
-5. La marque si identifiable (sinon laisser vide)
-6. Un texte ALT pour l'image (15-20 mots max, décrivant précisément l'image pour Google Images et l'accessibilité, en français)
+À partir du nom du produit "${row.name}" et de l'image fournie, génère une annonce hybride optimisée pour la conversion (Facebook Marketplace/WhatsApp) ET pour le SEO local haïtien.
 
-Répondez en JSON strict.`,
+RÈGLES STRICTES :
+
+1. DESCRIPTION : Rédige une description de 3-4 lignes MAX avec des emojis, axée sur la résolution du problème client, l'urgence et un Call-to-Action direct. Intègre naturellement les villes de Delmas, Cap-Haïtien, Gonaïves et Haïti pour le référencement local. Ton prestige: luxueux, rassurant, excellence. En FRANÇAIS uniquement.
+
+2. FB_CATEGORY : La catégorie Facebook la plus précise parmi: ${FB_CATEGORIES.map(c => c.value).join(', ')}
+
+3. CATEGORY (app) : Parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
+
+4. SEO_TAGS : Génère 12 à 15 mots-clés ultra-pertinents pour saturer le champ lexical et capturer toutes les intentions de recherche. Mélange: synonymes du produit, termes de l'écosystème (ex: si chaise → table, réception, salle), mots en français + anglais (diaspora) + créole haïtien, fautes d'orthographe courantes, noms de villes haïtiennes. Maximum de diversité pour dominer le SEO.
+
+5. BRAND : La marque si identifiable (sinon laisser vide).
+
+6. IMAGE_ALT : Texte ALT de 15-20 mots décrivant précisément l'image pour Google Images et l'accessibilité, en français.
+
+Réponds en JSON strict.`,
         file_urls: [row.image_url],
         response_json_schema: {
           type: "object",
