@@ -192,7 +192,14 @@ Répondez en JSON strict.`,
     setSaving(false);
     toast.success(`${saved} article${saved > 1 ? 's' : ''} créé${saved > 1 ? 's' : ''} !`);
     onSuccess();
-    onClose();
+
+    // Supprimer les lignes publiées, garder les vides + ajouter 3 nouvelles lignes pour continuer
+    const savedIds = new Set(toSave.map(r => r.id));
+    setRows(prev => {
+      const remaining = prev.filter(r => !savedIds.has(r.id));
+      const empties = Array.from({ length: 3 }, createEmptyRow);
+      return [...remaining, ...empties];
+    });
   };
 
   const colClass = "px-3 py-2 border-r border-slate-100 bg-white align-top";
