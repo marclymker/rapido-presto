@@ -141,22 +141,21 @@ Deno.serve(async (req) => {
   <meta name="twitter:image:alt" content="${safeTitle}">
   ` : ''}
   
-  <!-- Redirect humans to React app after 2 seconds -->
+  <!-- Redirect humans to React app after 1 second -->
   <script>
-    // Rediriger seulement les vrais utilisateurs, pas les crawlers
-    setTimeout(function() {
-      if (!/facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Slackbot/i.test(navigator.userAgent)) {
+    if (typeof navigator !== 'undefined' && !/facebookexternalhit|whatsapp|twitterbot|telegrambot|linkedinbot|slackbot|pinterest|vkshare|iframely/i.test(navigator.userAgent)) {
+      setTimeout(function() {
         window.location.href = '${pageUrl}';
-      }
-    }, 100);
+      }, 1000);
+    }
   </script>
 </head>
-<body>
-  <div style="text-align: center; padding: 50px; font-family: system-ui;">
-    <h1>${pageTitle}</h1>
-    <p>${pageDescription}</p>
-    ${pageImage ? `<img src="${pageImage}" alt="${pageTitle}" style="max-width: 100%; height: auto;">` : ''}
-    <p><a href="${pageUrl}">Voir sur Rapido Presto</a></p>
+<body style="margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px; text-align: center;">
+    <h1 style="margin-top: 20px; color: #333;">${safeTitle}</h1>
+    <p style="color: #666; line-height: 1.6;">${safeDescription}</p>
+    ${pageImage ? `<img src="${pageImage}" alt="${safeTitle}" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 8px;">` : ''}
+    <p style="margin-top: 30px;"><a href="${pageUrl}" style="background: #FF9900; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">Voir sur Rapido Presto</a></p>
   </div>
 </body>
 </html>`;
