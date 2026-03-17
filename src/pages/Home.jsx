@@ -331,7 +331,8 @@ export default function Home() {
     queryKey: ['shops'],
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
     staleTime: 10 * 60 * 1000, // ⚡ 10 min cache
-    refetchInterval: false // ⚡ OPTIMISÉ: Pas d'auto-refresh sur accueil
+    refetchInterval: false, // ⚡ OPTIMISÉ: Pas d'auto-refresh sur accueil
+    gcTime: 30 * 60 * 1000 // Cache 30 min avant purge
   });
 
   // ⚡ Optimisation: Charger produits APRÈS shops (évite race condition)
@@ -340,7 +341,8 @@ export default function Home() {
     queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200), // ⚡ OPTIMISÉ: 200 au lieu de 1000
     enabled: !selectedShop && shops.length > 0, // ⚡ Attendre shops
     staleTime: 10 * 60 * 1000, // ⚡ 10 min cache (doublé)
-    refetchInterval: false // ⚡ OPTIMISÉ: Pas d'auto-refresh sur accueil
+    refetchInterval: false, // ⚡ OPTIMISÉ: Pas d'auto-refresh sur accueil
+    gcTime: 30 * 60 * 1000 // Cache 30 min avant purge
   });
 
   // Fonction getter sécurisée pour allProducts
