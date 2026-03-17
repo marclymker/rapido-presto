@@ -186,7 +186,7 @@ export default function Layout({ children, currentPageName }) {
 
       <CookieConsent onAccept={handleCookieAccept} onReject={handleCookieReject} />
 
-      <div className="min-h-screen bg-slate-50">
+      <div className="flex flex-col w-full min-h-screen bg-slate-50">
         <Toaster position="top-center" />
         <ThemeProvider />
         <OneSignalInit user={user} />
@@ -202,7 +202,9 @@ export default function Layout({ children, currentPageName }) {
           </div>
         )}
 
-        {children}
+        <div className="flex-1">
+          {children}
+        </div>
 
         {!noNavPages.includes(currentPageName) && (
           <SmartBottomNav
@@ -211,6 +213,12 @@ export default function Layout({ children, currentPageName }) {
           />
         )}
       </div>
+      <style>{`
+        html, body, #root {
+          height: auto !important;
+          overflow: visible !important;
+        }
+      `}</style>
     </HelmetProvider>
   );
 }
