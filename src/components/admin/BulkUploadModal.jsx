@@ -347,7 +347,7 @@ Répondez en JSON strict.`,
                         value={row.description}
                         onChange={e => updateRow(row.id, { description: e.target.value })}
                         placeholder={row.aiDone ? '' : 'Générée par IA ✨'}
-                        className="h-8 text-xs border-slate-200"
+                        className="h-8 text-xs text-slate-900 placeholder:text-slate-400 border-slate-200"
                       />
                       {row.seo_tags?.length > 0 && (
                         <div className="flex flex-wrap gap-0.5 mt-1">
