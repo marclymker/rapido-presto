@@ -71,6 +71,8 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
   const [rows, setRows] = useState(() => Array.from({ length: 6 }, createEmptyRow));
   const [saving, setSaving] = useState(false);
   const [draggingOver, setDraggingOver] = useState(null);
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [pickerDragging, setPickerDragging] = useState(false);
   const fileInputRefs = useRef({});
   const multiUploadRef = useRef(null);
 
