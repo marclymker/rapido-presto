@@ -116,6 +116,9 @@ export default function Layout({ children, currentPageName }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Rapido" />
+        <link rel="alternate" hreflang="fr-HT" href="https://rapidopresto.shop" />
+        <link rel="alternate" hreflang="fr" href="https://rapidopresto.shop" />
+        <link rel="alternate" hreflang="x-default" href="https://rapidopresto.shop" />
         <link rel="dns-prefetch" href="https://qtrypzzcjebvfcihiynt.supabase.co" />
         <link rel="preconnect" href="https://qtrypzzcjebvfcihiynt.supabase.co" crossOrigin="anonymous" />
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
