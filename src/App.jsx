@@ -40,15 +40,9 @@ const PageTransitionWrapper = ({ children }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.15 }}
-        // AJOUT : overflowX: 'hidden' pour éviter le scroll horizontal parasite
-        // AJOUT : flex: 1 pour s'assurer que le contenu occupe l'espace
         style={{ 
-          width: '100%', 
-          minHeight: '100vh', 
-          display: 'flex', 
-          flexDirection: 'column',
-          overflowX: 'hidden',
-          position: 'relative' 
+          width: '100%',
+          overflowX: 'hidden'
         }}
       >
         {children}
