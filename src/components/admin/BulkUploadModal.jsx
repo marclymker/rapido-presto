@@ -426,7 +426,7 @@ Répondez en JSON strict.`,
                     {/* Availability */}
                     <td className={colClass}>
                       <Select value={row.availability} onValueChange={v => updateRow(row.id, { availability: v })}>
-                        <SelectTrigger className="h-8 text-xs border-slate-200">
+                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
