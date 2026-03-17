@@ -623,7 +623,7 @@ Réponds en JSON strict.`,
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-900 font-bold">$</span>
                       <Input
                         type="number"
-                        className="pl-7 text-green-600 font-medium"
+                        className="pl-7 text-slate-900 font-medium"
                         value={formData.promo_price}
                         onChange={(e) => setFormData({ ...formData, promo_price: parseFloat(e.target.value) || null })}
                       />
@@ -632,12 +632,12 @@ Réponds en JSON strict.`,
               </div>
 
               <div>
-                <Label className="mb-1.5 flex items-center gap-2"><Package className="w-4 h-4" /> Stock disponible</Label>
+                <Label className="mb-1.5 flex items-center gap-2 text-slate-900"><Package className="w-4 h-4" /> Stock disponible</Label>
                 <Input
                   type="number"
                   value={formData.stock_quantity}
                   onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
-                  className="max-w-[150px]"
+                  className="max-w-[150px] text-slate-900"
                 />
               </div>
           </div>
@@ -734,7 +734,7 @@ Réponds en JSON strict.`,
 
           {/* Section 5: Images additionnelles */}
           <div className="bg-white p-4 rounded-xl shadow-sm border">
-            <Label className="mb-3 block flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Galerie d'images</Label>
+            <Label className="mb-3 block flex items-center gap-2 text-slate-900"><ImageIcon className="w-4 h-4" /> Galerie d'images</Label>
              
             <div className="flex flex-wrap gap-3">
                  <label className="w-20 h-20 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors">
@@ -762,14 +762,14 @@ Réponds en JSON strict.`,
 
           {/* Section 6: SEO */}
           <div className="bg-white p-4 rounded-xl shadow-sm border">
-            <Label className="mb-2 block flex items-center gap-2"><Tag className="w-4 h-4" /> Mots-clés (SEO)</Label>
+            <Label className="mb-2 block flex items-center gap-2 text-slate-900"><Tag className="w-4 h-4" /> Mots-clés (SEO)</Label>
             <div className="flex gap-2 mb-3">
               <Input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
                 placeholder="Ajouter un tag..."
-                className="h-9"
+                className="h-9 text-slate-900"
               />
               <Button type="button" onClick={addTag} variant="secondary" size="sm">
                 Ajouter
@@ -802,7 +802,7 @@ Réponds en JSON strict.`,
                   <div>
                     <Label className="text-xs text-slate-900 mb-1 flex gap-1"><Palette className="w-3 h-3"/> Couleur</Label>
                     <Input
-                      className="bg-white h-9"
+                      className="bg-white h-9 text-slate-900"
                       value={formData.product_attributes.color}
                       onChange={(e) => setFormData({
                         ...formData,
@@ -815,7 +815,7 @@ Réponds en JSON strict.`,
                   <div>
                     <Label className="text-xs text-slate-900 mb-1 flex gap-1"><Ruler className="w-3 h-3"/> Taille</Label>
                     <Input
-                      className="bg-white h-9"
+                      className="bg-white h-9 text-slate-900"
                       value={formData.product_attributes.size}
                       onChange={(e) => setFormData({
                         ...formData,
@@ -828,7 +828,7 @@ Réponds en JSON strict.`,
                   <div>
                     <Label className="text-xs text-slate-900 mb-1">Matière</Label>
                     <Input
-                      className="bg-white h-9"
+                      className="bg-white h-9 text-slate-900"
                       value={formData.product_attributes.material}
                       onChange={(e) => setFormData({
                         ...formData,
@@ -889,7 +889,7 @@ Réponds en JSON strict.`,
                     {[0, 1].map(i => (
                       <Input
                         key={i}
-                        className="bg-white h-8 text-sm"
+                        className="bg-white h-8 text-sm text-slate-900"
                         value={formData.product_attributes.custom_labels[`label_${i}`]}
                         onChange={(e) => setFormData({
                           ...formData,
