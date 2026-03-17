@@ -83,28 +83,41 @@ Deno.serve(async (req) => {
         ? `${url.origin}/shop-view?slug=${shopSlug}&product=${productSlug}`
         : `${url.origin}/shop-view?slug=${shopSlug}`;
 
-      // Générer HTML statique avec Meta Tags optimisés
+      // Échapper les caractères spéciaux pour HTML
+      const escapeHtml = (str) => str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+      
+      const safeTitle = escapeHtml(pageTitle);
+      const safeDescription = escapeHtml(pageDescription);
+
+      // Générer HTML statique avec Meta Tags optimisés (PRIORITÉ MAXIMALE)
       const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${pageTitle} - Rapido Presto</title>
-  <meta name="description" content="${pageDescription}">
+  <title>${safeTitle}</title>
   
-  <!-- Open Graph / Facebook / WhatsApp -->
-  <meta property="og:type" content="${product ? 'product' : 'website'}">
-  <meta property="og:title" content="${pageTitle}">
-  <meta property="og:description" content="${pageDescription}">
-  <meta property="og:site_name" content="Rapido Presto">
+  <!-- Meta Tags CRITIQUES pour WhatsApp - EN PREMIER -->
+  <meta property="og:title" content="${safeTitle}">
+  <meta property="og:description" content="${safeDescription}">
   <meta property="og:url" content="${pageUrl}">
+  <meta property="og:type" content="${product ? 'product' : 'website'}">
+  ${pageImage ? `<meta property="og:image" content="${pageImage}">` : ''}
+  
+  <!-- Meta Tags Secondaires -->
+  <meta name="description" content="${safeDescription}">
+  <meta property="og:site_name" content="Rapido Presto">
   <meta property="og:locale" content="fr_HT">
   ${pageImage ? `
-  <meta property="og:image" content="${pageImage}">
   <meta property="og:image:secure_url" content="${pageImage}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="${pageTitle}">
+  <meta property="og:image:alt" content="${safeTitle}">
   <meta property="og:image:type" content="image/jpeg">
   ` : ''}
   
