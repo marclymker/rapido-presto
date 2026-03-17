@@ -6,57 +6,56 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, X, ImagePlus, Loader2, Info } from 'lucide-react';
+import { Plus, Save, X, ImagePlus, Loader2, Sparkles, Info } from 'lucide-react';
 
-// Catégories officielles Facebook Product Catalog
 const FB_CATEGORIES = [
-  { value: "Apparel & Accessories > Women's Clothing", label: "Vêtements Femme" },
-  { value: "Apparel & Accessories > Men's Clothing", label: "Vêtements Homme" },
-  { value: "Apparel & Accessories > Shoes", label: "Chaussures" },
-  { value: "Apparel & Accessories > Jewelry", label: "Bijoux & Accessoires" },
-  { value: "Apparel & Accessories > Handbags", label: "Sacs & Bagages" },
-  { value: "Apparel & Accessories > Wedding", label: "Mariage & Robes" },
-  { value: "Electronics > Mobile Phones", label: "Téléphones portables" },
-  { value: "Electronics > Computers", label: "Ordinateurs" },
-  { value: "Electronics > Audio", label: "Audio" },
-  { value: "Electronics > Cameras", label: "Caméras" },
-  { value: "Health & Beauty > Skin Care", label: "Soins de la peau" },
-  { value: "Health & Beauty > Makeup", label: "Maquillage" },
-  { value: "Health & Beauty > Hair Care", label: "Soins capillaires" },
-  { value: "Health & Beauty > Fragrances", label: "Parfums" },
-  { value: "Home & Garden > Furniture", label: "Mobilier" },
-  { value: "Home & Garden > Decor", label: "Décoration intérieure" },
-  { value: "Home & Garden > Kitchen", label: "Articles ménagers" },
-  { value: "Home & Garden > Plants", label: "Plantes & Fleurs" },
-  { value: "Food & Beverages > Groceries", label: "Épicerie" },
-  { value: "Food & Beverages > Beverages", label: "Boissons" },
-  { value: "Toys & Games > Baby", label: "Articles bébé & enfants" },
-  { value: "Sporting Goods", label: "Articles de sport" },
-  { value: "Hardware > Tools", label: "Outils & Quincaillerie" },
+  { value: "Apparel & Accessories > Women's Clothing", label: "Vêtements Femme", appCat: "Habillement et accessoires" },
+  { value: "Apparel & Accessories > Men's Clothing", label: "Vêtements Homme", appCat: "Habillement et accessoires" },
+  { value: "Apparel & Accessories > Shoes", label: "Chaussures", appCat: "Habillement et accessoires" },
+  { value: "Apparel & Accessories > Jewelry", label: "Bijoux & Accessoires", appCat: "Habillement et accessoires" },
+  { value: "Apparel & Accessories > Handbags", label: "Sacs & Bagages", appCat: "Habillement et accessoires" },
+  { value: "Apparel & Accessories > Wedding", label: "Mariage & Robes", appCat: "Mariage" },
+  { value: "Electronics > Mobile Phones", label: "Téléphones portables", appCat: "Électronique" },
+  { value: "Electronics > Computers", label: "Ordinateurs", appCat: "Électronique" },
+  { value: "Electronics > Audio", label: "Audio", appCat: "Électronique" },
+  { value: "Electronics > Cameras", label: "Caméras", appCat: "Électronique" },
+  { value: "Health & Beauty > Skin Care", label: "Soins de la peau", appCat: "Santé et beauté" },
+  { value: "Health & Beauty > Makeup", label: "Maquillage", appCat: "Santé et beauté" },
+  { value: "Health & Beauty > Hair Care", label: "Soins capillaires", appCat: "Santé et beauté" },
+  { value: "Health & Beauty > Fragrances", label: "Parfums", appCat: "Santé et beauté" },
+  { value: "Home & Garden > Furniture", label: "Mobilier", appCat: "Maison" },
+  { value: "Home & Garden > Decor", label: "Décoration intérieure", appCat: "Maison" },
+  { value: "Home & Garden > Kitchen", label: "Articles ménagers", appCat: "Maison" },
+  { value: "Home & Garden > Plants", label: "Plantes & Fleurs", appCat: "Maison" },
+  { value: "Food & Beverages > Groceries", label: "Épicerie", appCat: "Épicerie" },
+  { value: "Food & Beverages > Beverages", label: "Boissons", appCat: "Épicerie" },
+  { value: "Toys & Games > Baby", label: "Articles bébé & enfants", appCat: "Famille" },
+  { value: "Sporting Goods", label: "Articles de sport", appCat: "Loisirs" },
+  { value: "Hardware > Tools", label: "Outils & Quincaillerie", appCat: "Maison" },
+  { value: "Food & Beverages > Restaurant", label: "Restauration", appCat: "Restauration" },
+  { value: "Health > Pharmacy", label: "Pharmacie", appCat: "Pharmacie et santé" },
 ];
 
-const APP_CATEGORIES = [
-  "Habillement et accessoires", "Électronique", "Maison", "Famille",
-  "Santé et beauté", "Épicerie", "Loisirs", "Jardin et extérieur",
-  "Fournitures de bureau", "Véhicules", "Mariage", "Restauration", "Pharmacie et santé"
-];
+const generateSlug = (name) =>
+  name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 60);
 
 const createEmptyRow = () => ({
   id: Date.now() + Math.random(),
   image_url: '',
   name: '',
   description: '',
-  link: '',
   price: '',
   sale_price: '',
   fb_category: '',
+  category: '',
   condition: 'new',
   availability: 'in stock',
   status: 'active',
   brand: '',
-  content_id: '',
-  category: '',
+  seo_tags: [],
   uploading: false,
+  aiLoading: false,
+  aiDone: false,
   errors: {},
 });
 
@@ -68,14 +67,14 @@ const validateRow = (row) => {
 };
 
 export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuccess }) {
-  const [rows, setRows] = useState(() => Array.from({ length: 8 }, createEmptyRow));
+  const [rows, setRows] = useState(() => Array.from({ length: 6 }, createEmptyRow));
   const [saving, setSaving] = useState(false);
   const fileInputRefs = useRef({});
 
-  const updateRow = (id, field, value) => {
+  const updateRow = (id, fields) => {
     setRows(prev => prev.map(r => {
       if (r.id !== id) return r;
-      const updated = { ...r, [field]: value };
+      const updated = { ...r, ...fields };
       updated.errors = validateRow(updated);
       return updated;
     }));
@@ -86,9 +85,62 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
 
   const handleImageUpload = async (rowId, file) => {
     if (!file) return;
-    setRows(prev => prev.map(r => r.id === rowId ? { ...r, uploading: true } : r));
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setRows(prev => prev.map(r => r.id === rowId ? { ...r, image_url: file_url, uploading: false } : r));
+    updateRow(rowId, { uploading: true });
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      updateRow(rowId, { image_url: file_url, uploading: false });
+    } catch {
+      updateRow(rowId, { uploading: false });
+      toast.error('Erreur upload image');
+    }
+  };
+
+  const handleMagieAI = async (rowId) => {
+    const row = rows.find(r => r.id === rowId);
+    if (!row.name.trim()) { toast.error('Ajoutez un titre d\'abord'); return; }
+    if (!row.image_url) { toast.error('Ajoutez une image d\'abord'); return; }
+
+    updateRow(rowId, { aiLoading: true });
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analysez ce produit à partir du titre "${row.name}" et de l'image fournie.
+
+Générez en français:
+1. Une description marketing puissante et détaillée (2-3 phrases percutantes)
+2. La catégorie Facebook la plus précise parmi: ${FB_CATEGORIES.map(c => c.value).join(', ')}
+3. La catégorie app correspondante parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
+4. 7 à 10 tags SEO ultra-pertinents en français et créole haïtien pour maximiser la visibilité (mots-clés de recherche, synonymes, termes locaux haïtiens)
+5. La marque si identifiable (sinon laisser vide)
+
+Répondez en JSON strict.`,
+        file_urls: [row.image_url],
+        response_json_schema: {
+          type: "object",
+          properties: {
+            description: { type: "string" },
+            fb_category: { type: "string" },
+            category: { type: "string" },
+            seo_tags: { type: "array", items: { type: "string" } },
+            brand: { type: "string" }
+          },
+          required: ["description", "fb_category", "category", "seo_tags"]
+        }
+      });
+
+      updateRow(rowId, {
+        description: result.description || row.description,
+        fb_category: result.fb_category || row.fb_category,
+        category: result.category || row.category,
+        seo_tags: result.seo_tags || row.seo_tags,
+        brand: result.brand || row.brand,
+        aiLoading: false,
+        aiDone: true,
+      });
+      toast.success('✨ IA terminée pour cet article');
+    } catch (error) {
+      updateRow(rowId, { aiLoading: false });
+      toast.error('Erreur IA: ' + error.message);
+    }
   };
 
   const filledRows = rows.filter(r => r.name.trim() && r.price);
@@ -97,16 +149,16 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
   const handleSave = async () => {
     const toSave = rows.filter(r => r.name.trim() && r.price);
     if (!toSave.length) { toast.error('Aucun article à sauvegarder'); return; }
-
     const invalid = toSave.some(r => Object.keys(validateRow(r)).length > 0);
     if (invalid) { toast.error('Corrigez les erreurs d\'abord'); return; }
 
     setSaving(true);
     let saved = 0;
     for (const row of toSave) {
-      const slug = row.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 60);
+      const slug = generateSlug(row.name) + '-' + Date.now().toString(36);
       await base44.entities.Product.create({
         name: row.name.trim(),
+        slug,
         description: row.description || '',
         price: Number(row.price),
         promo_price: row.sale_price ? Number(row.sale_price) : undefined,
@@ -114,11 +166,10 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
         is_available: row.availability === 'in stock',
         image_url: row.image_url || '',
         shop_id: shopId,
-        slug,
-        seo_tags: [row.brand, row.fb_category].filter(Boolean),
+        seo_tags: row.seo_tags || [],
         product_attributes: {
           condition: row.condition,
-          custom_labels: { label_0: row.brand || '', label_1: row.content_id || '' }
+          custom_labels: { label_0: row.brand || '' }
         },
       });
       saved++;
@@ -130,7 +181,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
     onClose();
   };
 
-  const colClass = "px-3 py-2 border-r border-slate-100 bg-white";
+  const colClass = "px-3 py-2 border-r border-slate-100 bg-white align-top";
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -142,61 +193,58 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
               <DialogTitle className="text-lg font-bold text-slate-800">Ajout en masse — Facebook Shop</DialogTitle>
               <p className="text-xs text-slate-500 mt-0.5">{shopName} · {filledRows.length} article{filledRows.length !== 1 ? 's' : ''} rempli{filledRows.length !== 1 ? 's' : ''}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge className={validCount === filledRows.length && filledRows.length > 0 ? "bg-green-100 text-green-700 border-green-200" : "bg-slate-100 text-slate-600"}>
-                {validCount}/{filledRows.length} valides
-              </Badge>
-            </div>
+            <Badge className={validCount === filledRows.length && filledRows.length > 0 ? "bg-green-100 text-green-700 border-green-200" : "bg-slate-100 text-slate-600"}>
+              {validCount}/{filledRows.length} valides
+            </Badge>
           </div>
         </DialogHeader>
 
         {/* Table */}
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-xs border-collapse" style={{ minWidth: 1400 }}>
-            {/* Column Headers */}
+          <table className="w-full text-xs border-collapse" style={{ minWidth: 1100 }}>
             <thead className="sticky top-0 z-20">
               <tr className="bg-slate-50 border-b-2 border-slate-200">
-                <th className="w-8 px-2 py-3 text-left font-semibold text-slate-500 border-r border-slate-200"></th>
+                <th className="w-8 px-2 py-3 border-r border-slate-200"></th>
                 <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Images et vidéos <Info className="inline w-3 h-3 text-slate-400 ml-1" />
-                </th>
-                <th className="w-40 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Titre <Info className="inline w-3 h-3 text-slate-400 ml-1" />
-                </th>
-                <th className="w-48 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Description</th>
-                <th className="w-40 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Lien</th>
-                <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Prix <Info className="inline w-3 h-3 text-slate-400 ml-1" />
-                </th>
-                <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Prix de vente <span className="text-slate-400 font-normal">· Optionnel</span>
+                  Image <span className="text-red-500">*</span>
                 </th>
                 <th className="w-44 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Catégorie Facebook <span className="text-slate-400 font-normal">· Optionnel</span>
+                  Titre <span className="text-red-500">*</span>
                 </th>
-                <th className="w-32 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Catégorie app</th>
+                <th className="w-20 px-3 py-3 text-center font-semibold text-slate-600 border-r border-slate-200">
+                  <div className="flex items-center justify-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                    <span>Magie AI</span>
+                  </div>
+                </th>
+                <th className="w-56 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
+                  Description <span className="text-slate-400 font-normal">· via IA</span>
+                </th>
+                <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
+                  Prix (HTG) <span className="text-red-500">*</span>
+                </th>
+                <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
+                  Prix promo <span className="text-slate-400 font-normal">· Optionnel</span>
+                </th>
+                <th className="w-44 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
+                  Catégorie Facebook <span className="text-slate-400 font-normal">· via IA</span>
+                </th>
+                <th className="w-36 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
+                  Catégorie app <span className="text-slate-400 font-normal">· via IA</span>
+                </th>
                 <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Condition</th>
                 <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Disponibilité</th>
-                <th className="w-24 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Statut</th>
-                <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Marque <span className="text-slate-400 font-normal">· Optionnel</span>
-                </th>
-                <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600">
-                  Content ID <span className="text-slate-400 font-normal">· Optionnel</span>
-                </th>
+                <th className="w-24 px-3 py-3 text-left font-semibold text-slate-600">Statut</th>
               </tr>
             </thead>
 
             <tbody>
-              {rows.map((row, idx) => {
+              {rows.map((row) => {
                 const hasError = Object.keys(row.errors).length > 0 && row.name;
                 return (
-                  <tr
-                    key={row.id}
-                    className={`border-b border-slate-100 transition-colors ${hasError ? 'bg-red-50' : 'hover:bg-blue-50/30'}`}
-                  >
-                    {/* Row number + remove */}
-                    <td className="w-8 px-2 text-center border-r border-slate-100">
+                  <tr key={row.id} className={`border-b border-slate-100 transition-colors ${hasError ? 'bg-red-50/60' : 'hover:bg-blue-50/20'}`}>
+                    {/* Remove */}
+                    <td className="w-8 px-2 text-center border-r border-slate-100 align-middle">
                       <button
                         onClick={() => rows.length > 1 && removeRow(row.id)}
                         className="text-slate-300 hover:text-red-400 transition-colors"
@@ -208,98 +256,105 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
 
                     {/* Image */}
                     <td className={colClass}>
-                      <div className="flex items-center gap-1">
-                        {row.image_url ? (
-                          <div className="relative w-10 h-10 rounded border overflow-hidden group shrink-0">
-                            <img src={row.image_url} alt="" className="w-full h-full object-cover" />
-                            <button
-                              onClick={() => updateRow(row.id, 'image_url', '')}
-                              className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center"
-                            >
-                              <X className="w-3 h-3 text-white" />
-                            </button>
-                          </div>
-                        ) : (
+                      {row.image_url ? (
+                        <div className="relative w-12 h-12 rounded border overflow-hidden group">
+                          <img src={row.image_url} alt="" className="w-full h-full object-cover" />
                           <button
-                            onClick={() => fileInputRefs.current[row.id]?.click()}
-                            className="w-10 h-10 rounded border-2 border-dashed border-slate-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-50 transition-colors shrink-0"
+                            onClick={() => updateRow(row.id, { image_url: '', aiDone: false })}
+                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center"
                           >
-                            {row.uploading ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" /> : <ImagePlus className="w-4 h-4 text-slate-300" />}
+                            <X className="w-3 h-3 text-white" />
                           </button>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          ref={el => fileInputRefs.current[row.id] = el}
-                          onChange={e => handleImageUpload(row.id, e.target.files?.[0])}
-                        />
-                      </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => fileInputRefs.current[row.id]?.click()}
+                          className="w-12 h-12 rounded border-2 border-dashed border-slate-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                        >
+                          {row.uploading ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" /> : <ImagePlus className="w-4 h-4 text-slate-300" />}
+                        </button>
+                      )}
+                      <input
+                        type="file" accept="image/*" className="hidden"
+                        ref={el => fileInputRefs.current[row.id] = el}
+                        onChange={e => handleImageUpload(row.id, e.target.files?.[0])}
+                      />
                     </td>
 
                     {/* Title */}
                     <td className={colClass}>
                       <Input
                         value={row.name}
-                        onChange={e => updateRow(row.id, 'name', e.target.value)}
-                        placeholder="Entrer un titre court"
-                        className={`h-8 text-xs border-0 shadow-none bg-transparent focus:ring-1 focus:ring-blue-400 px-0 ${row.errors.name ? 'ring-1 ring-red-400' : ''}`}
+                        onChange={e => updateRow(row.id, { name: e.target.value })}
+                        placeholder="Titre de l'article"
+                        className={`h-8 text-xs border-slate-200 ${row.errors.name ? 'border-red-400 focus-visible:ring-red-300' : ''}`}
                       />
+                    </td>
+
+                    {/* Magie AI */}
+                    <td className="px-2 py-2 border-r border-slate-100 bg-white text-center align-middle">
+                      <Button
+                        size="sm"
+                        disabled={row.aiLoading || !row.name.trim() || !row.image_url}
+                        onClick={() => handleMagieAI(row.id)}
+                        className={`h-8 px-2 text-xs ${row.aiDone ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-300' : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'}`}
+                        title={!row.name.trim() || !row.image_url ? 'Ajoutez titre et image' : 'Générer avec IA'}
+                      >
+                        {row.aiLoading ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : row.aiDone ? (
+                          <span>✓ Fait</span>
+                        ) : (
+                          <Sparkles className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
                     </td>
 
                     {/* Description */}
                     <td className={colClass}>
                       <Input
                         value={row.description}
-                        onChange={e => updateRow(row.id, 'description', e.target.value)}
-                        placeholder="Décrire les caractéristiques..."
-                        className="h-8 text-xs border-0 shadow-none bg-transparent focus:ring-1 focus:ring-blue-400 px-0"
+                        onChange={e => updateRow(row.id, { description: e.target.value })}
+                        placeholder={row.aiDone ? '' : 'Générée par IA ✨'}
+                        className="h-8 text-xs border-slate-200"
                       />
-                    </td>
-
-                    {/* Link */}
-                    <td className={colClass}>
-                      <Input
-                        value={row.link}
-                        onChange={e => updateRow(row.id, 'link', e.target.value)}
-                        placeholder="https://exemple.com/item"
-                        className="h-8 text-xs border-0 shadow-none bg-transparent focus:ring-1 focus:ring-blue-400 px-0"
-                      />
+                      {row.seo_tags?.length > 0 && (
+                        <div className="flex flex-wrap gap-0.5 mt-1">
+                          {row.seo_tags.slice(0, 3).map(t => (
+                            <span key={t} className="text-[9px] bg-purple-50 text-purple-600 px-1 rounded">{t}</span>
+                          ))}
+                          {row.seo_tags.length > 3 && <span className="text-[9px] text-slate-400">+{row.seo_tags.length - 3}</span>}
+                        </div>
+                      )}
                     </td>
 
                     {/* Price */}
                     <td className={colClass}>
-                      <div className="flex items-center gap-1">
-                        <span className="text-slate-400 text-xs shrink-0">HTG</span>
-                        <Input
-                          type="number"
-                          value={row.price}
-                          onChange={e => updateRow(row.id, 'price', e.target.value)}
-                          placeholder="0"
-                          className={`h-8 text-xs border-0 shadow-none bg-transparent focus:ring-1 focus:ring-blue-400 px-1 ${row.errors.price ? 'ring-1 ring-red-400' : ''}`}
-                        />
-                      </div>
+                      <Input
+                        type="number"
+                        value={row.price}
+                        onChange={e => updateRow(row.id, { price: e.target.value })}
+                        placeholder="0"
+                        className={`h-8 text-xs border-slate-200 ${row.errors.price ? 'border-red-400' : ''}`}
+                      />
                     </td>
 
                     {/* Sale price */}
                     <td className={colClass}>
-                      <div className="flex items-center gap-1">
-                        <span className="text-slate-400 text-xs shrink-0">HTG</span>
-                        <Input
-                          type="number"
-                          value={row.sale_price}
-                          onChange={e => updateRow(row.id, 'sale_price', e.target.value)}
-                          placeholder="0"
-                          className="h-8 text-xs border-0 shadow-none bg-transparent focus:ring-1 focus:ring-blue-400 px-1"
-                        />
-                      </div>
+                      <Input
+                        type="number"
+                        value={row.sale_price}
+                        onChange={e => updateRow(row.id, { sale_price: e.target.value })}
+                        placeholder="0"
+                        className="h-8 text-xs border-slate-200"
+                      />
                     </td>
 
                     {/* FB Category */}
                     <td className={colClass}>
-                      <Select value={row.fb_category} onValueChange={v => updateRow(row.id, 'fb_category', v)}>
-                        <SelectTrigger className="h-8 text-xs border border-slate-200 bg-white">
-                          <SelectValue placeholder="Sélectionner une catégorie" />
+                      <Select value={row.fb_category} onValueChange={v => updateRow(row.id, { fb_category: v })}>
+                        <SelectTrigger className="h-8 text-xs border-slate-200">
+                          <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
                         </SelectTrigger>
                         <SelectContent>
                           {FB_CATEGORIES.map(c => (
@@ -311,12 +366,12 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
 
                     {/* App Category */}
                     <td className={colClass}>
-                      <Select value={row.category} onValueChange={v => updateRow(row.id, 'category', v)}>
-                        <SelectTrigger className="h-8 text-xs border border-slate-200 bg-white">
-                          <SelectValue placeholder="Catégorie" />
+                      <Select value={row.category} onValueChange={v => updateRow(row.id, { category: v })}>
+                        <SelectTrigger className="h-8 text-xs border-slate-200">
+                          <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
                         </SelectTrigger>
                         <SelectContent>
-                          {APP_CATEGORIES.map(c => (
+                          {["Habillement et accessoires","Électronique","Maison","Famille","Santé et beauté","Épicerie","Loisirs","Jardin et extérieur","Mariage","Restauration","Pharmacie et santé"].map(c => (
                             <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
                           ))}
                         </SelectContent>
@@ -325,8 +380,8 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
 
                     {/* Condition */}
                     <td className={colClass}>
-                      <Select value={row.condition} onValueChange={v => updateRow(row.id, 'condition', v)}>
-                        <SelectTrigger className="h-8 text-xs border border-slate-200 bg-white">
+                      <Select value={row.condition} onValueChange={v => updateRow(row.id, { condition: v })}>
+                        <SelectTrigger className="h-8 text-xs border-slate-200">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -339,8 +394,8 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
 
                     {/* Availability */}
                     <td className={colClass}>
-                      <Select value={row.availability} onValueChange={v => updateRow(row.id, 'availability', v)}>
-                        <SelectTrigger className="h-8 text-xs border border-slate-200 bg-white">
+                      <Select value={row.availability} onValueChange={v => updateRow(row.id, { availability: v })}>
+                        <SelectTrigger className="h-8 text-xs border-slate-200">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -352,40 +407,20 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
                     </td>
 
                     {/* Status */}
-                    <td className={colClass}>
-                      <Select value={row.status} onValueChange={v => updateRow(row.id, 'status', v)}>
-                        <SelectTrigger className="h-8 text-xs border border-slate-200 bg-white">
+                    <td className="px-3 py-2 bg-white align-top">
+                      <Select value={row.status} onValueChange={v => updateRow(row.id, { status: v })}>
+                        <SelectTrigger className="h-8 text-xs border-slate-200">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="active" className="text-xs">
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-green-500 rounded-full inline-block" /> Actif</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-green-500 rounded-full inline-block" />Actif</span>
                           </SelectItem>
                           <SelectItem value="inactive" className="text-xs">
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-slate-300 rounded-full inline-block" /> Inactif</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 bg-slate-300 rounded-full inline-block" />Inactif</span>
                           </SelectItem>
                         </SelectContent>
                       </Select>
-                    </td>
-
-                    {/* Brand */}
-                    <td className={colClass}>
-                      <Input
-                        value={row.brand}
-                        onChange={e => updateRow(row.id, 'brand', e.target.value)}
-                        placeholder="Marque"
-                        className="h-8 text-xs border-0 shadow-none bg-transparent focus:ring-1 focus:ring-blue-400 px-0"
-                      />
-                    </td>
-
-                    {/* Content ID */}
-                    <td className="px-3 py-2 bg-white">
-                      <Input
-                        value={row.content_id}
-                        onChange={e => updateRow(row.id, 'content_id', e.target.value)}
-                        placeholder="ID"
-                        className="h-8 text-xs border-0 shadow-none bg-transparent focus:ring-1 focus:ring-blue-400 px-0"
-                      />
                     </td>
                   </tr>
                 );
@@ -393,14 +428,9 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
             </tbody>
           </table>
 
-          {/* Add row button */}
+          {/* Add row */}
           <div className="px-4 py-3 border-t border-slate-100 bg-slate-50">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={addRow}
-              className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs"
-            >
+            <Button variant="outline" size="sm" onClick={addRow} className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs">
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               Nouvelle ligne
             </Button>
@@ -410,7 +440,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
         {/* Footer */}
         <div className="border-t px-6 py-3 flex items-center justify-between shrink-0 bg-white">
           <p className="text-xs text-slate-500">
-            <span className="font-semibold text-slate-700">{filledRows.length}</span> article{filledRows.length !== 1 ? 's' : ''} rempli{filledRows.length !== 1 ? 's' : ''} · <span className="text-green-600 font-semibold">{validCount}</span> valide{validCount !== 1 ? 's' : ''}
+            <span className="font-semibold text-slate-700">{filledRows.length}</span> article{filledRows.length !== 1 ? 's' : ''} · <span className="text-green-600 font-semibold">{validCount}</span> valide{validCount !== 1 ? 's' : ''} · Le slug et l'ID sont générés automatiquement
           </p>
           <div className="flex gap-3">
             <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
