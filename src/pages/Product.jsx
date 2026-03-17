@@ -336,7 +336,7 @@ export default function Product() {
         <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
       </Helmet>
       
-    <div className="min-h-screen bg-white pb-32 font-sans text-slate-900">
+      <div className="min-h-screen bg-white pb-32 font-sans text-slate-900">
       
       {/* 1. AMAZON STYLE BREADCRUMBS */}
       <div className="sticky top-0 bg-white/95 backdrop-blur-sm z-40 border-b border-slate-100">
