@@ -12,6 +12,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner";
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import NotificationPreferences from '@/components/notifications/NotificationPreferences';
+import BlogManager from '@/components/admin/BlogManager';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const REGIONS = [
   "Petion-ville", "Route de Freres", "Delmas", "Pelerin", "Thomassain", "Kenscoff",
@@ -339,9 +341,16 @@ export default function Account() {
           </Dialog>
         </div>
 
-        {/* Admin Tools */}
+        {/* Admin Tools & Blog Manager */}
         {user?.role === 'admin' && (
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-4">
+          <Tabs defaultValue="admin-tools" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="admin-tools">Outils Admin</TabsTrigger>
+              <TabsTrigger value="blog">Blog</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="admin-tools">
+              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
               <Shield className="w-5 h-5 text-purple-600" />
               <span>Outils Admin</span>
@@ -480,6 +489,14 @@ export default function Account() {
               </div>
             </div>
           </div>
+            </TabsContent>
+
+            <TabsContent value="blog">
+              <div className="bg-white rounded-xl p-4">
+                <BlogManager />
+              </div>
+            </TabsContent>
+          </Tabs>
         )}
 
         {/* Notification Preferences */}
