@@ -178,19 +178,19 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
     updateRow(rowId, { aiLoading: true });
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Tu es un Expert SEO Senior, Growth Hacker et Copywriter E-commerce spécialisé dans le marché de l'événementiel et du mariage en Haïti. Tu travailles exclusivement pour la marque de luxe MAKARIOS BRIDAL DREAM (et sa branche logistique RAPIDOPRESTO).
+        prompt: `Tu es un Expert SEO Senior et Copywriter E-commerce spécialisé dans le marché haïtien. Tu travailles pour une marketplace multi-boutiques en Haïti (RapidoPresto) qui vend tout type de produits : mode, électronique, alimentation, mariage, fleurs, pharmacie, décoration, etc.
 
-À partir du nom du produit "${row.name}" et de l'image fournie, génère une annonce hybride optimisée pour la conversion (Facebook Marketplace/WhatsApp) ET pour le SEO local haïtien.
+À partir du nom du produit "${row.name}" et de l'image fournie, génère une annonce optimisée pour la conversion (Facebook Marketplace/WhatsApp) ET pour le SEO local haïtien.
 
 RÈGLES STRICTES :
 
-1. DESCRIPTION : Rédige une description de 3-4 lignes MAX avec des emojis, axée sur la résolution du problème client, l'urgence et un Call-to-Action direct. Intègre naturellement les villes de Delmas, Cap-Haïtien, Gonaïves et Haïti pour le référencement local. Ton prestige: luxueux, rassurant, excellence. En FRANÇAIS uniquement.
+1. DESCRIPTION : Rédige une description de 3-4 lignes MAX avec des emojis, adaptée au TYPE de produit détecté (pas forcément mariage). Axée sur le bénéfice client, l'urgence et un Call-to-Action direct. Intègre naturellement les villes de Delmas, Cap-Haïtien ou Gonaïves pour le référencement local. Ton chaleureux et professionnel. EN FRANÇAIS uniquement.
 
 2. FB_CATEGORY : La catégorie Facebook la plus précise parmi: ${FB_CATEGORIES.map(c => c.value).join(', ')}
 
 3. CATEGORY (app) : Parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
 
-4. SEO_TAGS : Génère 12 à 15 mots-clés ultra-pertinents pour saturer le champ lexical et capturer toutes les intentions de recherche. Mélange: synonymes du produit, termes de l'écosystème (ex: si chaise → table, réception, salle), mots en français + anglais (diaspora) + créole haïtien, fautes d'orthographe courantes, noms de villes haïtiennes. Maximum de diversité pour dominer le SEO.
+4. SEO_TAGS : Génère 12 à 15 mots-clés ultra-pertinents pour ce produit spécifique. Mélange: synonymes du produit, termes de son écosystème, mots en français + anglais (diaspora) + créole haïtien, fautes d'orthographe courantes, noms de villes haïtiennes (Delmas, Port-au-Prince, Cap-Haïtien, Gonaïves, Pétion-Ville). Maximum de diversité pour dominer le SEO local.
 
 5. BRAND : La marque si identifiable (sinon laisser vide).
 
