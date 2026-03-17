@@ -318,7 +318,7 @@ Répondez en JSON strict.`,
                         value={row.name}
                         onChange={e => updateRow(row.id, { name: e.target.value })}
                         placeholder="Titre de l'article"
-                        className={`h-8 text-xs border-slate-200 ${row.errors.name ? 'border-red-400 focus-visible:ring-red-300' : ''}`}
+                        className={`h-8 text-xs text-slate-900 placeholder:text-slate-400 border-slate-200 ${row.errors.name ? 'border-red-400 focus-visible:ring-red-300' : ''}`}
                       />
                     </td>
 
