@@ -25,6 +25,7 @@ export default function BlogArticleForm({ article, onClose, onSuccess }) {
   });
   const [newKeyword, setNewKeyword] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [productSearch, setProductSearch] = useState('');
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
@@ -269,30 +270,41 @@ export default function BlogArticleForm({ article, onClose, onSuccess }) {
 
           {/* Produits liés */}
           <div>
-            <Label>Produits liés</Label>
+            <Label>Produits liés ({formData.related_products.length} sélectionnés)</Label>
+            <Input
+              placeholder="Rechercher un produit..."
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              className="mb-3"
+            />
             <div className="max-h-48 overflow-y-auto border rounded p-3 space-y-2">
-              {products.map(product => (
-                <label key={product.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded">
-                  <input
-                    type="checkbox"
-                    checked={formData.related_products.includes(product.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData(prev => ({
-                          ...prev,
-                          related_products: [...prev.related_products, product.id]
-                        }));
-                      } else {
-                        setFormData(prev => ({
-                          ...prev,
-                          related_products: prev.related_products.filter(id => id !== product.id)
-                        }));
-                      }
-                    }}
-                  />
-                  <span className="text-sm text-slate-700">{product.name}</span>
-                </label>
-              ))}
+              {products
+                .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
+                .map(product => (
+                  <label key={product.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      checked={formData.related_products.includes(product.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            related_products: [...prev.related_products, product.id]
+                          }));
+                        } else {
+                          setFormData(prev => ({
+                            ...prev,
+                            related_products: prev.related_products.filter(id => id !== product.id)
+                          }));
+                        }
+                      }}
+                    />
+                    <span className="text-sm text-slate-700">{product.name}</span>
+                  </label>
+                ))}
+              {products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
+                <p className="text-xs text-slate-500 text-center py-4">Aucun produit trouvé</p>
+              )}
             </div>
           </div>
 
