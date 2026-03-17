@@ -151,8 +151,8 @@ export default function BlogArticle() {
             </div>
           )}
 
-          {/* Back to Blog */}
-          <div className="mt-12 pt-8 border-t text-center">
+          {/* Actions */}
+          <div className="mt-12 pt-8 border-t flex flex-col sm:flex-row gap-4 items-center justify-center">
             <a
               href="/Blog"
               className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium transition-colors"
@@ -161,6 +161,18 @@ export default function BlogArticle() {
               Retour au blog
               <ChevronRight size={16} />
             </a>
+            
+            <Button
+              onClick={() => {
+                const message = `${article.title}\n${window.location.href}`;
+                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+              }}
+              className="bg-[#25D366] hover:bg-[#1ebd57] text-white gap-2"
+            >
+              <MessageCircle size={16} />
+              Partager sur WhatsApp
+            </Button>
           </div>
         </div>
       </article>
