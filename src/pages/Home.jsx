@@ -653,8 +653,8 @@ export default function Home() {
 
 
   const filteredProducts = React.useMemo(() => 
-    products.filter(p => p.name?.toLowerCase().includes(debouncedSearch.toLowerCase())),
-    [products, debouncedSearch]
+    filteredProductsByType.filter(p => p.name?.toLowerCase().includes(debouncedSearch.toLowerCase())),
+    [filteredProductsByType, debouncedSearch]
   );
 
 
@@ -1101,7 +1101,7 @@ export default function Home() {
 
                              if (shop?.slug && targetProduct.slug) {
 
-                               window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
+                               navigate(`/ShopView?slug=${shop.slug}&product=${targetProduct.slug}`);
 
                              } else if (shop) {
 
@@ -1535,10 +1535,10 @@ export default function Home() {
 
                                                              trackProductView(targetProduct, shop);
                                                              if (shop?.slug && targetProduct.slug) {
-                                                               window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
-                                                             } else {
-                                                               // Ne pas setter selectedShop en sous-catégorie
-                                                               setSelectedProduct(targetProduct);
+                                                                                      navigate(`/ShopView?slug=${shop.slug}&product=${targetProduct.slug}`);
+                                                                                    } else {
+                                                                                      // Ne pas setter selectedShop en sous-catégorie
+                                                                                      setSelectedProduct(targetProduct);
                                                              }
                                                             }}
 
@@ -1611,7 +1611,7 @@ export default function Home() {
                                                                   
                                                                   trackProductView(targetProduct, shop);
                                                                   if (shop?.slug && targetProduct.slug) {
-                                                                    window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
+                                                                    navigate(`/ShopView?slug=${shop.slug}&product=${targetProduct.slug}`);
                                                                   } else {
                                                                     // Ne pas setter selectedShop en sous-catégorie
                                                                     setSelectedProduct(targetProduct);
@@ -1662,7 +1662,7 @@ export default function Home() {
 
                                                     if (shop?.slug) {
 
-                                                        window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
+                                                        navigate(`/ShopView?slug=${shop.slug}`);
 
                                                     } else {
 
@@ -1718,17 +1718,17 @@ export default function Home() {
 
                                                onClick={() => {
 
-                                                   if (shop?.slug) {
+                                                    if (shop?.slug) {
 
-                                                       window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
+                                                        navigate(`/ShopView?slug=${shop.slug}`);
 
-                                                   } else {
+                                                    } else {
 
-                                                       setSelectedShop(shop);
+                                                        setSelectedShop(shop);
 
-                                                   }
+                                                    }
 
-                                               }}
+                                                }}
 
                                             >
 
@@ -1771,17 +1771,17 @@ export default function Home() {
 
                                                            if (shop?.slug && targetProduct.slug) {
 
-                                                             window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
+                                                                                      navigate(`/ShopView?slug=${shop.slug}&product=${targetProduct.slug}`);
 
-                                                           } else if (shop?.slug) {
+                                                                                    } else if (shop?.slug) {
 
-                                                             window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}`;
+                                                                                      navigate(`/ShopView?slug=${shop.slug}`);
 
-                                                           } else {
+                                                                                    } else {
 
-                                                             setSelectedShop(shop);
+                                                                                      setSelectedShop(shop);
 
-                                                             setSelectedProduct(targetProduct);
+                                                                                      setSelectedProduct(targetProduct);
 
                                                            }
 
