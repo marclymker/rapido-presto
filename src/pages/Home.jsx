@@ -744,7 +744,7 @@ export default function Home() {
 
       
 
-      <header className="sticky top-0 z-50 flex flex-col shadow-md">
+      <header className="sticky top-0 z-50 flex flex-col shadow-md" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
 
         <div className="text-white px-4 py-2 flex items-center gap-4" style={{ backgroundColor: theme.darkBlue }}>
 
