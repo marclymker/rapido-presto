@@ -505,18 +505,23 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
           {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') && (
             <Button 
               onClick={async () => {
-                // Générer le lien OG optimisé (appel direct à /functions/ogMetaTags)
-                const ogLink = await generateOGLink(product.id, shop.id);
-                
-                if (!ogLink) {
-                  toast.error("Impossible de générer le lien");
-                  return;
+                setGeneratingOGLink(true);
+                try {
+                  // Construire directement le lien OG
+                  const appUrl = window.location.origin;
+                  const ogLink = product.slug && shop.slug
+                    ? `${appUrl}/functions/ogMetaTags?slug=${shop.slug}&product=${product.slug}`
+                    : `${appUrl}/functions/ogMetaTags?slug=${shop.slug}&product=${product.id}`;
+
+                  const message = `Je Suis Intéressé par Cet Article 👇\n${ogLink}`;
+                  const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
+
+                  window.open(whatsappUrl, '_blank');
+                } catch (error) {
+                  toast.error("Erreur lors du partage");
+                } finally {
+                  setGeneratingOGLink(false);
                 }
-
-                const message = `Je Suis Intéressé par Cet Article 👇\n${ogLink}`;
-                const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
-
-                window.open(whatsappUrl, '_blank');
               }} 
               disabled={generatingOGLink}
               className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] disabled:bg-[#1ebd57]/50 text-white rounded-2xl font-bold"
