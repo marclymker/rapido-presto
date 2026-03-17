@@ -4,9 +4,11 @@ import { base44 } from '@/api/base44Client';
 import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Loader2, Calendar, User, Link as LinkIcon, ChevronRight } from 'lucide-react';
+import { Loader2, Calendar, User, Link as LinkIcon, ChevronRight, MessageCircle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import ReactMarkdown from 'react-markdown';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import ProductCard from '@/components/ui/ProductCard';
 
 export default function BlogArticle() {
