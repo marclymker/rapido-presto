@@ -225,6 +225,11 @@ export default function AdminProducts() {
         }}
       />
 
+      <MigrateFbCategoriesModal
+        open={showFbMigration}
+        onClose={() => setShowFbMigration(false)}
+      />
+
       <ProductFormModal
         product={editingProduct}
         shopId={selectedShop?.id}
