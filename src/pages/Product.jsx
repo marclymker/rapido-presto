@@ -347,13 +347,12 @@ export default function Product() {
         </div>
 
         <div className="max-w-lg mx-auto">
-        
-        {/* Header Navigation */}
-        <div className="absolute top-10 left-4 z-30">
-          <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="bg-white/80 rounded-full shadow-sm hover:bg-white">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-        </div>
+          {/* Header Navigation */}
+          <div className="absolute top-10 left-4 z-30">
+            <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="bg-white/80 rounded-full shadow-sm hover:bg-white">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </div>
 
         {/* 2. GALLERY SYSTEM */}
         <div className="relative w-full bg-slate-50">
