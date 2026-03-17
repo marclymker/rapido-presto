@@ -12,17 +12,19 @@ export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 })
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
-      setLastScrollY(currentScrollY);
+      setLastScrollY(prev => {
+        if (currentScrollY > prev && currentScrollY > 100) {
+          setIsVisible(false);
+        } else {
+          setIsVisible(true);
+        }
+        return currentScrollY;
+      });
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   const navItems = [
     { 
@@ -76,6 +78,11 @@ export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 })
             <Link
               key={item.id}
               to={createPageUrl(item.page)}
+              onClick={() => {
+                if (active) {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
               className="flex flex-col items-center justify-center w-full h-full gap-1 group relative"
             >
               <div className="relative">

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Layers } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import ProductFormModal from './modals/ProductFormModal';
+import BulkUploadModal from '@/components/admin/BulkUploadModal';
 
 export default function ProductsSection({ shopId }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: shop } = useQuery({
@@ -43,6 +45,14 @@ export default function ProductsSection({ shopId }) {
               className="w-full bg-gray-100 rounded-full pl-12 pr-6 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
             />
           </div>
+          <Button
+            onClick={() => setShowBulkModal(true)}
+            variant="outline"
+            className="px-4 py-3 rounded-full font-bold border-2 border-blue-200 text-blue-600 hover:bg-blue-50"
+          >
+            <Layers className="w-5 h-5 mr-2" />
+            Bulk
+          </Button>
           <Button 
             onClick={() => {
               setSelectedProduct(null);
@@ -113,6 +123,14 @@ export default function ProductsSection({ shopId }) {
           setShowModal(false);
           setSelectedProduct(null);
         }}
+        onSuccess={() => queryClient.invalidateQueries(['shop-products'])}
+      />
+
+      <BulkUploadModal
+        open={showBulkModal}
+        onClose={() => setShowBulkModal(false)}
+        shopId={shopId}
+        shopName={shop?.company_name}
         onSuccess={() => queryClient.invalidateQueries(['shop-products'])}
       />
     </div>

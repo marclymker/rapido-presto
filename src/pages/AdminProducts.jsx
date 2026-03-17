@@ -13,6 +13,7 @@ export default function AdminProducts() {
   const [selectedShop, setSelectedShop] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  
   const [editingProduct, setEditingProduct] = useState(null);
   const queryClient = useQueryClient();
 
@@ -70,6 +71,7 @@ export default function AdminProducts() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-slate-800">Gestion des Articles</h1>
+          
         </div>
 
         {!selectedShop ? (
@@ -215,6 +217,8 @@ export default function AdminProducts() {
           setShowBulkUpload(false);
         }}
       />
+
+      
 
       <ProductFormModal
         product={editingProduct}

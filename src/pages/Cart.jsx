@@ -72,12 +72,28 @@ export default function Cart() {
       }
       return base44.entities.CartItem.update(id, { quantity });
     },
-    onSuccess: () => queryClient.invalidateQueries(['cart'])
+    onMutate: async ({ id, quantity }) => {
+      await queryClient.cancelQueries(['cart', user?.id]);
+      const previous = queryClient.getQueryData(['cart', user?.id]);
+      queryClient.setQueryData(['cart', user?.id], (old = []) =>
+        quantity <= 0 ? old.filter(i => i.id !== id) : old.map(i => i.id === id ? { ...i, quantity } : i)
+      );
+      return { previous };
+    },
+    onError: (_, __, ctx) => { if (ctx?.previous) queryClient.setQueryData(['cart', user?.id], ctx.previous); },
+    onSettled: () => queryClient.invalidateQueries(['cart'])
   });
 
   const deleteItemMutation = useMutation({
     mutationFn: (id) => base44.entities.CartItem.delete(id),
-    onSuccess: () => queryClient.invalidateQueries(['cart'])
+    onMutate: async (id) => {
+      await queryClient.cancelQueries(['cart', user?.id]);
+      const previous = queryClient.getQueryData(['cart', user?.id]);
+      queryClient.setQueryData(['cart', user?.id], (old = []) => old.filter(i => i.id !== id));
+      return { previous };
+    },
+    onError: (_, __, ctx) => { if (ctx?.previous) queryClient.setQueryData(['cart', user?.id], ctx.previous); },
+    onSettled: () => queryClient.invalidateQueries(['cart'])
   });
 
   const createOrderMutation = useMutation({
@@ -345,7 +361,7 @@ export default function Cart() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white sticky top-0 z-40 border-b">
+      <header className="bg-white sticky top-0 z-40 border-b" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Link to={createPageUrl('Home')}>
