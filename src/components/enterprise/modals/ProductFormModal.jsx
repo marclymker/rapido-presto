@@ -357,7 +357,8 @@ Répondez au format JSON strict.`,
         description: result.description || formData.description,
         category: result.category || formData.category,
         subcategory: result.category === 'Mariage' ? (result.subcategory || formData.subcategory) : formData.subcategory,
-        seo_tags: result.seo_tags || formData.seo_tags
+        seo_tags: result.seo_tags || formData.seo_tags,
+        image_alt: result.image_alt || formData.image_alt
       });
       
       setAiGenerated(true);
