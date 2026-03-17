@@ -354,8 +354,8 @@ export default function Product() {
             </Button>
           </div>
 
-        {/* 2. GALLERY SYSTEM */}
-        <div className="relative w-full bg-slate-50">
+          {/* 2. GALLERY SYSTEM */}
+          <div className="relative w-full bg-slate-50">
           <div className="relative w-full aspect-square group">
             <img 
               src={activeImage} 
