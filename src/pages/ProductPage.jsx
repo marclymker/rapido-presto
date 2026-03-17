@@ -11,6 +11,7 @@ import ProductCard from '@/components/ui/ProductCard';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
 import { createPageUrl } from '@/utils';
+import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 
 /**
  * PAGE PRODUIT INDIVIDUELLE - SEO OPTIMISÉE
