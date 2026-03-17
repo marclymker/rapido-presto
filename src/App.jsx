@@ -17,6 +17,24 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
+const PageTransitionWrapper = ({ children }) => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={location.pathname}
+        initial={{ x: '100%', opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: '-30%', opacity: 0 }}
+        transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
+        style={{ willChange: 'transform, opacity' }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
@@ -42,25 +60,27 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
-    <Routes>
-      <Route path="/" element={
-        <LayoutWrapper currentPageName={mainPageKey}>
-          <MainPage />
-        </LayoutWrapper>
-      } />
-      {Object.entries(Pages).map(([path, Page]) => (
-        <Route
-          key={path}
-          path={`/${path}`}
-          element={
-            <LayoutWrapper currentPageName={path}>
-              <Page />
-            </LayoutWrapper>
-          }
-        />
-      ))}
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+    <PageTransitionWrapper>
+      <Routes>
+        <Route path="/" element={
+          <LayoutWrapper currentPageName={mainPageKey}>
+            <MainPage />
+          </LayoutWrapper>
+        } />
+        {Object.entries(Pages).map(([path, Page]) => (
+          <Route
+            key={path}
+            path={`/${path}`}
+            element={
+              <LayoutWrapper currentPageName={path}>
+                <Page />
+              </LayoutWrapper>
+            }
+          />
+        ))}
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </PageTransitionWrapper>
   );
 };
 
