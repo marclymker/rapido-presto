@@ -14,6 +14,7 @@ export default function AdminProducts() {
   const [selectedShop, setSelectedShop] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showFbMigration, setShowFbMigration] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const queryClient = useQueryClient();
 
