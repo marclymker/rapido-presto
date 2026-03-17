@@ -323,10 +323,15 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
 
 Générez en français:
 1. Une description marketing attractive et détaillée (2-3 phrases)
-2. La catégorie exacte parmi: Fastfood, Restaurants, Boutique Fleurs, Pharmacie, Mariage, Epicerie, Café, Pour Femme, Electronics, Pour homme, Maison, Bébé, Outils, Bijoux
-3. Si catégorie = "Mariage", déterminez aussi la sous-catégorie parmi:
-   - Pour les robes de mariée: "Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe de Cérémonie"
-   - Pour autres articles mariage: "Demoiselle d'honneur", "Témoins", "Bague de Mariage", "Bague", "Accessoires", "Carte et programmation", "Matériels Décor"
+2. La catégorie exacte parmi les catégories Facebook Marketplace officielles:
+   "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté",
+   "Épicerie", "Loisirs", "Jardin et extérieur", "Fournitures de bureau", "Véhicules",
+   "Mariage", "Restauration", "Pharmacie et santé"
+3. La sous-catégorie la plus précise correspondant à la catégorie choisie. Exemples:
+   - Habillement: "Vêtements pour femmes", "Chaussures", "Bijoux et accessoires", "Robes"...
+   - Électronique: "Téléphones portables", "Ordinateurs", "Audio"...
+   - Mariage: "Robe Sirène", "Robe Catalina", "Bague de Mariage", "Accessoires"...
+   - Santé et beauté: "Soins de la peau", "Maquillage", "Perruques et extensions"...
 4. 5-7 tags SEO pertinents en français (mots-clés de recherche)
 
 Répondez au format JSON strict.`,
