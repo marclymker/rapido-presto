@@ -34,16 +34,20 @@ Deno.serve(async (req) => {
                      req.headers.get('x-real-ip') ||
                      user_data?.client_ip_address;
 
-    // Hasher l'email et le téléphone
+    // Hasher toutes les PII en SHA256 (requis par Meta)
     const hashedEmail = await sha256Hash(user_data?.email || user.email);
     const hashedPhone = user_data?.phone ? await sha256Hash(user_data.phone.replace(/[^0-9]/g, '')) : null;
+    const firstName = user.full_name?.split(' ')[0]?.toLowerCase() || null;
+    const lastName = user.full_name?.split(' ').slice(1).join(' ')?.toLowerCase() || null;
+    const hashedFn = firstName ? await sha256Hash(firstName) : null;
+    const hashedLn = lastName ? await sha256Hash(lastName) : null;
 
     // Préparer les données utilisateur
     const userData = {
       em: hashedEmail,
       ph: hashedPhone,
-      fn: user.full_name?.split(' ')[0]?.toLowerCase(),
-      ln: user.full_name?.split(' ').slice(1).join(' ')?.toLowerCase(),
+      fn: hashedFn,
+      ln: hashedLn,
       client_ip_address: clientIp,
       client_user_agent: user_data?.client_user_agent || req.headers.get('user-agent'),
       fbc: user_data?.fbc, // Facebook Click ID
