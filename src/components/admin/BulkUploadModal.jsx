@@ -70,6 +70,7 @@ const validateRow = (row) => {
 export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuccess }) {
   const [rows, setRows] = useState(() => Array.from({ length: 6 }, createEmptyRow));
   const [saving, setSaving] = useState(false);
+  const [draggingOver, setDraggingOver] = useState(null);
   const fileInputRefs = useRef({});
 
   const updateRow = (id, fields) => {
