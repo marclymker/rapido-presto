@@ -296,7 +296,46 @@ export default function Product() {
     );
   }
 
+  // 🔥 OPTIMISATION OG META TAGS POUR WHATSAPP
+  const optimizedImageUrl = ensureHttpsAndCompress(product.image_url);
+  const shortDescription = product.description?.substring(0, 160) || `${product.name} - ${shop?.company_name || 'Rapido Presto'}`;
+
   return (
+    <>
+      <Helmet>
+        <title>{product.name} | Rapido Presto</title>
+        <meta name="description" content={shortDescription} />
+        
+        {/* ✅ META TAGS OPEN GRAPH (CRITIQUES POUR WHATSAPP) */}
+        <meta property="og:title" content={product.name} />
+        <meta property="og:description" content={shortDescription} />
+        <meta property="og:image" content={optimizedImageUrl} />
+        <meta property="og:image:secure_url" content={optimizedImageUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:type" content="image/jpeg" />
+        <meta property="og:url" content={typeof window !== 'undefined' ? window.location.href : ''} />
+        <meta property="og:type" content="product" />
+        <meta property="og:site_name" content="Rapido Presto" />
+        <meta property="og:locale" content="fr_HT" />
+
+        {/* ✅ META TAGS PRODUIT */}
+        <meta property="product:price:amount" content={clientPrice.toString()} />
+        <meta property="product:price:currency" content="HTG" />
+        <meta property="product:brand" content={shop?.company_name || 'Rapido Presto'} />
+        <meta property="product:availability" content={product.is_available ? 'in stock' : 'out of stock'} />
+
+        {/* ✅ TWITTER CARD */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@RapidoPrestoHT" />
+        <meta name="twitter:title" content={product.name} />
+        <meta name="twitter:description" content={shortDescription} />
+        <meta name="twitter:image" content={optimizedImageUrl} />
+
+        {/* ✅ CANONICAL URL */}
+        <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
+      </Helmet>
+      
     <div className="min-h-screen bg-white pb-32 font-sans text-slate-900">
       
       {/* 1. AMAZON STYLE BREADCRUMBS */}
