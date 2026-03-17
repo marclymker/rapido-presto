@@ -271,6 +271,7 @@ Répondez en JSON strict.`,
   const inputClass = "h-8 text-xs border-slate-200 text-slate-900 placeholder:text-slate-400";
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-[99vw] w-full max-h-[96vh] overflow-hidden flex flex-col p-0 rounded-xl">
         {/* Header */}
