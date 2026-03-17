@@ -20,9 +20,9 @@ export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 })
       setLastScrollY(currentScrollY);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, [lastScrollY, isVisible]);
 
   const navItems = [
     { 

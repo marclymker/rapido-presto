@@ -204,7 +204,7 @@ export default function Layout({ children, currentPageName }) {
 
         {children}
 
-        {user && !noNavPages.includes(currentPageName) && (
+        {!noNavPages.includes(currentPageName) && (
           <SmartBottomNav
             cartCount={cartCount}
             activeOrdersCount={activeOrdersCount}
