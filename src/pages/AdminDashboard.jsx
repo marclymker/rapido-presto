@@ -219,15 +219,7 @@ export default function AdminDashboard() {
           {/* Products */}
           <TabsContent value="products" className="mt-4">
             <div className="bg-white rounded-xl shadow-sm border p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-lg">Tous les articles ({products.length})</h2>
-                <Link to={createPageUrl('AdminProducts')}>
-                  <Button className="bg-orange-500 hover:bg-orange-600 gap-2">
-                    <Package className="w-4 h-4" />
-                    Gérer / Ajout en masse
-                  </Button>
-                </Link>
-              </div>
+              <h2 className="font-bold text-lg mb-4">Tous les articles ({products.length})</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {products.map(product => (
                   <div key={product.id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
