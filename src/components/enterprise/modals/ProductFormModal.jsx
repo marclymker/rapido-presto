@@ -124,11 +124,8 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     description: '',
     category: 'Fastfood',
     subcategory: '',
-    facebook_category: 'Restauration',
-    facebook_subcategory: '',
     stock_quantity: 0,
     image_url: '',
-    image_alt: '',
     additional_images: [],
     taille_emballage: 'Moyen',
     delivery_time: '30-45 minutes',
@@ -166,8 +163,6 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         description: '',
         category: 'Fastfood',
         subcategory: '',
-        facebook_category: 'Restauration',
-        facebook_subcategory: '',
         stock_quantity: 0,
         image_url: '',
         additional_images: [],
@@ -203,11 +198,8 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         description: product.description || '',
         category: product.category || 'Fastfood',
         subcategory: product.subcategory || product.subCategory || '',
-        facebook_category: product.facebook_category || 'Restauration',
-        facebook_subcategory: product.facebook_subcategory || '',
         stock_quantity: product.stock_quantity || 0,
         image_url: product.image_url || '',
-        image_alt: product.image_alt || '',
         additional_images: product.additional_images || [],
         taille_emballage: product.taille_emballage || 'Moyen',
         delivery_time: product.delivery_time || '30-45 minutes',
@@ -276,7 +268,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         .replace(/^-+|-+$/g, '')
         .substring(0, 60);
 
-      const dataWithSlug = { ...formData, slug: slug || undefined, image_alt: formData.image_alt || formData.name };
+      const dataWithSlug = { ...formData, slug: slug || undefined };
 
       if (product) {
         await base44.entities.Product.update(product.id, dataWithSlug);
@@ -331,28 +323,16 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
 
 Générez en français:
 1. Une description marketing attractive et détaillée (2-3 phrases)
-2. La catégorie Facebook Marketplace la PLUS APPROPRIÉE parmi ces options OBLIGATOIRES:
+2. La catégorie exacte parmi les catégories Facebook Marketplace officielles:
    "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté",
    "Épicerie", "Loisirs", "Jardin et extérieur", "Fournitures de bureau", "Véhicules",
    "Mariage", "Restauration", "Pharmacie et santé"
-3. La sous-catégorie Facebook PRÉCISE correspondant à la catégorie choisie. Exemples exhaustifs:
-   - Habillement et accessoires: "Vêtements pour femmes", "Vêtements pour hommes", "Chaussures", "Sacs et bagages", "Bijoux et accessoires", "Robes", "Costumes", "Vêtements bébé"
-   - Électronique: "Téléphones portables", "Ordinateurs", "Électronique grand public", "Audio", "Caméras", "Accessoires informatiques"
-   - Maison: "Meubles", "Décoration intérieure", "Articles ménagers", "Jardin", "Outils", "Décoration de fête", "Fleurs et plantes artificielles"
-   - Famille: "Articles pour bébés et enfants", "Jouets et jeux", "Puériculture", "Poussettes"
-   - Santé et beauté: "Soins de la peau", "Maquillage", "Soins capillaires", "Bain et corps", "Parfums", "Perruques et extensions"
-   - Épicerie: "Boissons", "Nourriture", "Produits frais", "Café", "Paniers-cadeaux", "Chocolats"
-   - Loisirs: "Articles de sport", "Instruments de musique", "Livres", "Artisanat", "Films et musique"
-   - Jardin et extérieur: "Meubles de jardin", "Barbecue", "Plantes", "Fleurs naturelles"
-   - Fournitures de bureau: "Équipement de bureau", "Papeterie", "Fournitures scolaires"
-   - Véhicules: "Voitures et camions", "Motos", "Pièces de véhicules", "Accessoires auto"
-   - Mariage: "Robe Sirène", "Robe Catalina", "Robe Ponpon (Princesse)", "Robe de Cérémonie", "Demoiselle d'honneur", "Témoins", "Bague de Mariage", "Bague", "Accessoires", "Carte et programmation", "Matériels Décor"
-   - Restauration: "Fastfood", "Restaurant", "Café", "Épicerie fine", "Traiteur"
-   - Pharmacie et santé: "Médicaments sans ordonnance", "Compléments alimentaires", "Matériel médical"
+3. La sous-catégorie la plus précise correspondant à la catégorie choisie. Exemples:
+   - Habillement: "Vêtements pour femmes", "Chaussures", "Bijoux et accessoires", "Robes"...
+   - Électronique: "Téléphones portables", "Ordinateurs", "Audio"...
+   - Mariage: "Robe Sirène", "Robe Catalina", "Bague de Mariage", "Accessoires"...
+   - Santé et beauté: "Soins de la peau", "Maquillage", "Perruques et extensions"...
 4. 5-7 tags SEO pertinents en français (mots-clés de recherche)
-5. Un texte ALT pour l'image (15-20 mots max, décrivant précisément l'image pour Google Images et l'accessibilité, en français)
-
-IMPORTANT: Retournez EXACTEMENT les valeurs Facebook énumérées ci-dessus (respectez la casse et les espaces).
 
 Répondez au format JSON strict.`,
         file_urls: [formData.image_url],
@@ -360,29 +340,27 @@ Répondez au format JSON strict.`,
           type: "object",
           properties: {
             description: { type: "string" },
-            facebook_category: { type: "string" },
-            facebook_subcategory: { type: "string" },
-            seo_tags: { type: "array", items: { type: "string" } },
-            image_alt: { type: "string" }
+            category: { type: "string" },
+            subcategory: { type: "string" },
+            seo_tags: { type: "array", items: { type: "string" } }
           },
-          required: ["description", "facebook_category", "facebook_subcategory", "seo_tags", "image_alt"]
+          required: ["description", "category", "seo_tags"]
         }
       });
 
       setFormData({
         ...formData,
         description: result.description || formData.description,
-        facebook_category: result.facebook_category || formData.facebook_category,
-        facebook_subcategory: result.facebook_subcategory || formData.facebook_subcategory,
-        seo_tags: result.seo_tags || formData.seo_tags,
-        image_alt: result.image_alt || formData.image_alt
+        category: result.category || formData.category,
+        subcategory: result.category === 'Mariage' ? (result.subcategory || formData.subcategory) : formData.subcategory,
+        seo_tags: result.seo_tags || formData.seo_tags
       });
       
       setAiGenerated(true);
-      toast.success('✨ Description, catégories Facebook et tags générés par IA');
+      toast.success('✨ Description, catégorie et tags générés par IA');
     } catch (error) {
       toast.error('Erreur IA: ' + error.message);
-      setAiGenerated(true);
+      setAiGenerated(true); // Mark as attempted even on error
     } finally {
       setAiLoading(false);
     }
@@ -592,23 +570,6 @@ Répondez au format JSON strict.`,
                   placeholder="Décrivez votre produit... (ou laissez l'IA le faire)"
                 />
               </div>
-
-              <div>
-                <Label className="mb-1.5 flex items-center gap-2">
-                  Texte ALT de l'image
-                  <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">SEO · Google Images · Accessibilité</span>
-                </Label>
-                <Input
-                  value={formData.image_alt}
-                  onChange={(e) => setFormData({ ...formData, image_alt: e.target.value })}
-                  placeholder="Ex: Robe de mariée sirène blanche avec traîne, vue de face — généré par IA"
-                  className="bg-slate-50"
-                  maxLength={150}
-                />
-                {formData.image_alt && (
-                  <p className="text-xs text-slate-400 mt-1">{formData.image_alt.length}/150 caractères</p>
-                )}
-              </div>
           </div>
 
           {/* Section 2: Prix et Stock */}
@@ -658,17 +619,17 @@ Répondez au format JSON strict.`,
               </div>
           </div>
 
-          {/* Section 3: Catégorisation Interne + Facebook */}
+          {/* Section 3: Catégorisation Facebook */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
               <div className="flex items-center gap-2 mb-2 pb-2 border-b">
                  <Layers className="w-4 h-4 text-slate-500" />
-                 <h3 className="font-semibold text-slate-700">Catégorisation Produit</h3>
+                 <h3 className="font-semibold text-slate-700">Catégorie Facebook</h3>
+                 <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Marketplace</span>
               </div>
 
-              {/* Catégories Internes (Rapido) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div>
-                   <Label className="mb-1.5 text-xs font-semibold text-slate-600">🏪 Catégorie Rapido</Label>
+                   <Label className="mb-1.5">Catégorie principale</Label>
                    <Select 
                      value={formData.category} 
                      onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: '' })}
@@ -688,7 +649,7 @@ Répondez au format JSON strict.`,
 
                  {activeSubCategories.length > 0 && (
                    <div className="animate-in fade-in slide-in-from-top-2">
-                     <Label className="mb-1.5 text-xs font-semibold text-slate-600">📌 Sous-catégorie Rapido</Label>
+                     <Label className="mb-1.5">Sous-catégorie</Label>
                      <Select 
                        value={formData.subcategory} 
                        onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
@@ -702,49 +663,6 @@ Répondez au format JSON strict.`,
                          ))}
                        </SelectContent>
                      </Select>
-                   </div>
-                 )}
-             </div>
-
-             {/* Catégories Facebook (Génération IA automatique) */}
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-blue-50/40 rounded-lg border border-blue-200">
-                 <div>
-                   <Label className="mb-1.5 text-xs font-semibold text-blue-700">📱 Catégorie Facebook ✨</Label>
-                   <Select 
-                     value={formData.facebook_category} 
-                     onValueChange={(v) => setFormData({ ...formData, facebook_category: v, facebook_subcategory: '' })}
-                   >
-                     <SelectTrigger className="h-11 border-blue-300 bg-white">
-                       <SelectValue />
-                     </SelectTrigger>
-                     <SelectContent>
-                       {Object.keys(FB_CATEGORIES).map((cat) => (
-                         <SelectItem key={cat} value={cat}>
-                           {FB_CATEGORY_ICONS[cat]} {cat}
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                   <p className="text-xs text-blue-600 mt-1">⚡ Générée automatiquement par l'IA</p>
-                 </div>
-
-                 {formData.facebook_category && FB_CATEGORIES[formData.facebook_category]?.length > 0 && (
-                   <div className="animate-in fade-in slide-in-from-top-2">
-                     <Label className="mb-1.5 text-xs font-semibold text-blue-700">🎯 Sous-catégorie Facebook ✨</Label>
-                     <Select 
-                       value={formData.facebook_subcategory} 
-                       onValueChange={(v) => setFormData({ ...formData, facebook_subcategory: v })}
-                     >
-                       <SelectTrigger className="h-11 border-blue-300 bg-white">
-                         <SelectValue placeholder="Générée par IA..." />
-                       </SelectTrigger>
-                       <SelectContent>
-                         {FB_CATEGORIES[formData.facebook_category]?.map((sub) => (
-                           <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                         ))}
-                       </SelectContent>
-                     </Select>
-                     <p className="text-xs text-blue-600 mt-1">⚡ Sélection automatique recommandée</p>
                    </div>
                  )}
              </div>
