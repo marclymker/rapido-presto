@@ -1,6 +1,7 @@
 /**
- * Table de référence des catégories Facebook Commerce (Google Product Taxonomy)
- * Hiérarchie complète : Niveau 1 → Niveau 2 → Niveau 3+
+ * Hiérarchie Complète des Catégories Facebook Commerce (Google Product Taxonomy)
+ * Source: document officiel fourni - IDs exacts, strictement cette liste.
+ * 6 catégories racines officielles uniquement.
  */
 
 export const FB_TAXONOMY = [
@@ -17,14 +18,22 @@ export const FB_TAXONOMY = [
             id: 188,
             name: "Chaussures pour hommes",
             children: [
-              { id: 189, name: "Chaussures de ville", children: [
-                { id: 190, name: "Mocassins et chaussures à lacets" },
-                { id: 191, name: "Bottes de ville" },
-              ]},
-              { id: 192, name: "Chaussures de sport", children: [
-                { id: 193, name: "Chaussures de course à pied" },
-                { id: 194, name: "Chaussures de basket-ball" },
-              ]},
+              {
+                id: 189,
+                name: "Chaussures de ville",
+                children: [
+                  { id: 190, name: "Mocassins et chaussures à lacets" },
+                  { id: 191, name: "Bottes de ville" },
+                ],
+              },
+              {
+                id: 192,
+                name: "Chaussures de sport",
+                children: [
+                  { id: 193, name: "Chaussures de course à pied" },
+                  { id: 194, name: "Chaussures de basket-ball" },
+                ],
+              },
             ],
           },
           {
@@ -42,11 +51,15 @@ export const FB_TAXONOMY = [
         id: 199,
         name: "Sacs et sacs à main",
         children: [
-          { id: 200, name: "Sacs à main", children: [
-            { id: 201, name: "Sacs portés épaule" },
-            { id: 202, name: "Sacs cabas" },
-            { id: 203, name: "Pochettes et sacs de soirée" },
-          ]},
+          {
+            id: 200,
+            name: "Sacs à main",
+            children: [
+              { id: 201, name: "Sacs portés épaule" },
+              { id: 202, name: "Sacs cabas" },
+              { id: 203, name: "Pochettes et sacs de soirée" },
+            ],
+          },
           { id: 204, name: "Sacs à dos" },
         ],
       },
@@ -54,15 +67,23 @@ export const FB_TAXONOMY = [
         id: 205,
         name: "Bijoux et montres",
         children: [
-          { id: 206, name: "Montres", children: [
-            { id: 207, name: "Montres-bracelets" },
-            { id: 208, name: "Montres de poche" },
-          ]},
-          { id: 209, name: "Bijoux", children: [
-            { id: 210, name: "Colliers et pendentifs" },
-            { id: 211, name: "Bagues" },
-            { id: 212, name: "Boucles d'oreilles" },
-          ]},
+          {
+            id: 206,
+            name: "Montres",
+            children: [
+              { id: 207, name: "Montres-bracelets" },
+              { id: 208, name: "Montres de poche" },
+            ],
+          },
+          {
+            id: 209,
+            name: "Bijoux",
+            children: [
+              { id: 210, name: "Colliers et pendentifs" },
+              { id: 211, name: "Bagues" },
+              { id: 212, name: "Boucles d'oreilles" },
+            ],
+          },
         ],
       },
     ],
@@ -76,34 +97,54 @@ export const FB_TAXONOMY = [
         id: 437,
         name: "Meubles",
         children: [
-          { id: 438, name: "Meubles de salon", children: [
-            { id: 439, name: "Canapés et fauteuils" },
-            { id: 440, name: "Tables basses et tables de salon" },
-            { id: 441, name: "Meubles TV et centres de divertissement" },
-          ]},
-          { id: 442, name: "Meubles de chambre", children: [
-            { id: 443, name: "Lits et sommiers" },
-            { id: 444, name: "Matelas" },
-            { id: 445, name: "Armoires et commodes" },
-          ]},
-          { id: 446, name: "Meubles de cuisine et salle à manger", children: [
-            { id: 447, name: "Tables de salle à manger" },
-            { id: 448, name: "Chaises de salle à manger" },
-          ]},
+          {
+            id: 438,
+            name: "Meubles de salon",
+            children: [
+              { id: 439, name: "Canapés et fauteuils" },
+              { id: 440, name: "Tables basses et tables de salon" },
+              { id: 441, name: "Meubles TV et centres de divertissement" },
+            ],
+          },
+          {
+            id: 442,
+            name: "Meubles de chambre",
+            children: [
+              { id: 443, name: "Lits et sommiers" },
+              { id: 444, name: "Matelas" },
+              { id: 445, name: "Armoires et commodes" },
+            ],
+          },
+          {
+            id: 446,
+            name: "Meubles de cuisine et salle à manger",
+            children: [
+              { id: 447, name: "Tables de salle à manger" },
+              { id: 448, name: "Chaises de salle à manger" },
+            ],
+          },
         ],
       },
       {
         id: 449,
         name: "Éclairage",
         children: [
-          { id: 450, name: "Lampes", children: [
-            { id: 451, name: "Lampes de chevet" },
-            { id: 452, name: "Lampadaires" },
-          ]},
-          { id: 453, name: "Luminaires de plafond", children: [
-            { id: 454, name: "Lustres" },
-            { id: 455, name: "Plafonniers" },
-          ]},
+          {
+            id: 450,
+            name: "Lampes",
+            children: [
+              { id: 451, name: "Lampes de chevet" },
+              { id: 452, name: "Lampadaires" },
+            ],
+          },
+          {
+            id: 453,
+            name: "Luminaires de plafond",
+            children: [
+              { id: 454, name: "Lustres" },
+              { id: 455, name: "Plafonniers" },
+            ],
+          },
         ],
       },
     ],
@@ -117,14 +158,22 @@ export const FB_TAXONOMY = [
         id: 223,
         name: "Téléphonie",
         children: [
-          { id: 224, name: "Téléphones portables", children: [
-            { id: 225, name: "Smartphones" },
-            { id: 226, name: "Téléphones classiques" },
-          ]},
-          { id: 227, name: "Accessoires de téléphonie mobile", children: [
-            { id: 228, name: "Étuis et coques" },
-            { id: 229, name: "Chargeurs et câbles" },
-          ]},
+          {
+            id: 224,
+            name: "Téléphones portables",
+            children: [
+              { id: 225, name: "Smartphones" },
+              { id: 226, name: "Téléphones classiques" },
+            ],
+          },
+          {
+            id: 227,
+            name: "Accessoires de téléphonie mobile",
+            children: [
+              { id: 228, name: "Étuis et coques" },
+              { id: 229, name: "Chargeurs et câbles" },
+            ],
+          },
         ],
       },
       {
@@ -140,14 +189,22 @@ export const FB_TAXONOMY = [
         id: 234,
         name: "Audio et Vidéo",
         children: [
-          { id: 235, name: "Téléviseurs", children: [
-            { id: 236, name: "Téléviseurs LED/OLED" },
-            { id: 237, name: "Téléviseurs 4K/8K" },
-          ]},
-          { id: 238, name: "Casques et écouteurs", children: [
-            { id: 239, name: "Écouteurs sans fil (Bluetooth)" },
-            { id: 240, name: "Casques audio" },
-          ]},
+          {
+            id: 235,
+            name: "Téléviseurs",
+            children: [
+              { id: 236, name: "Téléviseurs LED/OLED" },
+              { id: 237, name: "Téléviseurs 4K/8K" },
+            ],
+          },
+          {
+            id: 238,
+            name: "Casques et écouteurs",
+            children: [
+              { id: 239, name: "Écouteurs sans fil (Bluetooth)" },
+              { id: 240, name: "Casques audio" },
+            ],
+          },
         ],
       },
     ],
@@ -161,14 +218,22 @@ export const FB_TAXONOMY = [
         id: 470,
         name: "Soins personnels",
         children: [
-          { id: 471, name: "Soins des cheveux", children: [
-            { id: 472, name: "Shampoings et après-shampoings" },
-            { id: 473, name: "Produits coiffants" },
-          ]},
-          { id: 474, name: "Soins de la peau", children: [
-            { id: 475, name: "Crèmes hydratantes" },
-            { id: 476, name: "Nettoyants pour le visage" },
-          ]},
+          {
+            id: 471,
+            name: "Soins des cheveux",
+            children: [
+              { id: 472, name: "Shampoings et après-shampoings" },
+              { id: 473, name: "Produits coiffants" },
+            ],
+          },
+          {
+            id: 474,
+            name: "Soins de la peau",
+            children: [
+              { id: 475, name: "Crèmes hydratantes" },
+              { id: 476, name: "Nettoyants pour le visage" },
+            ],
+          },
         ],
       },
       {
@@ -228,88 +293,6 @@ export const FB_TAXONOMY = [
       },
     ],
   },
-  // Catégories supplémentaires pour le marché haïtien
-  {
-    id: 9000,
-    name: "Alimentation et boissons",
-    icon: "🍽️",
-    children: [
-      { id: 9001, name: "Épicerie", children: [
-        { id: 9002, name: "Produits frais" },
-        { id: 9003, name: "Boissons" },
-        { id: 9004, name: "Café et thé" },
-      ]},
-      { id: 9005, name: "Restauration rapide" },
-      { id: 9006, name: "Restaurant" },
-    ],
-  },
-  {
-    id: 9100,
-    name: "Mariage et événements",
-    icon: "💍",
-    children: [
-      { id: 9101, name: "Robes de mariée", children: [
-        { id: 9102, name: "Robe Sirène" },
-        { id: 9103, name: "Robe Catalina" },
-        { id: 9104, name: "Robe Ponpon (Princesse)" },
-        { id: 9105, name: "Robe de Cérémonie" },
-      ]},
-      { id: 9106, name: "Cortège", children: [
-        { id: 9107, name: "Demoiselles d'honneur" },
-        { id: 9108, name: "Témoins" },
-      ]},
-      { id: 9109, name: "Bijoux de mariage", children: [
-        { id: 9110, name: "Bague de Mariage" },
-        { id: 9111, name: "Accessoires" },
-      ]},
-      { id: 9112, name: "Décoration événement", children: [
-        { id: 9113, name: "Matériels Décor" },
-        { id: 9114, name: "Carte et programmation" },
-      ]},
-    ],
-  },
-  {
-    id: 9200,
-    name: "Pharmacie et santé",
-    icon: "💊",
-    children: [
-      { id: 9201, name: "Médicaments sans ordonnance" },
-      { id: 9202, name: "Compléments alimentaires" },
-      { id: 9203, name: "Matériel médical" },
-    ],
-  },
-  {
-    id: 9300,
-    name: "Fleurs et cadeaux",
-    icon: "💐",
-    children: [
-      { id: 9301, name: "Fleurs naturelles" },
-      { id: 9302, name: "Fleurs artificielles" },
-      { id: 9303, name: "Paniers cadeaux" },
-      { id: 9304, name: "Bougies et parfums d'ambiance" },
-    ],
-  },
-  {
-    id: 9400,
-    name: "Bébé et enfants",
-    icon: "👶",
-    children: [
-      { id: 9401, name: "Vêtements bébé" },
-      { id: 9402, name: "Puériculture" },
-      { id: 9403, name: "Jouets et jeux éducatifs" },
-      { id: 9404, name: "Poussettes" },
-    ],
-  },
-  {
-    id: 9500,
-    name: "Outils et bricolage",
-    icon: "🔧",
-    children: [
-      { id: 9501, name: "Outils électriques" },
-      { id: 9502, name: "Outils à main" },
-      { id: 9503, name: "Matériaux de construction" },
-    ],
-  },
 ];
 
 /**
@@ -355,13 +338,6 @@ export function getRootCategories() {
  * Retourne les enfants directs d'un nœud
  */
 export function getChildren(parentId) {
-  const parent = FB_TAXONOMY.find(n => n.id === parentId);
-  if (parent) return parent.children || [];
-  // Cherche dans la hiérarchie complète
-  const flat = FLAT_TAXONOMY;
-  const node = flat.find(n => n.id === parentId);
-  if (!node) return [];
-  // Reconstruire les enfants depuis l'arbre original
   function findInTree(nodes, targetId) {
     for (const n of nodes) {
       if (n.id === targetId) return n.children || [];
@@ -380,7 +356,6 @@ export function getChildren(parentId) {
  */
 export function getTaxonomyMappingPrompt() {
   const leaves = FLAT_TAXONOMY.filter(n => {
-    // Nœud feuille = aucun enfant dans l'arbre original
     function hasChildren(nodes, id) {
       for (const n of nodes) {
         if (n.id === id) return !!(n.children?.length);
