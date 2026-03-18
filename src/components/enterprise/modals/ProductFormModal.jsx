@@ -211,6 +211,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         delivery_time: product.delivery_time || '30-45 minutes',
         seo_tags: product.seo_tags || [],
         is_available: product.is_available !== false,
+        fb_category_id: product.fb_category_id || null,
         product_attributes: product.product_attributes || {
           color: '',
           size: '',
