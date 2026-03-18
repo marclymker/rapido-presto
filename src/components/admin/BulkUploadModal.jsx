@@ -153,38 +153,35 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
     try {
       const taxonomyList = getTaxonomyMappingPrompt();
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Tu es un Expert SEO Senior et Copywriter E-commerce spécialisé dans le marché haïtien (RapidoPresto).
+       prompt: `Tu es un Expert SEO Senior et Copywriter E-commerce spécialisé dans le marché haïtien (RapidoPresto).
 
-Produit: "${row.name}"
+      Produit: "${row.name}"
 
-RÈGLES :
-1. DESCRIPTION : 3-4 lignes MAX avec emojis, bénéfice client + urgence + CTA. Villes: Delmas, Cap-Haïtien ou Gonaïves. EN FRANÇAIS.
-2. FB_CATEGORY_ID : Attribue l'ID numérique Facebook/Google Taxonomy le plus précis :
-${taxonomyList}
-Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones).
-4. SEO_TAGS : 12-15 mots-clés: français + anglais + créole + villes haïtiennes.
-5. BRAND : Marque si identifiable.
-6. IMAGE_ALT : 15-20 mots SEO en français.`,
-        file_urls: [row.image_url],
-        response_json_schema: {
-          type: "object",
-          properties: {
-            description: { type: "string" },
-            fb_category_id: { type: "number" },
-            category: { type: "string" },
-            seo_tags: { type: "array", items: { type: "string" } },
-            brand: { type: "string" },
-            image_alt: { type: "string" }
-          },
-          required: ["description", "category", "seo_tags", "image_alt"]
-        }
+      RÈGLES :
+      1. DESCRIPTION : 3-4 lignes MAX avec emojis, bénéfice client + urgence + CTA. Villes: Delmas, Cap-Haïtien ou Gonaïves. EN FRANÇAIS.
+      2. FB_CATEGORY_ID : Attribue l'ID numérique Facebook/Google Taxonomy le plus précis parmi cette hiérarchie officielle :
+      ${taxonomyList}
+      Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones, 211 pour Bagues, 166 pour vêtements génériques).
+      3. SEO_TAGS : 12-15 mots-clés: français + anglais + créole + villes haïtiennes.
+      4. BRAND : Marque si identifiable.
+      5. IMAGE_ALT : 15-20 mots SEO en français.`,
+       file_urls: [row.image_url],
+       response_json_schema: {
+         type: "object",
+         properties: {
+           description: { type: "string" },
+           fb_category_id: { type: "number" },
+           seo_tags: { type: "array", items: { type: "string" } },
+           brand: { type: "string" },
+           image_alt: { type: "string" }
+         },
+         required: ["description", "fb_category_id", "seo_tags", "image_alt"]
+       }
       });
 
       updateRow(rowId, {
         description: result.description || row.description,
         fb_category_id: result.fb_category_id || row.fb_category_id,
-        fb_category: result.fb_category_id ? String(result.fb_category_id) : row.fb_category,
-        category: result.category || row.category,
         seo_tags: result.seo_tags || row.seo_tags,
         brand: result.brand || row.brand,
         image_alt: result.image_alt || row.image_alt,
