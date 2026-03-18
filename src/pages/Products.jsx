@@ -1,152 +1,216 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Search, ArrowLeft } from 'lucide-react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import ProductCard from '@/components/ui/ProductCard';
+import { Search, MapPin, Tag, Store, ShoppingBag, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { applyClientMargin } from '@/components/utils/priceCalculation';
+import { useAuth } from '@/components/auth/useAuth';
 
-export default function Products() {
-  const [user, setUser] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+const CATEGORIES = [
+  'Fastfood', 'Restaurants', 'Boutique Fleurs', 'Pharmacie', 'Mariage',
+  'Epicerie', 'Café', 'Pour Femme', 'Electronics', 'Pour homme', 'Maison',
+  'Bébé', 'Outils', 'Bijoux', 'Matériels Décor'
+];
 
-  useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => setUser(null));
-  }, []);
-
-  // Fetch all products
-  const { data: allProducts = [], isLoading } = useQuery({
-    queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.list(),
-    refetchInterval: 60000
-  });
-
-  // Fetch all shops
-  const { data: shops = [] } = useQuery({
-    queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true })
-  });
-
-  const filteredProducts = allProducts.filter(p => 
-    p.is_available !== false && 
-    p.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Generate dynamic SEO based on search and products
-  const seoTitle = searchQuery 
-    ? `Recherche: ${searchQuery} - Rapido Presto`
-    : "Tous les produits - Rapido Presto";
-
-  const seoDescription = searchQuery
-    ? `${filteredProducts.length} résultat${filteredProducts.length > 1 ? 's' : ''} pour "${searchQuery}" - Livraison rapide en Haïti`
-    : `Découvrez ${allProducts.length} produits disponibles - Fastfood, Restaurants, Fleurs, Pharmacie, Mode et plus encore - Livraison en 30 minutes`;
-
-  const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
-  const keywords = [
-    'acheter en ligne Haïti',
-    'livraison rapide',
-    'e-commerce Haïti',
-    ...categories,
-    ...(searchQuery ? [searchQuery] : [])
-  ].join(', ');
+const ProductCard = ({ product, shop, onClick }) => {
+  const price = applyClientMargin(product.promo_price || product.price);
+  const originalPrice = product.promo_price ? applyClientMargin(product.price) : null;
+  const hasPromo = product.promo_price && product.promo_price < product.price;
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div
+      className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98]"
+      onClick={onClick}
+    >
+      <div className="relative aspect-square bg-slate-100">
+        {product.image_url ? (
+          <img
+            src={product.image_url}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-slate-300">
+            <ShoppingBag className="w-10 h-10" />
+          </div>
+        )}
+        {hasPromo && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+            -{Math.round((1 - product.promo_price / product.price) * 100)}%
+          </div>
+        )}
+        {product.is_available === false && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <span className="text-white text-xs font-bold bg-black/60 px-3 py-1 rounded-full">Rupture de stock</span>
+          </div>
+        )}
+      </div>
+      <div className="p-2.5">
+        <p className="text-[11px] text-slate-400 truncate">{shop?.company_name || ''}</p>
+        <p className="text-sm font-semibold text-slate-800 truncate leading-tight mt-0.5">{product.name}</p>
+        <div className="flex items-center gap-1.5 mt-1">
+          <span className="text-sm font-black text-orange-500">{price.toLocaleString()} HTG</span>
+          {originalPrice && (
+            <span className="text-[11px] text-slate-400 line-through">{originalPrice.toLocaleString()}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function Products() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [showCategories, setShowCategories] = useState(false);
+
+  const { data: allProducts = [], isLoading } = useQuery({
+    queryKey: ['all-products'],
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200),
+  });
+
+  const { data: shops = [] } = useQuery({
+    queryKey: ['shops'],
+    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+  });
+
+  const filteredProducts = allProducts.filter(p => {
+    const matchSearch = p.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCategory = !selectedCategory || p.category === selectedCategory;
+    return matchSearch && matchCategory;
+  });
+
+  const handleProductClick = (product) => {
+    const shop = shops.find(s => s.id === product.shop_id);
+    if (shop?.slug && product.slug) {
+      navigate(`/ShopView?slug=${shop.slug}&product=${product.slug}`);
+    } else if (shop?.slug) {
+      navigate(`/ShopView?slug=${shop.slug}`);
+    } else {
+      navigate(`/product?id=${product.id}`);
+    }
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
       <Helmet>
-        <title>{seoTitle}</title>
-        <meta name="description" content={seoDescription} />
-        <meta name="keywords" content={keywords} />
-        <link rel="canonical" href="https://rapidopresto.shop/Products" />
-
-        {/* Open Graph */}
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={seoTitle} />
-        <meta property="og:description" content={seoDescription} />
-        <meta property="og:url" content="https://rapidopresto.shop/Products" />
-
-        {/* Schema.org for product listing */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "CollectionPage",
-            "name": "Tous les produits",
-            "description": seoDescription,
-            "url": "https://rapidopresto.shop/Products",
-            "numberOfItems": filteredProducts.length
-          })}
-        </script>
+        <title>Tous les produits - Rapido Presto</title>
+        <meta name="description" content="Découvrez tous les produits disponibles sur Rapido Presto - Livraison rapide en Haïti" />
       </Helmet>
 
       {/* Header */}
-      <div className="sticky top-0 bg-white z-50 shadow-sm">
-        <div className="p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => window.location.href = '/'}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-xl font-bold text-orange-500">Tous les produits</h1>
+      <header className="bg-white shadow-sm sticky top-0 z-40">
+        <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-slate-900">Marketplace</h1>
+          <div className="flex items-center gap-1 text-sm text-slate-500">
+            <MapPin className="w-4 h-4 text-orange-500" />
+            <span>Haïti</span>
           </div>
+        </div>
 
-          {/* Search Bar */}
-          <div className="flex items-center bg-slate-100 rounded-full px-4 py-3">
-            <Search className="text-slate-400 mr-2 w-5 h-5" />
-            <input 
-              type="text" 
-              placeholder='Rechercher un produit...' 
+        {/* Search Bar */}
+        <div className="px-4 pb-3">
+          <div className="flex items-center bg-slate-100 rounded-full px-4 py-2.5 gap-2">
+            <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Rechercher un produit..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent outline-none w-full text-slate-700"
+              className="bg-transparent outline-none w-full text-sm text-slate-700 placeholder:text-slate-400"
             />
           </div>
         </div>
-      </div>
 
-      {/* Products Grid */}
-      <div className="p-4">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-          </div>
-        ) : (
-          <>
-            <p className="text-sm text-slate-500 mb-4">
-              {filteredProducts.length} produit{filteredProducts.length > 1 ? 's' : ''} disponible{filteredProducts.length > 1 ? 's' : ''}
-            </p>
-            <div className="grid grid-cols-2 gap-4">
-              {filteredProducts.map(product => {
-                const shop = shops.find(s => s.id === product.shop_id);
-                return (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    shop={shop}
-                    onClick={() => window.location.href = `/product?id=${product.id}`}
-                    onAdd={() => {
-                      if (!user) {
-                        base44.auth.redirectToLogin(window.location.pathname);
-                        return;
-                      }
-                      window.location.href = `/product?id=${product.id}`;
-                    }}
-                  />
-                );
-              })}
+        {/* Action Buttons */}
+        <div className="px-4 pb-3 flex gap-2">
+          <button
+            onClick={() => navigate('/Dashboard')}
+            className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white py-2 px-4 rounded-full text-sm font-semibold hover:bg-orange-600 transition"
+          >
+            <Store className="w-4 h-4" />
+            <span>Ma boutique</span>
+          </button>
+          <button
+            onClick={() => setShowCategories(!showCategories)}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm font-semibold transition ${
+              showCategories || selectedCategory
+                ? 'bg-orange-500 text-white'
+                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+            }`}
+          >
+            <Tag className="w-4 h-4" />
+            <span>{selectedCategory || 'Catégories'}</span>
+          </button>
+        </div>
+
+        {/* Categories dropdown */}
+        {showCategories && (
+          <div className="px-4 pb-3">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => { setSelectedCategory(null); setShowCategories(false); }}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                  !selectedCategory ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
+                }`}
+              >
+                Tous
+              </button>
+              {CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => { setSelectedCategory(cat); setShowCategories(false); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                    selectedCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
-          </>
+          </div>
         )}
+      </header>
 
-        {!isLoading && filteredProducts.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">📦</div>
+      {/* Main Content */}
+      <main className="flex-1 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold text-slate-800">
+            {selectedCategory ? selectedCategory : 'Sélection du jour'}
+          </h2>
+          <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
+        </div>
+
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
+            <p className="text-sm text-slate-500">Chargement des produits...</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-5xl mb-3">📦</div>
             <p className="text-slate-500">Aucun produit trouvé</p>
           </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {filteredProducts.map(product => {
+              const shop = shops.find(s => s.id === product.shop_id);
+              return (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  shop={shop}
+                  onClick={() => handleProductClick(product)}
+                />
+              );
+            })}
+          </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
