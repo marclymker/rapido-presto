@@ -458,30 +458,35 @@ Réponds en JSON strict.`,
                       />
                     </td>
 
-                    {/* FB Category */}
+                    {/* Catégorie parente */}
                     <td className={colClass}>
-                      <Select value={row.fb_category} onValueChange={v => updateRow(row.id, { fb_category: v })}>
+                      <Select value={row.category} onValueChange={v => updateRow(row.id, { category: v, leaf_category: '' })}>
                         <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
                           <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
                         </SelectTrigger>
                         <SelectContent>
-                          {FB_CATEGORIES.map(c => (
-                            <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
+                          {FB_PARENT_CATEGORIES.map(c => (
+                            <SelectItem key={c} value={c} className="text-xs">{FB_CATEGORY_ICONS[c]} {c}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </td>
 
-                    {/* App Category */}
+                    {/* Spécialité (niveau 3) */}
                     <td className={colClass}>
-                      <Select value={row.category} onValueChange={v => updateRow(row.id, { category: v })}>
+                      <Select value={row.leaf_category || ''} onValueChange={v => updateRow(row.id, { leaf_category: v })}>
                         <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
                           <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
                         </SelectTrigger>
-                        <SelectContent>
-                          {["Habillement et accessoires","Électronique","Maison","Famille","Santé et beauté","Épicerie","Loisirs","Jardin et extérieur","Mariage","Restauration","Pharmacie et santé"].map(c => (
-                            <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-                          ))}
+                        <SelectContent className="max-h-48">
+                          {row.category && getAllLeafCategories()
+                            .filter(l => l.startsWith(row.category))
+                            .map(l => {
+                              const parts = l.split(' > ');
+                              const label = parts.slice(1).join(' > ');
+                              return <SelectItem key={l} value={l} className="text-xs">{label}</SelectItem>;
+                            })
+                          }
                         </SelectContent>
                       </Select>
                     </td>
