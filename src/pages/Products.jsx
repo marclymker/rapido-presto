@@ -11,12 +11,7 @@ import { toast } from 'sonner';
 import SEO from '@/components/SEO';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
-
-const CATEGORIES = [
-  'Fastfood', 'Restaurants', 'Boutique Fleurs', 'Pharmacie', 'Mariage',
-  'Epicerie', 'Café', 'Pour Femme', 'Electronics', 'Pour homme', 'Maison',
-  'Bébé', 'Outils', 'Bijoux', 'Matériels Décor'
-];
+import { FB_PARENT_CATEGORIES, FB_CATEGORY_ICONS } from '@/lib/fbCategories';
 
 const ProductCard = ({ product, shop, onClick }) => {
   const price = applyClientMargin(product.promo_price || product.price);
