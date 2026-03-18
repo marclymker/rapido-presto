@@ -185,10 +185,32 @@ export default function Home() {
   };
 
   // Algorithme de personnalisation basé sur le dernier produit visualisé
+  // IDs de la branche FB sélectionnée (inclut tous les enfants)
+  const selectedFbBranchIds = useMemo(() => {
+    if (!selectedFbCatId) return null;
+    const ids = new Set();
+    function collect(nodes) {
+      for (const n of nodes) {
+        ids.add(n.id);
+        if (n.children?.length) collect(n.children);
+      }
+    }
+    function findAndCollect(nodes, targetId) {
+      for (const n of nodes) {
+        if (n.id === targetId) { collect([n]); return true; }
+        if (n.children?.length && findAndCollect(n.children, targetId)) return true;
+      }
+      return false;
+    }
+    findAndCollect(FB_TAXONOMY, selectedFbCatId);
+    return ids;
+  }, [selectedFbCatId]);
+
   const filteredProducts = useMemo(() => {
     const base = allProducts.filter(p => {
       const matchCategory = !selectedCategory || p.category === selectedCategory;
       if (!matchCategory) return false;
+      if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
 
       // Recherche hybride multi-mots : titre + description + nom boutique + tags SEO
       if (searchQuery.trim()) {
