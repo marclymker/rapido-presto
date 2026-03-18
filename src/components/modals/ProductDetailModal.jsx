@@ -54,10 +54,6 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
   useEffect(() => {
     if (open && product) {
-      if (similarItems.length === 0) {
-        fetchSimilarProducts();
-      }
-      
       // Track ViewContent
       trackMetaEvent('ViewContent', {
         content_ids: [product.id],
