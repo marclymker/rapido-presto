@@ -121,13 +121,8 @@ export default function Products() {
 
   const handleProductClick = (product) => {
     const shop = shops.find(s => s.id === product.shop_id);
-    if (shop?.slug && product.slug) {
-      navigate(`/ShopView?slug=${shop.slug}&product=${product.slug}`);
-    } else if (shop?.slug) {
-      navigate(`/ShopView?slug=${shop.slug}`);
-    } else {
-      navigate(`/product?id=${product.id}`);
-    }
+    setSelectedProduct(product);
+    setSelectedShop(shop || null);
   };
 
   return (
