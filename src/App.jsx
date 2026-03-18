@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import Products from './pages/Products';
 import Blog from './pages/Blog';
 import BlogArticle from './pages/BlogArticle';
 import BlogManager from './pages/BlogManager';
@@ -44,7 +45,7 @@ const InnerRouter = () => {
       <Routes>
         <Route path="/" element={
           <LayoutWrapper currentPageName="Products">
-            <Pages["Products"] />
+            <Products />
           </LayoutWrapper>
         } />
         {Object.entries(Pages).map(([path, Page]) => (
