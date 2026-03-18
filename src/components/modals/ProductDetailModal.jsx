@@ -74,27 +74,6 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
     }
   }, [product?.id, open]);
 
-  const fetchSimilarProducts = async () => {
-    setLoadingSimilar(true);
-    try {
-      const response = await base44.functions.invoke('getSimilarProducts', {
-        product_id: product.id,
-        category: product.category,
-        limit: 6
-      });
-      
-      if (response?.data?.data) {
-        setSimilarItems(response.data.data);
-      } else if (response?.data) {
-        setSimilarItems(response.data);
-      }
-    } catch (error) {
-      console.error("Erreur chargement similaires:", error);
-    } finally {
-      setLoadingSimilar(false);
-    }
-  };
-
   const handleZoomIn = () => {
     setZoom(prev => Math.min(prev + 0.25, 3));
     if (zoom >= 1.5) setPosition({ x: 0, y: 0 });
