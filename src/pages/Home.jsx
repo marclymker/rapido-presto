@@ -266,7 +266,7 @@ export default function Home() {
     const rest = shuffle(scored.filter(p => !top10Ids.has(p.id)));
 
     return [...top10, ...rest];
-  }, [allProducts, searchQuery, selectedCategory]);
+  }, [allProducts, searchQuery, selectedFbCatId]);
 
   const handleProductClick = (product) => {
     const shop = shops.find(s => s.id === product.shop_id);
@@ -310,9 +310,9 @@ export default function Home() {
       </Helmet>
 
       <SEO
-        title={selectedCategory ? `${selectedCategory} - Marketplace Rapido Presto` : 'Marketplace - Tous les produits | Rapido Presto'}
-        description={selectedCategory ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Livraison rapide avec Rapido Presto` : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
-        keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedCategory || 'produits'].filter(Boolean)}
+        title={selectedFbCatId ? `${findById(selectedFbCatId)?.name} - Marketplace Rapido Presto` : 'Marketplace - Tous les produits | Rapido Presto'}
+        description={selectedFbCatId ? `Découvrez tous nos produits ${findById(selectedFbCatId)?.name} disponibles en Haïti - Livraison rapide avec Rapido Presto` : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
+        keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedFbCatId ? findById(selectedFbCatId)?.name : 'produits'].filter(Boolean)}
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 
