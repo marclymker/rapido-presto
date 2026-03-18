@@ -229,6 +229,7 @@ Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones).
         image_alt: row.image_alt || row.name,
         shop_id: shopId,
         seo_tags: row.seo_tags || [],
+        fb_category_id: row.fb_category_id || null,
         product_attributes: {
           condition: row.condition,
           custom_labels: { label_0: row.brand || '' }
