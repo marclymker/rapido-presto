@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
+import { ShoppingCart } from 'lucide-react';
 
 /**
  * Algorithme de Similitude Hybride (Nom + Tags + Catégorie)
