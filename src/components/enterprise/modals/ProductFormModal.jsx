@@ -36,6 +36,8 @@ import {
 } from 'lucide-react';
 
 import { base44 } from '@/api/base44Client';
+import FbCategorySelector from '@/components/product/FbCategorySelector';
+import { getTaxonomyMappingPrompt, getCategoryPath } from '@/lib/fbTaxonomy';
 
 const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
   if (!open) return null;
