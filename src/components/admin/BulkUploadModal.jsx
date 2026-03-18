@@ -156,44 +156,40 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
 
     updateRow(rowId, { aiLoading: true });
     try {
+      const taxonomyList = getTaxonomyMappingPrompt();
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Tu es un Expert SEO Senior et Copywriter E-commerce spécialisé dans le marché haïtien. Tu travailles pour une marketplace multi-boutiques en Haïti (RapidoPresto) qui vend tout type de produits : mode, électronique, alimentation, mariage, fleurs, pharmacie, décoration, etc.
+        prompt: `Tu es un Expert SEO Senior et Copywriter E-commerce spécialisé dans le marché haïtien (RapidoPresto).
 
-À partir du nom du produit "${row.name}" et de l'image fournie, génère une annonce optimisée pour la conversion (Facebook Marketplace/WhatsApp) ET pour le SEO local haïtien.
+Produit: "${row.name}"
 
-RÈGLES STRICTES :
-
-1. DESCRIPTION : Rédige une description de 3-4 lignes MAX avec des emojis, adaptée au TYPE de produit détecté (pas forcément mariage). Axée sur le bénéfice client, l'urgence et un Call-to-Action direct. Intègre naturellement les villes de Delmas, Cap-Haïtien ou Gonaïves pour le référencement local. Ton chaleureux et professionnel. EN FRANÇAIS uniquement.
-
-2. FB_CATEGORY : La catégorie Facebook la plus précise parmi: ${FB_CATEGORIES.map(c => c.value).join(', ')}
-
-3. CATEGORY (app) : Parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
-
-4. SEO_TAGS : Génère 12 à 15 mots-clés ultra-pertinents pour ce produit spécifique. Mélange: synonymes du produit, termes de son écosystème, mots en français + anglais (diaspora) + créole haïtien, fautes d'orthographe courantes, noms de villes haïtiennes (Delmas, Port-au-Prince, Cap-Haïtien, Gonaïves, Pétion-Ville). Maximum de diversité pour dominer le SEO local.
-
-5. BRAND : La marque si identifiable (sinon laisser vide).
-
-6. IMAGE_ALT : Texte ALT de 15-20 mots décrivant précisément l'image pour Google Images et l'accessibilité, en français.
-
-Réponds en JSON strict.`,
+RÈGLES :
+1. DESCRIPTION : 3-4 lignes MAX avec emojis, bénéfice client + urgence + CTA. Villes: Delmas, Cap-Haïtien ou Gonaïves. EN FRANÇAIS.
+2. CATEGORY : Parmi: ${APP_CATEGORIES.join(', ')}
+3. FB_CATEGORY_ID : Attribue l'ID numérique Facebook/Google Taxonomy le plus précis :
+${taxonomyList}
+Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones).
+4. SEO_TAGS : 12-15 mots-clés: français + anglais + créole + villes haïtiennes.
+5. BRAND : Marque si identifiable.
+6. IMAGE_ALT : 15-20 mots SEO en français.`,
         file_urls: [row.image_url],
         response_json_schema: {
           type: "object",
           properties: {
             description: { type: "string" },
-            fb_category: { type: "string" },
+            fb_category_id: { type: "number" },
             category: { type: "string" },
             seo_tags: { type: "array", items: { type: "string" } },
             brand: { type: "string" },
             image_alt: { type: "string" }
           },
-          required: ["description", "fb_category", "category", "seo_tags", "image_alt"]
+          required: ["description", "category", "seo_tags", "image_alt"]
         }
       });
 
       updateRow(rowId, {
         description: result.description || row.description,
-        fb_category: result.fb_category || row.fb_category,
+        fb_category_id: result.fb_category_id || row.fb_category_id,
+        fb_category: result.fb_category_id ? String(result.fb_category_id) : row.fb_category,
         category: result.category || row.category,
         seo_tags: result.seo_tags || row.seo_tags,
         brand: result.brand || row.brand,
