@@ -50,9 +50,16 @@
 }
 
 @layer base {
+  html, body {
+    overscroll-behavior: none;
+  }
+
   * {
     @apply border-border;
+    /* ✅ Supprime le highlight gris au tap (Android WebView) */
+    -webkit-tap-highlight-color: transparent;
   }
+
   body {
     @apply bg-background text-foreground;
     /* ⚡ Polices système natives pour performance optimale */
@@ -61,6 +68,12 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ✅ Désactiver la sélection de texte sur éléments interactifs */
+  button, a, nav, [role="button"], [role="tab"], [role="menuitem"] {
+    user-select: none;
+    -webkit-user-select: none;
   }
   
   /* Safe area for iOS notch */

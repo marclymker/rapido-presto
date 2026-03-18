@@ -1,188 +1,184 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-/**
- * Service de génération de Meta Tags Open Graph pour crawlers sociaux
- * Détecte les bots (WhatsApp, Facebook, Twitter) et sert du HTML statique avec Meta Tags
- * Pour les utilisateurs normaux, retourne une redirection vers l'app React
- */
+// APP_URL doit correspondre exactement au domaine public de l'app
+const APP_URL = (Deno.env.get('APP_URL') || 'https://rapido-presto.base44.app').replace(/\/$/, '');
+
+function getOptimizedImageUrl(imageUrl) {
+  if (!imageUrl) return '';
+  if (!imageUrl.startsWith('http')) imageUrl = `${APP_URL}${imageUrl}`;
+  // Pour images Supabase: redimensionner à 600x600, qualité 75 → garantit < 300KB pour WhatsApp
+  if (imageUrl.includes('supabase.co/storage')) {
+    const separator = imageUrl.includes('?') ? '&' : '?';
+    return `${imageUrl}${separator}width=600&height=600&quality=75&resize=contain`;
+  }
+  return imageUrl;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const url = new URL(req.url);
-    
-    // Paramètres de l'URL
-    const shopSlug = url.searchParams.get('slug');
-    const productSlug = url.searchParams.get('product');
-    
-    if (!shopSlug) {
-      return new Response('Shop slug required', { status: 400 });
+
+    // Lire les params depuis URL query string OU body JSON
+    let shopSlug = url.searchParams.get('slug');
+    let productSlug = url.searchParams.get('product');
+    let productId = url.searchParams.get('product_id');
+
+    // Fallback: lire depuis le body si params absents de l'URL
+    if (!shopSlug && !productSlug && !productId && req.method === 'POST') {
+      try {
+        const body = await req.json();
+        shopSlug = body.slug || body.shopSlug;
+        productSlug = body.product || body.productSlug;
+        productId = body.product_id || body.productId;
+      } catch (_) {}
     }
 
-    // Détecter les crawlers sociaux (WhatsApp, Facebook, etc.)
-    const userAgent = req.headers.get('user-agent') || '';
-    const isCrawler = /facebookexternalhit|whatsapp|twitterbot|telegrambot|linkedinbot|slackbot|pinterest|vkshare|iframely/i.test(userAgent);
-    
-    // Log pour débogage
-    console.log(`[OG Meta Tags] User-Agent: ${userAgent.substring(0, 100)}`);
-    console.log(`[OG Meta Tags] Is Crawler: ${isCrawler}, Shop: ${shopSlug}, Product: ${productSlug}`);
-
-    // Charger les données de la boutique
-    const shops = await base44.asServiceRole.entities.Shop.filter({ slug: shopSlug });
-    const shop = shops[0];
-    
-    if (!shop) {
-      return new Response('Shop not found', { status: 404 });
+    if (!shopSlug && !productId) {
+      return new Response('Paramètre slug requis', { status: 400 });
     }
 
+    let shop = null;
     let product = null;
     let productPrice = null;
 
-    // Charger le produit si spécifié
-    if (productSlug) {
-      const products = await base44.asServiceRole.entities.Product.filter({ 
-        shop_id: shop.id, 
-        slug: productSlug 
+    if (shopSlug) {
+      const shops = await base44.asServiceRole.entities.Shop.filter({ slug: shopSlug });
+      shop = shops[0];
+    }
+
+    if (productSlug && shop) {
+      const products = await base44.asServiceRole.entities.Product.filter({
+        shop_id: shop.id,
+        slug: productSlug
       });
       product = products[0];
-      
-      if (product) {
-        // Calculer le prix client (avec marge)
-        const basePrice = product.promo_price || product.price;
-        productPrice = Math.round(basePrice * 1.10);
+    } else if (productId) {
+      const products = await base44.asServiceRole.entities.Product.filter({ id: productId });
+      product = products[0];
+      if (product && !shop) {
+        const shops = await base44.asServiceRole.entities.Shop.filter({ id: product.shop_id });
+        shop = shops[0];
       }
     }
 
-    // Si crawler détecté, servir HTML statique avec Meta Tags
-    if (isCrawler) {
-      const pageTitle = product 
-        ? `${product.name} - ${productPrice?.toLocaleString()} HTG`
-        : shop.company_name;
-      
-      const pageDescription = product
-        ? (product.description || product.name).substring(0, 160)
-        : `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`.substring(0, 160);
-      
-      // Optimiser l'image pour WhatsApp (< 300 Ko, dimensions 1200x630)
-      let pageImage = product?.image_url || shop.company_logo_url || '';
-      
-      // S'assurer que l'image est une URL absolue avec paramètres d'optimisation
-      if (pageImage && !pageImage.startsWith('http')) {
-        pageImage = `${url.origin}${pageImage}`;
-      }
-      
-      // Ajouter paramètres de compression et redimensionnement
-      if (pageImage) {
-        const separator = pageImage.includes('?') ? '&' : '?';
-        pageImage = `${pageImage}${separator}w=1200&h=630&q=75&fit=crop`;
-      }
-      
-      console.log(`[OG Meta Tags] Image optimisée: ${pageImage?.substring(0, 100)}`);
-      
-      const pageUrl = product
-        ? `${url.origin}/shop-view?slug=${shopSlug}&product=${productSlug}`
-        : `${url.origin}/shop-view?slug=${shopSlug}`;
+    if (product) {
+      const basePrice = product.promo_price && product.promo_price < product.price
+        ? product.promo_price
+        : product.price;
+      productPrice = Math.round(basePrice * 1.10);
+    }
 
-      // Échapper les caractères spéciaux pour HTML
-      const escapeHtml = (str) => str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#x27;');
-      
-      const safeTitle = escapeHtml(pageTitle);
-      const safeDescription = escapeHtml(pageDescription);
+    const appPageUrl = product
+      ? `${APP_URL}/ShopView?slug=${shop?.slug || ''}&product=${product.slug || product.id}`
+      : `${APP_URL}/ShopView?slug=${shopSlug}`;
 
-      // Générer HTML statique avec Meta Tags optimisés (PRIORITÉ MAXIMALE)
-      const html = `<!DOCTYPE html>
-<html lang="fr">
+    const ogUrl = product
+      ? `${APP_URL}/functions/ogMetaTags?slug=${shop?.slug || ''}&product=${product.slug || product.id}`
+      : `${APP_URL}/functions/ogMetaTags?slug=${shopSlug}`;
+
+    const pageTitle = product
+      ? `${escapeHtml(product.name)} — ${productPrice?.toLocaleString()} HTG`
+      : escapeHtml(shop?.company_name || 'Rapido Presto');
+
+    const pageDescription = product
+      ? escapeHtml(`${product.description || product.name} · Prix: ${productPrice?.toLocaleString()} HTG · ${shop?.company_name || ''}`)
+      : escapeHtml(`Découvrez ${shop?.company_name} sur Rapido Presto. ${shop?.company_category || ''} en Haïti.`);
+
+    const rawImage = product?.image_url || shop?.company_logo_url || '';
+    const pageImage = getOptimizedImageUrl(rawImage);
+
+    // Détecter les crawlers pour la redirection (humains → app React)
+    // IMPORTANT: On sert TOUJOURS le HTML avec OG tags — WhatsApp, Facebook et autres bots
+    // ont des UA variés. La redirection JS ne fonctionne pas pour les crawlers.
+    const userAgent = req.headers.get('user-agent') || '';
+    const isHuman = /Mozilla.*(?:Chrome|Firefox|Safari|Edge|Opera)/i.test(userAgent)
+      && !/bot|crawl|spider|facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Slackbot|Discordbot/i.test(userAgent);
+
+    // Si humain (navigateur réel) → redirection immédiate vers l'app
+    if (isHuman) {
+      return Response.redirect(appPageUrl, 302);
+    }
+
+    // Pour TOUS les autres (crawlers, bots, WhatsApp, accès direct) → HTML avec OG tags
+    const html = `<!DOCTYPE html>
+<html lang="fr" prefix="og: https://ogp.me/ns# product: https://ogp.me/ns/product#">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${safeTitle}</title>
-  
-  <!-- Meta Tags CRITIQUES pour WhatsApp - EN PREMIER -->
-  <meta property="og:title" content="${safeTitle}">
-  <meta property="og:description" content="${safeDescription}">
-  <meta property="og:url" content="${pageUrl}">
-  <meta property="og:type" content="${product ? 'product' : 'website'}">
-  ${pageImage ? `<meta property="og:image" content="${pageImage}">` : ''}
-  
-  <!-- Meta Tags Secondaires -->
-  <meta name="description" content="${safeDescription}">
-  <meta property="og:site_name" content="Rapido Presto">
-  <meta property="og:locale" content="fr_HT">
-  ${pageImage ? `
-  <meta property="og:image:secure_url" content="${pageImage}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="${safeTitle}">
-  <meta property="og:image:type" content="image/jpeg">
-  ` : ''}
-  
-  ${product ? `
-  <!-- Product-specific Meta Tags -->
-  <meta property="product:price:amount" content="${productPrice}">
-  <meta property="product:price:currency" content="HTG">
-  <meta property="product:availability" content="in stock">
-  <meta property="product:brand" content="${escapeHtml(shop.company_name)}">
-  <meta property="product:condition" content="new">
-  <meta property="product:retailer_item_id" content="${product.id}">
-  ` : ''}
-  
+  <title>${pageTitle} - Rapido Presto</title>
+  <meta name="description" content="${pageDescription}">
+
+  <!-- Open Graph / WhatsApp / Facebook -->
+  <meta property="fb:app_id" content="1346505637253912" />
+  <meta property="og:type" content="${product ? 'product' : 'website'}" />
+  <meta property="og:site_name" content="Rapido Presto" />
+  <meta property="og:title" content="${pageTitle}" />
+  <meta property="og:description" content="${pageDescription}" />
+  <meta property="og:url" content="${ogUrl}" />
+  <meta property="og:locale" content="fr_HT" />
+  ${pageImage ? `<meta property="og:image" content="${pageImage}" />
+  <meta property="og:image:secure_url" content="${pageImage}" />
+  <meta property="og:image:width" content="600" />
+  <meta property="og:image:height" content="600" />
+  <meta property="og:image:alt" content="${pageTitle}" />
+  <meta property="og:image:type" content="image/jpeg" />` : ''}
+
+  ${product ? `<meta property="product:price:amount" content="${productPrice}" />
+  <meta property="product:price:currency" content="HTG" />
+  <meta property="product:availability" content="in stock" />
+  <meta property="product:brand" content="${escapeHtml(shop?.company_name || '')}" />
+  <meta property="product:condition" content="new" />` : ''}
+
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@RapidoPrestoHT">
-  <meta name="twitter:title" content="${safeTitle}">
-  <meta name="twitter:description" content="${safeDescription}">
-  ${pageImage ? `
-  <meta name="twitter:image" content="${pageImage}">
-  <meta name="twitter:image:alt" content="${safeTitle}">
-  ` : ''}
-  
-  <!-- Redirect humans to React app after 1 second -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${pageTitle}" />
+  <meta name="twitter:description" content="${pageDescription}" />
+  ${pageImage ? `<meta name="twitter:image" content="${pageImage}" />` : ''}
+
+  <!-- Rediriger les humains vers l'app -->
   <script>
-    if (typeof navigator !== 'undefined' && !/facebookexternalhit|whatsapp|twitterbot|telegrambot|linkedinbot|slackbot|pinterest|vkshare|iframely/i.test(navigator.userAgent)) {
-      setTimeout(function() {
-        window.location.href = '${pageUrl}';
-      }, 1000);
-    }
+    var ua = navigator.userAgent || '';
+    var isBot = /bot|crawl|facebookexternalhit|WhatsApp|Telegram|Slack|Discord/i.test(ua);
+    if (!isBot) { window.location.replace('${appPageUrl}'); }
   </script>
 </head>
-<body style="margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px; text-align: center;">
-    <h1 style="margin-top: 20px; color: #333;">${safeTitle}</h1>
-    <p style="color: #666; line-height: 1.6;">${safeDescription}</p>
-    ${pageImage ? `<img src="${pageImage}" alt="${safeTitle}" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 8px;">` : ''}
-    <p style="margin-top: 30px;"><a href="${pageUrl}" style="background: #FF9900; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">Voir sur Rapido Presto</a></p>
+<body>
+  <div style="max-width:600px;margin:40px auto;padding:20px;font-family:system-ui,sans-serif;text-align:center;">
+    <h1 style="font-size:1.4rem;margin-bottom:8px;">${pageTitle}</h1>
+    <p style="color:#666;margin-bottom:16px;">${pageDescription}</p>
+    ${pageImage ? `<img src="${pageImage}" alt="${pageTitle}" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:20px;" />` : ''}
+    <a href="${appPageUrl}" style="display:inline-block;background:#f97316;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:1rem;">
+      Commander sur Rapido Presto →
+    </a>
   </div>
 </body>
 </html>`;
 
-      console.log(`[OG Meta Tags] SUCCESS - Serving crawler response for ${shopSlug}/${productSlug || 'shop'}`);
-      
-      return new Response(html, {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'public, max-age=3600',
-          'base44-app-id': Deno.env.get('BASE44_APP_ID') || '',
-          'X-Content-Type-Options': 'nosniff',
-          'X-Frame-Options': 'SAMEORIGIN'
-        }
-      });
-    }
-
-    // Pour les utilisateurs normaux, rediriger vers l'app React
-    const redirectUrl = product
-      ? `/shop-view?slug=${shopSlug}&product=${productSlug}`
-      : `/shop-view?slug=${shopSlug}`;
-    
-    return Response.redirect(new URL(redirectUrl, url.origin), 302);
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=0, must-revalidate', // Force WhatsApp/Facebook to re-scrape
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
+    });
 
   } catch (error) {
-    console.error('Error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('ogMetaTags error:', error);
+    return new Response(`<html><body><p>Erreur: ${error.message}</p></body></html>`, {
+      status: 500,
+      headers: { 'Content-Type': 'text/html' }
+    });
   }
 });

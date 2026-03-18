@@ -15,8 +15,6 @@ import ChatButton from '@/components/chat/ChatButton';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { createPageUrl } from '@/utils';
 import ShareProductButton from '@/components/share/ShareProductButton';
-import { useProductOGLink } from '@/hooks/useProductOGLink';
-import { injectOGMetaTags, generateShareLinkWithCacheBust, ensureHttpsAndCompress } from '@/components/utils/ogMetaTagsManager';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
@@ -34,7 +32,6 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   const [showCreateProductModal, setShowCreateProductModal] = useState(false);
   const [userShop, setUserShop] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const { generateLink: generateOGLink, loading: generatingOGLink } = useProductOGLink();
 
   // Gérer le bouton retour natif pour fermer la modale
   useBackButton(() => {
@@ -504,49 +501,22 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             Payer Maintenant
           </Button>
 
-          {shop?.company_name?.toUpperCase().includes('MAKARIOS BRIDAL') && (
-            <Button 
-              onClick={async () => {
-                try {
-                  // ⚡ OPTIMISATION OG TAGS
-                  injectOGMetaTags(product, shop);
-                  
-                  // Générer le lien OG optimisé avec cache-bust
-                  const baseOgLink = await generateOGLink(product.id, shop.id);
-                  
-                  if (!baseOgLink) {
-                    toast.error("Impossible de générer le lien");
-                    return;
-                  }
+          <Button 
+            onClick={() => {
+              // Lien optimisé pour preview WhatsApp via fonction backend
+              const productUrl = shop?.slug && product.slug 
+                ? `${window.location.origin}/functions/ogMetaTags?slug=${shop.slug}&product=${product.slug}`
+                : `${window.location.origin}/functions/ogMetaTags?product=${product.id}`;
 
-                  // Ajouter cache-bust pour forcer WhatsApp à rafraîchir l'aperçu
-                  const ogLink = generateShareLinkWithCacheBust(baseOgLink);
-                  
-                  // Assurer HTTPS complet
-                  const secureLink = ensureHttpsAndCompress(ogLink);
+              const message = `Je suis intéressé par cet article\n${productUrl}`;
+              const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
 
-                  const message = `Je Suis Intéressé par Cet Article 👇\n${secureLink}`;
-                  const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
-
-                  window.open(whatsappUrl, '_blank');
-                } catch (error) {
-                  console.error('❌ Erreur WhatsApp:', error);
-                  toast.error("Erreur lors de la génération du lien");
-                }
-              }} 
-              disabled={generatingOGLink}
-              className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] disabled:bg-[#1ebd57]/50 text-white rounded-2xl font-bold"
-            >
-              {generatingOGLink ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 inline animate-spin" />
-                  Génération...
-                </>
-              ) : (
-                '📱 WhatsApp'
-              )}
-            </Button>
-          )}
+              window.open(whatsappUrl, '_blank');
+            }} 
+            className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl"
+          >
+            WhatsApp
+          </Button>
           
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-slate-100 rounded-xl p-1">

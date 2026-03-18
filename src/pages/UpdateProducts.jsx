@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { base44 } from '@/api/base44Client';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import GenerateAltTextsModal from '@/components/admin/GenerateAltTextsModal';
+import MigrateFbCategoriesModal from '@/components/admin/MigrateFbCategoriesModal';
 
 export default function UpdateProducts() {
   const [loading, setLoading] = useState(false);
@@ -11,6 +13,8 @@ export default function UpdateProducts() {
   const [inventoryResult, setInventoryResult] = useState(null);
   const [compressingImages, setCompressingImages] = useState(false);
   const [compressResult, setCompressResult] = useState(null);
+  const [showAltTexts, setShowAltTexts] = useState(false);
+  const [showFbMigration, setShowFbMigration] = useState(false);
 
   const handleUpdate = async () => {
     setLoading(true);
@@ -217,7 +221,49 @@ export default function UpdateProducts() {
             )}
           </CardContent>
         </Card>
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Générer les textes ALT</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Génère automatiquement un texte ALT (SEO + accessibilité Google Images) pour chaque image de produit qui n'en possède pas encore.
+            </p>
+            <Button
+              onClick={() => setShowAltTexts(true)}
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              Générer les textes ALT manquants
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Migrer les catégories Facebook</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Migre et assigne les catégories Facebook Marketplace officielles à tous les produits du catalogue.
+            </p>
+            <Button
+              onClick={() => setShowFbMigration(true)}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              Migrer les catégories Facebook
+            </Button>
+          </CardContent>
+        </Card>
       </div>
+
+      <GenerateAltTextsModal
+        open={showAltTexts}
+        onClose={() => setShowAltTexts(false)}
+      />
+      <MigrateFbCategoriesModal
+        open={showFbMigration}
+        onClose={() => setShowFbMigration(false)}
+      />
     </div>
   );
 }

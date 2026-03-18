@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { base44 } from '@/api/base44Client';
-import { ensureHttpsAndCompress } from '@/components/utils/ogMetaTagsManager';
 import { 
   ArrowLeft, 
   ShoppingCart, 
@@ -296,66 +294,29 @@ export default function Product() {
     );
   }
 
-  // 🔥 OPTIMISATION OG META TAGS POUR WHATSAPP
-  const optimizedImageUrl = ensureHttpsAndCompress(product.image_url);
-  const shortDescription = product.description?.substring(0, 160) || `${product.name} - ${shop?.company_name || 'Rapido Presto'}`;
-
   return (
-    <>
-      <Helmet>
-        <title>{product.name} | Rapido Presto</title>
-        <meta name="description" content={shortDescription} />
-        
-        {/* ✅ META TAGS OPEN GRAPH (CRITIQUES POUR WHATSAPP) */}
-        <meta property="og:title" content={product.name} />
-        <meta property="og:description" content={shortDescription} />
-        <meta property="og:image" content={optimizedImageUrl} />
-        <meta property="og:image:secure_url" content={optimizedImageUrl} />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:image:type" content="image/jpeg" />
-        <meta property="og:url" content={typeof window !== 'undefined' ? window.location.href : ''} />
-        <meta property="og:type" content="product" />
-        <meta property="og:site_name" content="Rapido Presto" />
-        <meta property="og:locale" content="fr_HT" />
-
-        {/* ✅ META TAGS PRODUIT */}
-        <meta property="product:price:amount" content={clientPrice.toString()} />
-        <meta property="product:price:currency" content="HTG" />
-        <meta property="product:brand" content={shop?.company_name || 'Rapido Presto'} />
-        <meta property="product:availability" content={product.is_available ? 'in stock' : 'out of stock'} />
-
-        {/* ✅ TWITTER CARD */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:site" content="@RapidoPrestoHT" />
-        <meta name="twitter:title" content={product.name} />
-        <meta name="twitter:description" content={shortDescription} />
-        <meta name="twitter:image" content={optimizedImageUrl} />
-
-        {/* ✅ CANONICAL URL */}
-        <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
-      </Helmet>
-
-      <div className="min-h-screen bg-white pb-32 font-sans text-slate-900">
-        {/* 1. AMAZON STYLE BREADCRUMBS */}
-        <div className="sticky top-0 bg-white/95 backdrop-blur-sm z-40 border-b border-slate-100">
-          <div className="px-4 py-2 text-xs text-slate-500 flex items-center gap-1 max-w-lg mx-auto">
+    <div className="min-h-screen bg-white pb-32 font-sans text-slate-900">
+      
+      {/* 1. AMAZON STYLE BREADCRUMBS */}
+      <div className="sticky top-0 bg-white/95 backdrop-blur-sm z-40 border-b border-slate-100">
+         <div className="px-4 py-2 text-xs text-slate-500 flex items-center gap-1 max-w-lg mx-auto">
             <span>Accueil</span> <ChevronRight className="w-3 h-3" />
             <span>{product.category}</span> <ChevronRight className="w-3 h-3" />
             <span className="text-slate-800 truncate font-medium">{product.name}</span>
-          </div>
+         </div>
+      </div>
+
+      <div className="max-w-lg mx-auto">
+        
+        {/* Header Navigation */}
+        <div className="absolute top-10 left-4 z-30">
+          <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="bg-white/80 rounded-full shadow-sm hover:bg-white">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
         </div>
 
-        <div className="max-w-lg mx-auto">
-          {/* Header Navigation */}
-          <div className="absolute top-10 left-4 z-30">
-            <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="bg-white/80 rounded-full shadow-sm hover:bg-white">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </div>
-
-          {/* 2. GALLERY SYSTEM */}
-          <div className="relative w-full bg-slate-50">
+        {/* 2. GALLERY SYSTEM */}
+        <div className="relative w-full bg-slate-50">
           <div className="relative w-full aspect-square group">
             <img 
               src={activeImage} 
@@ -518,41 +479,40 @@ export default function Product() {
               </div>
             </div>
           )}
-          </div>
-          </div>
+        </div>
+      </div>
 
-          {/* Zoom Modal */}
-          {isZoomed && (
-            <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
-              <Button variant="ghost" size="icon" onClick={() => setIsZoomed(false)} className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full h-12 w-12">
-                <X className="w-8 h-8" />
-              </Button>
-              <img src={activeImage} alt="Zoom" className="max-w-full max-h-full object-contain" />
-            </div>
-          )}
+      {/* Zoom Modal */}
+      {isZoomed && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
+          <Button variant="ghost" size="icon" onClick={() => setIsZoomed(false)} className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full h-12 w-12">
+            <X className="w-8 h-8" />
+          </Button>
+          <img src={activeImage} alt="Zoom" className="max-w-full max-h-full object-contain" />
+        </div>
+      )}
 
-          {/* Sticky Bottom Bar */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] p-3 pb-6 z-40">
-            <div className="max-w-lg mx-auto flex items-center gap-3">
-              <div className="flex items-center bg-slate-100 rounded-full px-1 h-12">
-                <Button variant="ghost" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="rounded-full h-10 w-10">
-                  <Minus className="w-4 h-4" />
-                </Button>
-                <span className="w-8 text-center font-bold text-sm">{quantity}</span>
-                <Button variant="ghost" size="icon" onClick={() => setQuantity(quantity + 1)} className="rounded-full h-10 w-10">
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-              <Button onClick={handleAddToCart} disabled={!product.is_available} className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white h-12 rounded-full font-bold shadow-lg shadow-orange-500/25">
-                <div className="flex flex-col items-start leading-none gap-0.5">
-                  <span className="text-sm">Acheter maintenant</span>
-                  <span className="text-[10px] font-normal opacity-90">Total: {calculateTotalPrice().toLocaleString()} HTG</span>
-                </div>
-                <ShoppingCart className="w-5 h-5 ml-auto" />
-              </Button>
-            </div>
+      {/* Sticky Bottom Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] p-3 pb-6 z-40">
+        <div className="max-w-lg mx-auto flex items-center gap-3">
+          <div className="flex items-center bg-slate-100 rounded-full px-1 h-12">
+            <Button variant="ghost" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="rounded-full h-10 w-10">
+              <Minus className="w-4 h-4" />
+            </Button>
+            <span className="w-8 text-center font-bold text-sm">{quantity}</span>
+            <Button variant="ghost" size="icon" onClick={() => setQuantity(quantity + 1)} className="rounded-full h-10 w-10">
+              <Plus className="w-4 h-4" />
+            </Button>
           </div>
-          </div>
-          </>
-          );
+          <Button onClick={handleAddToCart} disabled={!product.is_available} className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white h-12 rounded-full font-bold shadow-lg shadow-orange-500/25">
+             <div className="flex flex-col items-start leading-none gap-0.5">
+                <span className="text-sm">Acheter maintenant</span>
+                <span className="text-[10px] font-normal opacity-90">Total: {calculateTotalPrice().toLocaleString()} HTG</span>
+             </div>
+             <ShoppingCart className="w-5 h-5 ml-auto" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
