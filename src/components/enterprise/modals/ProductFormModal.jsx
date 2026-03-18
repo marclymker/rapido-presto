@@ -134,6 +134,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     delivery_time: '30-45 minutes',
     seo_tags: [],
     is_available: true,
+    fb_category_id: null,
     product_attributes: {
       color: '',
       size: '',
