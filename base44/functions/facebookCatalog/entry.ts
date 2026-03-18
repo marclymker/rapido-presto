@@ -34,7 +34,11 @@ Deno.serve(async (req) => {
       const link = p.slug ? `https://rapido-presto.base44.app/product?slug=${p.slug}` : `https://rapido-presto.base44.app/product?id=${p.id}`;
       const image_link = p.image_url || "https://rapido-presto.base44.app/logo.png";
       const brand = escapeCSV(p.shop_name || "Rapido Presto");
-      const google_product_category = escapeCSV(p.product_attributes?.fb_category || '');
+      // Utilise l'ID numérique FB si disponible, sinon le chemin complet
+      // Facebook recommande l'ID numérique (ex: 225) OU le chemin complet (ex: "Électronique > Téléphonie > Smartphones")
+      const google_product_category = p.fb_category_id
+        ? String(Math.round(p.fb_category_id))
+        : escapeCSV(p.fb_category_path || p.category || '');
 
       // Attributs produits (standards Facebook/Google Shopping)
       const color = escapeCSV(attrs.color || '');
