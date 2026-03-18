@@ -136,9 +136,11 @@ Deno.serve(async (req) => {
 
   ${product ? `<meta property="product:price:amount" content="${productPrice}" />
   <meta property="product:price:currency" content="HTG" />
-  <meta property="product:availability" content="in stock" />
+  <meta property="product:availability" content="${product.is_available !== false ? 'in stock' : 'out of stock'}" />
   <meta property="product:brand" content="${escapeHtml(shop?.company_name || '')}" />
-  <meta property="product:condition" content="new" />` : ''}
+  <meta property="product:condition" content="new" />
+  <meta property="product:retailer_item_id" content="${product.id}" />
+  <meta property="product:category" content="${escapeHtml(product.category || '')}" />` : ''}
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
