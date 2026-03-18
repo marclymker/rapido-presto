@@ -82,7 +82,6 @@ export default function Home() {
   const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategories, setShowCategories] = useState(false);
   const [selectedFbCatId, setSelectedFbCatId] = useState(null);
   const [fbLevel1Id, setFbLevel1Id] = useState(null);

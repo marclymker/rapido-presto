@@ -159,8 +159,7 @@ Produit: "${row.name}"
 
 RÈGLES :
 1. DESCRIPTION : 3-4 lignes MAX avec emojis, bénéfice client + urgence + CTA. Villes: Delmas, Cap-Haïtien ou Gonaïves. EN FRANÇAIS.
-2. CATEGORY : Parmi: ${APP_CATEGORIES.join(', ')}
-3. FB_CATEGORY_ID : Attribue l'ID numérique Facebook/Google Taxonomy le plus précis :
+2. FB_CATEGORY_ID : Attribue l'ID numérique Facebook/Google Taxonomy le plus précis :
 ${taxonomyList}
 Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones).
 4. SEO_TAGS : 12-15 mots-clés: français + anglais + créole + villes haïtiennes.
@@ -314,9 +313,6 @@ Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones).
                 </th>
                 <th className="w-44 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
                   Catégorie Facebook <span className="text-slate-400 font-normal">· via IA</span>
-                </th>
-                <th className="w-36 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Catégorie app <span className="text-slate-400 font-normal">· via IA</span>
                 </th>
                 <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Condition</th>
                 <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Disponibilité</th>
@@ -476,20 +472,6 @@ Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones).
                       {row.fb_category_id && (
                         <p className="text-[9px] text-blue-500 mt-0.5 truncate">{getCategoryPath(row.fb_category_id)}</p>
                       )}
-                    </td>
-
-                    {/* App Category */}
-                    <td className={colClass}>
-                      <Select value={row.category} onValueChange={v => updateRow(row.id, { category: v })}>
-                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
-                          <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {APP_CATEGORIES.map(c => (
-                            <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </td>
 
                     {/* Condition */}
