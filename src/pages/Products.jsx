@@ -128,11 +128,59 @@ export default function Products() {
     addToCartMutation.mutate({ product, quantity });
   };
 
-  const filteredProducts = allProducts.filter(p => {
-    const matchSearch = p.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchCategory = !selectedCategory || p.category === selectedCategory;
-    return matchSearch && matchCategory;
-  });
+  // Algorithme de personnalisation basé sur le dernier produit visualisé
+  const filteredProducts = React.useMemo(() => {
+    const base = allProducts.filter(p => {
+      const matchSearch = p.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchCategory = !selectedCategory || p.category === selectedCategory;
+      return matchSearch && matchCategory;
+    });
+
+    // Si recherche ou catégorie active, pas de personnalisation
+    if (searchQuery || selectedCategory) return base;
+
+    // Récupérer le dernier produit visualisé
+    let lastViewed = null;
+    try {
+      const raw = localStorage.getItem('last_viewed_product');
+      if (raw) lastViewed = JSON.parse(raw);
+    } catch (_) {}
+
+    // Fonction de mélange aléatoire
+    const shuffle = (arr) => {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+
+    if (!lastViewed) return shuffle(base);
+
+    const nameWords = (lastViewed.name || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    const tags = lastViewed.seo_tags || [];
+    const category = lastViewed.category || '';
+
+    // Scorer les produits similaires
+    const scored = base
+      .filter(p => p.id !== lastViewed.id)
+      .map(p => {
+        let score = 0;
+        const pName = (p.name || '').toLowerCase();
+        const pTags = p.seo_tags || [];
+        nameWords.forEach(w => { if (pName.includes(w)) score += 2; });
+        tags.forEach(t => { if (pTags.includes(t)) score += 3; });
+        if (p.category === category) score += 1;
+        return { ...p, _score: score };
+      });
+
+    const top10 = scored.filter(p => p._score > 0).sort((a, b) => b._score - a._score).slice(0, 10);
+    const top10Ids = new Set(top10.map(p => p.id));
+    const rest = shuffle(scored.filter(p => !top10Ids.has(p.id)));
+
+    return [...top10, ...rest];
+  }, [allProducts, searchQuery, selectedCategory]);
 
   const handleProductClick = (product) => {
     const shop = shops.find(s => s.id === product.shop_id);
@@ -144,6 +192,8 @@ export default function Products() {
       value: applyClientMargin(product.promo_price || product.price),
       currency: 'HTG',
     });
+    // Sauvegarder pour personnalisation future
+    try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
     setSelectedProduct(product);
     setSelectedShop(shop || null);
   };
