@@ -136,8 +136,27 @@ export default function Products() {
 
   const handleProductClick = (product) => {
     const shop = shops.find(s => s.id === product.shop_id);
+    trackProductView(product, shop);
+    trackMetaEvent('ViewContent', {
+      content_ids: [product.id],
+      content_type: 'product',
+      content_name: product.name,
+      value: applyClientMargin(product.promo_price || product.price),
+      currency: 'HTG',
+    });
     setSelectedProduct(product);
     setSelectedShop(shop || null);
+  };
+
+  const handleCategorySelect = (cat) => {
+    setSelectedCategory(cat);
+    setShowCategories(false);
+    if (cat) trackCategoryView(cat);
+  };
+
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    if (value.length > 2) trackSearch(value);
   };
 
   return (
