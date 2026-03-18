@@ -196,11 +196,19 @@ export default function ProductPage() {
         {/* Open Graph */}
         <meta property="og:type" content="product" />
         <meta property="og:title" content={product.name} />
-        <meta property="og:description" content={product.description || product.name} />
+        <meta property="og:description" content={product.description || `${product.name} - ${price.toFixed(0)} HTG. Livraison rapide en Haïti.`} />
         <meta property="og:image" content={product.image_url} />
+        <meta property="og:image:width" content="800" />
+        <meta property="og:image:height" content="800" />
+        <meta property="og:image:alt" content={product.image_alt || product.name} />
         <meta property="og:url" content={typeof window !== 'undefined' ? window.location.href : ''} />
+        <meta property="og:site_name" content="Rapido Presto" />
+        <meta property="og:locale" content="fr_HT" />
         <meta property="product:price:amount" content={price.toString()} />
         <meta property="product:price:currency" content="HTG" />
+        <meta property="product:availability" content={product.is_available !== false ? 'in stock' : 'out of stock'} />
+        <meta property="product:retailer_item_id" content={product.id} />
+        <meta property="product:condition" content="new" />
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
