@@ -168,6 +168,7 @@ export default function Products() {
         onClose={() => setSelectedProduct(null)}
         onAddToCart={handleAddToCart}
         user={user}
+        allProducts={allProducts}
         onProductChange={(p) => {
           setSelectedProduct(p);
           setSelectedShop(shops.find(s => s.id === p.shop_id) || null);
