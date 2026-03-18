@@ -75,6 +75,8 @@ export default function Products() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategories, setShowCategories] = useState(false);
+  const [selectedFbCatId, setSelectedFbCatId] = useState(null); // Filtre taxonomie FB
+  const [fbLevel1Id, setFbLevel1Id] = useState(null); // Navigation hiérarchique
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
 
