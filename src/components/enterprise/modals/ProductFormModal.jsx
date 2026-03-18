@@ -361,7 +361,8 @@ Réponds en JSON strict.`,
         ...formData,
         description: result.description || formData.description,
         category: result.category || formData.category,
-        subcategory: result.category === 'Mariage' ? (result.subcategory || formData.subcategory) : formData.subcategory,
+        subcategory: result.subcategory || formData.subcategory,
+        leaf_category: result.leaf_category || formData.leaf_category,
         seo_tags: result.seo_tags || formData.seo_tags,
         image_alt: result.image_alt || formData.image_alt
       });
