@@ -97,6 +97,16 @@ const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, s
             <Truck size={10} /> Livraison Offerte
           </div>
         )}
+
+        {/* Infos Facebook Catalog */}
+        <div className="flex items-center justify-between mt-1 pt-1 border-t border-slate-100">
+          <span className="text-[8px] text-slate-300 font-mono truncate" title={`ID: ${product.id}`}>
+            #{product.id?.slice(-6)}
+          </span>
+          <span className={`text-[8px] font-bold px-1 rounded ${product.is_available !== false ? 'text-green-600' : 'text-red-500'}`}>
+            {product.is_available !== false ? 'in stock' : 'out of stock'}
+          </span>
+        </div>
       </div>
 
       {/* 3. SECTION BOUTON CONTACT : MASQUÉE TEMPORAIREMENT */}
