@@ -460,18 +460,26 @@ Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones).
                       />
                     </td>
 
-                    {/* FB Category */}
+                    {/* FB Category ID (Taxonomie hiérarchique) */}
                     <td className={colClass}>
-                      <Select value={row.fb_category} onValueChange={v => updateRow(row.id, { fb_category: v })}>
+                      <Select
+                        value={row.fb_category_id ? String(row.fb_category_id) : ''}
+                        onValueChange={v => updateRow(row.id, { fb_category_id: Number(v) })}
+                      >
                         <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
                           <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
                         </SelectTrigger>
-                        <SelectContent>
-                          {FB_CATEGORIES.map(c => (
-                            <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
+                        <SelectContent className="max-h-60">
+                          {FLAT_TAXONOMY.filter(n => n.id <= 9500).map(c => (
+                            <SelectItem key={c.id} value={String(c.id)} className="text-xs">
+                              {c.id} · {c.path.join(' › ')}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                      {row.fb_category_id && (
+                        <p className="text-[9px] text-blue-500 mt-0.5 truncate">{getCategoryPath(row.fb_category_id)}</p>
+                      )}
                     </td>
 
                     {/* App Category */}
@@ -481,7 +489,7 @@ Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones).
                           <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
                         </SelectTrigger>
                         <SelectContent>
-                          {["Habillement et accessoires","Électronique","Maison","Famille","Santé et beauté","Épicerie","Loisirs","Jardin et extérieur","Mariage","Restauration","Pharmacie et santé"].map(c => (
+                          {APP_CATEGORIES.map(c => (
                             <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
                           ))}
                         </SelectContent>
