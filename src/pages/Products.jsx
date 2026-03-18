@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Tag, Store, ShoppingBag } from 'lucide-react';
@@ -8,6 +8,9 @@ import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
 import { toast } from 'sonner';
+import SEO from '@/components/SEO';
+import { useActivityTracker } from '@/components/tracking/useActivityTracker';
+import { trackMetaEvent } from '@/components/utils/metaTracking';
 
 const CATEGORIES = [
   'Fastfood', 'Restaurants', 'Boutique Fleurs', 'Pharmacie', 'Mariage',
