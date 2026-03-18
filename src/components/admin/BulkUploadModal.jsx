@@ -7,34 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Save, X, ImagePlus, Loader2, Sparkles, Upload, FolderOpen } from 'lucide-react';
-
-const FB_CATEGORIES = [
-  { value: "Apparel & Accessories > Women's Clothing", label: "Vêtements Femme", appCat: "Habillement et accessoires" },
-  { value: "Apparel & Accessories > Men's Clothing", label: "Vêtements Homme", appCat: "Habillement et accessoires" },
-  { value: "Apparel & Accessories > Shoes", label: "Chaussures", appCat: "Habillement et accessoires" },
-  { value: "Apparel & Accessories > Jewelry", label: "Bijoux & Accessoires", appCat: "Habillement et accessoires" },
-  { value: "Apparel & Accessories > Handbags", label: "Sacs & Bagages", appCat: "Habillement et accessoires" },
-  { value: "Apparel & Accessories > Wedding", label: "Mariage & Robes", appCat: "Mariage" },
-  { value: "Electronics > Mobile Phones", label: "Téléphones portables", appCat: "Électronique" },
-  { value: "Electronics > Computers", label: "Ordinateurs", appCat: "Électronique" },
-  { value: "Electronics > Audio", label: "Audio", appCat: "Électronique" },
-  { value: "Electronics > Cameras", label: "Caméras", appCat: "Électronique" },
-  { value: "Health & Beauty > Skin Care", label: "Soins de la peau", appCat: "Santé et beauté" },
-  { value: "Health & Beauty > Makeup", label: "Maquillage", appCat: "Santé et beauté" },
-  { value: "Health & Beauty > Hair Care", label: "Soins capillaires", appCat: "Santé et beauté" },
-  { value: "Health & Beauty > Fragrances", label: "Parfums", appCat: "Santé et beauté" },
-  { value: "Home & Garden > Furniture", label: "Mobilier", appCat: "Maison" },
-  { value: "Home & Garden > Decor", label: "Décoration intérieure", appCat: "Maison" },
-  { value: "Home & Garden > Kitchen", label: "Articles ménagers", appCat: "Maison" },
-  { value: "Home & Garden > Plants", label: "Plantes & Fleurs", appCat: "Maison" },
-  { value: "Food & Beverages > Groceries", label: "Épicerie", appCat: "Épicerie" },
-  { value: "Food & Beverages > Beverages", label: "Boissons", appCat: "Épicerie" },
-  { value: "Toys & Games > Baby", label: "Articles bébé & enfants", appCat: "Famille" },
-  { value: "Sporting Goods", label: "Articles de sport", appCat: "Loisirs" },
-  { value: "Hardware > Tools", label: "Outils & Quincaillerie", appCat: "Maison" },
-  { value: "Food & Beverages > Restaurant", label: "Restauration", appCat: "Restauration" },
-  { value: "Health > Pharmacy", label: "Pharmacie", appCat: "Pharmacie et santé" },
-];
+import { FB_PARENT_CATEGORIES, FB_CATEGORY_ICONS, getAllLeafCategories, getSubcategories, getLeafCategories } from '@/lib/fbCategories';
 
 const generateSlug = (name) =>
   name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 60);

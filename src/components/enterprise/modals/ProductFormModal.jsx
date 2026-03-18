@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 
 import { base44 } from '@/api/base44Client';
+import { FB_CATEGORIES_TREE, FB_CATEGORY_ICONS, getSubcategories, getLeafCategories, getAllLeafCategories } from '@/lib/fbCategories';
 
 const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
   if (!open) return null;
