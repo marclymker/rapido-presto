@@ -258,7 +258,13 @@ export default function Products() {
         {/* Action Buttons */}
         <div className="px-4 pb-3 flex gap-2">
           <button
-            onClick={() => navigate('/Dashboard')}
+            onClick={() => {
+              if (user) {
+                navigate('/Dashboard');
+              } else {
+                base44.auth.redirectToLogin('/Dashboard');
+              }
+            }}
             className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white py-2 px-4 rounded-full text-sm font-semibold hover:bg-orange-600 transition"
           >
             <Store className="w-4 h-4" />
