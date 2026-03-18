@@ -331,9 +331,11 @@ RÈGLES STRICTES :
 
 1. DESCRIPTION : Rédige une description de 3-4 lignes MAX avec des emojis, adaptée au TYPE de produit détecté (pas forcément mariage). Axée sur le bénéfice client, l'urgence et un Call-to-Action direct. Intègre naturellement les villes de Delmas, Cap-Haïtien ou Gonaïves pour le référencement local. Ton chaleureux et professionnel. EN FRANÇAIS uniquement.
 
-2. CATÉGORIE : La catégorie exacte parmi: "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté", "Épicerie", "Loisirs", "Jardin et extérieur", "Fournitures de bureau", "Véhicules", "Mariage", "Restauration", "Pharmacie et santé"
+2. CATÉGORIE : La catégorie parente exacte parmi: ${Object.keys(FB_CATEGORIES_TREE).join(', ')}
 
-3. SOUS-CATÉGORIE : La plus précise selon la catégorie détectée.
+3. SOUS-CATÉGORIE (niveau 2) : La sous-catégorie exacte correspondant à la catégorie choisie.
+
+3b. LEAF_CATEGORY (niveau 3, le plus précis) : La spécialité la plus précise parmi toutes ces options: ${getAllLeafCategories().slice(0, 80).join(', ')}
 
 4. SEO_TAGS : Génère 10 à 15 mots-clés ultra-pertinents pour ce produit spécifique. Mélange: synonymes du produit, termes de son écosystème, mots en français + anglais (diaspora) + créole haïtien, fautes d'orthographe courantes, noms de villes haïtiennes (Delmas, Port-au-Prince, Cap-Haïtien, Gonaïves, Pétion-Ville). Maximum de diversité pour dominer le SEO local.
 
@@ -347,6 +349,7 @@ Réponds en JSON strict.`,
             description: { type: "string" },
             category: { type: "string" },
             subcategory: { type: "string" },
+            leaf_category: { type: "string" },
             seo_tags: { type: "array", items: { type: "string" } },
             image_alt: { type: "string" }
           },
