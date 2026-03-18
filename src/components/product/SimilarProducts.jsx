@@ -6,7 +6,7 @@ import { ShoppingCart } from 'lucide-react';
  * Algorithme de Similitude Hybride (Nom + Tags + Catégorie)
  * Compare les mots du titre et les seo_tags pour calculer un score de pertinence
  */
-const SimilarProducts = ({ currentProduct, allProducts, onProductClick }) => {
+const SimilarProducts = ({ currentProduct, allProducts, onProductClick, onAddToCart }) => {
 
   const recommendations = useMemo(() => {
     if (!currentProduct || !allProducts?.length) return [];
