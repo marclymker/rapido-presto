@@ -198,7 +198,7 @@ export default function Products() {
               type="text"
               placeholder="Rechercher un produit..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="bg-transparent outline-none w-full text-sm text-slate-700 placeholder:text-slate-400"
             />
           </div>
