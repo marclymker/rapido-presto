@@ -41,6 +41,8 @@ Deno.serve(async (req) => {
         if (Object.keys(updates).length > 0) {
           await base44.asServiceRole.entities.Product.update(product.id, updates);
           compressed++;
+          // Pause 300ms pour éviter le rate limit
+          await new Promise(r => setTimeout(r, 300));
         }
       } catch (error) {
         failed++;
