@@ -75,9 +75,9 @@ Deno.serve(async (req) => {
 
   console.log(`Total produits trouvés: ${allProducts.length}`);
 
-  // Traitement par batches de 20 pour éviter les timeouts
-  const updatePromises = [];
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+  // Traitement séquentiel avec délai pour éviter le rate limit
   for (const product of allProducts) {
     const cat = product.category;
     const subcat = product.subcategory;
@@ -102,25 +102,27 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    updatePromises.push(
-      base44.asServiceRole.entities.Product.update(product.id, {
-        fb_category_id: mapping.id,
-        fb_category_path: mapping.path,
-      }).then(() => { updated++; }).catch((err) => {
-        console.error(`Erreur produit ${product.id}:`, err.message);
-        errors++;
-      })
-    );
-
-    // Exécuter par batch de 20
-    if (updatePromises.length >= 20) {
-      await Promise.all(updatePromises.splice(0, 20));
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        await base44.asServiceRole.entities.Product.update(product.id, {
+          fb_category_id: mapping.id,
+          fb_category_path: mapping.path,
+        });
+        updated++;
+        break;
+      } catch (err) {
+        retries--;
+        if (retries === 0) {
+          console.error(`Erreur produit ${product.id}:`, err.message);
+          errors++;
+        } else {
+          await sleep(500); // attendre 500ms avant de réessayer
+        }
+      }
     }
-  }
 
-  // Vider le reste
-  if (updatePromises.length > 0) {
-    await Promise.all(updatePromises);
+    await sleep(100); // 100ms entre chaque update pour éviter le rate limit
   }
 
   const result = {
