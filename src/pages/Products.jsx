@@ -131,11 +131,34 @@ export default function Products() {
     addToCartMutation.mutate({ product, quantity });
   };
 
+  // IDs de la branche FB sélectionnée (pour inclure tous les enfants)
+  const selectedFbBranchIds = useMemo(() => {
+    if (!selectedFbCatId) return null;
+    const ids = new Set();
+    function collect(nodes) {
+      for (const n of nodes) {
+        ids.add(n.id);
+        if (n.children?.length) collect(n.children);
+      }
+    }
+    function findAndCollect(nodes, targetId) {
+      for (const n of nodes) {
+        if (n.id === targetId) { collect([n]); return true; }
+        if (n.children?.length && findAndCollect(n.children, targetId)) return true;
+      }
+      return false;
+    }
+    findAndCollect(FB_TAXONOMY, selectedFbCatId);
+    return ids;
+  }, [selectedFbCatId]);
+
   // Algorithme de personnalisation basé sur le dernier produit visualisé
   const filteredProducts = React.useMemo(() => {
     const base = allProducts.filter(p => {
       const matchCategory = !selectedCategory || p.category === selectedCategory;
       if (!matchCategory) return false;
+      // Filtre taxonomie FB (inclut tous les sous-niveaux)
+      if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
 
       // Recherche hybride multi-mots : titre + nom + description + tags SEO
       if (searchQuery.trim()) {
