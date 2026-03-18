@@ -397,6 +397,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               currentProduct={product}
               allProducts={allProducts}
               onProductClick={handleSimilarProductClick}
+              onAddToCart={onAddToCart}
             />
           </div>
         </div>
