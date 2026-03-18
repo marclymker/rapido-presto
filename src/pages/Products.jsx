@@ -70,11 +70,23 @@ export default function Products() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { trackProductView, trackCategoryView, trackSearch } = useActivityTracker();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategories, setShowCategories] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
+
+  // Track PageView Meta Pixel
+  useEffect(() => {
+    trackMetaEvent('PageView');
+    if (window.gtag) {
+      window.gtag('event', 'page_view', {
+        page_title: 'Marketplace - Rapido Presto',
+        page_location: window.location.href,
+      });
+    }
+  }, []);
 
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
