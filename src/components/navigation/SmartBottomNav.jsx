@@ -34,6 +34,12 @@ export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 })
       page: 'Home'
     },
     { 
+      id: 'products', 
+      label: 'Produits', 
+      icon: Grid, 
+      page: 'Products'
+    },
+    { 
       id: 'cart', 
       label: 'Panier', 
       icon: ShoppingBag, 
