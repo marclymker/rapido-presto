@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Tag, Store, ShoppingBag, ShoppingCart, X, Clock, ChevronRight } from 'lucide-react';
+
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
@@ -19,12 +20,6 @@ import PullToRefresh from '@/components/mobile/PullToRefresh';
 import { Button } from "@/components/ui/button";
 
 const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
-
-const CATEGORIES = [
-  'Fastfood', 'Restaurants', 'Boutique Fleurs', 'Pharmacie', 'Mariage',
-  'Epicerie', 'Café', 'Pour Femme', 'Electronics', 'Pour homme', 'Maison',
-  'Bébé', 'Outils', 'Bijoux', 'Matériels Décor'
-];
 
 const ProductCard = ({ product, shop, onClick }) => {
   const price = applyClientMargin(product.promo_price || product.price);
