@@ -83,6 +83,36 @@ export default function Products() {
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
   });
 
+  const addToCartMutation = useMutation({
+    mutationFn: async ({ product, quantity }) => {
+      if (!user) {
+        base44.auth.redirectToLogin(window.location.pathname);
+        return;
+      }
+      const price = applyClientMargin(product.promo_price || product.price);
+      const shop = shops.find(s => s.id === product.shop_id);
+      await base44.entities.CartItem.create({
+        user_id: user.id,
+        product_id: product.id,
+        product_name: product.name,
+        product_image: product.image_url,
+        quantity,
+        unit_price: price,
+        shop_id: product.shop_id,
+        shop_name: shop?.company_name || '',
+        shop_region: shop?.region || '',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart', user?.id] });
+      toast.success('Ajouté au panier !');
+    },
+  });
+
+  const handleAddToCart = (product, quantity = 1) => {
+    addToCartMutation.mutate({ product, quantity });
+  };
+
   const filteredProducts = allProducts.filter(p => {
     const matchSearch = p.name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchCategory = !selectedCategory || p.category === selectedCategory;
