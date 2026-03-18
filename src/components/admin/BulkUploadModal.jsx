@@ -175,13 +175,13 @@ Réponds en JSON strict.`,
           type: "object",
           properties: {
             description: { type: "string" },
-            fb_category: { type: "string" },
             category: { type: "string" },
+            leaf_category: { type: "string" },
             seo_tags: { type: "array", items: { type: "string" } },
             brand: { type: "string" },
             image_alt: { type: "string" }
           },
-          required: ["description", "fb_category", "category", "seo_tags", "image_alt"]
+          required: ["description", "category", "seo_tags", "image_alt"]
         }
       });
 
