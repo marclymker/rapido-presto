@@ -335,13 +335,13 @@ RÈGLES :
 
 1. DESCRIPTION : 3-4 lignes MAX avec emojis, axée bénéfice client + urgence + CTA. Intègre Delmas, Cap-Haïtien ou Gonaïves. EN FRANÇAIS.
 
-2. FB_CATEGORY_ID : Attribue l'ID de catégorie Facebook/Google Taxonomy le plus précis parmi cette liste :
+2. FB_CATEGORY_ID : Attribue l'ID de catégorie Facebook/Google Taxonomy le plus précis parmi cette liste officielle :
 ${taxonomyList}
-Retourne UNIQUEMENT l'ID numérique (ex: 225 pour Smartphones, 211 pour Bagues, etc.)
+Retourne UNIQUEMENT l'ID numérique (ex: 225 pour Smartphones, 211 pour Bagues, 166 pour vêtements génériques, etc.)
 
-5. SEO_TAGS : 10-15 mots-clés en français + anglais + créole + villes haïtiennes.
+3. SEO_TAGS : 10-15 mots-clés en français + anglais + créole + villes haïtiennes.
 
-6. IMAGE_ALT : 15-20 mots décrivant l'image pour SEO.
+4. IMAGE_ALT : 15-20 mots décrivant l'image pour SEO.
 
 Réponds en JSON strict.`,
         file_urls: [formData.image_url],
@@ -349,21 +349,17 @@ Réponds en JSON strict.`,
           type: "object",
           properties: {
             description: { type: "string" },
-            category: { type: "string" },
-            subcategory: { type: "string" },
             fb_category_id: { type: "number" },
             seo_tags: { type: "array", items: { type: "string" } },
             image_alt: { type: "string" }
           },
-          required: ["description", "category", "seo_tags", "image_alt"]
+          required: ["description", "fb_category_id", "seo_tags", "image_alt"]
         }
       });
 
       setFormData({
         ...formData,
         description: result.description || formData.description,
-        category: result.category || formData.category,
-        subcategory: result.category === 'Mariage' ? (result.subcategory || formData.subcategory) : formData.subcategory,
         seo_tags: result.seo_tags || formData.seo_tags,
         image_alt: result.image_alt || formData.image_alt,
         fb_category_id: result.fb_category_id || formData.fb_category_id,
