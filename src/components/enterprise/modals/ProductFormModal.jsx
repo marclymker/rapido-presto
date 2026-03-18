@@ -335,11 +335,7 @@ RÈGLES :
 
 1. DESCRIPTION : 3-4 lignes MAX avec emojis, axée bénéfice client + urgence + CTA. Intègre Delmas, Cap-Haïtien ou Gonaïves. EN FRANÇAIS.
 
-2. CATEGORY : Catégorie parmi: "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté", "Épicerie", "Loisirs", "Mariage", "Restauration", "Pharmacie et santé"
-
-3. SUBCATEGORY : La plus précise selon la catégorie.
-
-4. FB_CATEGORY_ID : Attribue l'ID de catégorie Facebook/Google Taxonomy le plus précis parmi cette liste :
+2. FB_CATEGORY_ID : Attribue l'ID de catégorie Facebook/Google Taxonomy le plus précis parmi cette liste :
 ${taxonomyList}
 Retourne UNIQUEMENT l'ID numérique (ex: 225 pour Smartphones, 211 pour Bagues, etc.)
 
@@ -393,92 +389,6 @@ Réponds en JSON strict.`,
   const removeTag = (tag) => {
     setFormData({ ...formData, seo_tags: formData.seo_tags.filter(t => t !== tag) });
   };
-
-  // --- CATEGORIES FACEBOOK MARKETPLACE OFFICIELLES ---
-  const FB_CATEGORIES = {
-    'Habillement et accessoires': [
-      'Vêtements pour femmes', 'Vêtements pour hommes', 'Chaussures',
-      'Sacs et bagages', 'Bijoux et accessoires', 'Robes', 'Costumes', 'Vêtements bébé'
-    ],
-    'Électronique': [
-      'Téléphones portables', 'Ordinateurs', 'Électronique grand public',
-      'Audio', 'Caméras', 'Accessoires informatiques'
-    ],
-    'Maison': [
-      'Meubles', 'Décoration intérieure', 'Articles ménagers',
-      'Jardin', 'Outils', 'Décoration de fête', 'Fleurs et plantes artificielles'
-    ],
-    'Famille': [
-      'Articles pour bébés et enfants', 'Jouets et jeux', 'Puériculture', 'Poussettes'
-    ],
-    'Santé et beauté': [
-      'Soins de la peau', 'Maquillage', 'Soins capillaires',
-      'Bain et corps', 'Parfums', 'Perruques et extensions'
-    ],
-    'Épicerie': [
-      'Boissons', 'Nourriture', 'Produits frais', 'Café', 'Paniers-cadeaux', 'Chocolats'
-    ],
-    'Loisirs': [
-      'Articles de sport', 'Instruments de musique', 'Livres', 'Artisanat', 'Films et musique'
-    ],
-    'Jardin et extérieur': [
-      'Meubles de jardin', 'Barbecue', 'Plantes', 'Fleurs naturelles'
-    ],
-    'Fournitures de bureau': [
-      'Équipement de bureau', 'Papeterie', 'Fournitures scolaires'
-    ],
-    'Véhicules': [
-      'Voitures et camions', 'Motos', 'Pièces de véhicules', 'Accessoires auto'
-    ],
-    'Mariage': [
-      'Robe Sirène', 'Robe Catalina', 'Robe Ponpon (Princesse)', 'Robe de Cérémonie',
-      'Demoiselle d\'honneur', 'Témoins', 'Bague de Mariage', 'Bague',
-      'Accessoires', 'Carte et programmation', 'Matériels Décor'
-    ],
-    'Restauration': [
-      'Fastfood', 'Restaurant', 'Café', 'Épicerie fine', 'Traiteur'
-    ],
-    'Pharmacie et santé': [
-      'Médicaments sans ordonnance', 'Compléments alimentaires', 'Matériel médical'
-    ],
-  };
-
-  const FB_CATEGORY_ICONS = {
-    'Habillement et accessoires': '👗',
-    'Électronique': '📱',
-    'Maison': '🏠',
-    'Famille': '👶',
-    'Santé et beauté': '💄',
-    'Épicerie': '🛒',
-    'Loisirs': '🎸',
-    'Jardin et extérieur': '🌿',
-    'Fournitures de bureau': '📋',
-    'Véhicules': '🚗',
-    'Mariage': '💍',
-    'Restauration': '🍽️',
-    'Pharmacie et santé': '💊',
-  };
-
-  // Sous-catégories actives selon la catégorie choisie
-  const activeSubCategories = FB_CATEGORIES[formData.category] || [];
-
-  // --- CORRECTION ET AJOUT DES SOUS-CATEGORIES MARIAGE (legacy) ---
-  const weddingGeneralCategories = [
-    'Demoiselle d\'honneur',
-    'Témoins',
-    'Bague de Mariage',
-    'Bague',
-    'Accessoires',
-    'Carte et programmation',
-    'Matériels Décor'
-  ];
-
-  const weddingDressCategories = [
-    'Robe Sirène',
-    'Robe Catalina',
-    'Robe Ponpon (Princesse)',
-    'Robe de Cérémonie'
-  ];
 
   return (
     <>
