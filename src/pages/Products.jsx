@@ -297,7 +297,7 @@ export default function Products() {
 
         {/* Categories dropdown */}
         {showCategories && (
-          <div className="px-4 pb-3">
+          <div className="px-4 pb-3 max-h-52 overflow-y-auto">
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleCategorySelect(null)}
@@ -307,7 +307,7 @@ export default function Products() {
               >
                 Tous
               </button>
-              {CATEGORIES.map(cat => (
+              {FB_PARENT_CATEGORIES.map(cat => (
                 <button
                   key={cat}
                   onClick={() => handleCategorySelect(cat)}
@@ -315,7 +315,7 @@ export default function Products() {
                     selectedCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
                   }`}
                 >
-                  {cat}
+                  {FB_CATEGORY_ICONS[cat]} {cat}
                 </button>
               ))}
             </div>
