@@ -174,9 +174,14 @@ export default function Products() {
         }}
       />
       <Helmet>
-        <title>Tous les produits - Rapido Presto</title>
-        <meta name="description" content="Découvrez tous les produits disponibles sur Rapido Presto - Livraison rapide en Haïti" />
+        <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
       </Helmet>
+      <SEO
+        title={selectedCategory ? `${selectedCategory} - Marketplace Rapido Presto` : 'Marketplace - Tous les produits | Rapido Presto'}
+        description={selectedCategory ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Livraison rapide avec Rapido Presto` : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
+        keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedCategory || 'produits'].filter(Boolean)}
+        url={typeof window !== 'undefined' ? window.location.href : undefined}
+      />
 
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-40">
