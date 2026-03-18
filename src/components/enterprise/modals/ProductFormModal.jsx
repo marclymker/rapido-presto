@@ -653,68 +653,20 @@ Réponds en JSON strict.`,
               </div>
           </div>
 
-          {/* Section 3: Catégorisation Facebook Hiérarchique */}
+          {/* Section 3: Catégorisation Facebook/Google Taxonomy */}
           <div className="bg-white p-4 rounded-xl shadow-sm border space-y-4">
               <div className="flex items-center gap-2 mb-2 pb-2 border-b">
                  <Layers className="w-4 h-4 text-slate-900" />
-                 <h3 className="font-semibold text-slate-900">Catégorie Facebook</h3>
-                 <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Hiérarchique</span>
+                 <h3 className="font-semibold text-slate-900">Catégorie Facebook/Google</h3>
+                 <span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">SEO Ads</span>
+                 {formData.fb_category_id && (
+                   <span className="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-2 rounded-full">ID: {formData.fb_category_id}</span>
+                 )}
               </div>
-
-              {/* Catégorie app (simple) */}
-              <div>
-                <Label className="mb-1.5 text-xs text-slate-500 uppercase tracking-wide">Catégorie boutique</Label>
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: '' })}
-                >
-                  <SelectTrigger className="h-10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(FB_CATEGORIES).map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {FB_CATEGORY_ICONS[cat]} {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Sous-catégorie mariage */}
-              {activeSubCategories.length > 0 && (
-                <div className="animate-in fade-in">
-                  <Label className="mb-1.5 text-xs text-slate-500 uppercase tracking-wide">Sous-catégorie boutique</Label>
-                  <Select 
-                    value={formData.subcategory} 
-                    onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
-                  >
-                    <SelectTrigger className="h-10 border-blue-200 bg-blue-50/30">
-                      <SelectValue placeholder="Sélectionner..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {activeSubCategories.map((sub) => (
-                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Sélecteur hiérarchique Facebook/Google Taxonomy */}
-              <div className="border-t pt-4">
-                <Label className="mb-2 text-xs text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-                  <span>Taxonomie Facebook/Google</span>
-                  <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-medium">SEO Ads</span>
-                  {formData.fb_category_id && (
-                    <span className="ml-auto text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-2 rounded-full">ID: {formData.fb_category_id}</span>
-                  )}
-                </Label>
-                <FbCategorySelector
-                  value={formData.fb_category_id}
-                  onChange={(id) => setFormData({ ...formData, fb_category_id: id })}
-                />
-              </div>
+              <FbCategorySelector
+                value={formData.fb_category_id}
+                onChange={(id) => setFormData({ ...formData, fb_category_id: id })}
+              />
           </div>
 
           {/* Section 4: Logistique */}

@@ -9,11 +9,6 @@ import { toast } from "sonner";
 import { Plus, Save, X, ImagePlus, Loader2, Sparkles, Upload, FolderOpen } from 'lucide-react';
 import { getTaxonomyMappingPrompt, getCategoryPath, FLAT_TAXONOMY } from '@/lib/fbTaxonomy';
 
-// Catégories app (niveau simple)
-const APP_CATEGORIES = [
-  "Habillement et accessoires","Électronique","Maison","Famille",
-  "Santé et beauté","Épicerie","Loisirs","Mariage","Restauration","Pharmacie et santé"
-];
 
 const generateSlug = (name) =>
   name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 60);
