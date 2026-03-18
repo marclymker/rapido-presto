@@ -184,9 +184,26 @@ export default function Home() {
   // Algorithme de personnalisation basé sur le dernier produit visualisé
   const filteredProducts = useMemo(() => {
     const base = allProducts.filter(p => {
-      const matchSearch = p.name?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchCategory = !selectedCategory || p.category === selectedCategory;
-      return matchSearch && matchCategory;
+      if (!matchCategory) return false;
+
+      // Recherche hybride multi-mots : titre + description + nom boutique + tags SEO
+      if (searchQuery.trim()) {
+        const keywords = searchQuery.toLowerCase().trim().split(/\s+/).filter(w => w.length > 1);
+        const title = (p.name || '').toLowerCase();
+        const desc = (p.description || '').toLowerCase();
+        const shopName = (p.shop_name || '').toLowerCase();
+        const tags = (p.seo_tags || []).map(t => t.toLowerCase());
+
+        return keywords.every(keyword =>
+          title.includes(keyword) ||
+          desc.includes(keyword) ||
+          shopName.includes(keyword) ||
+          tags.some(tag => tag.includes(keyword))
+        );
+      }
+
+      return true;
     });
 
     // Si recherche ou catégorie active, pas de personnalisation
