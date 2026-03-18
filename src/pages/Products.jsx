@@ -180,7 +180,7 @@ export default function Products() {
     });
 
     // Si recherche ou catégorie active, pas de personnalisation
-    if (searchQuery || selectedCategory) return base;
+    if (searchQuery || selectedCategory || selectedFbCatId) return base;
 
     // Récupérer le dernier produit visualisé
     let lastViewed = null;
