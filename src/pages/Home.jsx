@@ -207,8 +207,6 @@ export default function Home() {
 
   const filteredProducts = useMemo(() => {
     const base = allProducts.filter(p => {
-      const matchCategory = !selectedCategory || p.category === selectedCategory;
-      if (!matchCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
 
       // Recherche hybride multi-mots : titre + description + nom boutique + tags SEO
@@ -231,7 +229,7 @@ export default function Home() {
     });
 
     // Si recherche ou catégorie active, pas de personnalisation
-    if (searchQuery || selectedCategory || selectedFbCatId) return base;
+    if (searchQuery || selectedFbCatId) return base;
 
     // Récupérer le dernier produit visualisé
     let lastViewed = null;
@@ -289,12 +287,6 @@ export default function Home() {
     try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
     setSelectedProduct(product);
     setSelectedShop(shop || null);
-  };
-
-  const handleCategorySelect = (cat) => {
-    setSelectedCategory(cat);
-    setShowCategories(false);
-    if (cat) trackCategoryView(cat);
   };
 
   const handleSearchChange = (value) => {
@@ -444,7 +436,7 @@ export default function Home() {
         <main className="flex-1 p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-800">
-              {selectedFbCatId ? findById(selectedFbCatId)?.name : selectedCategory ? selectedCategory : 'Sélection du jour'}
+              {selectedFbCatId ? findById(selectedFbCatId)?.name : 'Sélection du jour'}
             </h2>
             <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
           </div>
