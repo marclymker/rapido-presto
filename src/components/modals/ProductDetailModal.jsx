@@ -393,35 +393,11 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               </div>
             )}
 
-            {similarItems.length > 0 && (
-              <div className="py-4 border-t border-slate-50">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Articles similaires ({similarItems.length})</h4>
-                  {loadingSimilar && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {similarItems.map((similarProduct) => {
-                    const similarPrice = applyClientMargin(similarProduct.promo_price || similarProduct.price);
-                    return (
-                      <button
-                        key={similarProduct.id}
-                        onClick={() => handleSimilarProductClick(similarProduct)}
-                        className="group text-left bg-slate-50 hover:bg-slate-100 rounded-xl p-3 transition-all duration-200 active:scale-[0.98]"
-                      >
-                        <div className="aspect-square w-full bg-white rounded-lg overflow-hidden mb-2">
-                          <img src={similarProduct.image_url} alt={similarProduct.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
-                        </div>
-                        <h5 className="text-xs font-bold text-slate-800 truncate mb-1">{similarProduct.name}</h5>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-black text-orange-500">{similarPrice.toLocaleString()} HTG</span>
-                          <ChevronRight size={14} className="text-slate-400" />
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <SimilarProducts
+              currentProduct={product}
+              allProducts={allProducts}
+              onProductClick={handleSimilarProductClick}
+            />
           </div>
         </div>
 
