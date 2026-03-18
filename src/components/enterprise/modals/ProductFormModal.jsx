@@ -325,22 +325,27 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
 
     setAiLoading(true);
     try {
+      const taxonomyList = getTaxonomyMappingPrompt();
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Tu es un Expert SEO Senior et Copywriter E-commerce spécialisé dans le marché haïtien. Tu travailles pour une marketplace multi-boutiques en Haïti (RapidoPresto) qui vend tout type de produits : mode, électronique, alimentation, mariage, fleurs, pharmacie, décoration, etc.
+        prompt: `Tu es un Expert SEO Senior et Copywriter E-commerce spécialisé dans le marché haïtien. Tu travailles pour la marketplace RapidoPresto en Haïti.
 
-À partir du nom du produit "${formData.name}" et de l'image fournie, génère une annonce optimisée pour la conversion (Facebook Marketplace/WhatsApp) ET pour le SEO local haïtien.
+À partir du nom du produit "${formData.name}" et de l'image fournie, génère une annonce complète.
 
-RÈGLES STRICTES :
+RÈGLES :
 
-1. DESCRIPTION : Rédige une description de 3-4 lignes MAX avec des emojis, adaptée au TYPE de produit détecté (pas forcément mariage). Axée sur le bénéfice client, l'urgence et un Call-to-Action direct. Intègre naturellement les villes de Delmas, Cap-Haïtien ou Gonaïves pour le référencement local. Ton chaleureux et professionnel. EN FRANÇAIS uniquement.
+1. DESCRIPTION : 3-4 lignes MAX avec emojis, axée bénéfice client + urgence + CTA. Intègre Delmas, Cap-Haïtien ou Gonaïves. EN FRANÇAIS.
 
-2. CATÉGORIE : La catégorie exacte parmi: "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté", "Épicerie", "Loisirs", "Jardin et extérieur", "Fournitures de bureau", "Véhicules", "Mariage", "Restauration", "Pharmacie et santé"
+2. CATEGORY : Catégorie parmi: "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté", "Épicerie", "Loisirs", "Mariage", "Restauration", "Pharmacie et santé"
 
-3. SOUS-CATÉGORIE : La plus précise selon la catégorie détectée.
+3. SUBCATEGORY : La plus précise selon la catégorie.
 
-4. SEO_TAGS : Génère 10 à 15 mots-clés ultra-pertinents pour ce produit spécifique. Mélange: synonymes du produit, termes de son écosystème, mots en français + anglais (diaspora) + créole haïtien, fautes d'orthographe courantes, noms de villes haïtiennes (Delmas, Port-au-Prince, Cap-Haïtien, Gonaïves, Pétion-Ville). Maximum de diversité pour dominer le SEO local.
+4. FB_CATEGORY_ID : Attribue l'ID de catégorie Facebook/Google Taxonomy le plus précis parmi cette liste :
+${taxonomyList}
+Retourne UNIQUEMENT l'ID numérique (ex: 225 pour Smartphones, 211 pour Bagues, etc.)
 
-5. IMAGE_ALT : Texte ALT de 15-20 mots décrivant précisément l'image pour Google Images et l'accessibilité, en français.
+5. SEO_TAGS : 10-15 mots-clés en français + anglais + créole + villes haïtiennes.
+
+6. IMAGE_ALT : 15-20 mots décrivant l'image pour SEO.
 
 Réponds en JSON strict.`,
         file_urls: [formData.image_url],
@@ -350,6 +355,7 @@ Réponds en JSON strict.`,
             description: { type: "string" },
             category: { type: "string" },
             subcategory: { type: "string" },
+            fb_category_id: { type: "number" },
             seo_tags: { type: "array", items: { type: "string" } },
             image_alt: { type: "string" }
           },
@@ -363,7 +369,8 @@ Réponds en JSON strict.`,
         category: result.category || formData.category,
         subcategory: result.category === 'Mariage' ? (result.subcategory || formData.subcategory) : formData.subcategory,
         seo_tags: result.seo_tags || formData.seo_tags,
-        image_alt: result.image_alt || formData.image_alt
+        image_alt: result.image_alt || formData.image_alt,
+        fb_category_id: result.fb_category_id || formData.fb_category_id,
       });
       
       setAiGenerated(true);
