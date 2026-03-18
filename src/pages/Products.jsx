@@ -231,7 +231,7 @@ export default function Products() {
           <div className="px-4 pb-3">
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => { setSelectedCategory(null); setShowCategories(false); }}
+                onClick={() => handleCategorySelect(null)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                   !selectedCategory ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
                 }`}
