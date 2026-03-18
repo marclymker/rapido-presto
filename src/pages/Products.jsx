@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Tag, Store, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
+import ProductDetailModal from '@/components/modals/ProductDetailModal';
+import { toast } from 'sonner';
 
 const CATEGORIES = [
   'Fastfood', 'Restaurants', 'Boutique Fleurs', 'Pharmacie', 'Mariage',
