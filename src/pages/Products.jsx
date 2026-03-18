@@ -106,10 +106,7 @@ export default function Products() {
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <h1 className="text-xl font-bold text-slate-900">Marketplace</h1>
-          <div className="flex items-center gap-1 text-sm text-slate-500">
-            <MapPin className="w-4 h-4 text-orange-500" />
-            <span>Haïti</span>
-          </div>
+
         </div>
 
         {/* Search Bar */}
