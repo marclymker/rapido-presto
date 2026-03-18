@@ -428,7 +428,11 @@ export default function Products() {
       <main className="flex-1 p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-slate-800">
-            {selectedCategory ? selectedCategory : 'Sélection du jour'}
+            {selectedFbCatId
+              ? findById(selectedFbCatId)?.name
+              : selectedCategory
+              ? selectedCategory
+              : 'Sélection du jour'}
           </h2>
           <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
         </div>
