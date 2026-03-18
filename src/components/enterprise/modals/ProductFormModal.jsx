@@ -570,18 +570,19 @@ Réponds en JSON strict.`,
                  <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Marketplace</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 {/* Niveau 1 : Catégorie parente */}
                  <div>
                    <Label className="mb-1.5">Catégorie principale</Label>
                    <Select 
                      value={formData.category} 
-                     onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: '' })}
+                     onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: '', leaf_category: '' })}
                    >
                      <SelectTrigger className="h-11">
                        <SelectValue />
                      </SelectTrigger>
                      <SelectContent>
-                       {Object.keys(FB_CATEGORIES).map((cat) => (
+                       {Object.keys(FB_CATEGORIES_TREE).map((cat) => (
                          <SelectItem key={cat} value={cat}>
                            {FB_CATEGORY_ICONS[cat]} {cat}
                          </SelectItem>
@@ -590,19 +591,40 @@ Réponds en JSON strict.`,
                    </Select>
                  </div>
 
-                 {activeSubCategories.length > 0 && (
+                 {/* Niveau 2 : Sous-catégorie */}
+                 {activeSubcategories.length > 0 && (
                    <div className="animate-in fade-in slide-in-from-top-2">
                      <Label className="mb-1.5">Sous-catégorie</Label>
                      <Select 
                        value={formData.subcategory} 
-                       onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
+                       onValueChange={(v) => setFormData({ ...formData, subcategory: v, leaf_category: '' })}
                      >
                        <SelectTrigger className="h-11 border-blue-200 bg-blue-50/30">
                          <SelectValue placeholder="Sélectionner..." />
                        </SelectTrigger>
                        <SelectContent>
-                         {activeSubCategories.map((sub) => (
+                         {activeSubcategories.map((sub) => (
                            <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                         ))}
+                       </SelectContent>
+                     </Select>
+                   </div>
+                 )}
+
+                 {/* Niveau 3 : Sous-sous-catégorie */}
+                 {activeLeafCategories.length > 0 && (
+                   <div className="animate-in fade-in slide-in-from-top-2">
+                     <Label className="mb-1.5">Spécialité</Label>
+                     <Select 
+                       value={formData.leaf_category || ''} 
+                       onValueChange={(v) => setFormData({ ...formData, leaf_category: v })}
+                     >
+                       <SelectTrigger className="h-11 border-green-200 bg-green-50/30">
+                         <SelectValue placeholder="Sélectionner..." />
+                       </SelectTrigger>
+                       <SelectContent>
+                         {activeLeafCategories.map((leaf) => (
+                           <SelectItem key={leaf} value={leaf}>{leaf}</SelectItem>
                          ))}
                        </SelectContent>
                      </Select>
