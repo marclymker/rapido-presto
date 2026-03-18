@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Tag, Store, ShoppingBag, ShoppingCart, X, Clock } from 'lucide-react';
+import { Search, Tag, Store, ShoppingBag, ShoppingCart, X, Clock, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
