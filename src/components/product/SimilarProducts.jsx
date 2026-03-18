@@ -58,24 +58,35 @@ const SimilarProducts = ({ currentProduct, allProducts, onProductClick, onAddToC
         {recommendations.map((item) => {
           const price = applyClientMargin(item.promo_price || item.price);
           return (
-            <button
+            <div
               key={item.id}
-              onClick={() => onProductClick?.(item)}
-              className="flex flex-col bg-slate-50 hover:bg-slate-100 rounded-xl overflow-hidden border border-slate-100 text-left active:scale-[0.98] transition-all"
+              className="flex flex-col bg-slate-50 rounded-xl overflow-hidden border border-slate-100 text-left"
             >
-              <div className="aspect-square w-full bg-white overflow-hidden">
+              <button
+                onClick={() => onProductClick?.(item)}
+                className="aspect-square w-full bg-white overflow-hidden active:scale-[0.98] transition-all"
+              >
                 <img
                   src={item.image_url}
                   alt={item.name}
                   className="w-full h-full object-contain p-1"
                   loading="lazy"
                 />
+              </button>
+              <div className="p-2 flex flex-col gap-1.5">
+                <div onClick={() => onProductClick?.(item)} className="cursor-pointer">
+                  <p className="text-orange-500 font-black text-sm">{price.toLocaleString()} HTG</p>
+                  <p className="text-slate-700 text-xs line-clamp-2 mt-0.5">{item.name}</p>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onAddToCart?.(item, 1); }}
+                  className="w-full flex items-center justify-center gap-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-1.5 rounded-lg transition-colors active:scale-[0.97]"
+                >
+                  <ShoppingCart size={12} />
+                  <span>Ajouter</span>
+                </button>
               </div>
-              <div className="p-2">
-                <p className="text-orange-500 font-black text-sm">{price.toLocaleString()} HTG</p>
-                <p className="text-slate-700 text-xs line-clamp-2 mt-0.5">{item.name}</p>
-              </div>
-            </button>
+            </div>
           );
         })}
       </div>
