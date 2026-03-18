@@ -393,27 +393,59 @@ export default function Home() {
 
         {/* Categories dropdown */}
         {showCategories && (
-          <div className="px-4 pb-3">
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => handleCategorySelect(null)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                  !selectedCategory ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
-                }`}
-              >
+          <div className="px-4 pb-3 space-y-3">
+            <div className="flex flex-wrap gap-1.5">
+              <button onClick={() => handleCategorySelect(null)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${!selectedCategory ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'}`}>
                 Tous
               </button>
               {CATEGORIES.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => handleCategorySelect(cat)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                    selectedCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
-                  }`}
-                >
+                <button key={cat} onClick={() => handleCategorySelect(cat)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${selectedCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'}`}>
                   {cat}
                 </button>
               ))}
+            </div>
+
+            {/* Filtre hiérarchique Facebook Taxonomy */}
+            <div className="border-t pt-2">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Taxonomy Facebook/Google</p>
+              <div className="flex flex-wrap gap-1.5 mb-1.5">
+                {FB_TAXONOMY.map(cat => (
+                  <button key={cat.id} onClick={() => { setFbLevel1Id(fbLevel1Id === cat.id ? null : cat.id); if (selectedFbCatId) setSelectedFbCatId(null); }}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${fbLevel1Id === cat.id ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-slate-600 border-slate-200'}`}>
+                    {cat.icon} {cat.name}
+                  </button>
+                ))}
+              </div>
+              {fbLevel1Id && getChildren(fbLevel1Id).length > 0 && (
+                <div className="flex flex-wrap gap-1.5 ml-3 mb-1.5 items-center">
+                  <ChevronRight className="w-3 h-3 text-slate-400" />
+                  {getChildren(fbLevel1Id).map(child => (
+                    <button key={child.id} onClick={() => setSelectedFbCatId(selectedFbCatId === child.id ? null : child.id)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${selectedFbCatId === child.id ? 'bg-blue-500 text-white border-blue-500' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
+                      {child.name}{child.children?.length > 0 && ' ›'}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedFbCatId && getChildren(selectedFbCatId).length > 0 && (
+                <div className="flex flex-wrap gap-1.5 ml-6 items-center">
+                  <ChevronRight className="w-3 h-3 text-slate-400" />
+                  {getChildren(selectedFbCatId).map(child => (
+                    <button key={child.id} onClick={() => setSelectedFbCatId(child.id)}
+                      className="px-2.5 py-1 rounded-full text-[11px] font-medium border bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 transition">
+                      {child.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedFbCatId && (
+                <div className="mt-1.5">
+                  <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                    ID {selectedFbCatId} · {findById(selectedFbCatId)?.name}
+                    <button onClick={() => setSelectedFbCatId(null)}><X className="w-2.5 h-2.5" /></button>
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}
