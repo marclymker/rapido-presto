@@ -159,9 +159,9 @@ RÈGLES STRICTES :
 
 1. DESCRIPTION : Rédige une description de 3-4 lignes MAX avec des emojis, adaptée au TYPE de produit détecté (pas forcément mariage). Axée sur le bénéfice client, l'urgence et un Call-to-Action direct. Intègre naturellement les villes de Delmas, Cap-Haïtien ou Gonaïves pour le référencement local. Ton chaleureux et professionnel. EN FRANÇAIS uniquement.
 
-2. FB_CATEGORY : La catégorie Facebook la plus précise parmi: ${FB_CATEGORIES.map(c => c.value).join(', ')}
+2. CATEGORY (catégorie parente app) : Parmi: ${FB_PARENT_CATEGORIES.join(', ')}
 
-3. CATEGORY (app) : Parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
+3. LEAF_CATEGORY (catégorie la plus précise, niveau 3) : Parmi: ${getAllLeafCategories().slice(0, 80).join(', ')}
 
 4. SEO_TAGS : Génère 12 à 15 mots-clés ultra-pertinents pour ce produit spécifique. Mélange: synonymes du produit, termes de son écosystème, mots en français + anglais (diaspora) + créole haïtien, fautes d'orthographe courantes, noms de villes haïtiennes (Delmas, Port-au-Prince, Cap-Haïtien, Gonaïves, Pétion-Ville). Maximum de diversité pour dominer le SEO local.
 
