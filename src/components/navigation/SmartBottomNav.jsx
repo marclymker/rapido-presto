@@ -27,16 +27,11 @@ export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 })
   }, []);
 
   const navItems = [
-    { 
-      id: 'home', 
-      label: 'Accueil', 
-      icon: Home, 
-      page: 'Home'
-    },
+    // { id: 'home', label: 'Accueil', icon: Home, page: 'Home' }, // Caché - utiliser Products comme accueil
     { 
       id: 'products', 
-      label: 'Produits', 
-      icon: Grid, 
+      label: 'Accueil', 
+      icon: Home, 
       page: 'Products'
     },
     { 

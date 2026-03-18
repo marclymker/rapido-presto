@@ -43,8 +43,8 @@ const InnerRouter = () => {
     <PageTransitionWrapper>
       <Routes>
         <Route path="/" element={
-          <LayoutWrapper currentPageName={mainPageKey}>
-            <MainPage />
+          <LayoutWrapper currentPageName="Products">
+            <Pages["Products"] />
           </LayoutWrapper>
         } />
         {Object.entries(Pages).map(([path, Page]) => (
