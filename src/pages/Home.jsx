@@ -84,6 +84,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategories, setShowCategories] = useState(false);
+  const [selectedFbCatId, setSelectedFbCatId] = useState(null);
+  const [fbLevel1Id, setFbLevel1Id] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
   const [showCartReminder, setShowCartReminder] = useState(false);
