@@ -16,9 +16,14 @@ import { useGuestCart } from '@/components/cart/useGuestCart';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
 import { Button } from "@/components/ui/button";
-import { FB_PARENT_CATEGORIES, FB_CATEGORY_ICONS } from '@/lib/fbCategories';
 
 const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
+
+const CATEGORIES = [
+  'Fastfood', 'Restaurants', 'Boutique Fleurs', 'Pharmacie', 'Mariage',
+  'Epicerie', 'Café', 'Pour Femme', 'Electronics', 'Pour homme', 'Maison',
+  'Bébé', 'Outils', 'Bijoux', 'Matériels Décor'
+];
 
 const ProductCard = ({ product, shop, onClick }) => {
   const price = applyClientMargin(product.promo_price || product.price);
@@ -363,7 +368,7 @@ export default function Home() {
 
         {/* Categories dropdown */}
         {showCategories && (
-          <div className="px-4 pb-3 max-h-52 overflow-y-auto">
+          <div className="px-4 pb-3">
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleCategorySelect(null)}
@@ -373,7 +378,7 @@ export default function Home() {
               >
                 Tous
               </button>
-              {FB_PARENT_CATEGORIES.map(cat => (
+              {CATEGORIES.map(cat => (
                 <button
                   key={cat}
                   onClick={() => handleCategorySelect(cat)}
@@ -381,7 +386,7 @@ export default function Home() {
                     selectedCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
                   }`}
                 >
-                  {FB_CATEGORY_ICONS[cat]} {cat}
+                  {cat}
                 </button>
               ))}
             </div>

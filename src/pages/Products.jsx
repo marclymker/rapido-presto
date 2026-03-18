@@ -11,7 +11,12 @@ import { toast } from 'sonner';
 import SEO from '@/components/SEO';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
-import { FB_PARENT_CATEGORIES, FB_CATEGORY_ICONS } from '@/lib/fbCategories';
+
+const CATEGORIES = [
+  'Fastfood', 'Restaurants', 'Boutique Fleurs', 'Pharmacie', 'Mariage',
+  'Epicerie', 'Café', 'Pour Femme', 'Electronics', 'Pour homme', 'Maison',
+  'Bébé', 'Outils', 'Bijoux', 'Matériels Décor'
+];
 
 const ProductCard = ({ product, shop, onClick }) => {
   const price = applyClientMargin(product.promo_price || product.price);
@@ -297,7 +302,7 @@ export default function Products() {
 
         {/* Categories dropdown */}
         {showCategories && (
-          <div className="px-4 pb-3 max-h-52 overflow-y-auto">
+          <div className="px-4 pb-3">
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleCategorySelect(null)}
@@ -307,7 +312,7 @@ export default function Products() {
               >
                 Tous
               </button>
-              {FB_PARENT_CATEGORIES.map(cat => (
+              {CATEGORIES.map(cat => (
                 <button
                   key={cat}
                   onClick={() => handleCategorySelect(cat)}
@@ -315,7 +320,7 @@ export default function Products() {
                     selectedCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
                   }`}
                 >
-                  {FB_CATEGORY_ICONS[cat]} {cat}
+                  {cat}
                 </button>
               ))}
             </div>

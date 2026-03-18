@@ -36,7 +36,6 @@ import {
 } from 'lucide-react';
 
 import { base44 } from '@/api/base44Client';
-import { FB_CATEGORIES_TREE, FB_CATEGORY_ICONS, getSubcategories, getLeafCategories, getAllLeafCategories } from '@/lib/fbCategories';
 
 const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
   if (!open) return null;
@@ -331,11 +330,9 @@ RÈGLES STRICTES :
 
 1. DESCRIPTION : Rédige une description de 3-4 lignes MAX avec des emojis, adaptée au TYPE de produit détecté (pas forcément mariage). Axée sur le bénéfice client, l'urgence et un Call-to-Action direct. Intègre naturellement les villes de Delmas, Cap-Haïtien ou Gonaïves pour le référencement local. Ton chaleureux et professionnel. EN FRANÇAIS uniquement.
 
-2. CATÉGORIE : La catégorie parente exacte parmi: ${Object.keys(FB_CATEGORIES_TREE).join(', ')}
+2. CATÉGORIE : La catégorie exacte parmi: "Habillement et accessoires", "Électronique", "Maison", "Famille", "Santé et beauté", "Épicerie", "Loisirs", "Jardin et extérieur", "Fournitures de bureau", "Véhicules", "Mariage", "Restauration", "Pharmacie et santé"
 
-3. SOUS-CATÉGORIE (niveau 2) : La sous-catégorie exacte correspondant à la catégorie choisie.
-
-3b. LEAF_CATEGORY (niveau 3, le plus précis) : La spécialité la plus précise parmi toutes ces options: ${getAllLeafCategories().slice(0, 80).join(', ')}
+3. SOUS-CATÉGORIE : La plus précise selon la catégorie détectée.
 
 4. SEO_TAGS : Génère 10 à 15 mots-clés ultra-pertinents pour ce produit spécifique. Mélange: synonymes du produit, termes de son écosystème, mots en français + anglais (diaspora) + créole haïtien, fautes d'orthographe courantes, noms de villes haïtiennes (Delmas, Port-au-Prince, Cap-Haïtien, Gonaïves, Pétion-Ville). Maximum de diversité pour dominer le SEO local.
 
@@ -349,7 +346,6 @@ Réponds en JSON strict.`,
             description: { type: "string" },
             category: { type: "string" },
             subcategory: { type: "string" },
-            leaf_category: { type: "string" },
             seo_tags: { type: "array", items: { type: "string" } },
             image_alt: { type: "string" }
           },
@@ -361,8 +357,7 @@ Réponds en JSON strict.`,
         ...formData,
         description: result.description || formData.description,
         category: result.category || formData.category,
-        subcategory: result.subcategory || formData.subcategory,
-        leaf_category: result.leaf_category || formData.leaf_category,
+        subcategory: result.category === 'Mariage' ? (result.subcategory || formData.subcategory) : formData.subcategory,
         seo_tags: result.seo_tags || formData.seo_tags,
         image_alt: result.image_alt || formData.image_alt
       });
@@ -388,10 +383,91 @@ Réponds en JSON strict.`,
     setFormData({ ...formData, seo_tags: formData.seo_tags.filter(t => t !== tag) });
   };
 
-  // Sous-catégories niveau 2 selon catégorie parente
-  const activeSubcategories = getSubcategories(formData.category);
-  // Sous-sous-catégories niveau 3 selon sous-catégorie choisie
-  const activeLeafCategories = formData.subcategory ? getLeafCategories(formData.category, formData.subcategory) : [];
+  // --- CATEGORIES FACEBOOK MARKETPLACE OFFICIELLES ---
+  const FB_CATEGORIES = {
+    'Habillement et accessoires': [
+      'Vêtements pour femmes', 'Vêtements pour hommes', 'Chaussures',
+      'Sacs et bagages', 'Bijoux et accessoires', 'Robes', 'Costumes', 'Vêtements bébé'
+    ],
+    'Électronique': [
+      'Téléphones portables', 'Ordinateurs', 'Électronique grand public',
+      'Audio', 'Caméras', 'Accessoires informatiques'
+    ],
+    'Maison': [
+      'Meubles', 'Décoration intérieure', 'Articles ménagers',
+      'Jardin', 'Outils', 'Décoration de fête', 'Fleurs et plantes artificielles'
+    ],
+    'Famille': [
+      'Articles pour bébés et enfants', 'Jouets et jeux', 'Puériculture', 'Poussettes'
+    ],
+    'Santé et beauté': [
+      'Soins de la peau', 'Maquillage', 'Soins capillaires',
+      'Bain et corps', 'Parfums', 'Perruques et extensions'
+    ],
+    'Épicerie': [
+      'Boissons', 'Nourriture', 'Produits frais', 'Café', 'Paniers-cadeaux', 'Chocolats'
+    ],
+    'Loisirs': [
+      'Articles de sport', 'Instruments de musique', 'Livres', 'Artisanat', 'Films et musique'
+    ],
+    'Jardin et extérieur': [
+      'Meubles de jardin', 'Barbecue', 'Plantes', 'Fleurs naturelles'
+    ],
+    'Fournitures de bureau': [
+      'Équipement de bureau', 'Papeterie', 'Fournitures scolaires'
+    ],
+    'Véhicules': [
+      'Voitures et camions', 'Motos', 'Pièces de véhicules', 'Accessoires auto'
+    ],
+    'Mariage': [
+      'Robe Sirène', 'Robe Catalina', 'Robe Ponpon (Princesse)', 'Robe de Cérémonie',
+      'Demoiselle d\'honneur', 'Témoins', 'Bague de Mariage', 'Bague',
+      'Accessoires', 'Carte et programmation', 'Matériels Décor'
+    ],
+    'Restauration': [
+      'Fastfood', 'Restaurant', 'Café', 'Épicerie fine', 'Traiteur'
+    ],
+    'Pharmacie et santé': [
+      'Médicaments sans ordonnance', 'Compléments alimentaires', 'Matériel médical'
+    ],
+  };
+
+  const FB_CATEGORY_ICONS = {
+    'Habillement et accessoires': '👗',
+    'Électronique': '📱',
+    'Maison': '🏠',
+    'Famille': '👶',
+    'Santé et beauté': '💄',
+    'Épicerie': '🛒',
+    'Loisirs': '🎸',
+    'Jardin et extérieur': '🌿',
+    'Fournitures de bureau': '📋',
+    'Véhicules': '🚗',
+    'Mariage': '💍',
+    'Restauration': '🍽️',
+    'Pharmacie et santé': '💊',
+  };
+
+  // Sous-catégories actives selon la catégorie choisie
+  const activeSubCategories = FB_CATEGORIES[formData.category] || [];
+
+  // --- CORRECTION ET AJOUT DES SOUS-CATEGORIES MARIAGE (legacy) ---
+  const weddingGeneralCategories = [
+    'Demoiselle d\'honneur',
+    'Témoins',
+    'Bague de Mariage',
+    'Bague',
+    'Accessoires',
+    'Carte et programmation',
+    'Matériels Décor'
+  ];
+
+  const weddingDressCategories = [
+    'Robe Sirène',
+    'Robe Catalina',
+    'Robe Ponpon (Princesse)',
+    'Robe de Cérémonie'
+  ];
 
   return (
     <>
@@ -574,19 +650,18 @@ Réponds en JSON strict.`,
                  <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Marketplace</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 {/* Niveau 1 : Catégorie parente */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div>
                    <Label className="mb-1.5">Catégorie principale</Label>
                    <Select 
                      value={formData.category} 
-                     onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: '', leaf_category: '' })}
+                     onValueChange={(v) => setFormData({ ...formData, category: v, subcategory: '' })}
                    >
                      <SelectTrigger className="h-11">
                        <SelectValue />
                      </SelectTrigger>
                      <SelectContent>
-                       {Object.keys(FB_CATEGORIES_TREE).map((cat) => (
+                       {Object.keys(FB_CATEGORIES).map((cat) => (
                          <SelectItem key={cat} value={cat}>
                            {FB_CATEGORY_ICONS[cat]} {cat}
                          </SelectItem>
@@ -595,40 +670,19 @@ Réponds en JSON strict.`,
                    </Select>
                  </div>
 
-                 {/* Niveau 2 : Sous-catégorie */}
-                 {activeSubcategories.length > 0 && (
+                 {activeSubCategories.length > 0 && (
                    <div className="animate-in fade-in slide-in-from-top-2">
                      <Label className="mb-1.5">Sous-catégorie</Label>
                      <Select 
                        value={formData.subcategory} 
-                       onValueChange={(v) => setFormData({ ...formData, subcategory: v, leaf_category: '' })}
+                       onValueChange={(v) => setFormData({ ...formData, subcategory: v })}
                      >
                        <SelectTrigger className="h-11 border-blue-200 bg-blue-50/30">
                          <SelectValue placeholder="Sélectionner..." />
                        </SelectTrigger>
                        <SelectContent>
-                         {activeSubcategories.map((sub) => (
+                         {activeSubCategories.map((sub) => (
                            <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                         ))}
-                       </SelectContent>
-                     </Select>
-                   </div>
-                 )}
-
-                 {/* Niveau 3 : Sous-sous-catégorie */}
-                 {activeLeafCategories.length > 0 && (
-                   <div className="animate-in fade-in slide-in-from-top-2">
-                     <Label className="mb-1.5">Spécialité</Label>
-                     <Select 
-                       value={formData.leaf_category || ''} 
-                       onValueChange={(v) => setFormData({ ...formData, leaf_category: v })}
-                     >
-                       <SelectTrigger className="h-11 border-green-200 bg-green-50/30">
-                         <SelectValue placeholder="Sélectionner..." />
-                       </SelectTrigger>
-                       <SelectContent>
-                         {activeLeafCategories.map((leaf) => (
-                           <SelectItem key={leaf} value={leaf}>{leaf}</SelectItem>
                          ))}
                        </SelectContent>
                      </Select>

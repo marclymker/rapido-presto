@@ -7,7 +7,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Save, X, ImagePlus, Loader2, Sparkles, Upload, FolderOpen } from 'lucide-react';
-import { FB_PARENT_CATEGORIES, FB_CATEGORY_ICONS, getAllLeafCategories, getSubcategories, getLeafCategories } from '@/lib/fbCategories';
+
+const FB_CATEGORIES = [
+  { value: "Apparel & Accessories > Women's Clothing", label: "Vêtements Femme", appCat: "Habillement et accessoires" },
+  { value: "Apparel & Accessories > Men's Clothing", label: "Vêtements Homme", appCat: "Habillement et accessoires" },
+  { value: "Apparel & Accessories > Shoes", label: "Chaussures", appCat: "Habillement et accessoires" },
+  { value: "Apparel & Accessories > Jewelry", label: "Bijoux & Accessoires", appCat: "Habillement et accessoires" },
+  { value: "Apparel & Accessories > Handbags", label: "Sacs & Bagages", appCat: "Habillement et accessoires" },
+  { value: "Apparel & Accessories > Wedding", label: "Mariage & Robes", appCat: "Mariage" },
+  { value: "Electronics > Mobile Phones", label: "Téléphones portables", appCat: "Électronique" },
+  { value: "Electronics > Computers", label: "Ordinateurs", appCat: "Électronique" },
+  { value: "Electronics > Audio", label: "Audio", appCat: "Électronique" },
+  { value: "Electronics > Cameras", label: "Caméras", appCat: "Électronique" },
+  { value: "Health & Beauty > Skin Care", label: "Soins de la peau", appCat: "Santé et beauté" },
+  { value: "Health & Beauty > Makeup", label: "Maquillage", appCat: "Santé et beauté" },
+  { value: "Health & Beauty > Hair Care", label: "Soins capillaires", appCat: "Santé et beauté" },
+  { value: "Health & Beauty > Fragrances", label: "Parfums", appCat: "Santé et beauté" },
+  { value: "Home & Garden > Furniture", label: "Mobilier", appCat: "Maison" },
+  { value: "Home & Garden > Decor", label: "Décoration intérieure", appCat: "Maison" },
+  { value: "Home & Garden > Kitchen", label: "Articles ménagers", appCat: "Maison" },
+  { value: "Home & Garden > Plants", label: "Plantes & Fleurs", appCat: "Maison" },
+  { value: "Food & Beverages > Groceries", label: "Épicerie", appCat: "Épicerie" },
+  { value: "Food & Beverages > Beverages", label: "Boissons", appCat: "Épicerie" },
+  { value: "Toys & Games > Baby", label: "Articles bébé & enfants", appCat: "Famille" },
+  { value: "Sporting Goods", label: "Articles de sport", appCat: "Loisirs" },
+  { value: "Hardware > Tools", label: "Outils & Quincaillerie", appCat: "Maison" },
+  { value: "Food & Beverages > Restaurant", label: "Restauration", appCat: "Restauration" },
+  { value: "Health > Pharmacy", label: "Pharmacie", appCat: "Pharmacie et santé" },
+];
 
 const generateSlug = (name) =>
   name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 60);
@@ -20,8 +47,8 @@ const createEmptyRow = () => ({
   description: '',
   price: '',
   sale_price: '',
+  fb_category: '',
   category: '',
-  leaf_category: '',
   condition: 'new',
   availability: 'in stock',
   status: 'active',
@@ -159,9 +186,9 @@ RÈGLES STRICTES :
 
 1. DESCRIPTION : Rédige une description de 3-4 lignes MAX avec des emojis, adaptée au TYPE de produit détecté (pas forcément mariage). Axée sur le bénéfice client, l'urgence et un Call-to-Action direct. Intègre naturellement les villes de Delmas, Cap-Haïtien ou Gonaïves pour le référencement local. Ton chaleureux et professionnel. EN FRANÇAIS uniquement.
 
-2. CATEGORY (catégorie parente app) : Parmi: ${FB_PARENT_CATEGORIES.join(', ')}
+2. FB_CATEGORY : La catégorie Facebook la plus précise parmi: ${FB_CATEGORIES.map(c => c.value).join(', ')}
 
-3. LEAF_CATEGORY (catégorie la plus précise, niveau 3) : Parmi: ${getAllLeafCategories().slice(0, 80).join(', ')}
+3. CATEGORY (app) : Parmi: Habillement et accessoires, Électronique, Maison, Famille, Santé et beauté, Épicerie, Loisirs, Mariage, Restauration, Pharmacie et santé
 
 4. SEO_TAGS : Génère 12 à 15 mots-clés ultra-pertinents pour ce produit spécifique. Mélange: synonymes du produit, termes de son écosystème, mots en français + anglais (diaspora) + créole haïtien, fautes d'orthographe courantes, noms de villes haïtiennes (Delmas, Port-au-Prince, Cap-Haïtien, Gonaïves, Pétion-Ville). Maximum de diversité pour dominer le SEO local.
 
@@ -175,20 +202,20 @@ Réponds en JSON strict.`,
           type: "object",
           properties: {
             description: { type: "string" },
+            fb_category: { type: "string" },
             category: { type: "string" },
-            leaf_category: { type: "string" },
             seo_tags: { type: "array", items: { type: "string" } },
             brand: { type: "string" },
             image_alt: { type: "string" }
           },
-          required: ["description", "category", "seo_tags", "image_alt"]
+          required: ["description", "fb_category", "category", "seo_tags", "image_alt"]
         }
       });
 
       updateRow(rowId, {
         description: result.description || row.description,
+        fb_category: result.fb_category || row.fb_category,
         category: result.category || row.category,
-        leaf_category: result.leaf_category || row.leaf_category,
         seo_tags: result.seo_tags || row.seo_tags,
         brand: result.brand || row.brand,
         image_alt: result.image_alt || row.image_alt,
@@ -315,10 +342,10 @@ Réponds en JSON strict.`,
                   Prix promo <span className="text-slate-400 font-normal">· Optionnel</span>
                 </th>
                 <th className="w-44 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Catégorie <span className="text-slate-400 font-normal">· via IA</span>
+                  Catégorie Facebook <span className="text-slate-400 font-normal">· via IA</span>
                 </th>
-                <th className="w-44 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Spécialité <span className="text-slate-400 font-normal">· niveau 3</span>
+                <th className="w-36 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
+                  Catégorie app <span className="text-slate-400 font-normal">· via IA</span>
                 </th>
                 <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Condition</th>
                 <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Disponibilité</th>
@@ -458,35 +485,30 @@ Réponds en JSON strict.`,
                       />
                     </td>
 
-                    {/* Catégorie parente */}
+                    {/* FB Category */}
                     <td className={colClass}>
-                      <Select value={row.category} onValueChange={v => updateRow(row.id, { category: v, leaf_category: '' })}>
+                      <Select value={row.fb_category} onValueChange={v => updateRow(row.id, { fb_category: v })}>
                         <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
                           <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
                         </SelectTrigger>
                         <SelectContent>
-                          {FB_PARENT_CATEGORIES.map(c => (
-                            <SelectItem key={c} value={c} className="text-xs">{FB_CATEGORY_ICONS[c]} {c}</SelectItem>
+                          {FB_CATEGORIES.map(c => (
+                            <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </td>
 
-                    {/* Spécialité (niveau 3) */}
+                    {/* App Category */}
                     <td className={colClass}>
-                      <Select value={row.leaf_category || ''} onValueChange={v => updateRow(row.id, { leaf_category: v })}>
+                      <Select value={row.category} onValueChange={v => updateRow(row.id, { category: v })}>
                         <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
                           <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
                         </SelectTrigger>
-                        <SelectContent className="max-h-48">
-                          {row.category && getAllLeafCategories()
-                            .filter(l => l.startsWith(row.category))
-                            .map(l => {
-                              const parts = l.split(' > ');
-                              const label = parts.slice(1).join(' > ');
-                              return <SelectItem key={l} value={l} className="text-xs">{label}</SelectItem>;
-                            })
-                          }
+                        <SelectContent>
+                          {["Habillement et accessoires","Électronique","Maison","Famille","Santé et beauté","Épicerie","Loisirs","Jardin et extérieur","Mariage","Restauration","Pharmacie et santé"].map(c => (
+                            <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </td>
