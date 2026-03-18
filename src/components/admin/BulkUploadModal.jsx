@@ -315,10 +315,10 @@ Réponds en JSON strict.`,
                   Prix promo <span className="text-slate-400 font-normal">· Optionnel</span>
                 </th>
                 <th className="w-44 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Catégorie Facebook <span className="text-slate-400 font-normal">· via IA</span>
+                  Catégorie <span className="text-slate-400 font-normal">· via IA</span>
                 </th>
-                <th className="w-36 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
-                  Catégorie app <span className="text-slate-400 font-normal">· via IA</span>
+                <th className="w-44 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">
+                  Spécialité <span className="text-slate-400 font-normal">· niveau 3</span>
                 </th>
                 <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Condition</th>
                 <th className="w-28 px-3 py-3 text-left font-semibold text-slate-600 border-r border-slate-200">Disponibilité</th>
