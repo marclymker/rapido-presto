@@ -1160,32 +1160,19 @@ export default function Home() {
                       key={product.id}
 
                       onClick={() => {
-                        // ⚡ Identification par ID unique
                         const targetProduct = getSafeProducts().find(p => p.id === product.id);
-                        if (!targetProduct) {
-                          console.error('❌ Produit non trouvé');
-                          return;
-                        }
+                        if (!targetProduct) return;
+                        if (!shop) { toast.error('Boutique non disponible'); return; }
 
-                        // 🔒 Protection 4: Double vérification avant redirection
-                        if (!shop) {
-                          console.error('❌ Clic sur produit sans boutique');
-                          toast.error('Boutique non disponible');
-                          return;
-                        }
+                        // Sauvegarder pour personnalisation future
+                        try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: targetProduct.id, name: targetProduct.name, seo_tags: targetProduct.seo_tags, category: targetProduct.category })); } catch (_) {}
 
                         if (shop.slug && targetProduct.slug) {
-
                           window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
-
                         } else if (shop) {
-
                           setSelectedShop(shop);
-
                           setSelectedProduct(targetProduct);
-
                         }
-
                       }}
 
                       className="bg-white p-2 border-r border-b border-gray-100 hover:shadow-lg hover:z-10 relative cursor-pointer group transition-all flex flex-col h-full"
