@@ -17,11 +17,9 @@ import { createPageUrl } from '@/utils';
 import ShareProductButton from '@/components/share/ShareProductButton';
 import SimilarProducts from '@/components/product/SimilarProducts';
 
-export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, similarProducts = [], onProductChange }) {
+export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, allProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [loadingSimilar, setLoadingSimilar] = useState(false);
-  const [similarItems, setSimilarItems] = useState(similarProducts);
   const [zoom, setZoom] = useState(1);
   const [downloading, setDownloading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
