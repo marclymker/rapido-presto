@@ -187,8 +187,8 @@ Réponds en JSON strict.`,
 
       updateRow(rowId, {
         description: result.description || row.description,
-        fb_category: result.fb_category || row.fb_category,
         category: result.category || row.category,
+        leaf_category: result.leaf_category || row.leaf_category,
         seo_tags: result.seo_tags || row.seo_tags,
         brand: result.brand || row.brand,
         image_alt: result.image_alt || row.image_alt,
