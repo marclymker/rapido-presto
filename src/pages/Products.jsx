@@ -66,9 +66,12 @@ const ProductCard = ({ product, shop, onClick }) => {
 export default function Products() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategories, setShowCategories] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedShop, setSelectedShop] = useState(null);
 
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
