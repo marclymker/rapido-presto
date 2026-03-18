@@ -241,7 +241,7 @@ export default function Products() {
               {CATEGORIES.map(cat => (
                 <button
                   key={cat}
-                  onClick={() => { setSelectedCategory(cat); setShowCategories(false); }}
+                  onClick={() => handleCategorySelect(cat)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     selectedCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
                   }`}
