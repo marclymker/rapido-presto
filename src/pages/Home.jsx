@@ -16,14 +16,9 @@ import { useGuestCart } from '@/components/cart/useGuestCart';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
 import { Button } from "@/components/ui/button";
+import { FB_PARENT_CATEGORIES, FB_CATEGORY_ICONS } from '@/lib/fbCategories';
 
 const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
-
-const CATEGORIES = [
-  'Fastfood', 'Restaurants', 'Boutique Fleurs', 'Pharmacie', 'Mariage',
-  'Epicerie', 'Café', 'Pour Femme', 'Electronics', 'Pour homme', 'Maison',
-  'Bébé', 'Outils', 'Bijoux', 'Matériels Décor'
-];
 
 const ProductCard = ({ product, shop, onClick }) => {
   const price = applyClientMargin(product.promo_price || product.price);
