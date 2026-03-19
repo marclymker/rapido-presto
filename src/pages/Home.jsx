@@ -83,6 +83,7 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
   const [showCartReminder, setShowCartReminder] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(40);
 
   // Track PageView Meta Pixel
   useEffect(() => {
