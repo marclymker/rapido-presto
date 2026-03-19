@@ -458,7 +458,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              {filteredProducts.map(product => {
+              {visibleProducts.map(product => {
                 const shop = shops.find(s => s.id === product.shop_id);
                 return (
                   <ProductCard
@@ -470,6 +470,16 @@ export default function Home() {
                 );
               })}
             </div>
+            {hasMore && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={() => setVisibleCount(c => c + 40)}
+                  className="px-8 py-3 bg-white border-2 border-orange-400 text-orange-500 font-semibold rounded-full text-sm hover:bg-orange-50 active:scale-95 transition-all shadow-sm"
+                >
+                  Voir plus ({filteredProducts.length - visibleCount} restants)
+                </button>
+              </div>
+            )}
           )}
         </main>
       </PullToRefresh>
