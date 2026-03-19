@@ -344,7 +344,7 @@ export default function Home() {
             <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
             <input
               type="text"
-              placeholder="Rechercher un produit..."
+              placeholder={t('search_placeholder')}
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="bg-transparent outline-none w-full text-sm text-slate-700 placeholder:text-slate-400"
