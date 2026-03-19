@@ -503,10 +503,10 @@ export default function Home() {
               </div>
             </div>
             <Button
-              className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold"
-              onClick={() => window.location.href = createPageUrl('Cart')}
+            className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold"
+            onClick={() => window.location.href = createPageUrl('Cart')}
             >
-              Finaliser ma commande
+            {t('finalize_order')}
             </Button>
           </div>
         </div>
