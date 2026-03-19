@@ -181,6 +181,9 @@ export default function Home() {
 
   // Algorithme de personnalisation basé sur le dernier produit visualisé
   // IDs de la branche FB sélectionnée (inclut tous les enfants)
+  // Reset visible count when category changes
+  useEffect(() => { setVisibleCount(40); }, [selectedFbCatId]);
+
   const selectedFbBranchIds = useMemo(() => {
     if (!selectedFbCatId) return null;
     const ids = new Set();
