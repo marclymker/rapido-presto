@@ -364,7 +364,7 @@ export default function Home() {
             className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white py-2 px-4 rounded-full text-sm font-semibold hover:bg-orange-600 transition"
           >
             <Store className="w-4 h-4" />
-            <span>Ma boutique</span>
+            <span>{t('my_shop')}</span>
           </button>
           <button
             onClick={() => setShowCategories(!showCategories)}
