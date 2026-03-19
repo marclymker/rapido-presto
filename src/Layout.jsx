@@ -186,6 +186,7 @@ export default function Layout({ children, currentPageName }) {
         <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P7C42MMP" height="0" width="0" style={{display: 'none', visibility: 'hidden'}} />
       </noscript>
 
+      <LocalBusinessSchema />
       <CookieConsent onAccept={handleCookieAccept} onReject={handleCookieReject} />
 
       <div className="flex flex-col w-full min-h-screen bg-slate-50">
