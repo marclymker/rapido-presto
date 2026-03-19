@@ -75,6 +75,7 @@ export default function Home() {
   const { addToGuestCart } = useGuestCart();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
 
   const [searchQuery, setSearchQuery] = useState('');
