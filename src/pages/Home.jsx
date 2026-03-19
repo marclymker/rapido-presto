@@ -451,19 +451,31 @@ export default function Home() {
               <p className="text-slate-500">Aucun produit trouvé</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {filteredProducts.map(product => {
-                const shop = shops.find(s => s.id === product.shop_id);
-                return (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    shop={shop}
-                    onClick={() => handleProductClick(product)}
-                  />
-                );
-              })}
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                {visibleProducts.map(product => {
+                  const shop = shops.find(s => s.id === product.shop_id);
+                  return (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      shop={shop}
+                      onClick={() => handleProductClick(product)}
+                    />
+                  );
+                })}
+              </div>
+              {visibleCount < filteredProducts.length && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => setVisibleCount(c => c + 40)}
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-3 rounded-full text-sm transition"
+                  >
+                    Voir plus ({filteredProducts.length - visibleCount} restants)
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </main>
       </PullToRefresh>
