@@ -187,6 +187,21 @@ export default function BlogManager() {
 
                   <Button
                     size="sm"
+                    variant="outline"
+                    className="w-full text-blue-600 border-blue-300 hover:bg-blue-50"
+                    onClick={() => handleShareToSocial(article)}
+                    disabled={publishingId === article.id}
+                    title="Publier sur Facebook & Instagram"
+                  >
+                    {publishingId === article.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Share2 className="w-4 h-4" />
+                    )}
+                  </Button>
+
+                  <Button
+                    size="sm"
                     variant="destructive"
                     onClick={() => {
                       if (confirm('Êtes-vous sûr?')) {
