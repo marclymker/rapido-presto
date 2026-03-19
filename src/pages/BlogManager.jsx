@@ -131,9 +131,16 @@ export default function BlogManager() {
                     <h2 className="text-lg font-bold text-slate-900 line-clamp-1">
                       {article.title}
                     </h2>
-                    <Badge variant={article.is_published ? "default" : "outline"}>
-                      {article.is_published ? 'Publié' : 'Brouillon'}
-                    </Badge>
+                    <div className="flex gap-2">
+                      <Badge variant={article.is_published ? "default" : "outline"}>
+                        {article.is_published ? 'Publié' : 'Brouillon'}
+                      </Badge>
+                      {article.social_published_at && (
+                        <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                          📱 Partagé
+                        </Badge>
+                      )}
+                    </div>
                   </div>
 
                   <p className="text-sm text-slate-600 line-clamp-2 mb-3">
