@@ -1,15 +1,97 @@
 /**
  * Hiérarchie Complète des Catégories Facebook Commerce (Google Product Taxonomy)
- * Source: document officiel fourni - IDs exacts, strictement cette liste.
- * 6 catégories racines officielles uniquement.
+ * Source: document officiel complet - IDs exacts.
  */
 
 export const FB_TAXONOMY = [
+  {
+    id: 8,
+    name: "Arts et loisirs",
+    icon: "🎨",
+    children: [
+      {
+        id: 24,
+        name: "Artisanat et loisirs créatifs",
+        children: [
+          {
+            id: 2270,
+            name: "Arts textiles",
+            children: [
+              { id: 2271, name: "Tissus" },
+              { id: 2272, name: "Fils et fibres" },
+            ],
+          },
+        ],
+      },
+      {
+        id: 50,
+        name: "Décoration de fêtes et d'événements",
+        children: [
+          {
+            id: 51,
+            name: "Décorations de mariage",
+            children: [],
+          },
+          {
+            id: 52,
+            name: "Décorations de fête",
+            children: [
+              { id: 53, name: "Ballons" },
+              { id: 54, name: "Confettis" },
+              { id: 55, name: "Cadeaux de fête" },
+              { id: 56, name: "Chapeaux de fête" },
+              { id: 57, name: "Nappes et serviettes de fête" },
+            ],
+          },
+        ],
+      },
+      {
+        id: 10,
+        name: "Instruments de musique",
+        children: [
+          { id: 11, name: "Guitares" },
+          { id: 12, name: "Pianos et claviers" },
+          { id: 13, name: "Batteries et percussions" },
+        ],
+      },
+    ],
+  },
   {
     id: 166,
     name: "Vêtements et accessoires",
     icon: "👗",
     children: [
+      {
+        id: 160,
+        name: "Vêtements",
+        children: [
+          {
+            id: 212,
+            name: "Hauts",
+            children: [
+              { id: 213, name: "Chemises et chemisiers" },
+              { id: 214, name: "T-shirts" },
+              { id: 215, name: "Pulls et gilets" },
+            ],
+          },
+          {
+            id: 204,
+            name: "Pantalons",
+            children: [
+              { id: 205, name: "Jeans" },
+              { id: 206, name: "Shorts" },
+            ],
+          },
+          {
+            id: 227,
+            name: "Robes",
+            children: [
+              { id: 228, name: "Robes de soirée" },
+              { id: 229, name: "Robes de mariée" },
+            ],
+          },
+        ],
+      },
       {
         id: 187,
         name: "Chaussures",
@@ -82,6 +164,7 @@ export const FB_TAXONOMY = [
               { id: 210, name: "Colliers et pendentifs" },
               { id: 211, name: "Bagues" },
               { id: 212, name: "Boucles d'oreilles" },
+              { id: 213, name: "Bracelets" },
             ],
           },
         ],
@@ -113,38 +196,51 @@ export const FB_TAXONOMY = [
               { id: 443, name: "Lits et sommiers" },
               { id: 444, name: "Matelas" },
               { id: 445, name: "Armoires et commodes" },
+              { id: 446, name: "Tables de chevet" },
             ],
           },
           {
-            id: 446,
+            id: 447,
             name: "Meubles de cuisine et salle à manger",
             children: [
-              { id: 447, name: "Tables de salle à manger" },
-              { id: 448, name: "Chaises de salle à manger" },
+              { id: 448, name: "Tables de salle à manger" },
+              { id: 449, name: "Chaises de salle à manger" },
+              { id: 450, name: "Buffets et vaisseliers" },
             ],
           },
         ],
       },
       {
-        id: 449,
+        id: 451,
         name: "Éclairage",
         children: [
           {
-            id: 450,
+            id: 452,
             name: "Lampes",
             children: [
-              { id: 451, name: "Lampes de chevet" },
-              { id: 452, name: "Lampadaires" },
+              { id: 453, name: "Lampes de chevet" },
+              { id: 454, name: "Lampadaires" },
+              { id: 455, name: "Lampes de bureau" },
             ],
           },
           {
-            id: 453,
+            id: 456,
             name: "Luminaires de plafond",
             children: [
-              { id: 454, name: "Lustres" },
-              { id: 455, name: "Plafonniers" },
+              { id: 457, name: "Lustres" },
+              { id: 458, name: "Plafonniers" },
             ],
           },
+        ],
+      },
+      {
+        id: 5999,
+        name: "Décoration",
+        children: [
+          { id: 6000, name: "Miroirs" },
+          { id: 6001, name: "Tapis" },
+          { id: 6002, name: "Rideaux et voilages" },
+          { id: 6003, name: "Coussins décoratifs" },
         ],
       },
     ],
@@ -172,39 +268,42 @@ export const FB_TAXONOMY = [
             children: [
               { id: 228, name: "Étuis et coques" },
               { id: 229, name: "Chargeurs et câbles" },
+              { id: 230, name: "Batteries externes" },
             ],
           },
         ],
       },
       {
-        id: 230,
+        id: 231,
         name: "Ordinateurs",
         children: [
-          { id: 231, name: "Ordinateurs portables" },
-          { id: 232, name: "Ordinateurs de bureau" },
-          { id: 233, name: "Tablettes tactiles" },
+          { id: 232, name: "Ordinateurs portables" },
+          { id: 233, name: "Ordinateurs de bureau" },
+          { id: 234, name: "Tablettes tactiles" },
+          { id: 235, name: "Composants informatiques" },
         ],
       },
       {
-        id: 234,
+        id: 236,
         name: "Audio et Vidéo",
         children: [
           {
-            id: 235,
+            id: 237,
             name: "Téléviseurs",
             children: [
-              { id: 236, name: "Téléviseurs LED/OLED" },
-              { id: 237, name: "Téléviseurs 4K/8K" },
+              { id: 238, name: "Téléviseurs LED/OLED" },
+              { id: 239, name: "Téléviseurs 4K/8K" },
             ],
           },
           {
-            id: 238,
+            id: 240,
             name: "Casques et écouteurs",
             children: [
-              { id: 239, name: "Écouteurs sans fil (Bluetooth)" },
-              { id: 240, name: "Casques audio" },
+              { id: 241, name: "Écouteurs sans fil (Bluetooth)" },
+              { id: 242, name: "Casques audio" },
             ],
           },
+          { id: 243, name: "Enceintes et haut-parleurs" },
         ],
       },
     ],
@@ -224,24 +323,27 @@ export const FB_TAXONOMY = [
             children: [
               { id: 472, name: "Shampoings et après-shampoings" },
               { id: 473, name: "Produits coiffants" },
+              { id: 474, name: "Colorations capillaires" },
             ],
           },
           {
-            id: 474,
+            id: 475,
             name: "Soins de la peau",
             children: [
-              { id: 475, name: "Crèmes hydratantes" },
-              { id: 476, name: "Nettoyants pour le visage" },
+              { id: 476, name: "Crèmes hydratantes" },
+              { id: 477, name: "Nettoyants pour le visage" },
+              { id: 478, name: "Sérums et soins anti-âge" },
             ],
           },
         ],
       },
       {
-        id: 477,
+        id: 479,
         name: "Maquillage",
         children: [
-          { id: 478, name: "Maquillage des yeux" },
-          { id: 479, name: "Maquillage des lèvres" },
+          { id: 480, name: "Maquillage des yeux" },
+          { id: 481, name: "Maquillage des lèvres" },
+          { id: 482, name: "Maquillage du teint" },
         ],
       },
     ],
@@ -258,14 +360,16 @@ export const FB_TAXONOMY = [
           { id: 1241, name: "Poupées et figurines" },
           { id: 1242, name: "Jeux de construction" },
           { id: 1243, name: "Jeux de société" },
+          { id: 1244, name: "Jouets éducatifs" },
         ],
       },
       {
-        id: 1244,
+        id: 1245,
         name: "Jeux vidéo",
         children: [
-          { id: 1245, name: "Consoles de jeux" },
-          { id: 1246, name: "Jeux pour consoles" },
+          { id: 1246, name: "Consoles de jeux" },
+          { id: 1247, name: "Jeux pour consoles" },
+          { id: 1248, name: "Accessoires de jeux vidéo" },
         ],
       },
     ],
@@ -281,14 +385,71 @@ export const FB_TAXONOMY = [
         children: [
           { id: 890, name: "Voitures" },
           { id: 891, name: "Motos" },
+          { id: 892, name: "Vélos" },
         ],
       },
       {
-        id: 892,
+        id: 893,
         name: "Pièces et accessoires de véhicules",
         children: [
-          { id: 893, name: "Pneus et jantes" },
-          { id: 894, name: "Accessoires d'intérieur" },
+          { id: 894, name: "Pneus et jantes" },
+          { id: 895, name: "Accessoires d'intérieur" },
+          { id: 896, name: "Pièces de moteur" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 412,
+    name: "Alimentation et boissons",
+    icon: "🍽️",
+    children: [
+      {
+        id: 413,
+        name: "Boissons",
+        children: [
+          { id: 414, name: "Boissons alcoolisées" },
+          { id: 415, name: "Boissons non alcoolisées" },
+        ],
+      },
+      {
+        id: 416,
+        name: "Épicerie",
+        children: [
+          { id: 417, name: "Produits laitiers" },
+          { id: 418, name: "Produits de boulangerie" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 922,
+    name: "Fournitures de bureau",
+    icon: "📎",
+    children: [
+      {
+        id: 923,
+        name: "Papeterie",
+        children: [
+          { id: 924, name: "Papier" },
+          { id: 925, name: "Stylos et crayons" },
+          { id: 926, name: "Cahiers et blocs-notes" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 1,
+    name: "Animaux et articles pour animaux",
+    icon: "🐾",
+    children: [
+      {
+        id: 2,
+        name: "Articles pour animaux",
+        children: [
+          { id: 3, name: "Articles pour chiens" },
+          { id: 4, name: "Articles pour chats" },
+          { id: 5, name: "Articles pour oiseaux" },
         ],
       },
     ],
