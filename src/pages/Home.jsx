@@ -392,7 +392,7 @@ export default function Home() {
           <div className="px-4 pb-3 space-y-2">
             <div className="flex flex-wrap gap-1.5">
               {FB_TAXONOMY.map(cat => (
-                <button key={cat.id} onClick={() => { setFbLevel1Id(fbLevel1Id === cat.id ? null : cat.id); if (selectedFbCatId) setSelectedFbCatId(null); }}
+                <button key={cat.id} onClick={() => { setFbLevel1Id(fbLevel1Id === cat.id ? null : cat.id); if (selectedFbCatId) setSelectedFbCatId(null); setVisibleCount(40); }}
                   className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${fbLevel1Id === cat.id ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'}`}>
                   {cat.icon} {cat.name}
                 </button>
