@@ -254,19 +254,21 @@ export default function Products() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
-      <ProductDetailModal
-        product={selectedProduct}
-        shop={selectedShop}
-        open={!!selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
-        user={user}
-        allProducts={allProducts}
-        onProductChange={(p) => {
-          setSelectedProduct(p);
-          setSelectedShop(shops.find(s => s.id === p.shop_id) || null);
-        }}
-      />
+      <Suspense fallback={null}>
+        <ProductDetailModal
+          product={selectedProduct}
+          shop={selectedShop}
+          open={!!selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onAddToCart={handleAddToCart}
+          user={user}
+          allProducts={allProducts}
+          onProductChange={(p) => {
+            setSelectedProduct(p);
+            setSelectedShop(shops.find(s => s.id === p.shop_id) || null);
+          }}
+        />
+      </Suspense>
       <Helmet>
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
       </Helmet>
