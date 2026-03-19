@@ -433,7 +433,7 @@ export default function Home() {
         <main className="flex-1 p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-800">
-              {selectedFbCatId ? findById(selectedFbCatId)?.name : 'Sélection du jour'}
+              {selectedFbCatId ? findById(selectedFbCatId)?.name : t('daily_selection')}
             </h2>
             <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
           </div>
