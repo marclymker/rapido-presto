@@ -446,7 +446,7 @@ export default function Home() {
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-5xl mb-3">📦</div>
-              <p className="text-slate-500">Aucun produit trouvé</p>
+              <p className="text-slate-500">{t('no_product_found')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
