@@ -97,7 +97,7 @@ export default function Home() {
 
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200),
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 1000),
     staleTime: 10 * 60 * 1000,
     refetchInterval: false,
   });
