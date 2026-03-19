@@ -22,6 +22,8 @@ import OfflineIndicator from '@/components/offline/OfflineIndicator';
 import ThemeProvider from '@/components/theme/ThemeProvider';
 import { useServiceWorker } from '@/components/offline/useServiceWorker';
 import { useCacheManager } from '@/components/offline/useCacheManager';
+import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
+import LocalBusinessSchema from '@/components/seo/LocalBusinessSchema';
 
 export default function Layout({ children, currentPageName }) {
   const { user, isLoading: loading } = useAuth();
