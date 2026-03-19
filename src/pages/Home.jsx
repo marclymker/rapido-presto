@@ -36,10 +36,11 @@ const ProductCard = ({ product, shop, onClick }) => {
       <div className="relative aspect-square bg-slate-100">
         {product.image_url ? (
           <img
-            src={product.image_url}
-            alt={product.name}
+            src={productThumbnail(product.image_url)}
+            alt={product.image_alt || product.name}
             className="w-full h-full object-cover"
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-300">
