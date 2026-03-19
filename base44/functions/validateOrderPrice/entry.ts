@@ -1,5 +1,25 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { validateInput, validateOrderPriceSchema } from './validationSchemas.js';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { z } from 'npm:zod@3.24.2';
+
+const validateOrderPriceSchema = z.object({
+  cartItemIds: z.array(z.string()).min(1).max(50),
+  paymentSplit: z.enum(['full', 'split']).optional().default('full')
+});
+
+function validateInput(schema, data) {
+  try {
+    return { success: true, data: schema.parse(data) };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: 'Données invalides',
+        details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+      };
+    }
+    return { success: false, error: 'Erreur de validation' };
+  }
+}
 
 /**
  * SÉCURITÉ CRITIQUE: Validation des prix côté serveur
