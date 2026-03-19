@@ -12,6 +12,7 @@ import Products from './pages/Products';
 import Blog from './pages/Blog';
 import BlogArticle from './pages/BlogArticle';
 import BlogManager from './pages/BlogManager';
+import PaymentCallback from './pages/PaymentCallback';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
