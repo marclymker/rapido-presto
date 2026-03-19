@@ -9,11 +9,6 @@ export default function MerchantDeliveryTracking({ order, onClose }) {
   const [confirmationCode, setConfirmationCode] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const clientLocation = order.client_location || { 
-    lat: 18.5944, 
-    lng: -72.3074 
-  };
-
   const handleCompleteDelivery = async () => {
     if (!confirmationCode) {
       toast.error('Entrez le code de confirmation');
