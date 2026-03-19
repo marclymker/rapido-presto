@@ -21,17 +21,17 @@ function getConnectionType() {
 
 // Polling adaptatif basé sur la connexion et l'activité
 function getPollingInterval(connectionType, isVisible, isActive) {
-  if (!isVisible) return 120000; // 2 min quand invisible
+  if (!isVisible) return 600000; // 10 min quand invisible
   
   if (connectionType === 'slow' || !isActive) {
-    return 90000; // 1.5 min pour connexion lente
+    return 300000; // 5 min pour connexion lente ou inactif
   }
   
   if (connectionType === 'medium') {
-    return 75000; // 1.25 min pour connexion moyenne
+    return 300000; // 5 min pour connexion moyenne
   }
   
-  return 60000; // 1 min pour connexion rapide
+  return 300000; // 5 min pour connexion rapide
 }
 
 export function useBackgroundSync({ userType, enabled = true }) {
