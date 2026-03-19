@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 
 const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
 
-const ProductCard = ({ product, shop, onClick }) => {
+const ProductCard = React.memo(({ product, shop, onClick }) => {
   const price = applyClientMargin(product.promo_price || product.price);
   const originalPrice = product.promo_price ? applyClientMargin(product.price) : null;
   const hasPromo = product.promo_price && product.promo_price < product.price;
@@ -35,9 +35,10 @@ const ProductCard = ({ product, shop, onClick }) => {
         {product.image_url ? (
           <img
             src={product.image_url}
-            alt={product.name}
+            alt={product.image_alt || product.name}
             className="w-full h-full object-cover"
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-300">
@@ -67,7 +68,7 @@ const ProductCard = ({ product, shop, onClick }) => {
       </div>
     </div>
   );
-};
+});
 
 export default function Home() {
   const { user } = useAuth();
