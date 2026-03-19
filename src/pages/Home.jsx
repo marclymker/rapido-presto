@@ -375,7 +375,7 @@ export default function Home() {
             }`}
           >
             <Tag className="w-4 h-4" />
-            <span>{selectedFbCatId ? findById(selectedFbCatId)?.name : 'Catégories'}</span>
+            <span>{selectedFbCatId ? findById(selectedFbCatId)?.name : t('categories')}</span>
           </button>
         </div>
 
