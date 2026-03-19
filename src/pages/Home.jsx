@@ -435,7 +435,7 @@ export default function Home() {
             <h2 className="text-base font-bold text-slate-800">
               {selectedFbCatId ? findById(selectedFbCatId)?.name : t('daily_selection')}
             </h2>
-            <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
+            <span className="text-xs text-slate-400">{t('products_count', { count: filteredProducts.length })}</span>
           </div>
 
           {isLoading ? (
