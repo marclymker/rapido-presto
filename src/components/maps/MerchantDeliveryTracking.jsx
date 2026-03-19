@@ -1,35 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Phone, MapPin, Navigation, CheckCircle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { base44 } from '@/api/base44Client';
 import { toast } from "sonner";
-import 'leaflet/dist/leaflet.css';
 
 export default function MerchantDeliveryTracking({ order, onClose }) {
-  const [merchantLocation, setMerchantLocation] = useState(null);
   const [confirmationCode, setConfirmationCode] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Suivi de la position du marchand
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        setMerchantLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
-      },
-      (error) => console.error('Geolocation error:', error),
-      { enableHighAccuracy: true }
-    );
-
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
 
   const clientLocation = order.client_location || { 
     lat: 18.5944, 
