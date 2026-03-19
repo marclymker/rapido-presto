@@ -60,6 +60,7 @@ const InnerRouter = () => {
             }
           />
         ))}
+        <Route path="/TaxonomySchema" element={<LayoutWrapper currentPageName="TaxonomySchema"><TaxonomySchema /></LayoutWrapper>} />
         <Route path="/Blog" element={<LayoutWrapper currentPageName="Blog"><Blog /></LayoutWrapper>} />
         <Route path="/BlogArticle" element={<LayoutWrapper currentPageName="BlogArticle"><BlogArticle /></LayoutWrapper>} />
         <Route path="/BlogManager" element={<LayoutWrapper currentPageName="BlogManager"><BlogManager /></LayoutWrapper>} />
