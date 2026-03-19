@@ -295,10 +295,8 @@ export default function Home() {
     setSelectedShop(shop || null);
   };
 
-  const handleSearchChange = (value) => {
-    setSearchQuery(value);
-    if (value.length > 2) trackSearch(value);
-  };
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredProducts.length;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
