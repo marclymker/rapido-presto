@@ -287,8 +287,11 @@ export default function Home() {
 
   const handleSearchChange = (value) => {
     setSearchQuery(value);
+    setVisibleCount(40); // reset pagination on new search
     if (value.length > 2) trackSearch(value);
   };
+
+  const visibleProducts = useMemo(() => filteredProducts.slice(0, visibleCount), [filteredProducts, visibleCount]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
