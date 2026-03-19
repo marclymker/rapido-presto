@@ -57,8 +57,7 @@ Deno.serve(async (req) => {
     const accessToken = await getMoncashAccessToken();
     console.log('✅ Token obtained');
 
-    const appUrl = Deno.env.get("APP_URL") || "https://rapido-presto.base44.app";
-    const returnUrl = `${appUrl}/PaymentCallback`;
+    const returnUrl = "https://rapido-presto.base44.app/payment/callback";
 
     const paymentPayload = {
       amount: integerAmount,
