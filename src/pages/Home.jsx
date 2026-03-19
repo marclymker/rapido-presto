@@ -496,7 +496,7 @@ export default function Home() {
                 <Clock className="w-6 h-6 text-orange-600" />
               </div>
               <div>
-                <h4 className="font-bold text-gray-900">N'oubliez pas vos achats !</h4>
+                <h4 className="font-bold text-gray-900">{t('dont_forget')}</h4>
                 <p className="text-sm text-gray-600 mt-1">
                   Il vous reste <span className="font-bold">{cartCount} article{cartCount > 1 ? 's' : ''}</span> dans votre panier.
                 </p>
