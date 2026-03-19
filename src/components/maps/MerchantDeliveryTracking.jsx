@@ -34,64 +34,17 @@ export default function MerchantDeliveryTracking({ order, onClose }) {
     }
   };
 
-  const center = merchantLocation || clientLocation;
-
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
-      {/* Map */}
-      <div className="flex-1 relative">
-        <MapContainer 
-          center={[center.lat, center.lng]} 
-          zoom={14} 
-          className="h-full w-full"
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; OpenStreetMap contributors'
-          />
-          
-          {/* Client Marker */}
-          <Marker position={[clientLocation.lat, clientLocation.lng]}>
-            <Popup>
-              <div className="text-center">
-                <p className="font-bold">📍 Client</p>
-                <p className="text-xs">{order.client_address}</p>
-              </div>
-            </Popup>
-          </Marker>
-
-          {/* Merchant Marker */}
-          {merchantLocation && (
-            <Marker position={[merchantLocation.lat, merchantLocation.lng]}>
-              <Popup>
-                <p className="font-bold">🚚 Vous</p>
-              </Popup>
-            </Marker>
-          )}
-
-          {/* Route Line */}
-          {merchantLocation && (
-            <Polyline
-              positions={[
-                [merchantLocation.lat, merchantLocation.lng],
-                [clientLocation.lat, clientLocation.lng]
-              ]}
-              color="#3b82f6"
-              weight={4}
-              dashArray="10, 10"
-            />
-          )}
-        </MapContainer>
-
-        {/* Floating back button */}
-        <Button
-          onClick={onClose}
-          className="absolute top-4 left-4 bg-white shadow-lg rounded-full"
-          size="icon"
-          variant="outline"
-        >
+      {/* Header */}
+      <div className="bg-orange-500 text-white p-4 flex items-center gap-3">
+        <Button onClick={onClose} size="icon" variant="ghost" className="text-white hover:bg-orange-600">
           ✕
         </Button>
+        <div>
+          <h2 className="font-bold text-lg">Livraison #{order.order_number}</h2>
+          <p className="text-sm text-orange-100">{order.client_name}</p>
+        </div>
       </div>
 
       {/* Bottom Panel */}
