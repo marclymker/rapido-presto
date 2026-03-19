@@ -16,6 +16,27 @@ export default function BlogManager() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingArticle, setEditingArticle] = useState(null);
+  const [publishingId, setPublishingId] = useState(null);
+
+  const handleShareToSocial = async (article) => {
+    setPublishingId(article.id);
+    try {
+      const res = await base44.functions.invoke('publishBlogToSocial', { articleId: article.id });
+      const data = res.data;
+      if (data.success) {
+        const fb = data.results?.facebook?.success ? '✅ Facebook' : `❌ Facebook: ${data.results?.facebook?.error}`;
+        const ig = data.results?.instagram?.success ? '✅ Instagram' : `❌ Instagram: ${data.results?.instagram?.error}`;
+        toast.success(`Publié! ${fb} | ${ig}`);
+        queryClient.invalidateQueries(['blog-articles-all']);
+      } else {
+        toast.error(data.error || 'Erreur de publication');
+      }
+    } catch (err) {
+      toast.error('Erreur: ' + err.message);
+    } finally {
+      setPublishingId(null);
+    }
+  };
 
   const { data: articles = [], isLoading } = useQuery({
     queryKey: ['blog-articles-all'],
