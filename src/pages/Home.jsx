@@ -99,6 +99,13 @@ export default function Home() {
     }
   }, []);
 
+  // Reset pagination quand le filtre ou la recherche change
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    setVisibleCount(40);
+    if (value.length > 2) trackSearch(value);
+  };
+
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
     queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200),
