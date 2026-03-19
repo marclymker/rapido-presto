@@ -327,21 +327,27 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     try {
       const taxonomyList = getTaxonomyMappingPrompt();
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Tu es un Expert SEO Senior et Copywriter E-commerce spécialisé dans le marché haïtien. Tu travailles pour la marketplace RapidoPresto en Haïti.
+        prompt: `Tu es un expert en vision par ordinateur ET en e-commerce haïtien (RapidoPresto).
 
-À partir du nom du produit "${formData.name}" et de l'image fournie, génère une annonce complète.
+ÉTAPE 1 — ANALYSE VISUELLE DE LA PHOTO :
+Examine attentivement l'image fournie. Identifie précisément :
+- Le type d'objet principal visible (vêtement, appareil électronique, bijou, meuble, etc.)
+- Les caractéristiques visuelles clés (couleur, forme, matière apparente, marque visible)
+- Le contexte d'utilisation (cuisine, chambre, sport, cérémonie, etc.)
 
-RÈGLES :
+ÉTAPE 2 — CROISEMENT AVEC LE TITRE :
+Titre du produit : "${formData.name}"
+Utilise l'analyse visuelle ET le titre pour confirmer ou affiner ta compréhension du produit.
 
-1. DESCRIPTION : 3-4 lignes MAX avec emojis, axée bénéfice client + urgence + CTA. Intègre Delmas, Cap-Haïtien ou Gonaïves. EN FRANÇAIS.
-
-2. FB_CATEGORY_ID : Attribue l'ID de catégorie Facebook/Google Taxonomy le plus précis parmi cette liste officielle :
+ÉTAPE 3 — CLASSIFICATION :
+FB_CATEGORY_ID : Choisis l'ID numérique Facebook/Google Taxonomy le plus précis en te basant PRINCIPALEMENT sur ce que tu vois dans la photo :
 ${taxonomyList}
-Retourne UNIQUEMENT l'ID numérique (ex: 225 pour Smartphones, 211 pour Bagues, 166 pour vêtements génériques, etc.)
+Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones, 211 pour Bagues, 195 pour chaussures femmes).
 
-3. SEO_TAGS : 10-15 mots-clés en français + anglais + créole + villes haïtiennes.
-
-4. IMAGE_ALT : 15-20 mots décrivant l'image pour SEO.
+ÉTAPE 4 — RÉDACTION :
+1. DESCRIPTION : 3-4 lignes avec emojis, bénéfice client + urgence + CTA. Villes haïtiennes (Delmas, Cap-Haïtien, Gonaïves). EN FRANÇAIS.
+2. SEO_TAGS : 10-15 mots-clés: français + anglais + créole + villes haïtiennes.
+3. IMAGE_ALT : 15-20 mots décrivant précisément ce que tu vois sur la photo (SEO).
 
 Réponds en JSON strict.`,
         file_urls: [formData.image_url],
