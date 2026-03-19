@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
-const MONCASH_BASE = 'https://moncashbutton.digicelgroup.com/Api';
+const MONCASH_BASE = 'https://sandbox.moncashbutton.digicelgroup.com/Api';
 
 async function getMoncashAccessToken() {
   const clientId = Deno.env.get("MONCASH_CLIENT_ID");
