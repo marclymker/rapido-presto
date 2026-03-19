@@ -22,8 +22,6 @@ import OfflineIndicator from '@/components/offline/OfflineIndicator';
 import ThemeProvider from '@/components/theme/ThemeProvider';
 import { useServiceWorker } from '@/components/offline/useServiceWorker';
 import { useCacheManager } from '@/components/offline/useCacheManager';
-import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
-import LocalBusinessSchema from '@/components/seo/LocalBusinessSchema';
 
 export default function Layout({ children, currentPageName }) {
   const { user, isLoading: loading } = useAuth();
@@ -186,7 +184,6 @@ export default function Layout({ children, currentPageName }) {
         <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P7C42MMP" height="0" width="0" style={{display: 'none', visibility: 'hidden'}} />
       </noscript>
 
-      <LocalBusinessSchema />
       <CookieConsent onAccept={handleCookieAccept} onReject={handleCookieReject} />
 
       <div className="flex flex-col w-full min-h-screen bg-slate-50">

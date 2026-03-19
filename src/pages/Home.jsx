@@ -6,7 +6,6 @@ import { Search, Tag, Store, ShoppingBag, ShoppingCart, X, Clock, ChevronRight }
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
-import { productThumbnail } from '@/components/utils/imageOptimizer';
 import { useAuth } from '@/components/auth/useAuth';
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
 import { toast } from 'sonner';
@@ -16,7 +15,6 @@ import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { createPageUrl } from '@/utils';
 import { useGuestCart } from '@/components/cart/useGuestCart';
 import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
-import { useTranslation } from 'react-i18next';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
 import { Button } from "@/components/ui/button";
@@ -36,11 +34,10 @@ const ProductCard = ({ product, shop, onClick }) => {
       <div className="relative aspect-square bg-slate-100">
         {product.image_url ? (
           <img
-            src={productThumbnail(product.image_url)}
-            alt={product.image_alt || product.name}
+            src={product.image_url}
+            alt={product.name}
             className="w-full h-full object-cover"
             loading="lazy"
-            decoding="async"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-300">
@@ -77,7 +74,6 @@ export default function Home() {
   const { addToGuestCart } = useGuestCart();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
   const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,7 +83,6 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
   const [showCartReminder, setShowCartReminder] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(40);
 
   // Track PageView Meta Pixel
   useEffect(() => {
@@ -99,13 +94,6 @@ export default function Home() {
       });
     }
   }, []);
-
-  // Reset pagination quand le filtre ou la recherche change
-  const handleSearchChange = (value) => {
-    setSearchQuery(value);
-    setVisibleCount(40);
-    if (value.length > 2) trackSearch(value);
-  };
 
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
@@ -296,8 +284,10 @@ export default function Home() {
     setSelectedShop(shop || null);
   };
 
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredProducts.length;
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    if (value.length > 2) trackSearch(value);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
@@ -352,7 +342,7 @@ export default function Home() {
             <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
             <input
               type="text"
-              placeholder={t('search_placeholder')}
+              placeholder="Rechercher un produit..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="bg-transparent outline-none w-full text-sm text-slate-700 placeholder:text-slate-400"
@@ -372,7 +362,7 @@ export default function Home() {
             className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white py-2 px-4 rounded-full text-sm font-semibold hover:bg-orange-600 transition"
           >
             <Store className="w-4 h-4" />
-            <span>{t('my_shop')}</span>
+            <span>Ma boutique</span>
           </button>
           <button
             onClick={() => setShowCategories(!showCategories)}
@@ -383,7 +373,7 @@ export default function Home() {
             }`}
           >
             <Tag className="w-4 h-4" />
-            <span>{selectedFbCatId ? findById(selectedFbCatId)?.name : t('categories')}</span>
+            <span>{selectedFbCatId ? findById(selectedFbCatId)?.name : 'Catégories'}</span>
           </button>
         </div>
 
@@ -392,7 +382,7 @@ export default function Home() {
           <div className="px-4 pb-3 space-y-2">
             <div className="flex flex-wrap gap-1.5">
               {FB_TAXONOMY.map(cat => (
-                <button key={cat.id} onClick={() => { setFbLevel1Id(fbLevel1Id === cat.id ? null : cat.id); if (selectedFbCatId) setSelectedFbCatId(null); setVisibleCount(40); }}
+                <button key={cat.id} onClick={() => { setFbLevel1Id(fbLevel1Id === cat.id ? null : cat.id); if (selectedFbCatId) setSelectedFbCatId(null); }}
                   className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${fbLevel1Id === cat.id ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'}`}>
                   {cat.icon} {cat.name}
                 </button>
@@ -402,7 +392,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-1.5 ml-3 items-center">
                 <ChevronRight className="w-3 h-3 text-slate-400" />
                 {getChildren(fbLevel1Id).map(child => (
-                  <button key={child.id} onClick={() => { setSelectedFbCatId(selectedFbCatId === child.id ? null : child.id); setVisibleCount(40); }}
+                  <button key={child.id} onClick={() => setSelectedFbCatId(selectedFbCatId === child.id ? null : child.id)}
                     className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${selectedFbCatId === child.id ? 'bg-orange-500 text-white border-orange-500' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
                     {child.name}{child.children?.length > 0 && ' ›'}
                   </button>
@@ -441,9 +431,9 @@ export default function Home() {
         <main className="flex-1 p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-800">
-              {selectedFbCatId ? findById(selectedFbCatId)?.name : t('daily_selection')}
+              {selectedFbCatId ? findById(selectedFbCatId)?.name : 'Sélection du jour'}
             </h2>
-            <span className="text-xs text-slate-400">{t('products_count', { count: filteredProducts.length })}</span>
+            <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
           </div>
 
           {isLoading ? (
@@ -454,34 +444,22 @@ export default function Home() {
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-5xl mb-3">📦</div>
-              <p className="text-slate-500">{t('no_product_found')}</p>
+              <p className="text-slate-500">Aucun produit trouvé</p>
             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                {visibleProducts.map(product => {
-                  const shop = shops.find(s => s.id === product.shop_id);
-                  return (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      shop={shop}
-                      onClick={() => handleProductClick(product)}
-                    />
-                  );
-                })}
-              </div>
-              {hasMore && (
-                <div className="flex justify-center mt-6">
-                  <button
-                    onClick={() => setVisibleCount(c => c + 40)}
-                    className="px-8 py-3 bg-white border-2 border-orange-400 text-orange-500 font-semibold rounded-full text-sm hover:bg-orange-50 active:scale-95 transition-all shadow-sm"
-                  >
-                    Voir plus ({filteredProducts.length - visibleCount} restants)
-                  </button>
-                </div>
-              )}
-            </>
+            <div className="grid grid-cols-2 gap-3">
+              {filteredProducts.map(product => {
+                const shop = shops.find(s => s.id === product.shop_id);
+                return (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    shop={shop}
+                    onClick={() => handleProductClick(product)}
+                  />
+                );
+              })}
+            </div>
           )}
         </main>
       </PullToRefresh>
@@ -516,17 +494,17 @@ export default function Home() {
                 <Clock className="w-6 h-6 text-orange-600" />
               </div>
               <div>
-                <h4 className="font-bold text-gray-900">{t('dont_forget')}</h4>
+                <h4 className="font-bold text-gray-900">N'oubliez pas vos achats !</h4>
                 <p className="text-sm text-gray-600 mt-1">
                   Il vous reste <span className="font-bold">{cartCount} article{cartCount > 1 ? 's' : ''}</span> dans votre panier.
                 </p>
               </div>
             </div>
             <Button
-            className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold"
-            onClick={() => window.location.href = createPageUrl('Cart')}
+              className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold"
+              onClick={() => window.location.href = createPageUrl('Cart')}
             >
-            {t('finalize_order')}
+              Finaliser ma commande
             </Button>
           </div>
         </div>

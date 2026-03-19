@@ -9,7 +9,6 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Products from './pages/Products';
-import TaxonomySchema from './pages/TaxonomySchema';
 import Blog from './pages/Blog';
 import BlogArticle from './pages/BlogArticle';
 import BlogManager from './pages/BlogManager';
@@ -60,7 +59,6 @@ const InnerRouter = () => {
             }
           />
         ))}
-        <Route path="/TaxonomySchema" element={<LayoutWrapper currentPageName="TaxonomySchema"><TaxonomySchema /></LayoutWrapper>} />
         <Route path="/Blog" element={<LayoutWrapper currentPageName="Blog"><Blog /></LayoutWrapper>} />
         <Route path="/BlogArticle" element={<LayoutWrapper currentPageName="BlogArticle"><BlogArticle /></LayoutWrapper>} />
         <Route path="/BlogManager" element={<LayoutWrapper currentPageName="BlogManager"><BlogManager /></LayoutWrapper>} />
