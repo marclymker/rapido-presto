@@ -69,9 +69,15 @@ export default function MerchantDeliveryTracking({ order, onClose }) {
               Appeler le client
             </Button>
           </a>
-          <Button variant="outline" size="icon">
-            <Navigation className="w-4 h-4" />
-          </Button>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.client_address + ' ' + (order.client_region || ''))}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" size="icon" title="Ouvrir dans Google Maps">
+              <Navigation className="w-4 h-4" />
+            </Button>
+          </a>
         </div>
 
         {/* Address */}
