@@ -1,198 +1,125 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { checkRateLimit, rateLimitResponse, PAYMENT_MAX_REQUESTS } from './rateLimiter.js';
-import { validateInput, moncashPaymentSchema } from './validationSchemas.js';
-import { verifyCSRF } from './csrfProtection.js';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+
+const MONCASH_BASE = 'https://moncashbutton.digicelgroup.com/Api';
+const MONCASH_REDIRECT = 'https://moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect';
 
 async function getMoncashAccessToken() {
   const clientId = Deno.env.get("MONCASH_CLIENT_ID");
   const clientSecret = Deno.env.get("MONCASH_CLIENT_SECRET");
-  
   const authString = btoa(`${clientId}:${clientSecret}`);
-  
-  // SANDBOX URL pour tests
-  const response = await fetch('https://sandbox.moncashbutton.digicelgroup.com/Api/oauth/token', {
+
+  const response = await fetch(`${MONCASH_BASE}/oauth/token`, {
     method: 'POST',
     headers: {
       'Authorization': `Basic ${authString}`,
-      'Content-Type': 'application/x-www-form-urlencoded'
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json'
     },
     body: 'grant_type=client_credentials&scope=read,write'
   });
-  
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error('MonCash OAuth error:', response.status, errorText);
-    throw new Error(`OAuth failed: ${response.status}`);
+    throw new Error(`OAuth failed: ${response.status} - ${errorText}`);
   }
-  
+
   const data = await response.json();
-  if (!data.access_token) {
-    throw new Error('No access token received');
-  }
+  if (!data.access_token) throw new Error('No access token received');
   return data.access_token;
 }
 
 Deno.serve(async (req) => {
   try {
-    // SÉCURITÉ: Protection CSRF
-    const csrfCheck = verifyCSRF(req);
-    if (!csrfCheck.valid) {
-      return Response.json({ error: 'CSRF validation failed' }, { status: 403 });
-    }
-
-    // SÉCURITÉ: Rate limiting sur les paiements
-    const rateLimit = checkRateLimit(req, 'moncash-payment', PAYMENT_MAX_REQUESTS);
-    if (!rateLimit.allowed) {
-      return rateLimitResponse(rateLimit.retryAfter);
-    }
-
     const base44 = createClientFromRequest(req);
-    
     const user = await base44.auth.me();
     if (!user) {
-      console.error('❌ User not authenticated');
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await req.json();
-    
-    // SÉCURITÉ: Validation Zod des entrées
-    const validation = validateInput(moncashPaymentSchema, body);
-    if (!validation.success) {
-      console.error('❌ Validation error:', validation);
-      return Response.json({ 
-        success: false, 
-        error: validation.error, 
-        details: validation.details 
-      }, { status: 400 });
+    const { orderId, amount, description } = body;
+
+    if (!orderId || !amount) {
+      return Response.json({ success: false, error: 'orderId et amount sont requis' }, { status: 400 });
     }
 
-    const { orderId, amount, description } = validation.data;
-    
-    console.log('✅ Validated MonCash Request:', { orderId, amount, description });
-
-    // S'assurer que le montant est un nombre entier (MonCash n'accepte pas les décimales)
-    const cleanAmount = typeof amount === 'string' 
-      ? parseFloat(amount.replace(/[^0-9.]/g, ''))
-      : parseFloat(amount);
-    
+    const cleanAmount = parseFloat(String(amount).replace(/[^0-9.]/g, ''));
     if (isNaN(cleanAmount) || cleanAmount <= 0) {
-      console.error('❌ Invalid amount:', amount, '→', cleanAmount);
-      return Response.json({ 
-        success: false,
-        error: 'Montant invalide' 
-      }, { status: 400 });
+      return Response.json({ success: false, error: 'Montant invalide' }, { status: 400 });
     }
 
-    // MonCash exige un montant ENTIER (pas de décimales)
     const integerAmount = Math.round(cleanAmount);
-    console.log('✅ Integer amount:', integerAmount, 'HTG');
-
-    // OrderId UNIQUE: max 15 caractères alphanumériques + timestamp pour éviter les doublons
     const timestamp = Date.now().toString().slice(-6);
     const simpleOrderId = (orderId.replace(/[^a-zA-Z0-9]/g, '') + timestamp).slice(0, 15);
-    console.log('📋 Clean Order ID (Unique):', simpleOrderId);
 
+    console.log('🔑 Getting MonCash token (PRODUCTION)...');
     const accessToken = await getMoncashAccessToken();
-    console.log('✅ Access token obtained');
-    
-    // CRITICAL: returnUrl pour redirection après paiement
+    console.log('✅ Token obtained');
+
     const appUrl = Deno.env.get("APP_URL") || "https://rapido-presto.base44.app";
-    const returnUrl = `${appUrl}/payment/callback`;
-    
-    // Payload MonCash - MONTANT ENTIER, ORDER ID SIMPLE, RETURN URL
+    const returnUrl = `${appUrl}/PaymentCallback`;
+
     const paymentPayload = {
       amount: integerAmount,
       orderId: simpleOrderId,
       returnUrl: returnUrl
     };
-    
-    console.log('📦 Payment Payload (JSON):', JSON.stringify(paymentPayload, null, 2));
-    console.log('🔙 Return URL:', returnUrl);
-    
-    // SANDBOX URL pour tests
-    const createPaymentUrl = 'https://sandbox.moncashbutton.digicelgroup.com/Api/v1/CreatePayment';
-    console.log('🌐 POST:', createPaymentUrl);
-    
-    // AbortController pour timeout de 20 secondes
+
+    console.log('📦 Payload:', JSON.stringify(paymentPayload));
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
-    
-    try {
-      const paymentResponse = await fetch(createPaymentUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(paymentPayload),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
 
-      console.log('📡 MonCash Response Status:', paymentResponse.status);
+    const paymentResponse = await fetch(`${MONCASH_BASE}/v1/CreatePayment`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(paymentPayload),
+      signal: controller.signal
+    });
 
-      if (!paymentResponse.ok) {
+    clearTimeout(timeoutId);
+    console.log('📡 MonCash Response Status:', paymentResponse.status);
+
+    if (!paymentResponse.ok) {
       const errorText = await paymentResponse.text();
-      console.error('❌ MonCash CreatePayment Error:', {
-        status: paymentResponse.status,
-        statusText: paymentResponse.statusText,
-        body: errorText
-      });
-      
-      return Response.json({ 
-        success: false, 
+      console.error('❌ CreatePayment Error:', paymentResponse.status, errorText);
+      return Response.json({
+        success: false,
         error: `MonCash Error ${paymentResponse.status}`,
-        details: errorText,
-        sentPayload: paymentPayload
+        details: errorText
       }, { status: 400 });
     }
 
     const paymentData = await paymentResponse.json();
-    console.log('✅ MonCash Success Response:', JSON.stringify(paymentData, null, 2));
-    
+    console.log('✅ MonCash Success:', JSON.stringify(paymentData));
+
     if (!paymentData.payment_token?.token) {
-      console.error('❌ No payment token in response:', paymentData);
-      return Response.json({ 
-        success: false, 
+      return Response.json({
+        success: false,
         error: 'Token de paiement manquant',
         details: paymentData
       }, { status: 400 });
     }
 
-    // SANDBOX URL pour redirection
-    const paymentUrl = `https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect?token=${paymentData.payment_token.token}`;
-    
-    console.log('🚀 Payment URL:', paymentUrl);
-    
+    const paymentUrl = `${MONCASH_REDIRECT}?token=${paymentData.payment_token.token}`;
+
     return Response.json({
       success: true,
-      paymentUrl: paymentUrl,
+      paymentUrl,
       transactionId: paymentData.payment_token.token,
       orderId: simpleOrderId
     });
 
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      if (fetchError.name === 'AbortError') {
-        console.error('❌ MonCash Timeout: Pas de réponse en 20 secondes');
-        return Response.json({ 
-          success: false, 
-          error: 'Timeout MonCash: Le serveur ne répond pas. Vérifiez vos identifiants.',
-        }, { status: 504 });
-      }
-      throw fetchError;
-    }
-
   } catch (error) {
-    console.error('❌ Exception in MonCash payment:', error);
-    console.error('Stack trace:', error.stack);
-    return Response.json({ 
-      success: false, 
-      error: error.message,
-      stack: error.stack
-    }, { status: 500 });
+    if (error.name === 'AbortError') {
+      return Response.json({ success: false, error: 'Timeout: MonCash ne répond pas' }, { status: 504 });
+    }
+    console.error('❌ Exception:', error.message);
+    return Response.json({ success: false, error: error.message }, { status: 500 });
   }
 });
