@@ -273,7 +273,7 @@ export default function Home() {
     return [...top10, ...rest];
   }, [allProducts, searchQuery, selectedFbCatId]);
 
-  const handleProductClick = (product) => {
+  const handleProductClick = useCallback((product) => {
     const shop = shops.find(s => s.id === product.shop_id);
     trackProductView(product, shop);
     trackMetaEvent('ViewContent', {
@@ -283,11 +283,10 @@ export default function Home() {
       value: applyClientMargin(product.promo_price || product.price),
       currency: 'HTG',
     });
-    // Sauvegarder pour personnalisation future
     try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
     setSelectedProduct(product);
     setSelectedShop(shop || null);
-  };
+  }, [shops, trackProductView]);
 
   const handleSearchChange = (value) => {
     setSearchQuery(value);
