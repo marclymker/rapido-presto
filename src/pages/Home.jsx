@@ -6,6 +6,7 @@ import { Search, Tag, Store, ShoppingBag, ShoppingCart, X, Clock, ChevronRight }
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
+import { productThumbnail } from '@/components/utils/imageOptimizer';
 import { useAuth } from '@/components/auth/useAuth';
 import ProductDetailModal from '@/components/modals/ProductDetailModal';
 import { toast } from 'sonner';
