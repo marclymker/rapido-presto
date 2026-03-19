@@ -402,7 +402,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-1.5 ml-3 items-center">
                 <ChevronRight className="w-3 h-3 text-slate-400" />
                 {getChildren(fbLevel1Id).map(child => (
-                  <button key={child.id} onClick={() => setSelectedFbCatId(selectedFbCatId === child.id ? null : child.id)}
+                  <button key={child.id} onClick={() => { setSelectedFbCatId(selectedFbCatId === child.id ? null : child.id); setVisibleCount(40); }}
                     className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${selectedFbCatId === child.id ? 'bg-orange-500 text-white border-orange-500' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
                     {child.name}{child.children?.length > 0 && ' ›'}
                   </button>
