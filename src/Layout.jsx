@@ -199,6 +199,11 @@ export default function Layout({ children, currentPageName }) {
         <GA4Tracker />
         <OfflineIndicator />
 
+        {/* Language switcher — visible en haut à gauche */}
+        <div className="fixed top-4 left-4 z-50">
+          <LanguageSwitcher />
+        </div>
+
         {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (
           <div className="fixed top-4 right-4 z-50">
             <ProfileSwitcher user={user} />
