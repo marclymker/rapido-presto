@@ -36,12 +36,6 @@ export default function PayLink() {
   });
 
   const handlePay = async () => {
-    if (!user) {
-      toast.error('Connectez-vous pour payer');
-      base44.auth.redirectToLogin(window.location.href);
-      return;
-    }
-
     setStep('paying');
     try {
       const orderNum = 'RP' + Date.now().toString().slice(-6);
