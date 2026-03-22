@@ -218,12 +218,6 @@ export default function PayLink() {
           </div>
         </div>
 
-        {!user && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-700">
-            Vous devrez vous connecter pour finaliser le paiement.
-          </div>
-        )}
-
         <Button
           className="w-full h-14 text-lg font-bold bg-orange-500 hover:bg-orange-600"
           onClick={handlePay}
