@@ -78,6 +78,7 @@ const InnerRouter = () => {
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </PageTransitionWrapper>
+    </Suspense>
   );
 };
 
