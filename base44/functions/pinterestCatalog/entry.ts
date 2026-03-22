@@ -38,8 +38,8 @@ Deno.serve(async (req) => {
       
       // Construire l'URL du produit
       const productUrl = product.slug 
-        ? `https://rapido-presto.base44.app/product?slug=${product.slug}` 
-        : `https://rapido-presto.base44.app/product?id=${product.id}`;
+        ? `https://rapidopresto.shop/product?slug=${product.slug}` 
+        : `https://rapidopresto.shop/product?id=${product.id}`;
       
       return {
         id: product.id,
