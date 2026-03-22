@@ -1,10 +1,20 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
 Deno.serve(async (req) => {
+  // Permettre les requêtes CORS publiques
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET',
+      }
+    });
+  }
+
   try {
     const base44 = createClientFromRequest(req);
     
-    // Récupérer tous les produits actifs
+    // Récupérer tous les produits actifs (service role = accès public)
     const products = await base44.asServiceRole.entities.Product.filter({ 
       is_available: true 
     });
