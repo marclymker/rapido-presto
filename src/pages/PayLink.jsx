@@ -103,6 +103,13 @@ export default function PayLink() {
 
   if (!linkId) return <div className="min-h-screen flex items-center justify-center"><p className="text-slate-500">Lien invalide</p></div>;
 
+  // Si pas encore de user (en attente de redirect ou chargement), afficher spinner
+  if (loadingUser || (!user && !isLoading)) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+    </div>
+  );
+
   if (isLoading || loadingUser) return (
     <div className="min-h-screen flex items-center justify-center">
       <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
