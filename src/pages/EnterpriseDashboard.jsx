@@ -79,6 +79,7 @@ export default function EnterpriseDashboard() {
     { id: 'orders', label: 'Commandes', icon: '📦', badge: pendingOrders.length },
     { id: 'selfOrders', label: 'Mes Achats', icon: '🛒' },
     { id: 'products', label: 'Mes Articles', icon: '🛍️' },
+    { id: 'paylink', label: 'Lien Paiement', icon: '🔗' },
     { id: 'chat', label: 'Chat', icon: '💬', page: 'Chat' },
     { id: 'stats', label: 'Statistiques', icon: '📈' },
     { id: 'settings', label: 'Réglages', icon: '⚙️' },
@@ -155,6 +156,7 @@ export default function EnterpriseDashboard() {
           {activeTab === 'orders' && <OrdersSection orders={orders} onAddProduct={() => setActiveTab('products')} />}
           {activeTab === 'selfOrders' && <OrdersSection orders={selfOrders} onAddProduct={() => setActiveTab('products')} userType="client" isSelfOrders={true} />}
           {activeTab === 'products' && <ProductsSection shopId={myShop?.id} />}
+          {activeTab === 'paylink' && <PaymentLinkBuilder shop={myShop} user={user} />}
           {activeTab === 'stats' && <StatsSection orders={orders} />}
           {activeTab === 'settings' && <SettingsSection shop={myShop} />}
           {activeTab === 'account' && <AccountSection user={user} shop={myShop} />}

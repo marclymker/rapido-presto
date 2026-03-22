@@ -65,6 +65,7 @@ const InnerRouter = () => {
         <Route path="/BlogArticle" element={<LayoutWrapper currentPageName="BlogArticle"><BlogArticle /></LayoutWrapper>} />
         <Route path="/BlogManager" element={<LayoutWrapper currentPageName="BlogManager"><BlogManager /></LayoutWrapper>} />
         <Route path="/payment/callback" element={<LayoutWrapper currentPageName="PaymentCallback"><PaymentCallback /></LayoutWrapper>} />
+        <Route path="/PayLink" element={<PayLink />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </PageTransitionWrapper>
