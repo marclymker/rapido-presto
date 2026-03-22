@@ -8,12 +8,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import Products from './pages/Products';
-import Blog from './pages/Blog';
-import BlogArticle from './pages/BlogArticle';
-import BlogManager from './pages/BlogManager';
-import PaymentCallback from './pages/PaymentCallback';
-import PayLink from './pages/PayLink';
+import { lazy, Suspense } from 'react';
+
+const Products = lazy(() => import('./pages/Products'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogArticle = lazy(() => import('./pages/BlogArticle'));
+const BlogManager = lazy(() => import('./pages/BlogManager'));
+const PaymentCallback = lazy(() => import('./pages/PaymentCallback'));
+const PayLink = lazy(() => import('./pages/PayLink'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
