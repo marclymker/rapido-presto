@@ -18,7 +18,15 @@ export default function PayLink() {
   const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
-    base44.auth.me().then(u => setUser(u)).catch(() => {}).finally(() => setLoadingUser(false));
+    base44.auth.me()
+      .then(u => {
+        setUser(u);
+        setLoadingUser(false);
+      })
+      .catch(() => {
+        // Non connecté → redirection vers login avec retour automatique
+        base44.auth.redirectToLogin(window.location.href);
+      });
   }, []);
 
   const { data: link, isLoading } = useQuery({
