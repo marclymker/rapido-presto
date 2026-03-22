@@ -11,6 +11,7 @@ import StatsSection from '@/components/enterprise/StatsSection';
 import SettingsSection from '@/components/enterprise/SettingsSection';
 import AccountSection from '@/components/enterprise/AccountSection';
 import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
+import PaymentLinkBuilder from '@/components/enterprise/PaymentLinkBuilder';
 
 export default function EnterpriseDashboard() {
   const [user, setUser] = useState(null);
