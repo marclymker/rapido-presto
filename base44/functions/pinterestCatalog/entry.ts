@@ -83,8 +83,9 @@ Deno.serve(async (req) => {
       status: 200,
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': 'attachment; filename="pinterest-catalog.csv"',
-        'Cache-Control': 'public, max-age=3600' // Cache 1 heure
+        'Content-Disposition': 'inline; filename="pinterest-catalog.csv"',
+        'Cache-Control': 'public, max-age=3600',
+        'Access-Control-Allow-Origin': '*'
       }
     });
   } catch (error) {
