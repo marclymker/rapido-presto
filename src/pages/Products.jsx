@@ -32,7 +32,7 @@ const ProductCard = ({ product, shop, onClick }) => {
       <div className="relative aspect-square bg-slate-100">
         {product.image_url ? (
           <img
-            src={product.image_url}
+            src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}width=400&quality=70&resize=cover`}
             alt={product.name}
             className="w-full h-full object-cover"
             loading="lazy"
