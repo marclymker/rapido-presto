@@ -15,6 +15,8 @@ import { getClientPrice } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
 import { useGuestCart } from '@/components/cart/useGuestCart';
 import { useBackButton } from '@/components/navigation/useBackButton';
+import { trackMetaEvent } from '@/components/utils/metaTracking';
+import { getClientPrice } from '@/components/utils/priceCalculation';
 
 const WEDDING_STRUCTURE = [
   {
@@ -54,6 +56,11 @@ export default function ShopView() {
   const urlParams = new URLSearchParams(window.location.search);
   const shopSlug = urlParams.get('slug');
   const productSlug = urlParams.get('product');
+
+  // Track PageView Meta Pixel
+  useEffect(() => {
+    trackMetaEvent('PageView');
+  }, []);
 
   // 🔥 Pour les crawlers : rediriger vers la fonction backend avec meta tags statiques
   React.useEffect(() => {
@@ -468,6 +475,7 @@ export default function ShopView() {
                           shop={shop}
                           onAdd={handleAddToCart}
                           onClick={() => {
+                            trackMetaEvent('ViewContent', { content_ids: [product.id], content_type: 'product', content_name: product.name, value: getClientPrice(product), currency: 'HTG' });
                             window.history.pushState({}, '', `${window.location.pathname}?slug=${shopSlug}&product=${product.slug || product.id}`);
                             setSelectedProduct(product);
                           }}
@@ -495,35 +503,41 @@ export default function ShopView() {
                             product={product}
                             shop={shop}
                             onAdd={handleAddToCart}
-                            onClick={() => setSelectedProduct(product)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            ) : (
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {filteredProducts.map(product => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      shop={shop}
-                      onAdd={handleAddToCart}
-                      onClick={() => setSelectedProduct(product)}
-                    />
-                  ))}
-                </div>
-                {filteredProducts.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">Aucun produit trouvé</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </main>
+                            onClick={() => {
+                              trackMetaEvent('ViewContent', { content_ids: [product.id], content_type: 'product', content_name: product.name, value: getClientPrice(product), currency: 'HTG' });
+                              setSelectedProduct(product);
+                            }}
+                            />
+                            ))}
+                            </div>
+                            </div>
+                            ))
+                            )}
+                            </div>
+                            ) : (
+                            <div className="bg-white rounded-lg p-4 shadow-sm">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {filteredProducts.map(product => (
+                            <ProductCard
+                            key={product.id}
+                            product={product}
+                            shop={shop}
+                            onAdd={handleAddToCart}
+                            onClick={() => {
+                            trackMetaEvent('ViewContent', { content_ids: [product.id], content_type: 'product', content_name: product.name, value: getClientPrice(product), currency: 'HTG' });
+                            setSelectedProduct(product);
+                            }}
+                            />
+                            ))}
+                            </div>
+                            {filteredProducts.length === 0 && (
+                            <div className="text-center py-12">
+                            <p className="text-gray-500">Aucun produit trouvé</p>
+                            </div>
+                            )}
+                            </div>
+                            )}
+                            </main>
         </div>
       </div>
 
