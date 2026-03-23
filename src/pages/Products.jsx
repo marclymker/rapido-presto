@@ -71,7 +71,7 @@ export default function Products() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { trackProductView, trackCategoryView, trackSearch } = useActivityTracker();
+  const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategories, setShowCategories] = useState(false);
@@ -128,6 +128,7 @@ export default function Products() {
   });
 
   const handleAddToCart = (product, quantity = 1) => {
+    trackAddToCart(product);
     addToCartMutation.mutate({ product, quantity });
   };
 
