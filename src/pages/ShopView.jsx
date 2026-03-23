@@ -1,10 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Search, ShoppingCart, ArrowLeft, MapPin, Star } from 'lucide-react';
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -16,7 +15,6 @@ import { useAuth } from '@/components/auth/useAuth';
 import { useGuestCart } from '@/components/cart/useGuestCart';
 import { useBackButton } from '@/components/navigation/useBackButton';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
-import { getClientPrice } from '@/components/utils/priceCalculation';
 
 const WEDDING_STRUCTURE = [
   {
@@ -63,12 +61,11 @@ export default function ShopView() {
   }, []);
 
   // 🔥 Pour les crawlers : rediriger vers la fonction backend avec meta tags statiques
-  React.useEffect(() => {
+  useEffect(() => {
     const userAgent = navigator.userAgent || '';
     const isCrawler = /facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Slackbot/i.test(userAgent);
-    
     if (isCrawler && shopSlug) {
-      const backendUrl = productSlug 
+      const backendUrl = productSlug
         ? `/functions/ogMetaTags?slug=${shopSlug}&product=${productSlug}`
         : `/functions/ogMetaTags?slug=${shopSlug}`;
       window.location.href = backendUrl;
@@ -85,36 +82,31 @@ export default function ShopView() {
   const shop = shops[0];
 
   // Fetch products for this shop
-  const { data: allProducts = [], isLoading: loadingProducts } = useQuery({
+  const { data: allProducts = [] } = useQuery({
     queryKey: ['shop-products', shop?.id],
     queryFn: () => base44.entities.Product.filter({ shop_id: shop?.id, is_available: true }),
     enabled: !!shop?.id
   });
 
   // Auto-open product if product slug in URL
-  React.useEffect(() => {
+  useEffect(() => {
     if (productSlug && allProducts.length > 0) {
       const product = allProducts.find(p => p.slug === productSlug || p.id === productSlug);
-      if (product) {
-        setSelectedProduct(product);
-      }
+      if (product) setSelectedProduct(product);
     }
   }, [productSlug, allProducts]);
 
   // Filter products by category
   const filteredProducts = useMemo(() => {
     let filtered = allProducts;
-
     if (selectedCategory !== 'Tout') {
       filtered = filtered.filter(p => p.category === selectedCategory);
     }
-
     if (searchQuery.trim()) {
-      filtered = filtered.filter(p => 
+      filtered = filtered.filter(p =>
         p.name?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-
     return filtered;
   }, [allProducts, selectedCategory, searchQuery]);
 
@@ -127,9 +119,7 @@ export default function ShopView() {
   // Wedding products grouping
   const weddingProductsBySubCategory = useMemo(() => {
     if (selectedCategory !== 'Mariage') return {};
-    const weddingProducts = filteredProducts;
     const grouped = {};
-
     const classifyProduct = (product) => {
       const textToSearch = `${product.name} ${product.subcategory || ''} ${product.description || ''}`.toLowerCase();
       for (const group of WEDDING_STRUCTURE) {
@@ -142,13 +132,11 @@ export default function ShopView() {
       }
       return 'Autre';
     };
-
-    weddingProducts.forEach(product => {
+    filteredProducts.forEach(product => {
       const sub = classifyProduct(product);
       if (!grouped[sub]) grouped[sub] = [];
       grouped[sub].push(product);
     });
-
     return grouped;
   }, [filteredProducts, selectedCategory]);
 
@@ -163,18 +151,15 @@ export default function ShopView() {
     mutationFn: async ({ product, quantity = 1 }) => {
       const existing = cartItems.find(item => item.product_id === product.id);
       const clientPrice = getClientPrice(product);
-      
       if (existing) {
-        return base44.entities.CartItem.update(existing.id, {
-          quantity: existing.quantity + quantity
-        });
+        return base44.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
       } else {
         return base44.entities.CartItem.create({
           user_id: user.id,
           product_id: product.id,
           product_name: product.name,
           product_image: product.image_url,
-          quantity: quantity,
+          quantity,
           unit_price: clientPrice,
           shop_id: shop?.id,
           shop_name: shop?.company_name,
@@ -189,22 +174,32 @@ export default function ShopView() {
   });
 
   const handleAddToCart = (product, quantity = 1) => {
-    if (!user) { 
-      // Add to guest cart
+    if (!user) {
       addToGuestCart({
         product_id: product.id,
         product_name: product.name,
         product_image: product.image_url,
-        quantity: quantity,
+        quantity,
         unit_price: getClientPrice(product),
         shop_id: shop?.id,
         shop_name: shop?.company_name,
         shop_region: shop?.region
       });
       toast.success('Ajouté au panier');
-      return; 
+      return;
     }
     addToCartMutation.mutate({ product, quantity });
+  };
+
+  const handleProductClick = (product) => {
+    trackMetaEvent('ViewContent', {
+      content_ids: [product.id],
+      content_type: 'product',
+      content_name: product.name,
+      value: getClientPrice(product),
+      currency: 'HTG'
+    });
+    setSelectedProduct(product);
   };
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -214,9 +209,7 @@ export default function ShopView() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Boutique non trouvée</h2>
-          <Button onClick={() => window.location.href = createPageUrl('Home')}>
-            Retour à l'accueil
-          </Button>
+          <Button onClick={() => window.location.href = createPageUrl('Home')}>Retour à l'accueil</Button>
         </div>
       </div>
     );
@@ -238,31 +231,27 @@ export default function ShopView() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Boutique non trouvée</h2>
-          <Button onClick={() => window.location.href = createPageUrl('Home')}>
-            Retour à l'accueil
-          </Button>
+          <Button onClick={() => window.location.href = createPageUrl('Home')}>Retour à l'accueil</Button>
         </div>
       </div>
     );
   }
 
-  // Get selected product for meta tags
   const selectedProductForMeta = selectedProduct || (productSlug && allProducts.find(p => p.slug === productSlug));
   const productPrice = selectedProductForMeta ? getClientPrice(selectedProductForMeta) : null;
-  const pageTitle = selectedProductForMeta 
-    ? `${selectedProductForMeta.name} - ${productPrice?.toLocaleString()} HTG` 
+  const pageTitle = selectedProductForMeta
+    ? `${selectedProductForMeta.name} - ${productPrice?.toLocaleString()} HTG`
     : `${shop.company_name}`;
-  const pageDescription = selectedProductForMeta 
-    ? `${selectedProductForMeta.description || selectedProductForMeta.name} - Prix: ${productPrice?.toLocaleString()} Gourdes | ${shop.company_name}` 
+  const pageDescription = selectedProductForMeta
+    ? `${selectedProductForMeta.description || selectedProductForMeta.name} - Prix: ${productPrice?.toLocaleString()} Gourdes | ${shop.company_name}`
     : `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`;
-  // Assurer URL absolue pour l'image (requise par WhatsApp/Facebook)
   const ensureAbsoluteUrl = (url) => {
     if (!url) return null;
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
     return `${window.location.origin}${url}`;
   };
   const pageImage = ensureAbsoluteUrl(selectedProductForMeta?.image_url || shop.company_logo_url);
-  const pageUrl = selectedProductForMeta 
+  const pageUrl = selectedProductForMeta
     ? `${window.location.origin}${createPageUrl('ShopView')}?slug=${shopSlug}&product=${selectedProductForMeta.slug || selectedProductForMeta.id}`
     : window.location.href;
 
@@ -271,8 +260,6 @@ export default function ShopView() {
       <Helmet>
         <title>{pageTitle} - Rapido Presto</title>
         <meta name="description" content={pageDescription} />
-        
-        {/* Open Graph pour partages */}
         <meta property="og:type" content={selectedProductForMeta ? "product" : "website"} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
@@ -284,8 +271,6 @@ export default function ShopView() {
         {pageImage && <meta property="og:image:alt" content={pageTitle} />}
         <meta property="og:url" content={pageUrl} />
         <meta property="og:locale" content="fr_HT" />
-        
-        {/* Product-specific Open Graph */}
         {selectedProductForMeta && (
           <>
             <meta property="product:price:amount" content={productPrice} />
@@ -296,16 +281,12 @@ export default function ShopView() {
             <meta property="product:retailer_item_id" content={selectedProductForMeta.id} />
           </>
         )}
-        
-        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@RapidoPrestoHT" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         {pageImage && <meta name="twitter:image" content={pageImage} />}
         {pageImage && <meta name="twitter:image:alt" content={pageTitle} />}
-        
-        {/* WhatsApp specific */}
         {pageImage && <meta property="og:image:type" content="image/jpeg" />}
       </Helmet>
 
@@ -313,14 +294,9 @@ export default function ShopView() {
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => window.location.href = createPageUrl('Home')}
-            >
+            <Button variant="ghost" size="icon" onClick={() => window.location.href = createPageUrl('Home')}>
               <ArrowLeft className="w-6 h-6" />
             </Button>
-
             <div className="flex-1">
               <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
                 <Search className="w-4 h-4 text-gray-500" />
@@ -333,13 +309,7 @@ export default function ShopView() {
                 />
               </div>
             </div>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative"
-              onClick={() => window.location.href = createPageUrl('Cart')}
-            >
+            <Button variant="ghost" size="icon" className="relative" onClick={() => window.location.href = createPageUrl('Cart')}>
               <ShoppingCart className="w-6 h-6" />
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
@@ -359,12 +329,9 @@ export default function ShopView() {
               {shop.company_logo_url ? (
                 <img src={shop.company_logo_url} className="w-full h-full object-cover" alt={shop.company_name} />
               ) : (
-                <div className="w-full h-full bg-orange-50 flex items-center justify-center text-4xl">
-                  🏪
-                </div>
+                <div className="w-full h-full bg-orange-50 flex items-center justify-center text-4xl">🏪</div>
               )}
             </div>
-
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-slate-900 mb-2">{shop.company_name}</h1>
               <div className="flex flex-wrap gap-3 text-sm text-gray-600">
@@ -375,7 +342,6 @@ export default function ShopView() {
                     {shop.region}
                   </div>
                 )}
-
               </div>
               <div className="flex items-center gap-2 mt-3">
                 <div className="flex items-center gap-1">
@@ -397,14 +363,9 @@ export default function ShopView() {
             {categories.map(cat => (
               <button
                 key={cat}
-                onClick={() => {
-                  setSelectedCategory(cat);
-                  setSelectedSubCategory(null);
-                }}
+                onClick={() => { setSelectedCategory(cat); setSelectedSubCategory(null); }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedCategory === cat
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  selectedCategory === cat ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 {cat}
@@ -420,9 +381,7 @@ export default function ShopView() {
               <h3 className="font-bold text-lg mb-4">Départements</h3>
               <div className="space-y-1">
                 <div
-                  className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${
-                    !selectedSubCategory ? 'font-bold bg-gray-50 text-orange-600' : ''
-                  }`}
+                  className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${!selectedSubCategory ? 'font-bold bg-gray-50 text-orange-600' : ''}`}
                   onClick={() => setSelectedSubCategory(null)}
                 >
                   Tout voir
@@ -435,9 +394,7 @@ export default function ShopView() {
                         {group.subtypes.map((sub) => (
                           <div
                             key={sub}
-                            className={`cursor-pointer text-sm p-2 pl-4 rounded hover:bg-gray-100 ${
-                              selectedSubCategory === sub ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'
-                            }`}
+                            className={`cursor-pointer text-sm p-2 pl-4 rounded hover:bg-gray-100 ${selectedSubCategory === sub ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
                             onClick={() => setSelectedSubCategory(sub)}
                           >
                             {sub}
@@ -446,9 +403,7 @@ export default function ShopView() {
                       </div>
                     ) : (
                       <div
-                        className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${
-                          selectedSubCategory === group.title ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'
-                        }`}
+                        className={`cursor-pointer text-sm p-2 rounded hover:bg-gray-100 ${selectedSubCategory === group.title ? 'font-bold text-orange-600 bg-gray-50' : 'text-gray-600'}`}
                         onClick={() => setSelectedSubCategory(group.title)}
                       >
                         {group.title}
@@ -475,9 +430,8 @@ export default function ShopView() {
                           shop={shop}
                           onAdd={handleAddToCart}
                           onClick={() => {
-                            trackMetaEvent('ViewContent', { content_ids: [product.id], content_type: 'product', content_name: product.name, value: getClientPrice(product), currency: 'HTG' });
                             window.history.pushState({}, '', `${window.location.pathname}?slug=${shopSlug}&product=${product.slug || product.id}`);
-                            setSelectedProduct(product);
+                            handleProductClick(product);
                           }}
                         />
                       ))}
@@ -488,11 +442,7 @@ export default function ShopView() {
                     <div key={subCat} className="bg-white rounded-lg p-4 shadow-sm">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="font-bold text-lg">{subCat}</h3>
-                        <Button
-                          variant="link"
-                          className="text-sm text-orange-600"
-                          onClick={() => setSelectedSubCategory(subCat)}
-                        >
+                        <Button variant="link" className="text-sm text-orange-600" onClick={() => setSelectedSubCategory(subCat)}>
                           Voir plus
                         </Button>
                       </div>
@@ -503,41 +453,35 @@ export default function ShopView() {
                             product={product}
                             shop={shop}
                             onAdd={handleAddToCart}
-                            onClick={() => {
-                              trackMetaEvent('ViewContent', { content_ids: [product.id], content_type: 'product', content_name: product.name, value: getClientPrice(product), currency: 'HTG' });
-                              setSelectedProduct(product);
-                            }}
-                            />
-                            ))}
-                            </div>
-                            </div>
-                            ))
-                            )}
-                            </div>
-                            ) : (
-                            <div className="bg-white rounded-lg p-4 shadow-sm">
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {filteredProducts.map(product => (
-                            <ProductCard
-                            key={product.id}
-                            product={product}
-                            shop={shop}
-                            onAdd={handleAddToCart}
-                            onClick={() => {
-                            trackMetaEvent('ViewContent', { content_ids: [product.id], content_type: 'product', content_name: product.name, value: getClientPrice(product), currency: 'HTG' });
-                            setSelectedProduct(product);
-                            }}
-                            />
-                            ))}
-                            </div>
-                            {filteredProducts.length === 0 && (
-                            <div className="text-center py-12">
-                            <p className="text-gray-500">Aucun produit trouvé</p>
-                            </div>
-                            )}
-                            </div>
-                            )}
-                            </main>
+                            onClick={() => handleProductClick(product)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {filteredProducts.map(product => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      shop={shop}
+                      onAdd={handleAddToCart}
+                      onClick={() => handleProductClick(product)}
+                    />
+                  ))}
+                </div>
+                {filteredProducts.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">Aucun produit trouvé</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </main>
         </div>
       </div>
 
