@@ -1,88 +1,44 @@
 /**
  * pages.config.js - Page routing configuration
- * 
- * This file is AUTO-GENERATED. Do not add imports or modify PAGES manually.
- * Pages are auto-registered when you create files in the ./pages/ folder.
- * 
- * THE ONLY EDITABLE VALUE: mainPage
- * This controls which page is the landing page (shown when users visit the app).
- * 
- * Example file structure:
- * 
- *   import HomePage from './pages/HomePage';
- *   import Dashboard from './pages/Dashboard';
- *   import Settings from './pages/Settings';
- *   
- *   export const PAGES = {
- *       "HomePage": HomePage,
- *       "Dashboard": Dashboard,
- *       "Settings": Settings,
- *   }
- *   
- *   export const pagesConfig = {
- *       mainPage: "HomePage",
- *       Pages: PAGES,
- *   };
- * 
- * Example with Layout (wraps all pages):
- *
- *   import Home from './pages/Home';
- *   import Settings from './pages/Settings';
- *   import __Layout from './Layout.jsx';
- *
- *   export const PAGES = {
- *       "Home": Home,
- *       "Settings": Settings,
- *   }
- *
- *   export const pagesConfig = {
- *       mainPage: "Home",
- *       Pages: PAGES,
- *       Layout: __Layout,
- *   };
- *
- * To change the main page from HomePage to Dashboard, use find_replace:
- *   Old: mainPage: "HomePage",
- *   New: mainPage: "Dashboard",
- *
- * The mainPage value must match a key in the PAGES object exactly.
+ * Lazy-loaded for performance — all pages load on demand only.
  */
-import Account from './pages/Account';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminProducts from './pages/AdminProducts';
-import AdminShops from './pages/AdminShops';
-import AdminValidation from './pages/AdminValidation';
-import AgentAccount from './pages/AgentAccount';
-import AgentClients from './pages/AgentClients';
-import AgentCommissions from './pages/AgentCommissions';
-import AgentDashboard from './pages/AgentDashboard';
-import AllOrdersAdmin from './pages/AllOrdersAdmin';
-import Cart from './pages/Cart';
-import CategoryPage from './pages/CategoryPage';
-import Chat from './pages/Chat';
-import Dashboard from './pages/Dashboard';
-import DriverAccount from './pages/DriverAccount';
-import DriverDashboard from './pages/DriverDashboard';
-import EnterpriseAccount from './pages/EnterpriseAccount';
-import EnterpriseDashboard from './pages/EnterpriseDashboard';
-import EventPlannerHaiti from './pages/EventPlannerHaiti';
-import Home from './pages/Home';
-import ManageProfiles from './pages/ManageProfiles';
-import Orders from './pages/Orders';
-import PaymentCallback from './pages/PaymentCallback';
-import Pricing from './pages/Pricing';
-import Product from './pages/Product';
-import ProductPage from './pages/ProductPage';
-import Products from './pages/Products';
-import ProfileSetup from './pages/ProfileSetup';
-import RobeDeMariageHaiti from './pages/RobeDeMariageHaiti';
-import ShopPage from './pages/ShopPage';
-import ShopView from './pages/ShopView';
-import TestNotifications from './pages/TestNotifications';
-import UpdateProducts from './pages/UpdateProducts';
-import WeddingPlannerHaiti from './pages/WeddingPlannerHaiti';
+import { lazy } from 'react';
 import __Layout from './Layout.jsx';
 
+const Account = lazy(() => import('./pages/Account'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminProducts = lazy(() => import('./pages/AdminProducts'));
+const AdminShops = lazy(() => import('./pages/AdminShops'));
+const AdminValidation = lazy(() => import('./pages/AdminValidation'));
+const AgentAccount = lazy(() => import('./pages/AgentAccount'));
+const AgentClients = lazy(() => import('./pages/AgentClients'));
+const AgentCommissions = lazy(() => import('./pages/AgentCommissions'));
+const AgentDashboard = lazy(() => import('./pages/AgentDashboard'));
+const AllOrdersAdmin = lazy(() => import('./pages/AllOrdersAdmin'));
+const Cart = lazy(() => import('./pages/Cart'));
+const CategoryPage = lazy(() => import('./pages/CategoryPage'));
+const Chat = lazy(() => import('./pages/Chat'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const DriverAccount = lazy(() => import('./pages/DriverAccount'));
+const DriverDashboard = lazy(() => import('./pages/DriverDashboard'));
+const EnterpriseAccount = lazy(() => import('./pages/EnterpriseAccount'));
+const EnterpriseDashboard = lazy(() => import('./pages/EnterpriseDashboard'));
+const EventPlannerHaiti = lazy(() => import('./pages/EventPlannerHaiti'));
+const Home = lazy(() => import('./pages/Home'));
+const ManageProfiles = lazy(() => import('./pages/ManageProfiles'));
+const Orders = lazy(() => import('./pages/Orders'));
+const PaymentCallback = lazy(() => import('./pages/PaymentCallback'));
+const Pricing = lazy(() => import('./pages/Pricing'));
+const Product = lazy(() => import('./pages/Product'));
+const ProductPage = lazy(() => import('./pages/ProductPage'));
+const Products = lazy(() => import('./pages/Products'));
+const ProfileSetup = lazy(() => import('./pages/ProfileSetup'));
+const RobeDeMariageHaiti = lazy(() => import('./pages/RobeDeMariageHaiti'));
+const ShopPage = lazy(() => import('./pages/ShopPage'));
+const ShopView = lazy(() => import('./pages/ShopView'));
+const TestNotifications = lazy(() => import('./pages/TestNotifications'));
+const UpdateProducts = lazy(() => import('./pages/UpdateProducts'));
+const WeddingPlannerHaiti = lazy(() => import('./pages/WeddingPlannerHaiti'));
 
 export const PAGES = {
     "Account": Account,
