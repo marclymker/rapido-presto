@@ -434,6 +434,67 @@ export default function Account() {
                 </Button>
               </div>
               
+              <div className="bg-white rounded-lg p-3 border-2 border-blue-200">
+                <h4 className="text-sm font-medium mb-2 text-blue-700">🖼️ Compresser les images (Bulk)</h4>
+                <p className="text-xs text-slate-600 mb-3">
+                  Réduit la résolution de toutes les images produits et logos boutiques pour accélérer le chargement (w=800, qualité 75%).
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={async () => {
+                      setConvertingWhatsApp(true);
+                      try {
+                        const response = await base44.functions.invoke('compressImages', { dry_run: true });
+                        toast.info(response.data.message);
+                      } catch (error) {
+                        toast.error('Erreur: ' + error.message);
+                      } finally {
+                        setConvertingWhatsApp(false);
+                      }
+                    }}
+                    disabled={convertingWhatsApp}
+                    variant="outline"
+                    className="flex-1 border-blue-300 text-blue-700"
+                  >
+                    Simuler (dry run)
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button disabled={convertingWhatsApp} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                        Appliquer
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Compresser toutes les images ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Ceci va réécrire les URLs de toutes les images produits et logos pour utiliser la version compressée (800px, q75). L'action est réversible.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-blue-600 hover:bg-blue-700"
+                          onClick={async () => {
+                            setConvertingWhatsApp(true);
+                            try {
+                              const response = await base44.functions.invoke('compressImages', { dry_run: false });
+                              toast.success(response.data.message);
+                            } catch (error) {
+                              toast.error('Erreur: ' + error.message);
+                            } finally {
+                              setConvertingWhatsApp(false);
+                            }
+                          }}
+                        >
+                          Confirmer
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+
               <div className="bg-white rounded-lg p-3 border-2 border-red-200">
                 <h4 className="text-sm font-medium mb-2 text-red-600">Déconnecter tous les utilisateurs</h4>
                 <p className="text-xs text-slate-600 mb-3">
