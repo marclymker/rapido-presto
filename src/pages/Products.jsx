@@ -93,7 +93,7 @@ export default function Products() {
 
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200),
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 2000),
   });
 
   const { data: shops = [] } = useQuery({
