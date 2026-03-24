@@ -337,6 +337,39 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
       const taxonomyList = getTaxonomyMappingPrompt();
       const result = await base44.integrations.Core.InvokeLLM({
         model: 'claude_sonnet_4_6',
+        prompt: `Tu es un expert en vision IA et en e-commerce haïtien (RapidoPresto). Analyse l'image ET le titre pour remplir toutes les données produit.
+
+Titre du produit : "${formData.name}"
+
+━━━ CLASSIFICATION ━━━
+
+FB_CATEGORY_ID : Identifie la catégorie Facebook/Google Taxonomy la plus PRÉCISE pour ce produit :
+${taxonomyList}
+Retourne l'ID entier exact (ex: 225 pour Smartphones, 211 pour Bagues, 195 pour chaussures femmes).
+
+APP_CATEGORY : Choisis UNE catégorie parmi cette liste exacte :
+"Restaurants", "Epicerie", "Café", "Pharmacie", "Maison", "Electronics", "Pour Femme", "Pour homme", "Bijoux", "Mariage", "Boutique Fleurs", "Bébé", "Outils", "Matériels Décor"
+
+━━━ DESCRIPTION ━━━
+3-4 lignes percutantes avec emojis. Bénéfice client clair + sentiment d'urgence + appel à l'action. Mentionne Haïti, livraison rapide. EN FRANÇAIS uniquement.
+
+━━━ SEO TAGS — TRÈS IMPORTANT ━━━
+Génère EXACTEMENT 20 tags SEO ultra-puissants. Champ lexical TRÈS LARGE :
+- Synonymes français (ex: robe, tenue, vêtement, habit, toilette)
+- Termes créole haïtien (ex: rad, bijou, kay, manje, telefòn)
+- Variations orthographiques courantes
+- Termes de recherche haïtiens populaires
+- Noms de villes : Port-au-Prince, Delmas, Pétion-Ville, Cap-Haïtien, Gonaïves, Carrefour
+- Termes anglais pertinents
+- Catégorie, usage, matière, couleur si visible
+Format: tableau de 20 strings courts (2-4 mots max par tag).
+
+━━━ IMAGE ALT ━━━
+15-20 mots décrivant précisément la photo pour Google Images et l'accessibilité.
+
+Réponds en JSON strict.`,
+        file_urls: [formData.image_url],
+        response_json_schema: {
           type: "object",
           properties: {
             description: { type: "string" },
