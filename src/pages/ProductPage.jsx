@@ -310,6 +310,16 @@ export default function ProductPage() {
           <p className="text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">{product.description}</p>
         )}
 
+        {/* Content ID + Stock — Meta Pixel retargeting */}
+        <div className="flex items-center gap-3 mt-2 flex-wrap">
+          <span className="text-[9px] text-slate-300 font-mono">ID: {product.id}</span>
+          {product.stock_quantity !== undefined && (
+            <span className={`text-[9px] font-semibold ${product.stock_quantity > 0 ? 'text-green-500' : 'text-red-400'}`}>
+              {product.stock_quantity > 0 ? `✓ ${product.stock_quantity} en stock` : '✗ Rupture'}
+            </span>
+          )}
+        </div>
+
         {/* Qty picker + add to cart */}
         <div className="flex items-center gap-3 mt-4">
           <span className="text-sm font-semibold text-slate-700">Quantité :</span>

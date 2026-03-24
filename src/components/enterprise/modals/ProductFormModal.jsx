@@ -305,13 +305,26 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
   const handleImageUpload = async (e, isAdditional = false) => {
     const file = e.target.files?.[0];
     if (!file) return;
-     
+
     setLoading(true);
-    toast.info('📸 Téléchargement en cours...');
-    
+    toast.info('📸 Téléchargement et vérification en cours...');
+
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      
+
+      // Scan for phone numbers in the image
+      const scanResult = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyse cette image. Y a-t-il un numéro de téléphone visible (ex: +509, 509, 3xxxxxxx, 4xxxxxxx, numéro haïtien ou autre) écrit ou imprimé sur l'image ? Réponds UNIQUEMENT par JSON : {"has_phone": true/false, "reason": "..."}`,
+        file_urls: [file_url],
+        response_json_schema: { type: "object", properties: { has_phone: { type: "boolean" }, reason: { type: "string" } }, required: ["has_phone"] }
+      });
+
+      if (scanResult?.has_phone) {
+        toast.error('🚫 Photo refusée : numéro de téléphone détecté. Veuillez supprimer le numéro de la photo avant de la publier.', { duration: 6000 });
+        setLoading(false);
+        return;
+      }
+
       if (isAdditional) {
         setFormData(prev => ({ ...prev, additional_images: [...prev.additional_images, file_url] }));
         toast.success('Image ajoutée');
