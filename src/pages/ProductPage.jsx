@@ -71,11 +71,13 @@ export default function ProductPage() {
   // Track ViewContent once product loads
   useEffect(() => {
     if (!product) return;
+    const price = applyClientMargin(product.promo_price || product.price);
     trackMetaEvent('ViewContent', {
       content_ids: [product.id],
       content_type: 'product',
       content_name: product.name,
-      value: applyClientMargin(product.promo_price || product.price),
+      contents: [{ id: product.id, quantity: 1, item_price: price }],
+      value: price,
       currency: 'HTG',
     });
     try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
@@ -110,11 +112,13 @@ export default function ProductPage() {
   });
 
   const handleAddToCart = useCallback(() => {
+    const unitPrice = getClientPrice(product);
     trackMetaEvent('AddToCart', {
       content_ids: [product.id],
       content_type: 'product',
       content_name: product.name,
-      value: getClientPrice(product) * qty,
+      contents: [{ id: product.id, quantity: qty, item_price: unitPrice }],
+      value: unitPrice * qty,
       currency: 'HTG',
     });
     if (!user) {
@@ -126,10 +130,13 @@ export default function ProductPage() {
   }, [product, qty, user, shop]);
 
   const handlePayNow = useCallback(() => {
+    const unitPrice2 = getClientPrice(product);
     trackMetaEvent('InitiateCheckout', {
       content_ids: [product.id],
+      content_type: 'product',
       content_name: product.name,
-      value: getClientPrice(product) * qty,
+      contents: [{ id: product.id, quantity: qty, item_price: unitPrice2 }],
+      value: unitPrice2 * qty,
       currency: 'HTG',
     });
     handleAddToCart();

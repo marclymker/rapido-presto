@@ -29,16 +29,16 @@ export function useActivityTracker() {
 
   // 🎯 TRACKING PRODUIT VU (ViewContent)
   const trackProductView = (product, shop) => {
-    const price = product.promo_price || product.price || 0;
+    const price = parseFloat(product.promo_price || product.price || 0);
     
-    // Meta Pixel - CORRIGÉ: content_type requis pour Dynamic Product Ads
     if (window.fbq) {
       window.fbq('track', 'ViewContent', {
         content_ids: [product.id],
-        content_type: 'product',        // ✅ REQUIS pour Dynamic Product Ads
+        content_type: 'product',
         content_name: product.name,
         content_category: product.category,
-        value: parseFloat(price),
+        contents: [{ id: product.id, quantity: 1, item_price: price }],
+        value: price,
         currency: 'HTG'
       });
     }
@@ -58,16 +58,16 @@ export function useActivityTracker() {
 
   // 🛒 TRACKING AJOUT PANIER (AddToCart)
   const trackAddToCart = (product, quantity = 1) => {
-    const price = product.promo_price || product.price || 0;
-    const totalValue = parseFloat(price) * quantity;
+    const price = parseFloat(product.promo_price || product.price || 0);
+    const totalValue = price * quantity;
 
-    // Meta Pixel - CORRIGÉ: content_type + value requis pour DPA
     if (window.fbq) {
       window.fbq('track', 'AddToCart', {
         content_ids: [product.id],
-        content_type: 'product',        // ✅ REQUIS pour Dynamic Product Ads
+        content_type: 'product',
         content_name: product.name,
         content_category: product.category,
+        contents: [{ id: product.id, quantity, item_price: price }],
         value: totalValue,
         currency: 'HTG'
       });
@@ -92,6 +92,7 @@ export function useActivityTracker() {
         content_ids: cartItems.map(item => item.product_id),
         content_type: 'product',
         num_items: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+        contents: cartItems.map(item => ({ id: item.product_id, quantity: item.quantity, item_price: item.unit_price })),
         value: parseFloat(total),
         currency: 'HTG'
       });
@@ -108,6 +109,7 @@ export function useActivityTracker() {
         content_ids: order.items?.map(item => item.product_id) || [],
         content_type: 'product',
         num_items: order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0,
+        contents: order.items?.map(item => ({ id: item.product_id, quantity: item.quantity, item_price: item.unit_price })) || [],
         value: parseFloat(order.total),
         currency: 'HTG',
         order_id: order.order_number
