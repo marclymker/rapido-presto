@@ -11,6 +11,11 @@ import { useGuestCart } from '@/components/cart/useGuestCart';
 import { toast } from 'sonner';
 import CompactProductCard from '@/components/home/CompactProductCard';
 
+// Save and restore scroll position for marketplace back-navigation
+function saveScroll() {
+  try { sessionStorage.setItem('marketplace_scroll', String(window.scrollY)); } catch (_) {}
+}
+
 export default function ProductPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -20,6 +25,14 @@ export default function ProductPage() {
   const [qty, setQty] = useState(1);
   const [imgIndex, setImgIndex] = useState(0);
   const [showRelated, setShowRelated] = useState(false);
+
+  // Push history entry so Android back button works correctly
+  useEffect(() => {
+    window.history.pushState({ productPage: true }, '');
+    const handlePop = () => navigate(-1);
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, []);
 
   // Fetch product by slug or id
   const { data: products = [], isLoading } = useQuery({
@@ -159,8 +172,13 @@ export default function ProductPage() {
     ? `${product.description.slice(0, 150)} - Prix: ${price.toLocaleString()} HTG. Livraison rapide en Haïti.`
     : `${product.name} disponible en Haïti. Prix: ${price.toLocaleString()} HTG. Commandez maintenant sur Rapido Presto.`;
 
+  const handleBack = () => {
+    saveScroll();
+    navigate(-1);
+  };
+
   return (
-    <div className="min-h-screen bg-white pb-28">
+    <div className="min-h-screen bg-white" style={{ paddingBottom: '80px' }}>
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDesc} />
@@ -176,7 +194,7 @@ export default function ProductPage() {
 
       {/* Back button */}
       <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-sm px-4 py-3 flex items-center gap-3 border-b border-slate-100">
-        <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-full hover:bg-slate-100">
+        <button onClick={handleBack} className="p-1.5 -ml-1.5 rounded-full hover:bg-slate-100">
           <ArrowLeft className="w-5 h-5 text-slate-700" />
         </button>
         <span className="text-sm font-semibold text-slate-700 truncate flex-1">{product.name}</span>
@@ -276,27 +294,46 @@ export default function ProductPage() {
         </div>
       )}
 
-      {/* Sticky action bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
-        <button
-          onClick={handleWhatsApp}
-          className="flex items-center justify-center gap-1.5 bg-[#25D366] text-white font-bold rounded-xl px-4 py-3 flex-shrink-0"
-        >
-          <MessageCircle className="w-4 h-4" />
-          <span className="text-sm">WA</span>
-        </button>
-        <button
-          onClick={handleAddToCart}
-          className="flex-1 bg-slate-800 text-white font-bold rounded-xl py-3 text-sm"
-        >
-          Ajouter au panier
-        </button>
-        <button
-          onClick={handlePayNow}
-          className="flex-1 bg-orange-500 text-white font-bold rounded-xl py-3 text-sm"
-        >
-          Payer maintenant
-        </button>
+      {/* Sticky action bar — fixed, root level, always visible */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          zIndex: 9999,
+          background: '#fff',
+          boxShadow: '0 -2px 12px rgba(0,0,0,0.10)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
+        <div className="flex items-center gap-2 px-3 py-2.5">
+          {/* WhatsApp ~22% */}
+          <button
+            onClick={handleWhatsApp}
+            style={{ minHeight: 48, flex: '0 0 22%' }}
+            className="flex items-center justify-center gap-1 bg-[#25D366] text-white font-bold rounded-xl text-xs"
+          >
+            <MessageCircle className="w-4 h-4 flex-shrink-0" />
+            <span>WA</span>
+          </button>
+          {/* Ajouter ~32% */}
+          <button
+            onClick={handleAddToCart}
+            style={{ minHeight: 48, flex: '0 0 32%' }}
+            className="flex items-center justify-center bg-slate-700 text-white font-bold rounded-xl text-sm"
+          >
+            Ajouter
+          </button>
+          {/* Payer ~46% */}
+          <button
+            onClick={handlePayNow}
+            style={{ minHeight: 48, flex: '1 1 0' }}
+            className="flex items-center justify-center bg-orange-500 text-white font-bold rounded-xl text-sm"
+          >
+            Payer maintenant
+          </button>
+        </div>
       </div>
     </div>
   );

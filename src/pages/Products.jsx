@@ -27,6 +27,17 @@ export default function Products() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // Restore scroll position when returning from a product page
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('marketplace_scroll');
+      if (saved) {
+        window.scrollTo(0, parseInt(saved, 10));
+        sessionStorage.removeItem('marketplace_scroll');
+      }
+    } catch (_) {}
+  }, []);
   const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
   const [visibleCount, setVisibleCount] = useState(60);
   const [searchQuery, setSearchQuery] = useState('');
