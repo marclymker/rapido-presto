@@ -300,7 +300,7 @@ export default function ProductPage() {
         <h1 className="text-lg font-bold text-slate-900 leading-snug mb-2">{product.name}</h1>
 
         {shop && (
-          <button onClick={() => navigate(`/shop-view?slug=${shop.slug || ''}&id=${shop.id}`)} className="flex items-center gap-2 mb-3">
+          <button onClick={() => navigate(`/ShopView?slug=${shop.slug || ''}&id=${shop.id}`)} className="flex items-center gap-2 mb-3">
             {shop.company_logo_url && <img src={shop.company_logo_url} alt={shop.company_name} className="w-7 h-7 rounded-full object-cover border border-slate-200" />}
             <span className="text-sm text-orange-500 font-semibold">{shop.company_name}</span>
           </button>

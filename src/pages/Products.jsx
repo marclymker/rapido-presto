@@ -132,6 +132,21 @@ export default function Products() {
   }, [selectedFbCatId]);
 
   // Algorithme de personnalisation basé sur le dernier produit visualisé
+  // Fuzzy search helper: normalize accents + allow 1 char difference
+  const normalize = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const fuzzyMatch = (text, keyword) => {
+    const t = normalize(text), k = normalize(keyword);
+    if (t.includes(k)) return true;
+    if (k.length <= 3) return false;
+    // Allow 1 char difference (simple fuzzy)
+    for (let i = 0; i <= t.length - k.length + 1; i++) {
+      let diff = 0;
+      for (let j = 0; j < k.length; j++) { if (t[i + j] !== k[j]) diff++; if (diff > 1) break; }
+      if (diff <= 1) return true;
+    }
+    return false;
+  };
+
   const filteredProducts = React.useMemo(() => {
     const base = allProducts.filter(p => {
       const matchCategory = !selectedCategory || p.category === selectedCategory;
@@ -140,27 +155,6 @@ export default function Products() {
         const shop = shops.find(s => s.id === p.shop_id);
         if (shop && shop.region && shop.region !== selectedRegion) return false;
       }
-      // Filtre taxonomie FB (inclut tous les sous-niveaux)
-      if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
-
-      // Recherche hybride multi-mots : titre + nom + description + tags SEO
-      if (searchQuery.trim()) {
-        const keywords = searchQuery.toLowerCase().trim().split(/\s+/).filter(w => w.length > 1);
-        const title = (p.name || '').toLowerCase();
-        const desc = (p.description || '').toLowerCase();
-        const shopName = (p.shop_name || '').toLowerCase();
-        const tags = (p.seo_tags || []).map(t => t.toLowerCase());
-
-        return keywords.every(keyword =>
-          title.includes(keyword) ||
-          desc.includes(keyword) ||
-          shopName.includes(keyword) ||
-          tags.some(tag => tag.includes(keyword))
-        );
-      }
-
-      return true;
-    });
 
     // Si recherche ou catégorie active, pas de personnalisation
     if (searchQuery || selectedCategory || selectedFbCatId || selectedRegion) return base;
