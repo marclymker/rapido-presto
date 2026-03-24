@@ -230,17 +230,9 @@ export default function Home() {
   const handleProductClick = useCallback((product) => {
     const shop = shops.find(s => s.id === product.shop_id);
     trackProductView(product, shop);
-    trackMetaEvent('ViewContent', {
-      content_ids: [product.id],
-      content_type: 'product',
-      content_name: product.name,
-      value: applyClientMargin(product.promo_price || product.price),
-      currency: 'HTG',
-    });
     try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
-    setSelectedProduct(product);
-    setSelectedShop(shop || null);
-  }, [shops, trackProductView]);
+    navigate(`/product/${product.slug || product.id}`);
+  }, [shops, trackProductView, navigate]);
 
   const handleSearchChange = (value) => {
     setSearchQuery(value);

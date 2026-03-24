@@ -184,17 +184,8 @@ export default function Products() {
   const handleProductClick = (product) => {
     const shop = shops.find(s => s.id === product.shop_id);
     trackProductView(product, shop);
-    trackMetaEvent('ViewContent', {
-      content_ids: [product.id],
-      content_type: 'product',
-      content_name: product.name,
-      value: applyClientMargin(product.promo_price || product.price),
-      currency: 'HTG',
-    });
-    // Sauvegarder pour personnalisation future
     try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
-    setSelectedProduct(product);
-    setSelectedShop(shop || null);
+    navigate(`/product/${product.slug || product.id}`);
   };
 
   const handleSearchChange = (value) => {

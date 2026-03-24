@@ -1,389 +1,303 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, ShoppingCart, MessageCircle, ChevronLeft, ChevronRight, Truck } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, ShoppingCart, Share2, Heart, Truck, Shield, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import ProductCard from '@/components/ui/ProductCard';
-import { getClientPrice } from '@/components/utils/priceCalculation';
+import { applyClientMargin, getClientPrice } from '@/components/utils/priceCalculation';
+import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { useAuth } from '@/components/auth/useAuth';
-import { createPageUrl } from '@/utils';
-import { useActivityTracker } from '@/components/tracking/useActivityTracker';
+import { useGuestCart } from '@/components/cart/useGuestCart';
+import { toast } from 'sonner';
+import CompactProductCard from '@/components/home/CompactProductCard';
 
-/**
- * PAGE PRODUIT INDIVIDUELLE - SEO OPTIMISÉE
- * URL: /products/{slug-produit}
- * 
- * ✅ URL propre et statique
- * ✅ Meta tags dynamiques complets
- * ✅ Structured data (Product Schema)
- * ✅ Breadcrumb
- * ✅ Images optimisées
- * ✅ Performance optimale
- */
 export default function ProductPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { trackProductView, trackAddToCart } = useActivityTracker();
-  const [selectedImage, setSelectedImage] = useState(0);
+  const { addToGuestCart } = useGuestCart();
+  const queryClient = useQueryClient();
+  const [qty, setQty] = useState(1);
+  const [imgIndex, setImgIndex] = useState(0);
+  const [showRelated, setShowRelated] = useState(false);
 
-  // Récupérer le produit par slug
+  // Fetch product by slug or id
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ['product-by-slug', slug],
-    queryFn: () => base44.entities.Product.filter({ slug }),
-    enabled: !!slug
+    queryKey: ['product', slug],
+    queryFn: async () => {
+      const bySlug = await base44.entities.Product.filter({ slug });
+      if (bySlug.length > 0) return bySlug;
+      return base44.entities.Product.filter({ id: slug });
+    },
+    enabled: !!slug,
   });
 
   const product = products[0];
 
-  // Récupérer la boutique
   const { data: shops = [] } = useQuery({
-    queryKey: ['shop', product?.shop_id],
-    queryFn: () => base44.entities.Shop.filter({ id: product.shop_id }),
-    enabled: !!product?.shop_id
+    queryKey: ['shops'],
+    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    staleTime: 10 * 60 * 1000,
   });
 
-  const shop = shops[0];
+  const shop = shops.find(s => s.id === product?.shop_id);
 
-  // Produits similaires
-  const { data: similarProducts = [] } = useQuery({
-    queryKey: ['similar', product?.category, product?.id],
-    queryFn: () => base44.entities.Product.filter({ 
-      category: product.category,
-      is_available: true 
-    }),
-    enabled: !!product?.category,
-    select: (data) => data.filter(p => p.id !== product?.id).slice(0, 8)
+  // Related products
+  const { data: relatedProducts = [] } = useQuery({
+    queryKey: ['related', product?.category, product?.id],
+    queryFn: () => base44.entities.Product.filter({ category: product.category, is_available: true }, '-created_date', 20),
+    enabled: showRelated && !!product?.category,
   });
 
+  const { data: cartItems = [] } = useQuery({
+    queryKey: ['cart', user?.id],
+    queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
+    enabled: !!user?.id,
+  });
+
+  // Track ViewContent once product loads
   useEffect(() => {
-    if (product) {
-      setSelectedImage(0);
-      // Track ViewContent pour Meta Pixel + GA4
-      trackProductView(product, shop);
-    }
+    if (!product) return;
+    trackMetaEvent('ViewContent', {
+      content_ids: [product.id],
+      content_type: 'product',
+      content_name: product.name,
+      value: applyClientMargin(product.promo_price || product.price),
+      currency: 'HTG',
+    });
+    try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
+    // Show related after 1.5s
+    const t = setTimeout(() => setShowRelated(true), 1500);
+    return () => clearTimeout(t);
   }, [product?.id]);
 
-  const handleAddToCart = async () => {
+  const addToCartMutation = useMutation({
+    mutationFn: async ({ quantity }) => {
+      const existing = cartItems.find(i => i.product_id === product.id);
+      const price = getClientPrice(product);
+      if (existing) {
+        return base44.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
+      }
+      return base44.entities.CartItem.create({
+        user_id: user.id,
+        product_id: product.id,
+        product_name: product.name,
+        product_image: product.image_url,
+        quantity,
+        unit_price: price,
+        shop_id: product.shop_id,
+        shop_name: shop?.company_name || '',
+        shop_region: shop?.region || '',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['cart', user?.id]);
+      toast.success('Ajouté au panier !');
+    },
+  });
+
+  const handleAddToCart = useCallback(() => {
+    trackMetaEvent('AddToCart', {
+      content_ids: [product.id],
+      content_type: 'product',
+      content_name: product.name,
+      value: getClientPrice(product) * qty,
+      currency: 'HTG',
+    });
     if (!user) {
-      base44.auth.redirectToLogin(window.location.pathname);
+      addToGuestCart({ product_id: product.id, product_name: product.name, product_image: product.image_url, quantity: qty, unit_price: getClientPrice(product), shop_id: product.shop_id, shop_name: shop?.company_name, shop_region: shop?.region });
+      toast.success('Ajouté au panier');
       return;
     }
+    addToCartMutation.mutate({ quantity: qty });
+  }, [product, qty, user, shop]);
 
-    try {
-      const cartItems = await base44.entities.CartItem.filter({ user_id: user.id });
-      const existing = cartItems.find(item => item.product_id === product.id);
-      
-      if (existing) {
-        await base44.entities.CartItem.update(existing.id, {
-          quantity: existing.quantity + 1
-        });
-      } else {
-        await base44.entities.CartItem.create({
-          user_id: user.id,
-          product_id: product.id,
-          product_name: product.name,
-          product_image: product.image_url,
-          quantity: 1,
-          unit_price: getClientPrice(product),
-          shop_id: shop?.id,
-          shop_name: shop?.company_name,
-          shop_region: shop?.region
-        });
-      }
-      toast.success('Ajouté au panier');
-      // Track AddToCart Meta Pixel + GA4
-      trackAddToCart(product, 1);
-    } catch (e) {
-      toast.error('Erreur');
-    }
-  };
+  const handlePayNow = useCallback(() => {
+    trackMetaEvent('InitiateCheckout', {
+      content_ids: [product.id],
+      content_name: product.name,
+      value: getClientPrice(product) * qty,
+      currency: 'HTG',
+    });
+    handleAddToCart();
+    setTimeout(() => navigate('/Cart'), 300);
+  }, [product, qty, handleAddToCart]);
+
+  const handleWhatsApp = useCallback(() => {
+    trackMetaEvent('Contact', { content_name: product.name });
+    const productUrl = `${window.location.href}`;
+    const msg = `Bonjour, je suis intéressé par : ${product.name}\n${productUrl}`;
+    window.open(`https://wa.me/50948690366?text=${encodeURIComponent(msg)}`, '_blank');
+  }, [product]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-slate-200 border-t-orange-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <h1 className="text-2xl font-bold mb-4">Produit introuvable</h1>
-        <Button onClick={() => navigate('/')}>Retour à l'accueil</Button>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+        <p className="text-slate-500">Produit introuvable</p>
+        <button onClick={() => navigate(-1)} className="text-orange-500 font-semibold">← Retour</button>
       </div>
     );
   }
 
-  const price = getClientPrice(product);
-  const images = [product.image_url, ...(product.additional_images || [])].filter(Boolean);
-  const inStock = product.stock_quantity > 0 || product.stock_quantity === undefined;
+  const price = applyClientMargin(product.promo_price || product.price);
+  const originalPrice = product.promo_price ? applyClientMargin(product.price) : null;
+  const hasPromo = product.promo_price && product.promo_price < product.price;
+  const allImages = [product.image_url, ...(product.additional_images || [])].filter(Boolean);
+  const currentImg = allImages[imgIndex] || product.image_url;
+  const imgSrc = currentImg ? `${currentImg}${currentImg.includes('?') ? '&' : '?'}width=800&quality=80` : null;
 
-  // Structured Data - Product Schema
-  const productSchema = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": product.name,
-    "description": product.description || `${product.name} disponible sur Rapido Presto`,
-    "image": images,
-    "sku": product.id,
-    "brand": {
-      "@type": "Brand",
-      "name": shop?.company_name || "Rapido Presto"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": price,
-      "priceCurrency": "HTG",
-      "availability": inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      "url": typeof window !== 'undefined' ? window.location.href : '',
-      "seller": {
-        "@type": "Organization",
-        "name": shop?.company_name || "Rapido Presto"
-      }
-    },
-    "category": product.category
-  };
-
-  // Breadcrumb Schema
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Accueil",
-        "item": typeof window !== 'undefined' ? window.location.origin : ''
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": product.category,
-        "item": typeof window !== 'undefined' ? `${window.location.origin}?category=${product.category}` : ''
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "name": product.name
-      }
-    ]
-  };
+  const pageTitle = `${product.name}${shop ? ` - ${shop.company_name}` : ''} | Rapido Presto Haïti`;
+  const pageDesc = product.description
+    ? `${product.description.slice(0, 150)} - Prix: ${price.toLocaleString()} HTG. Livraison rapide en Haïti.`
+    : `${product.name} disponible en Haïti. Prix: ${price.toLocaleString()} HTG. Commandez maintenant sur Rapido Presto.`;
 
   return (
-    <>
+    <div className="min-h-screen bg-white pb-28">
       <Helmet>
-        {/* Title optimisé pour SEO */}
-        <title>{product.name} - {price.toFixed(0)} HTG | {shop?.company_name || 'Rapido Presto'}</title>
-        
-        {/* Meta description riche */}
-        <meta 
-          name="description" 
-          content={`${product.name} - ${price.toFixed(0)} HTG. ${product.description || ''} Livraison rapide en Haïti. ${inStock ? 'En stock' : 'Épuisé'}.`}
-        />
-        
-        {/* Keywords */}
-        <meta 
-          name="keywords" 
-          content={`${product.name}, ${product.category}, Haïti, ${shop?.company_name || 'Rapido Presto'}, ${product.seo_tags?.join(', ') || ''}`}
-        />
-
-        {/* Open Graph */}
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
         <meta property="og:type" content="product" />
-        <meta property="og:title" content={product.name} />
-        <meta property="og:description" content={product.description || `${product.name} - ${price.toFixed(0)} HTG. Livraison rapide en Haïti.`} />
-        <meta property="og:image" content={product.image_url} />
-        <meta property="og:image:width" content="800" />
-        <meta property="og:image:height" content="800" />
-        <meta property="og:image:alt" content={product.image_alt || product.name} />
-        <meta property="og:url" content={typeof window !== 'undefined' ? window.location.href : ''} />
-        <meta property="og:site_name" content="Rapido Presto" />
-        <meta property="og:locale" content="fr_HT" />
-        <meta property="product:price:amount" content={price.toString()} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDesc} />
+        {imgSrc && <meta property="og:image" content={imgSrc} />}
+        <meta property="og:url" content={window.location.href} />
+        <meta property="product:price:amount" content={price} />
         <meta property="product:price:currency" content="HTG" />
-        <meta property="product:availability" content={product.is_available !== false ? 'in stock' : 'out of stock'} />
-        <meta property="product:retailer_item_id" content={product.id} />
-        <meta property="product:condition" content="new" />
-
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={product.name} />
-        <meta name="twitter:description" content={product.description || product.name} />
-        <meta name="twitter:image" content={product.image_url} />
-
-        {/* Canonical URL */}
-        <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
-
-        {/* Structured Data */}
-        <script type="application/ld+json">
-          {JSON.stringify(productSchema)}
-        </script>
-        <script type="application/ld+json">
-          {JSON.stringify(breadcrumbSchema)}
-        </script>
+        <link rel="canonical" href={window.location.href} />
       </Helmet>
 
-      {/* HTML SEMANTIC - Crawlable sans JS */}
-      <div className="min-h-screen bg-gray-50">
-        {/* Breadcrumb visible */}
-        <nav className="bg-white border-b px-4 py-2" aria-label="breadcrumb">
-          <ol className="flex items-center gap-2 text-sm text-gray-600">
-            <li><a href="/" className="hover:text-orange-600">Accueil</a></li>
-            <li>/</li>
-            <li><a href={`/?category=${product.category}`} className="hover:text-orange-600">{product.category}</a></li>
-            <li>/</li>
-            <li className="text-gray-900 font-medium">{product.name}</li>
-          </ol>
-        </nav>
-
-        <main className="max-w-7xl mx-auto p-4 lg:p-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour
-          </Button>
-
-          <article className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="grid lg:grid-cols-2 gap-8 p-6">
-              {/* Images */}
-              <section>
-                <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
-                  <img
-                    src={images[selectedImage]}
-                    alt={`${product.name} - Image ${selectedImage + 1}`}
-                    className="w-full h-full object-contain"
-                    loading="eager"
-                  />
-                </div>
-                {images.length > 1 && (
-                  <div className="grid grid-cols-5 gap-2">
-                    {images.map((img, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedImage(idx)}
-                        className={`aspect-square rounded overflow-hidden border-2 ${
-                          selectedImage === idx ? 'border-orange-500' : 'border-gray-200'
-                        }`}
-                      >
-                        <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {/* Détails produit */}
-              <section>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {product.name}
-                </h1>
-
-                {shop && (
-                  <a 
-                    href={shop.slug ? `/shops/${shop.slug}` : `${createPageUrl('ShopView')}?slug=${shop.slug}`}
-                    className="text-blue-600 hover:underline mb-4 block"
-                  >
-                    Par {shop.company_name}
-                  </a>
-                )}
-
-                <div className="flex items-baseline gap-3 mb-6">
-                  <span className="text-4xl font-black text-gray-900">
-                    {price.toFixed(0)} HTG
-                  </span>
-                  {product.promo_price && (
-                    <span className="text-lg line-through text-gray-400">
-                      {product.price.toFixed(0)} HTG
-                    </span>
-                  )}
-                </div>
-
-                {inStock ? (
-                  <Badge className="bg-green-100 text-green-800 mb-4">✓ En stock</Badge>
-                ) : (
-                  <Badge className="bg-red-100 text-red-800 mb-4">Épuisé</Badge>
-                )}
-
-                {/* Description */}
-                {product.description && (
-                  <div className="mb-6">
-                    <h2 className="font-bold text-lg mb-2">Description</h2>
-                    <p className="text-gray-700 whitespace-pre-wrap">{product.description}</p>
-                  </div>
-                )}
-
-                {/* Réassurance */}
-                <div className="grid grid-cols-3 gap-4 py-6 border-y mb-6">
-                  <div className="text-center">
-                    <Truck className="w-6 h-6 mx-auto mb-2 text-orange-500" />
-                    <p className="text-xs text-gray-600">Livraison rapide</p>
-                  </div>
-                  <div className="text-center">
-                    <Shield className="w-6 h-6 mx-auto mb-2 text-orange-500" />
-                    <p className="text-xs text-gray-600">Paiement sécurisé</p>
-                  </div>
-                  <div className="text-center">
-                    <Clock className="w-6 h-6 mx-auto mb-2 text-orange-500" />
-                    <p className="text-xs text-gray-600">{product.delivery_time || '24-48h'}</p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleAddToCart}
-                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-lg py-6"
-                    disabled={!inStock}
-                  >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Ajouter au panier
-                  </Button>
-                  <Button variant="outline" size="icon" className="py-6 px-4">
-                    <Heart className="w-5 h-5" />
-                  </Button>
-                  <Button variant="outline" size="icon" className="py-6 px-4">
-                    <Share2 className="w-5 h-5" />
-                  </Button>
-                </div>
-
-                {/* Infos complémentaires */}
-                <div className="mt-6 space-y-2 text-sm text-gray-600">
-                  <p><strong>Catégorie :</strong> {product.category}</p>
-                  {product.subcategory && <p><strong>Sous-catégorie :</strong> {product.subcategory}</p>}
-                  <p><strong>Délai :</strong> {product.delivery_time || 'Selon disponibilité'}</p>
-                  <p><strong>Référence :</strong> {product.id.slice(0, 8)}</p>
-                </div>
-              </section>
-            </div>
-          </article>
-
-          {/* Produits similaires */}
-          {similarProducts.length > 0 && (
-            <section className="mt-12">
-              <h2 className="text-2xl font-bold mb-6">Produits similaires</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {similarProducts.map(p => (
-                  <a key={p.id} href={`/products/${p.slug}`}>
-                    <ProductCard
-                      product={p}
-                      shop={shops.find(s => s.id === p.shop_id)}
-                      onClick={() => window.location.href = `/products/${p.slug}`}
-                    />
-                  </a>
-                ))}
-              </div>
-            </section>
+      {/* Back button */}
+      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-sm px-4 py-3 flex items-center gap-3 border-b border-slate-100">
+        <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-full hover:bg-slate-100">
+          <ArrowLeft className="w-5 h-5 text-slate-700" />
+        </button>
+        <span className="text-sm font-semibold text-slate-700 truncate flex-1">{product.name}</span>
+        <button onClick={() => navigate('/Cart')} className="relative p-1.5">
+          <ShoppingCart className="w-5 h-5 text-slate-700" />
+          {cartItems.length > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              {cartItems.reduce((s, i) => s + i.quantity, 0)}
+            </span>
           )}
-        </main>
+        </button>
       </div>
-    </>
+
+      {/* Image */}
+      <div className="relative bg-slate-100 w-full" style={{ aspectRatio: '1/1' }}>
+        {imgSrc ? (
+          <img src={imgSrc} alt={product.image_alt || product.name} className="w-full h-full object-contain" loading="eager" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-slate-300 text-6xl">📦</div>
+        )}
+        {hasPromo && (
+          <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+            -{Math.round((1 - product.promo_price / product.price) * 100)}%
+          </div>
+        )}
+        {allImages.length > 1 && (
+          <>
+            <button onClick={() => setImgIndex(i => (i === 0 ? allImages.length - 1 : i - 1))} className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/30 rounded-full text-white">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button onClick={() => setImgIndex(i => (i === allImages.length - 1 ? 0 : i + 1))} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/30 rounded-full text-white">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {allImages.map((_, i) => (
+                <button key={i} onClick={() => setImgIndex(i)} className={`w-1.5 h-1.5 rounded-full ${i === imgIndex ? 'bg-orange-500' : 'bg-white/60'}`} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Main info */}
+      <div className="px-4 py-4">
+        {/* Price first */}
+        <div className="flex items-baseline gap-2 mb-2">
+          <span className="text-2xl font-black text-orange-500">{price.toLocaleString()} HTG</span>
+          {originalPrice && <span className="text-sm text-slate-400 line-through">{originalPrice.toLocaleString()} HTG</span>}
+        </div>
+
+        {/* Free delivery badge */}
+        {price >= 3000 && (
+          <div className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-200 mb-3">
+            <Truck className="w-3.5 h-3.5" />
+            Livraison gratuite
+          </div>
+        )}
+
+        <h1 className="text-lg font-bold text-slate-900 leading-snug mb-2">{product.name}</h1>
+
+        {shop && (
+          <button onClick={() => navigate(`/shop-view?slug=${shop.slug || ''}&id=${shop.id}`)} className="flex items-center gap-2 mb-3">
+            {shop.company_logo_url && <img src={shop.company_logo_url} alt={shop.company_name} className="w-7 h-7 rounded-full object-cover border border-slate-200" />}
+            <span className="text-sm text-orange-500 font-semibold">{shop.company_name}</span>
+          </button>
+        )}
+
+        {product.description && (
+          <p className="text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">{product.description}</p>
+        )}
+
+        {/* Qty picker */}
+        <div className="flex items-center gap-3 mt-4">
+          <span className="text-sm font-semibold text-slate-700">Quantité :</span>
+          <div className="flex items-center bg-slate-100 rounded-full">
+            <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-8 h-8 flex items-center justify-center text-slate-700 font-bold text-lg">−</button>
+            <span className="w-8 text-center text-sm font-bold">{qty}</span>
+            <button onClick={() => setQty(q => q + 1)} className="w-8 h-8 flex items-center justify-center text-slate-700 font-bold text-lg">+</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Related products - lazy */}
+      {showRelated && relatedProducts.length > 1 && (
+        <div className="border-t border-slate-100 pt-4 mt-2">
+          <h2 className="text-sm font-bold text-slate-800 px-4 mb-3">Produits similaires</h2>
+          <div className="flex gap-2 overflow-x-auto px-4 pb-2 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {relatedProducts.filter(p => p.id !== product.id).slice(0, 10).map(p => {
+              const s = shops.find(sh => sh.id === p.shop_id);
+              return (
+                <div key={p.id} style={{ minWidth: '120px', maxWidth: '120px' }}>
+                  <CompactProductCard product={p} shop={s} onClick={() => navigate(`/product/${p.slug || p.id}`)} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Sticky action bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+        <button
+          onClick={handleWhatsApp}
+          className="flex items-center justify-center gap-1.5 bg-[#25D366] text-white font-bold rounded-xl px-4 py-3 flex-shrink-0"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span className="text-sm">WA</span>
+        </button>
+        <button
+          onClick={handleAddToCart}
+          className="flex-1 bg-slate-800 text-white font-bold rounded-xl py-3 text-sm"
+        >
+          Ajouter au panier
+        </button>
+        <button
+          onClick={handlePayNow}
+          className="flex-1 bg-orange-500 text-white font-bold rounded-xl py-3 text-sm"
+        >
+          Payer maintenant
+        </button>
+      </div>
+    </div>
   );
 }
