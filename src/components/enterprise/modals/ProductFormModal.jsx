@@ -336,48 +336,27 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     try {
       const taxonomyList = getTaxonomyMappingPrompt();
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Tu es un expert en vision par ordinateur ET en e-commerce haïtien (RapidoPresto).
-
-ÉTAPE 1 — ANALYSE VISUELLE DE LA PHOTO :
-Examine attentivement l'image fournie. Identifie précisément :
-- Le type d'objet principal visible (vêtement, appareil électronique, bijou, meuble, etc.)
-- Les caractéristiques visuelles clés (couleur, forme, matière apparente, marque visible)
-- Le contexte d'utilisation (cuisine, chambre, sport, cérémonie, etc.)
-
-ÉTAPE 2 — CROISEMENT AVEC LE TITRE :
-Titre du produit : "${formData.name}"
-Utilise l'analyse visuelle ET le titre pour confirmer ou affiner ta compréhension du produit.
-
-ÉTAPE 3 — CLASSIFICATION :
-FB_CATEGORY_ID : Choisis l'ID numérique Facebook/Google Taxonomy le plus précis en te basant PRINCIPALEMENT sur ce que tu vois dans la photo :
-${taxonomyList}
-Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones, 211 pour Bagues, 195 pour chaussures femmes).
-
-ÉTAPE 4 — RÉDACTION :
-1. DESCRIPTION : 3-4 lignes avec emojis, bénéfice client + urgence + CTA. Villes haïtiennes (Delmas, Cap-Haïtien, Gonaïves). EN FRANÇAIS.
-2. SEO_TAGS : 10-15 mots-clés: français + anglais + créole + villes haïtiennes.
-3. IMAGE_ALT : 15-20 mots décrivant précisément ce que tu vois sur la photo (SEO).
-
-Réponds en JSON strict.`,
-        file_urls: [formData.image_url],
-        response_json_schema: {
+        model: 'claude_sonnet_4_6',
           type: "object",
           properties: {
             description: { type: "string" },
             fb_category_id: { type: "number" },
+            app_category: { type: "string" },
             seo_tags: { type: "array", items: { type: "string" } },
             image_alt: { type: "string" }
           },
-          required: ["description", "fb_category_id", "seo_tags", "image_alt"]
+          required: ["description", "fb_category_id", "app_category", "seo_tags", "image_alt"]
         }
       });
 
+      const validCategories = ['Restaurants','Epicerie','Café','Pharmacie','Maison','Electronics','Pour Femme','Pour homme','Bijoux','Mariage','Boutique Fleurs','Bébé','Outils','Matériels Décor'];
       setFormData({
         ...formData,
         description: result.description || formData.description,
-        seo_tags: result.seo_tags || formData.seo_tags,
+        seo_tags: result.seo_tags?.slice(0, 20) || formData.seo_tags,
         image_alt: result.image_alt || formData.image_alt,
         fb_category_id: result.fb_category_id || formData.fb_category_id,
+        category: validCategories.includes(result.app_category) ? result.app_category : formData.category,
       });
       
       setAiGenerated(true);
