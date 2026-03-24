@@ -240,18 +240,41 @@ export default function ProductPage() {
       {/* Main info */}
       <div className="px-4 py-4">
         {/* Price first */}
-        <div className="flex items-baseline gap-2 mb-2">
+        <div className="flex items-baseline gap-2 mb-1.5">
           <span className="text-2xl font-black text-orange-500">{price.toLocaleString()} HTG</span>
           {originalPrice && <span className="text-sm text-slate-400 line-through">{originalPrice.toLocaleString()} HTG</span>}
         </div>
 
         {/* Free delivery badge */}
         {price >= 3000 && (
-          <div className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-200 mb-3">
-            <Truck className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1 rounded-full border border-green-200 mb-2">
+            <Truck className="w-3 h-3" />
             Livraison gratuite
           </div>
         )}
+
+        {/* Inline action buttons — compact, just under price */}
+        <div className="flex items-center gap-1.5 mb-3">
+          <button
+            onClick={handleWhatsApp}
+            className="flex items-center gap-1 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/30 font-semibold rounded-lg px-2.5 py-1.5 text-xs flex-shrink-0"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span>WA</span>
+          </button>
+          <button
+            onClick={() => { handleAddToCart(); }}
+            className="flex-1 bg-slate-100 text-slate-700 border border-slate-200 font-semibold rounded-lg px-3 py-1.5 text-xs"
+          >
+            + Panier
+          </button>
+          <button
+            onClick={handlePayNow}
+            className="flex-1 bg-orange-500 text-white font-bold rounded-lg px-3 py-1.5 text-xs shadow-sm shadow-orange-200"
+          >
+            Payer maintenant
+          </button>
+        </div>
 
         <h1 className="text-lg font-bold text-slate-900 leading-snug mb-2">{product.name}</h1>
 
@@ -266,7 +289,7 @@ export default function ProductPage() {
           <p className="text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">{product.description}</p>
         )}
 
-        {/* Qty picker */}
+        {/* Qty picker + add to cart */}
         <div className="flex items-center gap-3 mt-4">
           <span className="text-sm font-semibold text-slate-700">Quantité :</span>
           <div className="flex items-center bg-slate-100 rounded-full">
@@ -274,6 +297,12 @@ export default function ProductPage() {
             <span className="w-8 text-center text-sm font-bold">{qty}</span>
             <button onClick={() => setQty(q => q + 1)} className="w-8 h-8 flex items-center justify-center text-slate-700 font-bold text-lg">+</button>
           </div>
+          <button
+            onClick={handleAddToCart}
+            className="flex-1 bg-slate-800 text-white text-sm font-bold rounded-full py-2 px-4"
+          >
+            Ajouter au panier
+          </button>
         </div>
       </div>
 
@@ -294,47 +323,7 @@ export default function ProductPage() {
         </div>
       )}
 
-      {/* Sticky action bar — fixed, root level, always visible */}
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          width: '100%',
-          zIndex: 9999,
-          background: '#fff',
-          boxShadow: '0 -2px 12px rgba(0,0,0,0.10)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}
-      >
-        <div className="flex items-center gap-2 px-3 py-2.5">
-          {/* WhatsApp ~22% */}
-          <button
-            onClick={handleWhatsApp}
-            style={{ minHeight: 48, flex: '0 0 22%' }}
-            className="flex items-center justify-center gap-1 bg-[#25D366] text-white font-bold rounded-xl text-xs"
-          >
-            <MessageCircle className="w-4 h-4 flex-shrink-0" />
-            <span>WA</span>
-          </button>
-          {/* Ajouter ~32% */}
-          <button
-            onClick={handleAddToCart}
-            style={{ minHeight: 48, flex: '0 0 32%' }}
-            className="flex items-center justify-center bg-slate-700 text-white font-bold rounded-xl text-sm"
-          >
-            Ajouter
-          </button>
-          {/* Payer ~46% */}
-          <button
-            onClick={handlePayNow}
-            style={{ minHeight: 48, flex: '1 1 0' }}
-            className="flex items-center justify-center bg-orange-500 text-white font-bold rounded-xl text-sm"
-          >
-            Payer maintenant
-          </button>
-        </div>
-      </div>
+
     </div>
   );
 }
