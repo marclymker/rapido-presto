@@ -125,13 +125,10 @@ export default function ProductPage() {
 
   const handleWhatsApp = useCallback(() => {
     trackMetaEvent('Contact', { content_name: product.name });
-    // URL avec preview OG pour WhatsApp (via fonction ogMetaTags)
-    const previewUrl = shop?.slug && product.slug
-      ? `${window.location.origin}/functions/ogMetaTags?slug=${shop.slug}&product=${product.slug}`
-      : `${window.location.origin}/product/${product.slug || product.id}`;
-    const msg = `Bonjour, je suis intéressé par cet article :\n🛍️ ${product.name}\n💰 ${price.toLocaleString()} HTG\n\n${previewUrl}`;
+    const productUrl = `${window.location.href}`;
+    const msg = `Bonjour, je suis intéressé par : ${product.name}\n${productUrl}`;
     window.open(`https://wa.me/50948690366?text=${encodeURIComponent(msg)}`, '_blank');
-  }, [product, shop, price]);
+  }, [product]);
 
   if (isLoading) {
     return (
@@ -254,18 +251,10 @@ export default function ProductPage() {
         {/* Qty picker */}
         <div className="flex items-center gap-3 mt-4">
           <span className="text-sm font-semibold text-slate-700">Quantité :</span>
-          <div className="flex items-center bg-slate-100 rounded-xl overflow-hidden">
-            <button
-              type="button"
-              onPointerDown={(e) => { e.stopPropagation(); setQty(q => Math.max(1, q - 1)); }}
-              className="w-10 h-10 flex items-center justify-center text-slate-700 font-bold text-xl active:bg-slate-200"
-            >−</button>
-            <span className="w-10 text-center text-base font-bold select-none">{qty}</span>
-            <button
-              type="button"
-              onPointerDown={(e) => { e.stopPropagation(); setQty(q => q + 1); }}
-              className="w-10 h-10 flex items-center justify-center text-slate-700 font-bold text-xl active:bg-slate-200"
-            >+</button>
+          <div className="flex items-center bg-slate-100 rounded-full">
+            <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-8 h-8 flex items-center justify-center text-slate-700 font-bold text-lg">−</button>
+            <span className="w-8 text-center text-sm font-bold">{qty}</span>
+            <button onClick={() => setQty(q => q + 1)} className="w-8 h-8 flex items-center justify-center text-slate-700 font-bold text-lg">+</button>
           </div>
         </div>
       </div>
@@ -288,29 +277,25 @@ export default function ProductPage() {
       )}
 
       {/* Sticky action bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 px-3 pt-2 pb-3 flex gap-2" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 px-4 py-3 flex gap-2" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
         <button
-          type="button"
           onClick={handleWhatsApp}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-[#25D366] text-white font-bold rounded-xl py-2.5 min-w-0"
+          className="flex items-center justify-center gap-1.5 bg-[#25D366] text-white font-bold rounded-xl px-4 py-3 flex-shrink-0"
         >
-          <MessageCircle className="w-4 h-4 flex-shrink-0" />
-          <span className="text-[10px] font-bold leading-none">WhatsApp</span>
+          <MessageCircle className="w-4 h-4" />
+          <span className="text-sm">WA</span>
         </button>
         <button
-          type="button"
           onClick={handleAddToCart}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-slate-800 text-white font-bold rounded-xl py-2.5 min-w-0"
+          className="flex-1 bg-slate-800 text-white font-bold rounded-xl py-3 text-sm"
         >
-          <ShoppingCart className="w-4 h-4 flex-shrink-0" />
-          <span className="text-[10px] font-bold leading-none">Panier</span>
+          Ajouter au panier
         </button>
         <button
-          type="button"
           onClick={handlePayNow}
-          className="flex-[1.4] flex items-center justify-center bg-orange-500 text-white font-bold rounded-xl py-2.5 min-w-0"
+          className="flex-1 bg-orange-500 text-white font-bold rounded-xl py-3 text-sm"
         >
-          <span className="text-xs font-bold">Payer maintenant</span>
+          Payer maintenant
         </button>
       </div>
     </div>
