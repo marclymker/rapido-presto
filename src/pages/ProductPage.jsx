@@ -284,14 +284,14 @@ export default function ProductPage() {
         <div className="flex items-center gap-1.5 mb-3">
           <button
             onClick={handleWhatsApp}
-            className="flex items-center gap-1 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/30 font-semibold rounded-lg px-2.5 py-1.5 text-xs flex-shrink-0"
+            className="flex-1 flex items-center justify-center gap-1 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/30 font-semibold rounded-lg py-1.5 text-xs"
           >
             <MessageCircle className="w-3.5 h-3.5" />
-            <span>WA</span>
+            <span>WhatsApp</span>
           </button>
           <button
             onClick={handlePayNow}
-            className="flex-1 bg-orange-500 text-white font-bold rounded-lg px-3 py-1.5 text-xs shadow-sm shadow-orange-200"
+            className="flex-1 bg-orange-500 text-white font-bold rounded-lg py-1.5 text-xs shadow-sm shadow-orange-200"
           >
             Payer maintenant
           </button>
