@@ -15,7 +15,7 @@ const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, s
   return (
     <div
       id={`product-card-${product.id}`}
-      className="group relative bg-white rounded-xl transition-all duration-300 flex flex-col h-full border border-slate-100 overflow-hidden shadow-sm hover:shadow-md"
+      className="group relative bg-white rounded-lg flex flex-col h-full border border-slate-100 overflow-hidden shadow-sm active:scale-95 transition-transform"
     >
       {/* 1. ZONE IMAGE (Ratio Carré) */}
       <div className="relative aspect-square overflow-hidden bg-slate-50">
@@ -65,18 +65,14 @@ const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, s
         )}
       </div>
 
-      {/* 2. ZONE CONTENU (Optimisée pour l'espace) */}
-      <div className="p-2 flex flex-col gap-0">
+      {/* 2. ZONE CONTENU */}
+      <div className="p-1.5 flex flex-col gap-0">
         
-        {/* Badge de réassurance (Zap) */}
-        <div className="flex items-center gap-0.5 text-amber-600 mb-0.5">
-          <Zap size={8} fill="currentColor" />
-          <span className="text-[8px] font-bold uppercase tracking-tight">{fastText}</span>
-        </div>
 
-        {/* PRIX (Priorité #1 après l'image) */}
+
+        {/* PRIX */}
         <div className="flex items-baseline gap-1 leading-tight">
-          <span className="text-sm font-black text-slate-900">
+          <span className="text-[13px] font-black text-orange-500">
             {displayPrice.toLocaleString()} <span className="text-[8px] font-bold">HTG</span>
           </span>
           {hasPromo && (
@@ -86,8 +82,8 @@ const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, s
           )}
         </div>
 
-        {/* NOM DU PRODUIT (Strictement 1 ligne) */}
-        <h3 className="text-[10px] text-slate-500 font-medium truncate mt-0.5" title={product.name}>
+        {/* NOM */}
+        <h3 className="text-[9px] text-slate-500 truncate" title={product.name}>
           {product.name}
         </h3>
 
@@ -98,15 +94,6 @@ const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, s
           </div>
         )}
 
-        {/* Infos Facebook Catalog */}
-        <div className="flex items-center justify-between mt-1 pt-1 border-t border-slate-100">
-          <span className="text-[8px] text-slate-300 font-mono truncate" title={`ID: ${product.id}`}>
-            #{product.id?.slice(-6)}
-          </span>
-          <span className={`text-[8px] font-bold px-1 rounded ${product.is_available !== false ? 'text-green-600' : 'text-red-500'}`}>
-            {product.is_available !== false ? 'in stock' : 'out of stock'}
-          </span>
-        </div>
       </div>
 
       {/* 3. SECTION BOUTON CONTACT : MASQUÉE TEMPORAIREMENT */}
