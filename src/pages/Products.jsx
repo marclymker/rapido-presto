@@ -10,6 +10,7 @@ const ProductDetailModal = lazy(() => import('@/components/modals/ProductDetailM
 import { toast } from 'sonner';
 import CompactProductCard from '@/components/home/CompactProductCard';
 import CategoryRow from '@/components/home/CategoryRow';
+import TrendingSection from '@/components/home/TrendingSection';
 import SEO from '@/components/SEO';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
@@ -448,6 +449,13 @@ export default function Products() {
           </div>
         ) : (
           <div>
+            {/* Section Tendances en premier */}
+            <TrendingSection
+              allProducts={allProducts}
+              shops={shops}
+              onProductClick={handleProductClick}
+            />
+
             {/* Sections horizontales par catégorie */}
             {Object.entries(categoryGroups).map(([cat, products]) => (
               <CategoryRow
