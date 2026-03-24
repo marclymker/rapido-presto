@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ShoppingCart, MessageCircle, ChevronLeft, ChevronRight, Truck } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, MessageCircle, ChevronLeft, ChevronRight, Truck, Share2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin, getClientPrice } from '@/components/utils/priceCalculation';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
@@ -136,12 +136,31 @@ export default function ProductPage() {
     setTimeout(() => navigate('/Cart'), 300);
   }, [product, qty, handleAddToCart]);
 
+  const getShareUrl = useCallback(() => {
+    if (!product) return window.location.href;
+    const base = 'https://rapido-presto.base44.app/functions/ogMetaTags';
+    const params = new URLSearchParams();
+    if (shop?.slug) params.set('slug', shop.slug);
+    if (product.slug || product.id) params.set('product', product.slug || product.id);
+    return `${base}?${params.toString()}`;
+  }, [product, shop]);
+
   const handleWhatsApp = useCallback(() => {
     trackMetaEvent('Contact', { content_name: product.name });
-    const productUrl = `${window.location.href}`;
-    const msg = `Bonjour, je suis intéressé par : ${product.name}\n${productUrl}`;
+    const url = getShareUrl();
+    const msg = `Bonjour, je suis intéressé par : ${product.name}\n${url}`;
     window.open(`https://wa.me/50948690366?text=${encodeURIComponent(msg)}`, '_blank');
-  }, [product]);
+  }, [product, getShareUrl]);
+
+  const handleShare = useCallback(() => {
+    const url = getShareUrl();
+    if (navigator.share) {
+      navigator.share({ title: product.name, url });
+    } else {
+      navigator.clipboard?.writeText(url);
+      toast.success('Lien copié !');
+    }
+  }, [product, getShareUrl]);
 
   if (isLoading) {
     return (
@@ -220,6 +239,14 @@ export default function ProductPage() {
             -{Math.round((1 - product.promo_price / product.price) * 100)}%
           </div>
         )}
+        {/* Share button on photo */}
+        <button
+          onClick={handleShare}
+          className="absolute top-3 right-14 p-2 bg-black/25 backdrop-blur-sm rounded-full text-white"
+          title="Partager"
+        >
+          <Share2 className="w-4 h-4" />
+        </button>
         {allImages.length > 1 && (
           <>
             <button onClick={() => setImgIndex(i => (i === 0 ? allImages.length - 1 : i - 1))} className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/30 rounded-full text-white">
@@ -261,12 +288,6 @@ export default function ProductPage() {
           >
             <MessageCircle className="w-3.5 h-3.5" />
             <span>WA</span>
-          </button>
-          <button
-            onClick={() => { handleAddToCart(); }}
-            className="flex-1 bg-slate-100 text-slate-700 border border-slate-200 font-semibold rounded-lg px-3 py-1.5 text-xs"
-          >
-            + Panier
           </button>
           <button
             onClick={handlePayNow}
