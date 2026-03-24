@@ -80,8 +80,8 @@ Deno.serve(async (req) => {
     }
 
     const appPageUrl = product
-      ? `${APP_URL}/ShopView?slug=${shop?.slug || ''}&product=${product.slug || product.id}`
-      : `${APP_URL}/ShopView?slug=${shopSlug}`;
+      ? `${APP_URL}/product/${product.slug || product.id}`
+      : `${APP_URL}/shop-view?slug=${shopSlug}`;
 
     const ogUrl = product
       ? `${APP_URL}/functions/ogMetaTags?slug=${shop?.slug || ''}&product=${product.slug || product.id}`
