@@ -131,50 +131,42 @@ export default function Products() {
     return ids;
   }, [selectedFbCatId]);
 
-  // Algorithme de personnalisation basé sur le dernier produit visualisé
-  // Fuzzy search helper: normalize accents + allow 1 char difference
-  const normalize = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const fuzzyMatch = (text, keyword) => {
+  // Fuzzy search helper
+  const normalize = React.useCallback((s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''), []);
+  const fuzzyMatch = React.useCallback((text, keyword) => {
     const t = normalize(text), k = normalize(keyword);
     if (t.includes(k)) return true;
     if (k.length <= 3) return false;
-    // Allow 1 char difference (simple fuzzy)
     for (let i = 0; i <= t.length - k.length + 1; i++) {
       let diff = 0;
       for (let j = 0; j < k.length; j++) { if (t[i + j] !== k[j]) diff++; if (diff > 1) break; }
       if (diff <= 1) return true;
     }
     return false;
-  };
+  }, [normalize]);
 
   const filteredProducts = React.useMemo(() => {
     const base = allProducts.filter(p => {
-      const matchCategory = !selectedCategory || p.category === selectedCategory;
-      if (!matchCategory) return false;
+      if (selectedCategory && p.category !== selectedCategory) return false;
+      if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
       if (selectedRegion && p.shop_id) {
         const shop = shops.find(s => s.id === p.shop_id);
         if (shop && shop.region && shop.region !== selectedRegion) return false;
       }
+      if (searchQuery.trim()) {
+        const keywords = searchQuery.trim().split(/\s+/).filter(w => w.length > 1);
+        const fields = [p.name || '', p.description || '', p.shop_name || '', ...(p.seo_tags || [])];
+        return keywords.every(keyword => fields.some(field => fuzzyMatch(field, keyword)));
+      }
+      return true;
+    });
 
-    // Si recherche ou catégorie active, pas de personnalisation
     if (searchQuery || selectedCategory || selectedFbCatId || selectedRegion) return base;
 
-    // Récupérer le dernier produit visualisé
     let lastViewed = null;
-    try {
-      const raw = localStorage.getItem('last_viewed_product');
-      if (raw) lastViewed = JSON.parse(raw);
-    } catch (_) {}
+    try { const raw = localStorage.getItem('last_viewed_product'); if (raw) lastViewed = JSON.parse(raw); } catch (_) {}
 
-    // Fonction de mélange aléatoire
-    const shuffle = (arr) => {
-      const a = [...arr];
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    };
+    const shuffle = (arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
     if (!lastViewed) return shuffle(base);
 
@@ -182,25 +174,21 @@ export default function Products() {
     const tags = lastViewed.seo_tags || [];
     const category = lastViewed.category || '';
 
-    // Scorer les produits similaires
-    const scored = base
-      .filter(p => p.id !== lastViewed.id)
-      .map(p => {
-        let score = 0;
-        const pName = (p.name || '').toLowerCase();
-        const pTags = p.seo_tags || [];
-        nameWords.forEach(w => { if (pName.includes(w)) score += 2; });
-        tags.forEach(t => { if (pTags.includes(t)) score += 3; });
-        if (p.category === category) score += 1;
-        return { ...p, _score: score };
-      });
+    const scored = base.filter(p => p.id !== lastViewed.id).map(p => {
+      let score = 0;
+      const pName = (p.name || '').toLowerCase();
+      const pTags = p.seo_tags || [];
+      nameWords.forEach(w => { if (pName.includes(w)) score += 2; });
+      tags.forEach(t => { if (pTags.includes(t)) score += 3; });
+      if (p.category === category) score += 1;
+      return { ...p, _score: score };
+    });
 
     const top10 = scored.filter(p => p._score > 0).sort((a, b) => b._score - a._score).slice(0, 10);
     const top10Ids = new Set(top10.map(p => p.id));
     const rest = shuffle(scored.filter(p => !top10Ids.has(p.id)));
-
     return [...top10, ...rest];
-  }, [allProducts, searchQuery, selectedCategory]);
+  }, [allProducts, searchQuery, selectedCategory, selectedFbCatId, selectedRegion, selectedFbBranchIds, shops, fuzzyMatch]);
 
   const handleProductClick = (product) => {
     if (isAdmin) {
