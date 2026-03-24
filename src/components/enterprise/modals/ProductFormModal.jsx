@@ -353,10 +353,10 @@ FB_CATEGORY_ID : Choisis l'ID numérique Facebook/Google Taxonomy le plus préci
 ${taxonomyList}
 Retourne UNIQUEMENT le nombre entier (ex: 225 pour Smartphones, 211 pour Bagues, 195 pour chaussures femmes).
 
-ÉTAPE 4 — RÉDACTION :
-1. DESCRIPTION : 3-4 lignes avec emojis, bénéfice client + urgence + CTA. Villes haïtiennes (Delmas, Cap-Haïtien, Gonaïves). EN FRANÇAIS.
-2. SEO_TAGS : 10-15 mots-clés: français + anglais + créole + villes haïtiennes.
-3. IMAGE_ALT : 15-20 mots décrivant précisément ce que tu vois sur la photo (SEO).
+ÉTAPE 4 — RÉDACTION (FRANÇAIS uniquement) :
+1. DESCRIPTION : 3-4 lignes, emojis, bénéfice client, urgence, CTA. Villes haïtiennes (Delmas, Cap-Haïtien, Gonaïves).
+2. IMAGE_ALT : 15-20 mots décrivant la photo précisément (SEO français).
+3. SEO_TAGS : EXACTEMENT 20 tags en français et créole UNIQUEMENT (zéro anglais). Inclure OBLIGATOIREMENT : "cap haitien", "port-au-prince", "gonaives", "haiti", "makarios bridal". Les 15 autres : synonymes larges du produit, occasions (mariage, fête, cérémonie, bal, graduation), matières, adjectifs (élégant, luxueux, unique, bèl), termes créoles (rad, mariaj, ansanm, chic, boutique mode haïti, tenue, style haïtien).
 
 Réponds en JSON strict.`,
         file_urls: [formData.image_url],
