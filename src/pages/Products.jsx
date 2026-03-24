@@ -16,9 +16,9 @@ import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
 
 const CATEGORIES = [
-  'Pour Femme', 'Bijoux', 'Pour homme', 'Mariage', 'Maison', 'Electronics',
-  'Fastfood', 'Restaurants', 'Boutique Fleurs', 'Pharmacie',
-  'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor'
+  'Fastfood', 'Restaurants', 'Boutique Fleurs', 'Pharmacie', 'Mariage',
+  'Epicerie', 'Café', 'Pour Femme', 'Electronics', 'Pour homme', 'Maison',
+  'Bébé', 'Outils', 'Bijoux', 'Matériels Décor'
 ];
 
 export default function Products() {
