@@ -16,10 +16,12 @@ import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
 
 const CATEGORIES = [
-  'Fastfood', 'Restaurants', 'Boutique Fleurs', 'Pharmacie', 'Mariage',
-  'Epicerie', 'Café', 'Pour Femme', 'Electronics', 'Pour homme', 'Maison',
-  'Bébé', 'Outils', 'Bijoux', 'Matériels Décor'
+  'Pour Femme', 'Bijoux', 'Pour homme', 'Mariage', 'Boutique Fleurs',
+  'Maison', 'Electronics', 'Fastfood', 'Restaurants', 'Pharmacie',
+  'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor'
 ];
+
+const CATEGORY_ORDER = CATEGORIES;
 
 export default function Products() {
   const { user } = useAuth();
@@ -220,7 +222,11 @@ export default function Products() {
     Object.keys(groups).forEach(k => {
       groups[k].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     });
-    return groups;
+    // Sort categories by priority order
+    const sorted = {};
+    CATEGORY_ORDER.forEach(cat => { if (groups[cat]) sorted[cat] = groups[cat]; });
+    Object.keys(groups).forEach(cat => { if (!sorted[cat]) sorted[cat] = groups[cat]; });
+    return sorted;
   }, [allProducts, isFiltered]);
 
   return (
