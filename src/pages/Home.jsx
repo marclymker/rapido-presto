@@ -18,7 +18,6 @@ import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
 import { Button } from "@/components/ui/button";
-import CategorySection from '@/components/home/CategorySection';
 
 const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
 
@@ -275,8 +274,19 @@ export default function Home() {
   }, [allProducts, searchQuery, selectedFbCatId]);
 
   const handleProductClick = useCallback((product) => {
-    navigate(`/product/${product.slug || product.id}`);
-  }, [navigate]);
+    const shop = shops.find(s => s.id === product.shop_id);
+    trackProductView(product, shop);
+    trackMetaEvent('ViewContent', {
+      content_ids: [product.id],
+      content_type: 'product',
+      content_name: product.name,
+      value: applyClientMargin(product.promo_price || product.price),
+      currency: 'HTG',
+    });
+    try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
+    setSelectedProduct(product);
+    setSelectedShop(shop || null);
+  }, [shops, trackProductView]);
 
   const handleSearchChange = (value) => {
     setSearchQuery(value);
@@ -285,12 +295,6 @@ export default function Home() {
   };
 
   const visibleProducts = useMemo(() => filteredProducts.slice(0, visibleCount), [filteredProducts, visibleCount]);
-
-  // Sections horizontales catégories
-  const now = Date.now();
-  const newProducts = useMemo(() => [...allProducts].sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).slice(0, 20), [allProducts]);
-  const promoProducts = useMemo(() => allProducts.filter(p => p.promo_price && p.promo_price < p.price).slice(0, 20), [allProducts]);
-  const showSections = !searchQuery && !selectedFbCatId;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
@@ -441,32 +445,6 @@ export default function Home() {
             <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
           </div>
 
-          {/* Sections horizontales catégories */}
-          {showSections && (
-            <div className="-mx-4 mb-4">
-              {newProducts.length > 0 && (
-                <CategorySection
-                  title="Nouveautés"
-                  emoji="🆕"
-                  products={newProducts}
-                  shops={shops}
-                  onProductClick={handleProductClick}
-                  onAddToCart={handleAddToCart}
-                />
-              )}
-              {promoProducts.length > 0 && (
-                <CategorySection
-                  title="Promotions"
-                  emoji="🔥"
-                  products={promoProducts}
-                  shops={shops}
-                  onProductClick={handleProductClick}
-                  onAddToCart={handleAddToCart}
-                />
-              )}
-            </div>
-          )}
-
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
@@ -479,7 +457,7 @@ export default function Home() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 {visibleProducts.map(product => {
                   const shop = shops.find(s => s.id === product.shop_id);
                   return (

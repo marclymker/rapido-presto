@@ -11,7 +11,6 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { lazy, Suspense } from 'react';
 
 const Products = lazy(() => import('./pages/Products'));
-const ProductPage = lazy(() => import('./pages/ProductPage'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogArticle = lazy(() => import('./pages/BlogArticle'));
 const BlogManager = lazy(() => import('./pages/BlogManager'));
@@ -76,7 +75,6 @@ const InnerRouter = () => {
         <Route path="/BlogManager" element={<LayoutWrapper currentPageName="BlogManager"><BlogManager /></LayoutWrapper>} />
         <Route path="/payment/callback" element={<LayoutWrapper currentPageName="PaymentCallback"><PaymentCallback /></LayoutWrapper>} />
         <Route path="/PayLink" element={<PayLink />} />
-        <Route path="/product/:slug" element={<LayoutWrapper currentPageName="ProductPage"><ProductPage /></LayoutWrapper>} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </PageTransitionWrapper>

@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Tag, Store, ShoppingBag, ChevronRight, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
+const ProductDetailModal = lazy(() => import('@/components/modals/ProductDetailModal'));
 import { toast } from 'sonner';
 import SEO from '@/components/SEO';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
@@ -69,12 +70,15 @@ const ProductCard = ({ product, shop, onClick }) => {
 export default function Products() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { trackProductView, trackCategoryView, trackSearch } = useActivityTracker();
+  const queryClient = useQueryClient();
+  const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategories, setShowCategories] = useState(false);
-  const [selectedFbCatId, setSelectedFbCatId] = useState(null);
-  const [fbLevel1Id, setFbLevel1Id] = useState(null);
+  const [selectedFbCatId, setSelectedFbCatId] = useState(null); // Filtre taxonomie FB
+  const [fbLevel1Id, setFbLevel1Id] = useState(null); // Navigation hiérarchique
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedShop, setSelectedShop] = useState(null);
 
   // Track PageView Meta Pixel
   useEffect(() => {
@@ -97,7 +101,36 @@ export default function Products() {
     queryFn: () => base44.entities.Shop.filter({ is_active: true }),
   });
 
+  const addToCartMutation = useMutation({
+    mutationFn: async ({ product, quantity }) => {
+      if (!user) {
+        base44.auth.redirectToLogin(window.location.pathname);
+        return;
+      }
+      const price = applyClientMargin(product.promo_price || product.price);
+      const shop = shops.find(s => s.id === product.shop_id);
+      await base44.entities.CartItem.create({
+        user_id: user.id,
+        product_id: product.id,
+        product_name: product.name,
+        product_image: product.image_url,
+        quantity,
+        unit_price: price,
+        shop_id: product.shop_id,
+        shop_name: shop?.company_name || '',
+        shop_region: shop?.region || '',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart', user?.id] });
+      toast.success('Ajouté au panier !');
+    },
+  });
 
+  const handleAddToCart = (product, quantity = 1) => {
+    trackAddToCart(product);
+    addToCartMutation.mutate({ product, quantity });
+  };
 
   // IDs de la branche FB sélectionnée (pour inclure tous les enfants)
   const selectedFbBranchIds = useMemo(() => {
@@ -194,8 +227,19 @@ export default function Products() {
   }, [allProducts, searchQuery, selectedCategory]);
 
   const handleProductClick = (product) => {
+    const shop = shops.find(s => s.id === product.shop_id);
+    trackProductView(product, shop);
+    trackMetaEvent('ViewContent', {
+      content_ids: [product.id],
+      content_type: 'product',
+      content_name: product.name,
+      value: applyClientMargin(product.promo_price || product.price),
+      currency: 'HTG',
+    });
+    // Sauvegarder pour personnalisation future
     try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
-    navigate(`/product/${product.slug || product.id}`);
+    setSelectedProduct(product);
+    setSelectedShop(shop || null);
   };
 
   const handleCategorySelect = (cat) => {
@@ -211,6 +255,21 @@ export default function Products() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
+      <Suspense fallback={null}>
+        <ProductDetailModal
+          product={selectedProduct}
+          shop={selectedShop}
+          open={!!selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onAddToCart={handleAddToCart}
+          user={user}
+          allProducts={allProducts}
+          onProductChange={(p) => {
+            setSelectedProduct(p);
+            setSelectedShop(shops.find(s => s.id === p.shop_id) || null);
+          }}
+        />
+      </Suspense>
       <Helmet>
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
       </Helmet>
