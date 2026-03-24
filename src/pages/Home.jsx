@@ -15,60 +15,13 @@ import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { createPageUrl } from '@/utils';
 import { useGuestCart } from '@/components/cart/useGuestCart';
 import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
+import CompactProductCard from '@/components/home/CompactProductCard';
+import CategoryRow from '@/components/home/CategoryRow';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
 import { Button } from "@/components/ui/button";
 
 const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
-
-const ProductCard = React.memo(({ product, shop, onClick }) => {
-  const price = applyClientMargin(product.promo_price || product.price);
-  const originalPrice = product.promo_price ? applyClientMargin(product.price) : null;
-  const hasPromo = product.promo_price && product.promo_price < product.price;
-
-  return (
-    <div
-      className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98]"
-      onClick={onClick}
-    >
-      <div className="relative aspect-square bg-slate-100">
-        {product.image_url ? (
-          <img
-            src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}width=400&quality=70&resize=cover`}
-            alt={product.image_alt || product.name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-300">
-            <ShoppingBag className="w-10 h-10" />
-          </div>
-        )}
-        {hasPromo && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-            -{Math.round((1 - product.promo_price / product.price) * 100)}%
-          </div>
-        )}
-        {product.is_available === false && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <span className="text-white text-xs font-bold bg-black/60 px-3 py-1 rounded-full">Rupture de stock</span>
-          </div>
-        )}
-      </div>
-      <div className="p-2.5">
-        <p className="text-[11px] text-slate-400 truncate">{shop?.company_name || ''}</p>
-        <p className="text-sm font-semibold text-slate-800 truncate leading-tight mt-0.5">{product.name}</p>
-        <div className="flex items-center gap-1.5 mt-1">
-          <span className="text-sm font-black text-orange-500">{price.toLocaleString()} HTG</span>
-          {originalPrice && (
-            <span className="text-[11px] text-slate-400 line-through">{originalPrice.toLocaleString()}</span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-});
 
 export default function Home() {
   const { user } = useAuth();
@@ -77,6 +30,7 @@ export default function Home() {
   const queryClient = useQueryClient();
   const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
 
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCategories, setShowCategories] = useState(false);
   const [selectedFbCatId, setSelectedFbCatId] = useState(null);
@@ -296,6 +250,30 @@ export default function Home() {
 
   const visibleProducts = useMemo(() => filteredProducts.slice(0, visibleCount), [filteredProducts, visibleCount]);
 
+  const shopsMap = useMemo(() => {
+    const m = {};
+    shops.forEach(s => { m[s.id] = s; });
+    return m;
+  }, [shops]);
+
+  const isFiltered = !!(searchQuery || selectedFbCatId);
+
+  // Group products by category for horizontal sections
+  const categoryGroups = useMemo(() => {
+    if (isFiltered) return {};
+    const groups = {};
+    allProducts.forEach(p => {
+      if (!p.category) return;
+      if (!groups[p.category]) groups[p.category] = [];
+      groups[p.category].push(p);
+    });
+    // Sort each group by newest
+    Object.keys(groups).forEach(k => {
+      groups[k].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    });
+    return groups;
+  }, [allProducts, isFiltered]);
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
       <Suspense fallback={null}>
@@ -448,39 +426,71 @@ export default function Home() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
-              <p className="text-sm text-slate-500">Chargement des produits...</p>
+              <p className="text-sm text-slate-500">Chargement...</p>
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-5xl mb-3">📦</div>
               <p className="text-slate-500">Aucun produit trouvé</p>
             </div>
+          ) : isFiltered ? (
+            /* Grille filtrée compacte */
+            <div className="grid grid-cols-3 gap-1.5">
+              {visibleProducts.map(product => (
+                <CompactProductCard
+                  key={product.id}
+                  product={product}
+                  shop={shopsMap[product.shop_id]}
+                  onClick={() => handleProductClick(product)}
+                />
+              ))}
+            </div>
           ) : (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                {visibleProducts.map(product => {
-                  const shop = shops.find(s => s.id === product.shop_id);
-                  return (
-                    <ProductCard
+            /* Mode sections horizontales par catégorie */
+            <div className="-mx-4">
+              {/* Sections catégories horizontales */}
+              {Object.entries(categoryGroups).map(([cat, products]) => (
+                <CategoryRow
+                  key={cat}
+                  title={cat}
+                  products={products}
+                  shops={shops}
+                  onProductClick={handleProductClick}
+                  onSeeAll={() => {
+                    setSelectedCategory(cat);
+                    setShowCategories(false);
+                  }}
+                />
+              ))}
+
+              {/* Grille globale compacte en bas */}
+              <div className="px-4 mt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold text-slate-800">🔀 Tout voir</h3>
+                  <span className="text-[11px] text-slate-400">{filteredProducts.length} produits</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {visibleProducts.map(product => (
+                    <CompactProductCard
                       key={product.id}
                       product={product}
-                      shop={shop}
+                      shop={shopsMap[product.shop_id]}
                       onClick={() => handleProductClick(product)}
                     />
-                  );
-                })}
-              </div>
-              {visibleCount < filteredProducts.length && (
-                <div className="flex justify-center mt-6">
-                  <button
-                    onClick={() => setVisibleCount(c => c + 40)}
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-3 rounded-full text-sm transition"
-                  >
-                    Voir plus ({filteredProducts.length - visibleCount} restants)
-                  </button>
+                  ))}
                 </div>
-              )}
-            </>
+                {visibleCount < filteredProducts.length && (
+                  <div className="flex justify-center mt-4">
+                    <button
+                      onClick={() => setVisibleCount(c => c + 60)}
+                      className="bg-orange-500 text-white font-semibold px-8 py-2.5 rounded-full text-sm"
+                    >
+                      Voir plus ({filteredProducts.length - visibleCount} restants)
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </main>
       </PullToRefresh>

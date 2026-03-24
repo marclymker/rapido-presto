@@ -8,6 +8,8 @@ import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
 const ProductDetailModal = lazy(() => import('@/components/modals/ProductDetailModal'));
 import { toast } from 'sonner';
+import CompactProductCard from '@/components/home/CompactProductCard';
+import CategoryRow from '@/components/home/CategoryRow';
 import SEO from '@/components/SEO';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
@@ -19,59 +21,12 @@ const CATEGORIES = [
   'Bébé', 'Outils', 'Bijoux', 'Matériels Décor'
 ];
 
-const ProductCard = ({ product, shop, onClick }) => {
-  const price = applyClientMargin(product.promo_price || product.price);
-  const originalPrice = product.promo_price ? applyClientMargin(product.price) : null;
-  const hasPromo = product.promo_price && product.promo_price < product.price;
-
-  return (
-    <div
-      className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98]"
-      onClick={onClick}
-    >
-      <div className="relative aspect-square bg-slate-100">
-        {product.image_url ? (
-          <img
-            src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}width=400&quality=70&resize=cover`}
-            alt={product.name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-300">
-            <ShoppingBag className="w-10 h-10" />
-          </div>
-        )}
-        {hasPromo && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-            -{Math.round((1 - product.promo_price / product.price) * 100)}%
-          </div>
-        )}
-        {product.is_available === false && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <span className="text-white text-xs font-bold bg-black/60 px-3 py-1 rounded-full">Rupture de stock</span>
-          </div>
-        )}
-      </div>
-      <div className="p-2.5">
-        <p className="text-[11px] text-slate-400 truncate">{shop?.company_name || ''}</p>
-        <p className="text-sm font-semibold text-slate-800 truncate leading-tight mt-0.5">{product.name}</p>
-        <div className="flex items-center gap-1.5 mt-1">
-          <span className="text-sm font-black text-orange-500">{price.toLocaleString()} HTG</span>
-          {originalPrice && (
-            <span className="text-[11px] text-slate-400 line-through">{originalPrice.toLocaleString()}</span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export default function Products() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
+  const [visibleCount, setVisibleCount] = useState(60);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategories, setShowCategories] = useState(false);
@@ -242,16 +197,42 @@ export default function Products() {
     setSelectedShop(shop || null);
   };
 
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    setVisibleCount(60);
+    if (value.length > 2) trackSearch(value);
+  };
+
   const handleCategorySelect = (cat) => {
     setSelectedCategory(cat);
+    setVisibleCount(60);
     setShowCategories(false);
     if (cat) trackCategoryView(cat);
   };
 
-  const handleSearchChange = (value) => {
-    setSearchQuery(value);
-    if (value.length > 2) trackSearch(value);
-  };
+  const shopsMap = React.useMemo(() => {
+    const m = {};
+    shops.forEach(s => { m[s.id] = s; });
+    return m;
+  }, [shops]);
+
+  const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId);
+
+  const visibleProducts = React.useMemo(() => filteredProducts.slice(0, visibleCount), [filteredProducts, visibleCount]);
+
+  const categoryGroups = React.useMemo(() => {
+    if (isFiltered) return {};
+    const groups = {};
+    allProducts.forEach(p => {
+      if (!p.category) return;
+      if (!groups[p.category]) groups[p.category] = [];
+      groups[p.category].push(p);
+    });
+    Object.keys(groups).forEach(k => {
+      groups[k].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    });
+    return groups;
+  }, [allProducts, isFiltered]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
@@ -298,6 +279,11 @@ export default function Products() {
               onChange={(e) => handleSearchChange(e.target.value)}
               className="bg-transparent outline-none w-full text-sm text-slate-700 placeholder:text-slate-400"
             />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')}>
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -428,41 +414,87 @@ export default function Products() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-slate-800">
-            {selectedFbCatId
-              ? findById(selectedFbCatId)?.name
-              : selectedCategory
-              ? selectedCategory
-              : 'Sélection du jour'}
-          </h2>
-          <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
-        </div>
-
+      <main className="flex-1 pt-2 pb-4">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
-            <p className="text-sm text-slate-500">Chargement des produits...</p>
+            <p className="text-sm text-slate-500">Chargement...</p>
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-3">📦</div>
             <p className="text-slate-500">Aucun produit trouvé</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {filteredProducts.map(product => {
-              const shop = shops.find(s => s.id === product.shop_id);
-              return (
-                <ProductCard
+        ) : isFiltered ? (
+          <div className="px-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-slate-600">
+                {selectedFbCatId ? findById(selectedFbCatId)?.name : selectedCategory || 'Résultats'}
+              </span>
+              <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {visibleProducts.map(product => (
+                <CompactProductCard
                   key={product.id}
                   product={product}
-                  shop={shop}
+                  shop={shopsMap[product.shop_id]}
                   onClick={() => handleProductClick(product)}
                 />
-              );
-            })}
+              ))}
+            </div>
+            {visibleCount < filteredProducts.length && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={() => setVisibleCount(c => c + 60)}
+                  className="bg-orange-500 text-white font-semibold px-8 py-2.5 rounded-full text-sm"
+                >
+                  Voir plus ({filteredProducts.length - visibleCount} restants)
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            {/* Sections horizontales par catégorie */}
+            {Object.entries(categoryGroups).map(([cat, products]) => (
+              <CategoryRow
+                key={cat}
+                title={cat}
+                products={products}
+                shops={shops}
+                onProductClick={handleProductClick}
+                onSeeAll={() => handleCategorySelect(cat)}
+              />
+            ))}
+
+            {/* Grille globale compacte */}
+            <div className="px-3 mt-2">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold text-slate-800">🔀 Tout voir</h3>
+                <span className="text-[11px] text-slate-400">{filteredProducts.length} produits</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {visibleProducts.map(product => (
+                  <CompactProductCard
+                    key={product.id}
+                    product={product}
+                    shop={shopsMap[product.shop_id]}
+                    onClick={() => handleProductClick(product)}
+                  />
+                ))}
+              </div>
+              {visibleCount < filteredProducts.length && (
+                <div className="flex justify-center mt-4">
+                  <button
+                    onClick={() => setVisibleCount(c => c + 60)}
+                    className="bg-orange-500 text-white font-semibold px-8 py-2.5 rounded-full text-sm"
+                  >
+                    Voir plus ({filteredProducts.length - visibleCount} restants)
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
