@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Tag, Store, ShoppingBag, ChevronRight, X, MapPin } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
@@ -54,6 +55,8 @@ export default function Products() {
   const [selectedFbCatId, setSelectedFbCatId] = useState(null);
   const [fbLevel1Id, setFbLevel1Id] = useState(null);
   const [selectedRegion, setSelectedRegion] = useState('');
+  const [editingProduct, setEditingProduct] = useState(null);
+  const isAdmin = user?.role === 'admin';
 
   // Track PageView Meta Pixel
   useEffect(() => {
@@ -206,6 +209,10 @@ export default function Products() {
   }, [allProducts, searchQuery, selectedCategory]);
 
   const handleProductClick = (product) => {
+    if (isAdmin) {
+      setEditingProduct(product);
+      return;
+    }
     const shop = shops.find(s => s.id === product.shop_id);
     trackProductView(product, shop);
     try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
@@ -255,6 +262,18 @@ export default function Products() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
+      {isAdmin && editingProduct && (
+        <ProductFormModal
+          product={editingProduct}
+          shopId={editingProduct.shop_id}
+          open={!!editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onSuccess={() => {
+            setEditingProduct(null);
+            queryClient.invalidateQueries({ queryKey: ['all-products'] });
+          }}
+        />
+      )}
 
       <Helmet>
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
