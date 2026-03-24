@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Tag, Store, ShoppingBag, ChevronRight, X } from 'lucide-react';
+import { Search, Tag, Store, ShoppingBag, ChevronRight, X, MapPin } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
@@ -18,8 +19,14 @@ import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
 
 const CATEGORIES = [
   'Pour Femme', 'Bijoux', 'Pour homme', 'Mariage', 'Boutique Fleurs',
-  'Maison', 'Electronics', 'Fastfood', 'Restaurants', 'Pharmacie',
+  'Maison', 'Electronics', 'Restaurants', 'Pharmacie',
   'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor'
+];
+
+const REGIONS = [
+  'Port-au-Prince', 'Carrefour', 'Delmas', 'Pétion-Ville', 'Cité Soleil',
+  'Tabarre', 'Clercine', 'Croix des Bouquets', 'Kenscoff', 'Gressier',
+  'Cap-Haïtien', 'Limonade', 'Quartier-Morin', 'Les Gonaïves', 'Ennery', "L'Estère"
 ];
 
 const CATEGORY_ORDER = CATEGORIES;
@@ -46,6 +53,7 @@ export default function Products() {
   const [showCategories, setShowCategories] = useState(false);
   const [selectedFbCatId, setSelectedFbCatId] = useState(null);
   const [fbLevel1Id, setFbLevel1Id] = useState(null);
+  const [selectedRegion, setSelectedRegion] = useState('');
 
   // Track PageView Meta Pixel
   useEffect(() => {
@@ -125,6 +133,10 @@ export default function Products() {
     const base = allProducts.filter(p => {
       const matchCategory = !selectedCategory || p.category === selectedCategory;
       if (!matchCategory) return false;
+      if (selectedRegion && p.shop_id) {
+        const shop = shops.find(s => s.id === p.shop_id);
+        if (shop && shop.region && shop.region !== selectedRegion) return false;
+      }
       // Filtre taxonomie FB (inclut tous les sous-niveaux)
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
 
@@ -148,7 +160,7 @@ export default function Products() {
     });
 
     // Si recherche ou catégorie active, pas de personnalisation
-    if (searchQuery || selectedCategory || selectedFbCatId) return base;
+    if (searchQuery || selectedCategory || selectedFbCatId || selectedRegion) return base;
 
     // Récupérer le dernier produit visualisé
     let lastViewed = null;
@@ -219,7 +231,7 @@ export default function Products() {
     return m;
   }, [shops]);
 
-  const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId);
+  const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId || selectedRegion);
 
   const visibleProducts = React.useMemo(() => filteredProducts.slice(0, visibleCount), [filteredProducts, visibleCount]);
 
@@ -306,6 +318,19 @@ export default function Products() {
             <Tag className="w-4 h-4" />
             <span>{selectedCategory || 'Catégories'}</span>
           </button>
+          <Select value={selectedRegion} onValueChange={(v) => { setSelectedRegion(v === '__all__' ? '' : v); setVisibleCount(60); }}>
+            <SelectTrigger className={`h-9 w-9 p-0 flex items-center justify-center rounded-full border-0 flex-shrink-0 ${
+              selectedRegion ? 'bg-orange-500 text-white' : 'bg-slate-200 text-slate-700'
+            }`}>
+              <MapPin className="w-4 h-4" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Toutes les zones</SelectItem>
+              {REGIONS.map(r => (
+                <SelectItem key={r} value={r}>{r}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Categories dropdown */}

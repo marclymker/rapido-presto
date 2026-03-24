@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import VendorContactModal from '@/components/enterprise/modals/VendorContactModal';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -116,6 +117,7 @@ const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
 export default function ProductFormModal({ product, shopId = "shop_123", open = true, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [aiGenerated, setAiGenerated] = useState(false);
@@ -124,7 +126,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
     price: '',
     promo_price: '',
     description: '',
-    category: 'Fastfood',
+    category: 'Restaurants',
     subcategory: '',
     stock_quantity: 0,
     image_url: '',
@@ -155,8 +157,15 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
 
   useEffect(() => {
     if (open && !product) {
-      // Show guidelines only for new products
-      setShowGuidelines(true);
+      // Check if user has phone number
+      base44.auth.me().then(u => {
+        if (!u?.phone) {
+          setShowContactModal(true);
+          setShowGuidelines(false);
+        } else {
+          setShowGuidelines(true);
+        }
+      });
       setShowForm(false);
       setAiGenerated(false);
       // Reset form for new product
@@ -165,7 +174,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         price: '',
         promo_price: '',
         description: '',
-        category: 'Fastfood',
+        category: 'Restaurants',
         subcategory: '',
         stock_quantity: 0,
         image_url: '',
@@ -201,7 +210,7 @@ export default function ProductFormModal({ product, shopId = "shop_123", open = 
         price: product.price || '',
         promo_price: product.promo_price || '',
         description: product.description || '',
-        category: product.category || 'Fastfood',
+        category: product.category || 'Restaurants',
         subcategory: product.subcategory || product.subCategory || '',
         stock_quantity: product.stock_quantity || 0,
         image_url: product.image_url || '',
@@ -394,6 +403,15 @@ Réponds en JSON strict.`,
 
   return (
     <>
+      <VendorContactModal
+        open={showContactModal}
+        onConfirm={async ({ phone, region }) => {
+          await base44.auth.updateMe({ phone, region });
+          setShowContactModal(false);
+          setShowGuidelines(true);
+        }}
+        onCancel={() => { setShowContactModal(false); onClose?.(); }}
+      />
       <ProductGuidelinesModal
         open={showGuidelines}
         onConfirm={() => {
