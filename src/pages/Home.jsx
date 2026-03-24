@@ -35,8 +35,6 @@ export default function Home() {
   const [showCategories, setShowCategories] = useState(false);
   const [selectedFbCatId, setSelectedFbCatId] = useState(null);
   const [fbLevel1Id, setFbLevel1Id] = useState(null);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedShop, setSelectedShop] = useState(null);
   const [showCartReminder, setShowCartReminder] = useState(false);
   const [visibleCount, setVisibleCount] = useState(40);
 
@@ -268,21 +266,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
-      <Suspense fallback={null}>
-        <ProductDetailModal
-          product={selectedProduct}
-          shop={selectedShop}
-          open={!!selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          onAddToCart={handleAddToCart}
-          user={user}
-          allProducts={allProducts}
-          onProductChange={(p) => {
-            setSelectedProduct(p);
-            setSelectedShop(shops.find(s => s.id === p.shop_id) || null);
-          }}
-        />
-      </Suspense>
+
 
       <Helmet>
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
