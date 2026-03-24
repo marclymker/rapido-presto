@@ -24,6 +24,35 @@ const CATEGORIES = [
   'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor'
 ];
 
+// Normalize: lowercase + remove accents
+function norm(str) {
+  return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// Simple fuzzy: exact substring OR levenshtein ≤ 1 for words ≥ 4 chars
+function lev(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 99;
+  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+function fuzzyMatch(keyword, text) {
+  const k = norm(keyword);
+  const t = norm(text);
+  if (t.includes(k)) return true;
+  if (k.length >= 4) {
+    const words = t.split(/\s+/);
+    return words.some(w => w.length >= k.length - 1 && lev(k, w) <= 1);
+  }
+  return false;
+}
+
 const REGIONS = [
   'Port-au-Prince', 'Carrefour', 'Delmas', 'Pétion-Ville', 'Cité Soleil',
   'Tabarre', 'Clercine', 'Croix des Bouquets', 'Kenscoff', 'Gressier',
@@ -68,6 +97,31 @@ export default function Products() {
       });
     }
   }, []);
+
+  // Track ViewCategory pour tous les produits chargés (Meta Pixel)
+  useEffect(() => {
+    if (allProducts.length === 0) return;
+    if (window.fbq) {
+      window.fbq('track', 'ViewContent', {
+        content_type: 'product_group',
+        content_ids: allProducts.slice(0, 100).map(p => p.id),
+        content_category: selectedCategory || 'all',
+        num_items: allProducts.length,
+      });
+    }
+    if (window.gtag) {
+      window.gtag('event', 'view_item_list', {
+        item_list_name: selectedCategory || 'Marketplace',
+        items: allProducts.slice(0, 50).map((p, i) => ({
+          item_id: p.id,
+          item_name: p.name,
+          item_category: p.category,
+          price: p.promo_price || p.price,
+          index: i,
+        })),
+      });
+    }
+  }, [allProducts.length]);
 
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
@@ -143,19 +197,17 @@ export default function Products() {
       // Filtre taxonomie FB (inclut tous les sous-niveaux)
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
 
-      // Recherche hybride multi-mots : titre + nom + description + tags SEO
+      // Recherche floue multi-mots : titre + description + tags SEO (insensible casse + fautes)
       if (searchQuery.trim()) {
-        const keywords = searchQuery.toLowerCase().trim().split(/\s+/).filter(w => w.length > 1);
-        const title = (p.name || '').toLowerCase();
-        const desc = (p.description || '').toLowerCase();
-        const shopName = (p.shop_name || '').toLowerCase();
-        const tags = (p.seo_tags || []).map(t => t.toLowerCase());
-
+        const keywords = searchQuery.trim().split(/\s+/).filter(w => w.length > 1);
+        const fields = [
+          p.name || '',
+          p.description || '',
+          p.shop_name || '',
+          ...(p.seo_tags || []),
+        ];
         return keywords.every(keyword =>
-          title.includes(keyword) ||
-          desc.includes(keyword) ||
-          shopName.includes(keyword) ||
-          tags.some(tag => tag.includes(keyword))
+          fields.some(field => fuzzyMatch(keyword, field))
         );
       }
 
