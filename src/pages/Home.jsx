@@ -490,7 +490,7 @@ export default function Home() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 {visibleProducts.map(product => {
                   const shop = shops.find(s => s.id === product.shop_id);
                   return (
