@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Search, ShoppingCart, ArrowLeft, MapPin, Star } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Helmet } from 'react-helmet-async';
 import ProductCard from '@/components/ui/ProductCard';
-import ProductDetailModal from '@/components/modals/ProductDetailModal';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
 import { useGuestCart } from '@/components/cart/useGuestCart';
@@ -33,22 +32,20 @@ const WEDDING_STRUCTURE = [
 export default function ShopView() {
   const { user } = useAuth();
   const { addToGuestCart } = useGuestCart();
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('Tout');
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const queryClient = useQueryClient();
 
   // Gérer le bouton retour natif
   useBackButton(() => {
-    if (selectedProduct) {
-      setSelectedProduct(null);
-    } else if (selectedSubCategory) {
+    if (selectedSubCategory) {
       setSelectedSubCategory(null);
     } else {
       window.location.href = createPageUrl('Home');
     }
-  }, selectedProduct || selectedSubCategory);
+  }, !!selectedSubCategory);
 
   // Get shop slug and product slug from URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -88,11 +85,11 @@ export default function ShopView() {
     enabled: !!shop?.id
   });
 
-  // Auto-open product if product slug in URL
+  // Navigate to product page if product slug in URL
   useEffect(() => {
     if (productSlug && allProducts.length > 0) {
       const product = allProducts.find(p => p.slug === productSlug || p.id === productSlug);
-      if (product) setSelectedProduct(product);
+      if (product) navigate(`/product/${product.slug || product.id}`, { replace: true });
     }
   }, [productSlug, allProducts]);
 
@@ -199,7 +196,7 @@ export default function ShopView() {
       value: getClientPrice(product),
       currency: 'HTG'
     });
-    setSelectedProduct(product);
+    navigate(`/product/${product.slug || product.id}`);
   };
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -237,57 +234,32 @@ export default function ShopView() {
     );
   }
 
-  const selectedProductForMeta = selectedProduct || (productSlug && allProducts.find(p => p.slug === productSlug));
-  const productPrice = selectedProductForMeta ? getClientPrice(selectedProductForMeta) : null;
-  const pageTitle = selectedProductForMeta
-    ? `${selectedProductForMeta.name} - ${productPrice?.toLocaleString()} HTG`
-    : `${shop.company_name}`;
-  const pageDescription = selectedProductForMeta
-    ? `${selectedProductForMeta.description || selectedProductForMeta.name} - Prix: ${productPrice?.toLocaleString()} Gourdes | ${shop.company_name}`
-    : `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`;
   const ensureAbsoluteUrl = (url) => {
     if (!url) return null;
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
     return `${window.location.origin}${url}`;
   };
-  const pageImage = ensureAbsoluteUrl(selectedProductForMeta?.image_url || shop.company_logo_url);
-  const pageUrl = selectedProductForMeta
-    ? `${window.location.origin}${createPageUrl('ShopView')}?slug=${shopSlug}&product=${selectedProductForMeta.slug || selectedProductForMeta.id}`
-    : window.location.href;
+  const pageTitle = shop.company_name;
+  const pageDescription = `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`;
+  const pageImage = ensureAbsoluteUrl(shop.company_logo_url);
+  const pageUrl = window.location.href;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <Helmet>
         <title>{pageTitle} - Rapido Presto</title>
         <meta name="description" content={pageDescription} />
-        <meta property="og:type" content={selectedProductForMeta ? "product" : "website"} />
+        <meta property="og:type" content="website" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:site_name" content="Rapido Presto" />
         {pageImage && <meta property="og:image" content={pageImage} />}
-        {pageImage && <meta property="og:image:secure_url" content={pageImage} />}
-        {pageImage && <meta property="og:image:width" content="1200" />}
-        {pageImage && <meta property="og:image:height" content="630" />}
-        {pageImage && <meta property="og:image:alt" content={pageTitle} />}
         <meta property="og:url" content={pageUrl} />
         <meta property="og:locale" content="fr_HT" />
-        {selectedProductForMeta && (
-          <>
-            <meta property="product:price:amount" content={productPrice} />
-            <meta property="product:price:currency" content="HTG" />
-            <meta property="product:availability" content="in stock" />
-            <meta property="product:brand" content={shop.company_name} />
-            <meta property="product:condition" content="new" />
-            <meta property="product:retailer_item_id" content={selectedProductForMeta.id} />
-          </>
-        )}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:site" content="@RapidoPrestoHT" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         {pageImage && <meta name="twitter:image" content={pageImage} />}
-        {pageImage && <meta name="twitter:image:alt" content={pageTitle} />}
-        {pageImage && <meta property="og:image:type" content="image/jpeg" />}
       </Helmet>
 
       {/* Header */}
@@ -429,10 +401,7 @@ export default function ShopView() {
                           product={product}
                           shop={shop}
                           onAdd={handleAddToCart}
-                          onClick={() => {
-                            window.history.pushState({}, '', `${window.location.pathname}?slug=${shopSlug}&product=${product.slug || product.id}`);
-                            handleProductClick(product);
-                          }}
+                          onClick={() => handleProductClick(product)}
                         />
                       ))}
                     </div>
@@ -485,16 +454,6 @@ export default function ShopView() {
         </div>
       </div>
 
-      <ProductDetailModal
-        product={selectedProduct}
-        shop={shop}
-        open={!!selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
-        user={user}
-        similarProducts={[]}
-        onProductChange={(newProduct) => setSelectedProduct(newProduct)}
-      />
     </div>
   );
 }
