@@ -14,7 +14,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const APP_URL = Deno.env.get('APP_URL') || 'https://rapidopresto.base44.app';
+    const APP_URL = 'https://rapidopresto.shop';
 
     // Récupérer tous les produits actifs
     const products = await base44.asServiceRole.entities.Product.filter({ 
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     for (const product of products) {
       if (!product.slug) continue;
       sitemap += `  <url>
-    <loc>${APP_URL}/products/${product.slug}</loc>
+    <loc>${APP_URL}/product/${product.slug}</loc>
     <lastmod>${product.updated_date || new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>

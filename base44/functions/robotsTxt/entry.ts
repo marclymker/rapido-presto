@@ -5,7 +5,7 @@
  * Pointe vers le sitemap.xml
  */
 Deno.serve((req) => {
-  const APP_URL = Deno.env.get('APP_URL') || 'https://rapidopresto.base44.app';
+  const APP_URL = 'https://rapidopresto.shop';
 
   const robotsTxt = `User-agent: *
 Allow: /
