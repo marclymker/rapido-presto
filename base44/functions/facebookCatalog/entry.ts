@@ -5,7 +5,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
 
     // Récupération de tous les produits en mode service role
-    const products = await base44.asServiceRole.entities.Product.list('-created_date', 5000);
+    const products = await base44.asServiceRole.entities.Product.filter({}, '-created_date', 5000);
 
     if (!products || products.length === 0) {
        return new Response("id,title\nINFO,Aucun produit trouvé dans la base", { 
