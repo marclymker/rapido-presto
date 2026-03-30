@@ -238,22 +238,57 @@ export default function Products() {
   const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId || selectedRegion);
 
   const filteredProducts = useMemo(() => {
-    const base = allProducts.filter(p => {
+    // --- Filtrages de base (catégorie, région, fb taxonomy) ---
+    const baseFiltered = allProducts.filter(p => {
       if (selectedCategory && p.category !== selectedCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
       if (selectedRegion && p.shop_id) {
         const shop = shopsMap[p.shop_id];
         if (shop?.region && shop.region !== selectedRegion) return false;
       }
-      if (searchQuery.trim()) {
-        const keywords = searchQuery.trim().split(/\s+/).filter(w => w.length > 1);
-        const fields   = [p.name || '', p.description || '', p.shop_name || '', ...(p.seo_tags || [])];
-        return keywords.every(kw => fields.some(f => fuzzyMatch(f, kw)));
-      }
       return true;
     });
 
-    if (isFiltered) return base;
+    // --- Recherche avec priorité : titre > tags > fuzzy ---
+    if (searchQuery.trim()) {
+      const keywords = searchQuery.trim().split(/\s+/).filter(w => w.length > 1);
+
+      const scoreProduct = (p) => {
+        const normName = normalize(p.name || '');
+        const normTags = (p.seo_tags || []).map(t => normalize(t));
+        let score = 0;
+        let allMatch = true;
+
+        for (const kw of keywords) {
+          const normKw = normalize(kw);
+          const titleMatch = normName.includes(normKw);
+          const tagMatch   = normTags.some(t => t.includes(normKw));
+          const fuzzy      = !titleMatch && !tagMatch && fuzzyMatch(p.name + ' ' + (p.seo_tags || []).join(' '), kw);
+
+          if (titleMatch)  score += 100;
+          else if (tagMatch) score += 10;
+          else if (fuzzy)   score += 1;
+          else { allMatch = false; break; }
+        }
+
+        return allMatch ? score : -1;
+      };
+
+      const scored = baseFiltered
+        .map(p => ({ p, score: scoreProduct(p) }))
+        .filter(({ score }) => score >= 0);
+
+      // Trier : score décroissant, puis alphabétique sur le titre pour les ex-aequo
+      scored.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return normalize(a.p.name).localeCompare(normalize(b.p.name));
+      });
+
+      return scored.map(({ p }) => p);
+    }
+
+    // --- Pas de recherche : affichage personnalisé ---
+    if (isFiltered) return baseFiltered;
 
     let lastViewed = null;
     try {
@@ -270,13 +305,13 @@ export default function Products() {
       return a;
     };
 
-    if (!lastViewed) return shuffle(base);
+    if (!lastViewed) return shuffle(baseFiltered);
 
     const nameWords = (lastViewed.name || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
     const tags      = lastViewed.seo_tags || [];
     const category  = lastViewed.category || '';
 
-    const scored = base
+    const scored = baseFiltered
       .filter(p => p.id !== lastViewed.id)
       .map(p => {
         let score   = 0;
@@ -297,7 +332,7 @@ export default function Products() {
 
     return [...top10, ...rest];
   }, [allProducts, searchQuery, selectedCategory, selectedFbCatId, selectedRegion,
-      selectedFbBranchIds, shopsMap, fuzzyMatch, isFiltered]);
+      selectedFbBranchIds, shopsMap, fuzzyMatch, normalize, isFiltered]);
 
   const visibleProducts = useMemo(
     () => filteredProducts.slice(0, visibleCount),
