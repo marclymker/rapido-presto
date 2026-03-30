@@ -6,7 +6,7 @@ import { UtensilsCrossed, Pill, Heart, ShoppingBasket, Coffee, Pizza, Flower, Us
 const categories = [
   { id: 'Tout', label: 'Tout', icon: Home },
   { id: 'Fastfood', label: 'Fastfood', icon: Pizza },
-  { id: 'Restaurants', label: 'Restaurants', icon: UtensilsCrossed },
+  { id: 'Mode', label: 'Mode', icon: UtensilsCrossed },
   { id: 'Boutique Fleurs', label: 'Fleurs', icon: Flower },
   { id: 'Pharmacie', label: 'Pharmacie', icon: Pill },
   { 
