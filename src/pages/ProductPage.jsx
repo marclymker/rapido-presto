@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ShoppingCart, Send, Store, MapPin } from 'lucide-react';
+import { cacheProduct, getCachedProduct } from '@/lib/useProductCache';
+import { enqueueCartAction, useCartSync } from '@/lib/useCartSync';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin, getClientPrice } from '@/components/utils/priceCalculation';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
@@ -26,6 +28,10 @@ export default function ProductPage() {
   const [waMessage, setWaMessage] = useState('');
   const [waBoxOpen, setWaBoxOpen] = useState(false);
   const [relatedVisible, setRelatedVisible] = useState(12);
+  const [optimisticCart, setOptimisticCart] = useState(0);
+
+  // Background cart sync
+  useCartSync(user?.id);
 
   useEffect(() => {
     window.history.pushState({ productPage: true }, '');
@@ -33,6 +39,9 @@ export default function ProductPage() {
     window.addEventListener('popstate', handlePop);
     return () => window.removeEventListener('popstate', handlePop);
   }, []);
+
+  // Try cache first for instant offline render
+  const cached = getCachedProduct(slug);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['product', slug],
@@ -42,6 +51,8 @@ export default function ProductPage() {
       return base44.entities.Product.filter({ id: slug });
     },
     enabled: !!slug,
+    initialData: cached?.product ? [cached.product] : undefined,
+    staleTime: 2 * 60 * 1000,
   });
 
   const product = products[0];
@@ -72,6 +83,11 @@ export default function ProductPage() {
     queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id,
   });
+
+  // Cache product when loaded
+  useEffect(() => {
+    if (product && shop) cacheProduct(product, shop);
+  }, [product?.id, shop?.id]);
 
   useEffect(() => {
     if (!product) return;
@@ -106,18 +122,32 @@ export default function ProductPage() {
         shop_region: shop?.region || '',
       });
     },
+    onMutate: () => setOptimisticCart(c => c + 1),
     onSuccess: () => {
       queryClient.invalidateQueries(['cart', user?.id]);
       toast.success('Ajouté au panier !');
     },
+    onError: () => setOptimisticCart(c => Math.max(0, c - 1)),
   });
 
   const handleAddToCart = useCallback(() => {
     if (!user) {
+      // Optimistic + offline queue
+      setOptimisticCart(c => c + 1);
       addToGuestCart({
         product_id: product.id, product_name: product.name, product_image: product.image_url,
         quantity: qty, unit_price: getClientPrice(product),
         shop_id: product.shop_id, shop_name: shop?.company_name, shop_region: shop?.region
+      });
+      // Also enqueue for background sync when user logs in
+      enqueueCartAction({
+        type: 'add',
+        data: {
+          product_id: product.id, product_name: product.name,
+          product_image: product.image_url, quantity: qty,
+          unit_price: getClientPrice(product), shop_id: product.shop_id,
+          shop_name: shop?.company_name, shop_region: shop?.region,
+        },
       });
       toast.success('Ajouté au panier');
       return;
@@ -204,9 +234,9 @@ export default function ProductPage() {
         <span className="text-sm font-semibold text-gray-900 truncate flex-1">{product.name}</span>
         <button onClick={() => navigate('/Cart')} className="relative p-1.5">
           <ShoppingCart className="w-5 h-5 text-gray-700" />
-          {cartItems.length > 0 && (
+          {(cartItems.length > 0 || optimisticCart > 0) && (
             <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-              {cartItems.reduce((s, i) => s + i.quantity, 0)}
+              {cartItems.reduce((s, i) => s + i.quantity, 0) + optimisticCart}
             </span>
           )}
         </button>
@@ -216,7 +246,7 @@ export default function ProductPage() {
       <div className="bg-white relative">
         <div className="w-full" style={{ aspectRatio: '1/1' }}>
           {imgSrc ? (
-            <img src={imgSrc} alt={product.image_alt || product.name} className="w-full h-full object-contain" loading="eager" />
+            <img src={imgSrc} alt={product.image_alt || product.name} className="w-full h-full object-contain" loading="eager" decoding="async" fetchpriority="high" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300 text-6xl">📦</div>
           )}
@@ -256,7 +286,7 @@ export default function ProductPage() {
                 className="flex-shrink-0 rounded-md overflow-hidden border-2 transition-all"
                 style={{ borderColor: i === imgIndex ? '#1877F2' : 'transparent', width: 52, height: 52 }}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
               </button>
             ))}
           </div>
