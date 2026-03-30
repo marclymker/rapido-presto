@@ -15,7 +15,7 @@ import { motion } from 'framer-motion';
 
 const COMPANY_CATEGORIES = [
   "Fastfood", 
-  "Restaurants", 
+  "Mode", 
   "Boutique Fleurs", 
   "Pharmacie", 
   "Mariage", 
