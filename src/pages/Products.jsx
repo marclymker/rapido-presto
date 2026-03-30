@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Tag, Store, ShoppingBag, ChevronRight, X, MapPin } from 'lucide-react';
+import { Search, Tag, Store, ChevronRight, X, MapPin } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
-const ProductDetailModal = lazy(() => import('@/components/modals/ProductDetailModal'));
 import { toast } from 'sonner';
 import CompactProductCard from '@/components/home/CompactProductCard';
 import CategoryRow from '@/components/home/CategoryRow';
@@ -30,14 +29,83 @@ const REGIONS = [
   'Cap-Haïtien', 'Limonade', 'Quartier-Morin', 'Les Gonaïves', 'Ennery', "L'Estère"
 ];
 
-const CATEGORY_ORDER = CATEGORIES;
+// ---------------------------------------------------------------------------
+// Utilitaires déterministes (définis hors du composant — jamais recréés)
+// ---------------------------------------------------------------------------
+
+const seededRandom = (seed) => {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 0x100000000;
+  };
+};
+
+const hashString = (str) =>
+  (str || '').split('').reduce(
+    (h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) | 0,
+    0
+  );
+
+const buildCategoryOrder = (products, catName, nowMs) => {
+  if (!products.length) return [];
+
+  const catSeed = products.reduce(
+    (acc, p) => acc ^ hashString(p.id),
+    hashString(catName)
+  );
+  const rand = seededRandom(catSeed);
+
+  const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+  const scored = products.map(p => {
+    const ageMs        = nowMs - new Date(p.created_date).getTime();
+    const recencyScore = Math.max(0, 1 - ageMs / NINETY_DAYS_MS);
+    const viewScore    = Math.min(1, (p.view_count || 0) / 100);
+    const noise        = rand();
+    return {
+      product: p,
+      score: recencyScore * 0.5 + viewScore * 0.4 + noise * 0.1,
+    };
+  });
+
+  const shopQueuesMap = {};
+  scored.forEach(({ product, score }) => {
+    const key = product.shop_id || '__no_shop__';
+    if (!shopQueuesMap[key]) shopQueuesMap[key] = [];
+    shopQueuesMap[key].push({ product, score });
+  });
+
+  const queues = Object.values(shopQueuesMap).map(queue =>
+    queue
+      .sort((a, b) => b.score - a.score)
+      .map(item => item.product)
+  );
+
+  for (let i = queues.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [queues[i], queues[j]] = [queues[j], queues[i]];
+  }
+
+  const merged = [];
+  const maxLen = Math.max(...queues.map(q => q.length));
+  for (let i = 0; i < maxLen; i++) {
+    queues.forEach(queue => { if (queue[i]) merged.push(queue[i]); });
+  }
+
+  return merged;
+};
+
+// ---------------------------------------------------------------------------
+// Composant principal
+// ---------------------------------------------------------------------------
 
 export default function Products() {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
   const queryClient = useQueryClient();
 
-  // Restore scroll position when returning from a product page
+  const mountTimeRef = useRef(Date.now());
+
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem('marketplace_scroll');
@@ -47,23 +115,26 @@ export default function Products() {
       }
     } catch (_) {}
   }, []);
-  const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
-  const [visibleCount, setVisibleCount] = useState(60);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [showCategories, setShowCategories] = useState(false);
-  const [selectedFbCatId, setSelectedFbCatId] = useState(null);
-  const [fbLevel1Id, setFbLevel1Id] = useState(null);
-  const [selectedRegion, setSelectedRegion] = useState('');
-  const [editingProduct, setEditingProduct] = useState(null);
+
+  const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } =
+    useActivityTracker();
+
+  const [visibleCount,      setVisibleCount]      = useState(60);
+  const [searchQuery,       setSearchQuery]        = useState('');
+  const [selectedCategory,  setSelectedCategory]   = useState(null);
+  const [showCategories,    setShowCategories]     = useState(false);
+  const [selectedFbCatId,   setSelectedFbCatId]    = useState(null);
+  const [fbLevel1Id,        setFbLevel1Id]         = useState(null);
+  const [selectedRegion,    setSelectedRegion]     = useState('');
+  const [editingProduct,    setEditingProduct]     = useState(null);
+
   const isAdmin = user?.role === 'admin';
 
-  // Track PageView Meta Pixel
   useEffect(() => {
     trackMetaEvent('PageView');
     if (window.gtag) {
       window.gtag('event', 'page_view', {
-        page_title: 'Marketplace - Rapido Presto',
+        page_title:    'Marketplace - Rapido Presto',
         page_location: window.location.href,
       });
     }
@@ -71,13 +142,19 @@ export default function Products() {
 
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 2000),
+    queryFn:  () => base44.entities.Product.filter({ is_available: true }, '-created_date', 2000),
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn:  () => base44.entities.Shop.filter({ is_active: true }),
   });
+
+  const shopsMap = useMemo(() => {
+    const m = {};
+    shops.forEach(s => { m[s.id] = s; });
+    return m;
+  }, [shops]);
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity }) => {
@@ -86,17 +163,17 @@ export default function Products() {
         return;
       }
       const price = applyClientMargin(product.promo_price || product.price);
-      const shop = shops.find(s => s.id === product.shop_id);
+      const shop  = shopsMap[product.shop_id];
       await base44.entities.CartItem.create({
-        user_id: user.id,
-        product_id: product.id,
-        product_name: product.name,
+        user_id:       user.id,
+        product_id:    product.id,
+        product_name:  product.name,
         product_image: product.image_url,
         quantity,
-        unit_price: price,
-        shop_id: product.shop_id,
-        shop_name: shop?.company_name || '',
-        shop_region: shop?.region || '',
+        unit_price:    price,
+        shop_id:       product.shop_id,
+        shop_name:     shop?.company_name || '',
+        shop_region:   shop?.region       || '',
       });
     },
     onSuccess: () => {
@@ -105,142 +182,168 @@ export default function Products() {
     },
   });
 
-  const handleAddToCart = (product, quantity = 1) => {
+  const handleAddToCart = useCallback((product, quantity = 1) => {
     trackAddToCart(product);
     addToCartMutation.mutate({ product, quantity });
-  };
+  }, [addToCartMutation, trackAddToCart]);
 
-  // IDs de la branche FB sélectionnée (pour inclure tous les enfants)
   const selectedFbBranchIds = useMemo(() => {
     if (!selectedFbCatId) return null;
     const ids = new Set();
-    function collect(nodes) {
+    const collect = (nodes) => {
       for (const n of nodes) {
         ids.add(n.id);
         if (n.children?.length) collect(n.children);
       }
-    }
-    function findAndCollect(nodes, targetId) {
+    };
+    const findAndCollect = (nodes, targetId) => {
       for (const n of nodes) {
         if (n.id === targetId) { collect([n]); return true; }
         if (n.children?.length && findAndCollect(n.children, targetId)) return true;
       }
       return false;
-    }
+    };
     findAndCollect(FB_TAXONOMY, selectedFbCatId);
     return ids;
   }, [selectedFbCatId]);
 
-  // Fuzzy search helper
-  const normalize = React.useCallback((s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''), []);
-  const fuzzyMatch = React.useCallback((text, keyword) => {
+  const normalize = useCallback(
+    (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
+    []
+  );
+  const fuzzyMatch = useCallback((text, keyword) => {
     const t = normalize(text), k = normalize(keyword);
     if (t.includes(k)) return true;
     if (k.length <= 3) return false;
     for (let i = 0; i <= t.length - k.length + 1; i++) {
       let diff = 0;
-      for (let j = 0; j < k.length; j++) { if (t[i + j] !== k[j]) diff++; if (diff > 1) break; }
+      for (let j = 0; j < k.length; j++) {
+        if (t[i + j] !== k[j]) diff++;
+        if (diff > 1) break;
+      }
       if (diff <= 1) return true;
     }
     return false;
   }, [normalize]);
 
-  const filteredProducts = React.useMemo(() => {
+  const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId || selectedRegion);
+
+  const filteredProducts = useMemo(() => {
     const base = allProducts.filter(p => {
       if (selectedCategory && p.category !== selectedCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
       if (selectedRegion && p.shop_id) {
-        const shop = shops.find(s => s.id === p.shop_id);
-        if (shop && shop.region && shop.region !== selectedRegion) return false;
+        const shop = shopsMap[p.shop_id];
+        if (shop?.region && shop.region !== selectedRegion) return false;
       }
       if (searchQuery.trim()) {
         const keywords = searchQuery.trim().split(/\s+/).filter(w => w.length > 1);
-        const fields = [p.name || '', p.description || '', p.shop_name || '', ...(p.seo_tags || [])];
-        return keywords.every(keyword => fields.some(field => fuzzyMatch(field, keyword)));
+        const fields   = [p.name || '', p.description || '', p.shop_name || '', ...(p.seo_tags || [])];
+        return keywords.every(kw => fields.some(f => fuzzyMatch(f, kw)));
       }
       return true;
     });
 
-    if (searchQuery || selectedCategory || selectedFbCatId || selectedRegion) return base;
+    if (isFiltered) return base;
 
     let lastViewed = null;
-    try { const raw = localStorage.getItem('last_viewed_product'); if (raw) lastViewed = JSON.parse(raw); } catch (_) {}
+    try {
+      const raw = localStorage.getItem('last_viewed_product');
+      if (raw) lastViewed = JSON.parse(raw);
+    } catch (_) {}
 
-    const shuffle = (arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    const shuffle = (arr) => {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
 
     if (!lastViewed) return shuffle(base);
 
     const nameWords = (lastViewed.name || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
-    const tags = lastViewed.seo_tags || [];
-    const category = lastViewed.category || '';
+    const tags      = lastViewed.seo_tags || [];
+    const category  = lastViewed.category || '';
 
-    const scored = base.filter(p => p.id !== lastViewed.id).map(p => {
-      let score = 0;
-      const pName = (p.name || '').toLowerCase();
-      const pTags = p.seo_tags || [];
-      nameWords.forEach(w => { if (pName.includes(w)) score += 2; });
-      tags.forEach(t => { if (pTags.includes(t)) score += 3; });
-      if (p.category === category) score += 1;
-      return { ...p, _score: score };
+    const scored = base
+      .filter(p => p.id !== lastViewed.id)
+      .map(p => {
+        let score   = 0;
+        const pName = (p.name || '').toLowerCase();
+        const pTags = p.seo_tags || [];
+        nameWords.forEach(w => { if (pName.includes(w)) score += 2; });
+        tags.forEach(t      => { if (pTags.includes(t)) score += 3; });
+        if (p.category === category) score += 1;
+        return { ...p, _score: score };
+      });
+
+    const top10 = scored
+      .filter(p => p._score > 0)
+      .sort((a, b) => b._score - a._score)
+      .slice(0, 10);
+    const top10Ids = new Set(top10.map(p => p.id));
+    const rest     = shuffle(scored.filter(p => !top10Ids.has(p.id)));
+
+    return [...top10, ...rest];
+  }, [allProducts, searchQuery, selectedCategory, selectedFbCatId, selectedRegion,
+      selectedFbBranchIds, shopsMap, fuzzyMatch, isFiltered]);
+
+  const visibleProducts = useMemo(
+    () => filteredProducts.slice(0, visibleCount),
+    [filteredProducts, visibleCount]
+  );
+
+  const categoryGroups = useMemo(() => {
+    if (isFiltered) return {};
+
+    const nowMs = mountTimeRef.current;
+
+    const byCategory = {};
+    allProducts.forEach(p => {
+      if (!p.category) return;
+      if (!byCategory[p.category]) byCategory[p.category] = [];
+      byCategory[p.category].push(p);
     });
 
-    const top10 = scored.filter(p => p._score > 0).sort((a, b) => b._score - a._score).slice(0, 10);
-    const top10Ids = new Set(top10.map(p => p.id));
-    const rest = shuffle(scored.filter(p => !top10Ids.has(p.id)));
-    return [...top10, ...rest];
-  }, [allProducts, searchQuery, selectedCategory, selectedFbCatId, selectedRegion, selectedFbBranchIds, shops, fuzzyMatch]);
+    const result = {};
+    Object.keys(byCategory).forEach(cat => {
+      result[cat] = buildCategoryOrder(byCategory[cat], cat, nowMs);
+    });
 
-  const handleProductClick = (product) => {
-    if (isAdmin) {
-      setEditingProduct(product);
-      return;
-    }
-    const shop = shops.find(s => s.id === product.shop_id);
+    const sorted = {};
+    CATEGORIES.forEach(cat => { if (result[cat]) sorted[cat] = result[cat]; });
+    Object.keys(result).forEach(cat => { if (!sorted[cat]) sorted[cat] = result[cat]; });
+
+    return sorted;
+  }, [allProducts, isFiltered]);
+
+  const handleProductClick = useCallback((product) => {
+    if (isAdmin) { setEditingProduct(product); return; }
+    const shop = shopsMap[product.shop_id];
     trackProductView(product, shop);
-    try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
+    try {
+      localStorage.setItem('last_viewed_product', JSON.stringify({
+        id: product.id, name: product.name,
+        seo_tags: product.seo_tags, category: product.category,
+      }));
+    } catch (_) {}
     navigate(`/product/${product.slug || product.id}`);
-  };
+  }, [isAdmin, shopsMap, trackProductView, navigate]);
 
-  const handleSearchChange = (value) => {
+  const handleSearchChange = useCallback((value) => {
     setSearchQuery(value);
     setVisibleCount(60);
     if (value.length > 2) trackSearch(value);
-  };
+  }, [trackSearch]);
 
-  const handleCategorySelect = (cat) => {
+  const handleCategorySelect = useCallback((cat) => {
     setSelectedCategory(cat);
     setVisibleCount(60);
     setShowCategories(false);
     if (cat) trackCategoryView(cat);
-  };
-
-  const shopsMap = React.useMemo(() => {
-    const m = {};
-    shops.forEach(s => { m[s.id] = s; });
-    return m;
-  }, [shops]);
-
-  const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId || selectedRegion);
-
-  const visibleProducts = React.useMemo(() => filteredProducts.slice(0, visibleCount), [filteredProducts, visibleCount]);
-
-  const categoryGroups = React.useMemo(() => {
-    if (isFiltered) return {};
-    const groups = {};
-    allProducts.forEach(p => {
-      if (!p.category) return;
-      if (!groups[p.category]) groups[p.category] = [];
-      groups[p.category].push(p);
-    });
-    Object.keys(groups).forEach(k => {
-      groups[k].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-    });
-    // Sort categories by priority order
-    const sorted = {};
-    CATEGORY_ORDER.forEach(cat => { if (groups[cat]) sorted[cat] = groups[cat]; });
-    Object.keys(groups).forEach(cat => { if (!sorted[cat]) sorted[cat] = groups[cat]; });
-    return sorted;
-  }, [allProducts, isFiltered]);
+  }, [trackCategoryView]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
@@ -261,20 +364,25 @@ export default function Products() {
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
       </Helmet>
       <SEO
-        title={selectedCategory ? `${selectedCategory} - Marketplace Rapido Presto` : 'Marketplace - Tous les produits | Rapido Presto'}
-        description={selectedCategory ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Livraison rapide avec Rapido Presto` : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
+        title={
+          selectedCategory
+            ? `${selectedCategory} - Marketplace Rapido Presto`
+            : 'Marketplace - Tous les produits | Rapido Presto'
+        }
+        description={
+          selectedCategory
+            ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Livraison rapide avec Rapido Presto`
+            : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'
+        }
         keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedCategory || 'produits'].filter(Boolean)}
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 
-      {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <h1 className="text-xl font-bold text-slate-900">Marketplace</h1>
-
         </div>
 
-        {/* Search Bar */}
         <div className="px-4 pb-3">
           <div className="flex items-center bg-slate-100 rounded-full px-4 py-2.5 gap-2">
             <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
@@ -284,32 +392,30 @@ export default function Products() {
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="bg-transparent outline-none w-full text-sm text-slate-700 placeholder:text-slate-400"
+              aria-label="Rechercher un produit"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')}>
+              <button type="button" onClick={() => handleSearchChange('')} aria-label="Effacer la recherche">
                 <X className="w-4 h-4 text-slate-400" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="px-4 pb-3 flex gap-2">
           <button
-            onClick={() => {
-              if (user) {
-                navigate('/Dashboard');
-              } else {
-                base44.auth.redirectToLogin('/Dashboard');
-              }
-            }}
+            type="button"
+            onClick={() => user ? navigate('/Dashboard') : base44.auth.redirectToLogin('/Dashboard')}
             className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white py-2 px-4 rounded-full text-sm font-semibold hover:bg-orange-600 transition"
           >
             <Store className="w-4 h-4" />
             <span>Ma boutique</span>
           </button>
+
           <button
-            onClick={() => setShowCategories(!showCategories)}
+            type="button"
+            onClick={() => setShowCategories(v => !v)}
+            aria-pressed={showCategories || !!selectedCategory}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm font-semibold transition ${
               showCategories || selectedCategory
                 ? 'bg-orange-500 text-white'
@@ -319,28 +425,33 @@ export default function Products() {
             <Tag className="w-4 h-4" />
             <span>{selectedCategory || 'Catégories'}</span>
           </button>
-          <Select value={selectedRegion} onValueChange={(v) => { setSelectedRegion(v === '__all__' ? '' : v); setVisibleCount(60); }}>
-            <SelectTrigger className={`h-9 w-9 p-0 flex items-center justify-center rounded-full border-0 flex-shrink-0 ${
-              selectedRegion ? 'bg-orange-500 text-white' : 'bg-slate-200 text-slate-700'
-            }`}>
+
+          <Select
+            value={selectedRegion}
+            onValueChange={(v) => { setSelectedRegion(v === '__all__' ? '' : v); setVisibleCount(60); }}
+          >
+            <SelectTrigger
+              className={`h-9 w-9 p-0 flex items-center justify-center rounded-full border-0 flex-shrink-0 ${
+                selectedRegion ? 'bg-orange-500 text-white' : 'bg-slate-200 text-slate-700'
+              }`}
+              aria-label="Filtrer par région"
+            >
               <MapPin className="w-4 h-4" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Toutes les zones</SelectItem>
-              {REGIONS.map(r => (
-                <SelectItem key={r} value={r}>{r}</SelectItem>
-              ))}
+              {REGIONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Categories dropdown */}
         {showCategories && (
           <div className="px-4 pb-3 space-y-3">
-            {/* Catégories app */}
             <div className="flex flex-wrap gap-1.5">
               <button
+                type="button"
                 onClick={() => handleCategorySelect(null)}
+                aria-pressed={!selectedCategory}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                   !selectedCategory ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
                 }`}
@@ -350,7 +461,9 @@ export default function Products() {
               {CATEGORIES.map(cat => (
                 <button
                   key={cat}
+                  type="button"
                   onClick={() => handleCategorySelect(cat)}
+                  aria-pressed={selectedCategory === cat}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                     selectedCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
                   }`}
@@ -360,18 +473,23 @@ export default function Products() {
               ))}
             </div>
 
-            {/* Filtre hiérarchique Facebook Taxonomy */}
             <div className="border-t pt-2">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Taxonomy Facebook/Google</p>
-              {/* Niveau 1 */}
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                Taxonomy Facebook / Google
+              </p>
+
               <div className="flex flex-wrap gap-1.5 mb-1.5">
                 {FB_TAXONOMY.map(cat => (
                   <button
                     key={cat.id}
+                    type="button"
                     onClick={() => {
                       setFbLevel1Id(fbLevel1Id === cat.id ? null : cat.id);
-                      if (selectedFbCatId && !String(selectedFbCatId).startsWith(String(cat.id))) setSelectedFbCatId(null);
+                      if (selectedFbCatId && !String(selectedFbCatId).startsWith(String(cat.id))) {
+                        setSelectedFbCatId(null);
+                      }
                     }}
+                    aria-pressed={fbLevel1Id === cat.id}
                     className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
                       fbLevel1Id === cat.id ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-slate-600 border-slate-200'
                     }`}
@@ -381,33 +499,33 @@ export default function Products() {
                 ))}
               </div>
 
-              {/* Niveau 2 (enfants du niveau 1 sélectionné) */}
               {fbLevel1Id && getChildren(fbLevel1Id).length > 0 && (
                 <div className="flex flex-wrap gap-1.5 ml-3 mb-1.5">
                   <ChevronRight className="w-3 h-3 text-slate-400 self-center" />
                   {getChildren(fbLevel1Id).map(child => (
                     <button
                       key={child.id}
+                      type="button"
                       onClick={() => setSelectedFbCatId(selectedFbCatId === child.id ? null : child.id)}
+                      aria-pressed={selectedFbCatId === child.id}
                       className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
                         selectedFbCatId === child.id ? 'bg-blue-500 text-white border-blue-500' : 'bg-blue-50 text-blue-700 border-blue-100'
                       }`}
                     >
-                      {child.name}
-                      {child.children?.length > 0 && ' ›'}
+                      {child.name}{child.children?.length > 0 && ' ›'}
                     </button>
                   ))}
                 </div>
               )}
 
-              {/* Niveau 3 */}
               {selectedFbCatId && getChildren(selectedFbCatId).length > 0 && (
                 <div className="flex flex-wrap gap-1.5 ml-6">
                   <ChevronRight className="w-3 h-3 text-slate-400 self-center" />
                   {getChildren(selectedFbCatId).map(child => (
                     <button
                       key={child.id}
-                      onClick={() => setSelectedFbCatId(selectedFbCatId === child.id ? fbLevel1Id : child.id)}
+                      type="button"
+                      onClick={() => setSelectedFbCatId(prev => prev === child.id ? fbLevel1Id : child.id)}
                       className="px-2.5 py-1 rounded-full text-[11px] font-medium border bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 transition"
                     >
                       {child.name}
@@ -416,12 +534,16 @@ export default function Products() {
                 </div>
               )}
 
-              {/* Badge filtre actif */}
               {selectedFbCatId && (
                 <div className="mt-1.5 flex items-center gap-1">
                   <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full flex items-center gap-1">
                     ID {selectedFbCatId} · {findById(selectedFbCatId)?.name}
-                    <button onClick={() => { setSelectedFbCatId(null); }} className="ml-0.5 hover:text-blue-900">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFbCatId(null)}
+                      className="ml-0.5 hover:text-blue-900"
+                      aria-label="Supprimer le filtre"
+                    >
                       <X className="w-2.5 h-2.5" />
                     </button>
                   </span>
@@ -432,18 +554,19 @@ export default function Products() {
         )}
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 pt-2 pb-4">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500" />
             <p className="text-sm text-slate-500">Chargement...</p>
           </div>
+
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-3">📦</div>
             <p className="text-slate-500">Aucun produit trouvé</p>
           </div>
+
         ) : isFiltered ? (
           <div className="px-3">
             <div className="flex items-center justify-between mb-2">
@@ -465,6 +588,7 @@ export default function Products() {
             {visibleCount < filteredProducts.length && (
               <div className="flex justify-center mt-4">
                 <button
+                  type="button"
                   onClick={() => setVisibleCount(c => c + 60)}
                   className="bg-orange-500 text-white font-semibold px-8 py-2.5 rounded-full text-sm"
                 >
@@ -473,16 +597,15 @@ export default function Products() {
               </div>
             )}
           </div>
+
         ) : (
           <div>
-            {/* Section Tendances en premier */}
             <TrendingSection
               allProducts={allProducts}
               shops={shops}
               onProductClick={handleProductClick}
             />
 
-            {/* Sections horizontales par catégorie */}
             {Object.entries(categoryGroups).map(([cat, products]) => (
               <CategoryRow
                 key={cat}
@@ -494,7 +617,6 @@ export default function Products() {
               />
             ))}
 
-            {/* Grille globale compacte */}
             <div className="px-3 mt-2">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-bold text-slate-800">🔀 Tout voir</h3>
@@ -513,6 +635,7 @@ export default function Products() {
               {visibleCount < filteredProducts.length && (
                 <div className="flex justify-center mt-4">
                   <button
+                    type="button"
                     onClick={() => setVisibleCount(c => c + 60)}
                     className="bg-orange-500 text-white font-semibold px-8 py-2.5 rounded-full text-sm"
                   >
