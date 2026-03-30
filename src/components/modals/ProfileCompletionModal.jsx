@@ -18,7 +18,7 @@ const REGIONS = [
 ];
 
 const COMPANY_CATEGORIES = [
-  "Fastfood", "Restaurants", "Boutique Fleurs", "Pharmacie", "Mariage",
+  "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Mariage",
   "Epicerie", "Café", "Pour Femme", "Electronics", "Pour homme", "Maison", "Bébé", "Outils"
 ];
 
