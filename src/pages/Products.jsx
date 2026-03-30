@@ -19,7 +19,7 @@ import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
 
 const CATEGORIES = [
   'Pour Femme', 'Bijoux', 'Pour homme', 'Mariage', 'Boutique Fleurs',
-  'Maison', 'Electronics', 'Restaurants', 'Pharmacie',
+  'Maison', 'Electronics', 'Mode', 'Pharmacie',
   'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor'
 ];
 
