@@ -270,14 +270,14 @@ export default function ProductPage() {
 
         {/* Price */}
         <div className="flex items-baseline gap-2 mb-3">
-          <span className="text-xl font-bold" style={{ color: '#444950' }}>{price.toLocaleString()} HTG</span>
+          <span className="text-xl font-bold" style={{ color: '#050505' }}>{price.toLocaleString()} HTG</span>
           {originalPrice && (
             <span className="text-sm line-through" style={{ color: '#8a8d91' }}>{originalPrice.toLocaleString()} HTG</span>
           )}
         </div>
 
-        {/* WhatsApp message box */}
-        <div className="mb-3">
+        {/* WhatsApp message box - full line */}
+        <div className="mb-3 w-full">
           {!waBoxOpen ? (
             <button
               onClick={() => setWaBoxOpen(true)}
@@ -289,7 +289,7 @@ export default function ProductPage() {
               <Send className="w-4 h-4 flex-shrink-0" style={{ color: '#1877F2' }} />
             </button>
           ) : (
-            <div className="border border-blue-400 rounded-lg overflow-hidden">
+            <div className="border border-blue-400 rounded-lg overflow-hidden w-full">
               <textarea
                 value={waMessage}
                 onChange={e => setWaMessage(e.target.value)}
@@ -374,7 +374,7 @@ export default function ProductPage() {
       {relatedProducts.length > 0 && (
         <div className="bg-white mt-2 px-4 py-4">
           <h2 className="text-sm font-bold mb-3" style={{ color: '#050505' }}>Produits similaires</h2>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid gap-2" style={{ gridTemplateColumns: '1fr 1fr' }}>
             {visibleRelated.map(p => {
               const s = shops.find(sh => sh.id === p.shop_id);
               return (
