@@ -50,10 +50,10 @@ Deno.serve(async (req) => {
   </url>`;
     });
 
-    // 5. Boucle des Produits AVEC IMAGES (Le résultat asymétrique)
+    // 5. Boucle des Produits AVEC IMAGES
     products.forEach(product => {
-      // J'ai utilisé ProductPage car c'était le nom de votre page dans le sitemap statique
-      const productUrl = `${baseUrl}/ProductPage?id=${product.id}`.replace(/&/g, '&amp;');
+      if (!product.slug && !product.id) return;
+      const productUrl = `${baseUrl}/product/${product.slug || product.id}`;
       const lastMod = product.updated_date ? new Date(product.updated_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
       
       xml += `

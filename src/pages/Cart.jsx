@@ -305,7 +305,7 @@ export default function Cart() {
       setConfirmCode(data.code);
       setStep('confirmed');
       toast.success('Commande confirmée!');
-      // Track achat GA4 + Meta Pixel
+      // Track achat GA4 + Meta Pixel (Advantage+ catalog)
       trackPurchase({
         order_number: data.orderNum,
         total: baseTotal,
@@ -316,6 +316,18 @@ export default function Cart() {
           unit_price: item.unit_price
         }))
       });
+      // Pixel direct pour garantir le Purchase sur la page panier
+      if (window.fbq) {
+        window.fbq('track', 'Purchase', {
+          content_ids: cartItems.map(i => i.product_id),
+          content_type: 'product',
+          contents: cartItems.map(i => ({ id: i.product_id, quantity: i.quantity, item_price: i.unit_price })),
+          num_items: cartItems.reduce((s, i) => s + i.quantity, 0),
+          value: parseFloat(baseTotal),
+          currency: 'HTG',
+          order_id: data.orderNum
+        });
+      }
     },
     onError: (error) => {
       console.error('❌ Erreur mutation:', error);
