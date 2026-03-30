@@ -12,7 +12,7 @@ export const categoryToSlug = (category) => {
     'Bébé': 'bebe',
     'Outils': 'outils',
     'Fastfood': 'fastfood',
-    'Restaurants': 'restaurants',
+    'Mode': 'mode',
     'Pharmacie': 'pharmacie',
     'Epicerie': 'epicerie',
     'Café': 'cafe'
@@ -34,7 +34,7 @@ export const slugToCategory = (slug) => {
     'bebe': 'Bébé',
     'outils': 'Outils',
     'fastfood': 'Fastfood',
-    'restaurants': 'Restaurants',
+    'mode': 'Mode',
     'pharmacie': 'Pharmacie',
     'epicerie': 'Epicerie',
     'cafe': 'Café'
