@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
     }
 
     // En-tête avec tous les champs standards Facebook/Google Shopping + attributs personnalisés
-    let csv = 'id,title,description,availability,condition,price,link,image_link,google_product_category,brand,color,size,material,gender,age_group,pattern,custom_label_0,custom_label_1,custom_label_2,custom_label_3,custom_label_4,additional_image_link\n';
+    let csv = 'id,title,description,availability,condition,price,sale_price,link,image_link,google_product_category,brand,color,size,material,gender,age_group,pattern,custom_label_0,custom_label_1,custom_label_2,custom_label_3,custom_label_4,additional_image_link\n';
 
     const escapeCSV = (str) => {
       if (!str) return '';
@@ -31,8 +31,9 @@ Deno.serve(async (req) => {
       const availability = p.is_available !== false && (p.stock_quantity === undefined || p.stock_quantity > 0) ? 'in stock' : 'out of stock';
       const condition = 'new';
       const price = `${parseFloat(p.price || 0).toFixed(2)} HTG`;
-      const link = `https://rapido-presto.base44.app/product/${p.slug || p.id}`;
-      const image_link = p.image_url || "https://rapido-presto.base44.app/logo.png";
+      const link = `https://rapidopresto.shop/product/${p.slug || p.id}`;
+      const image_link = p.image_url || "https://rapidopresto.shop/logo.png";
+      const sale_price = p.promo_price && p.promo_price < p.price ? `${parseFloat(p.promo_price).toFixed(2)} HTG` : '';
       const brand = escapeCSV(p.shop_name || "Rapido Presto");
       // Utilise l'ID numérique FB si disponible, sinon le chemin complet
       // Facebook recommande l'ID numérique (ex: 225) OU le chemin complet (ex: "Électronique > Téléphonie > Smartphones")
@@ -60,7 +61,7 @@ Deno.serve(async (req) => {
         ? escapeCSV(p.additional_images.join(','))
         : '';
 
-      csv += `${id},${title},${description},${availability},${condition},${price},${link},${image_link},${google_product_category},${brand},${color},${size},${material},${gender},${age_group},${pattern},${custom_label_0},${custom_label_1},${custom_label_2},${custom_label_3},${custom_label_4},${additional_images}\n`;
+      csv += `${id},${title},${description},${availability},${condition},${price},${sale_price},${link},${image_link},${google_product_category},${brand},${color},${size},${material},${gender},${age_group},${pattern},${custom_label_0},${custom_label_1},${custom_label_2},${custom_label_3},${custom_label_4},${additional_images}\n`;
     });
 
     return new Response(csv, { 
