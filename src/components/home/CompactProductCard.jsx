@@ -59,16 +59,16 @@ const CompactProductCard = React.memo(({ product, shop, onClick }) => {
       <div className="p-1.5 flex flex-col gap-0.5">
         {/* Prix en premier - mise en avant */}
         <div className="flex items-baseline gap-1">
-          <span className="text-[12px] font-black text-orange-500 leading-tight">{price.toLocaleString()} G</span>
+          <span className="text-[12px] font-black leading-tight" style={{color: '#050505'}}>{price.toLocaleString()} G</span>
           {originalPrice && (
-            <span className="text-[9px] text-slate-400 line-through leading-tight">{originalPrice.toLocaleString()}</span>
+            <span className="text-[9px] line-through leading-tight" style={{color: '#8a8d91'}}>{originalPrice.toLocaleString()}</span>
           )}
         </div>
         {/* Nom produit */}
-        <p className="text-[11px] text-slate-700 truncate leading-tight font-medium">{product.name}</p>
+        <p className="text-[11px] truncate leading-tight font-medium" style={{color: '#3c4043'}}>{product.name}</p>
         {/* Boutique */}
         {shop?.company_name && (
-          <p className="text-[9px] text-slate-400 truncate leading-tight">{shop.company_name}</p>
+          <p className="text-[9px] truncate leading-tight" style={{color: '#8a8d91'}}>{shop.company_name}</p>
         )}
       </div>
     </div>
