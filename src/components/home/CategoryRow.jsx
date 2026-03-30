@@ -9,7 +9,7 @@ const CATEGORY_EMOJIS = {
   'Mariage': '💍',
   'Boutique Fleurs': '🌸',
   'Fastfood': '🍔',
-  'Restaurants': '🍽️',
+  'Mode': '👗',
   'Pharmacie': '💊',
   'Epicerie': '🛒',
   'Café': '☕',
