@@ -392,7 +392,7 @@ export default function Products() {
   }, [trackCategoryView]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
+    <div className="flex flex-col min-h-screen pb-20" style={{backgroundColor: '#f0f2f5'}}>
       {isAdmin && editingProduct && (
         <ProductFormModal
           product={editingProduct}
@@ -424,13 +424,13 @@ export default function Products() {
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 
-      <header className="bg-white shadow-sm sticky top-0 z-40">
+      <header className="sticky top-0 z-40 border-b border-gray-200" style={{backgroundColor: '#ffffff'}}>
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <h1 className="text-xl font-bold text-slate-900">Marketplace</h1>
         </div>
 
         <div className="px-4 pb-3">
-          <div className="flex items-center bg-slate-100 rounded-full px-4 py-2.5 gap-2">
+          <div className="flex items-center rounded-full px-4 py-2.5 gap-2" style={{backgroundColor: '#f0f2f5'}}>
             <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
             <input
               type="text"
@@ -452,7 +452,8 @@ export default function Products() {
           <button
             type="button"
             onClick={() => user ? navigate('/Dashboard') : base44.auth.redirectToLogin('/Dashboard')}
-            className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white py-2 px-4 rounded-full text-sm font-semibold hover:bg-orange-600 transition"
+            className="flex-1 flex items-center justify-center gap-2 text-white py-2 px-4 rounded-full text-sm font-semibold transition"
+            style={{backgroundColor: '#1877F2'}}
           >
             <Store className="w-4 h-4" />
             <span>Ma boutique</span>
@@ -462,11 +463,8 @@ export default function Products() {
             type="button"
             onClick={() => setShowCategories(v => !v)}
             aria-pressed={showCategories || !!selectedCategory}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm font-semibold transition ${
-              showCategories || selectedCategory
-                ? 'bg-orange-500 text-white'
-                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-            }`}
+            className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm font-semibold transition"
+            style={showCategories || selectedCategory ? {backgroundColor: '#1877F2', color: '#fff'} : {backgroundColor: '#e4e6eb', color: '#050505'}}
           >
             <Tag className="w-4 h-4" />
             <span>{selectedCategory || 'Catégories'}</span>
@@ -477,9 +475,8 @@ export default function Products() {
             onValueChange={(v) => { setSelectedRegion(v === '__all__' ? '' : v); setVisibleCount(60); }}
           >
             <SelectTrigger
-              className={`h-9 w-9 p-0 flex items-center justify-center rounded-full border-0 flex-shrink-0 ${
-                selectedRegion ? 'bg-orange-500 text-white' : 'bg-slate-200 text-slate-700'
-              }`}
+              className="h-9 w-9 p-0 flex items-center justify-center rounded-full border-0 flex-shrink-0"
+            style={selectedRegion ? {backgroundColor: '#1877F2', color: '#fff'} : {backgroundColor: '#e4e6eb', color: '#050505'}}
               aria-label="Filtrer par région"
             >
               <MapPin className="w-4 h-4" />
@@ -498,9 +495,8 @@ export default function Products() {
                 type="button"
                 onClick={() => handleCategorySelect(null)}
                 aria-pressed={!selectedCategory}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                  !selectedCategory ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
-                }`}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold border transition"
+                style={!selectedCategory ? {backgroundColor: '#1877F2', color: '#fff', borderColor: '#1877F2'} : {backgroundColor: '#fff', color: '#050505', borderColor: '#ddd'}}
               >
                 Tous
               </button>
@@ -510,9 +506,8 @@ export default function Products() {
                   type="button"
                   onClick={() => handleCategorySelect(cat)}
                   aria-pressed={selectedCategory === cat}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                    selectedCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'
-                  }`}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold border transition"
+                  style={selectedCategory === cat ? {backgroundColor: '#1877F2', color: '#fff', borderColor: '#1877F2'} : {backgroundColor: '#fff', color: '#050505', borderColor: '#ddd'}}
                 >
                   {cat}
                 </button>
@@ -636,7 +631,8 @@ export default function Products() {
                 <button
                   type="button"
                   onClick={() => setVisibleCount(c => c + 60)}
-                  className="bg-orange-500 text-white font-semibold px-8 py-2.5 rounded-full text-sm"
+                  className="font-semibold px-8 py-2.5 rounded-full text-sm text-white"
+                  style={{backgroundColor: '#1877F2'}}
                 >
                   Voir plus ({filteredProducts.length - visibleCount} restants)
                 </button>
@@ -683,7 +679,8 @@ export default function Products() {
                   <button
                     type="button"
                     onClick={() => setVisibleCount(c => c + 60)}
-                    className="bg-orange-500 text-white font-semibold px-8 py-2.5 rounded-full text-sm"
+                    className="font-semibold px-8 py-2.5 rounded-full text-sm text-white"
+                    style={{backgroundColor: '#1877F2'}}
                   >
                     Voir plus ({filteredProducts.length - visibleCount} restants)
                   </button>
