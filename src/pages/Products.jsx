@@ -108,6 +108,15 @@ export default function Products() {
 
   useEffect(() => {
     try {
+      const savedSearch = sessionStorage.getItem('marketplace_search');
+      if (savedSearch) setSearchQuery(savedSearch);
+      const savedCategory = sessionStorage.getItem('marketplace_category');
+      if (savedCategory) setSelectedCategory(savedCategory);
+    } catch (_) {}
+  }, []);
+
+  useEffect(() => {
+    try {
       const saved = sessionStorage.getItem('marketplace_scroll');
       if (saved) {
         window.scrollTo(0, parseInt(saved, 10));
@@ -335,6 +344,7 @@ export default function Products() {
   const handleSearchChange = useCallback((value) => {
     setSearchQuery(value);
     setVisibleCount(60);
+    try { sessionStorage.setItem('marketplace_search', value); } catch (_) {}
     if (value.length > 2) trackSearch(value);
   }, [trackSearch]);
 
@@ -342,6 +352,7 @@ export default function Products() {
     setSelectedCategory(cat);
     setVisibleCount(60);
     setShowCategories(false);
+    try { sessionStorage.setItem('marketplace_category', cat || ''); } catch (_) {}
     if (cat) trackCategoryView(cat);
   }, [trackCategoryView]);
 
