@@ -123,7 +123,7 @@ export default function ProductPage() {
   }, [product]);
 
   // ==========================================
-  // LA MUTATION CORRIGÉE (SYSTÈME ALIBABA)
+  // MUTATION RAYON-X (POUR DÉBOGAGE)
   // ==========================================
   const initiateChatMutation = useMutation({
     mutationFn: async (text) => {
@@ -131,21 +131,28 @@ export default function ProductPage() {
         throw new Error("NOT_LOGGED_IN");
       }
       
-      // On envoie EXACTEMENT ce que le backend attend dans sa section "init"
-      const response = await base44.functions.invoke('chatService', {
+      const payload = {
         action: 'init',
-        vendor_id: shop?.user_id,
+        vendor_id: shop?.user_id || shop?.owner_id, 
         shop_id: shop?.id,
         shop_name: shop?.company_name,
         shop_logo: shop?.company_logo_url,
         product_id: product?.id,
         product_name: product?.name,
         initial_message: text
-      });
+      };
+
+      console.log("📦 PAYLOAD ENVOYÉ AU SERVEUR:", payload);
+
+      if (!payload.vendor_id) {
+        toast.warning("Attention: ID du vendeur introuvable sur la boutique.");
+      }
+
+      const response = await base44.functions.invoke('chatService', payload);
       return response;
     },
     onSuccess: (res) => {
-      // base44 renvoie la réponse dans `res.data` ou directement dans `res`
+      console.log("✅ RÉPONSE DU SERVEUR:", res);
       const convData = res?.data || res;
       const convId = convData?.id;
       
@@ -156,11 +163,13 @@ export default function ProductPage() {
       }
     },
     onError: (error) => {
+      console.error("❌ ERREUR COMPLÈTE:", error);
       if (error.message === "NOT_LOGGED_IN") {
         toast.error("Veuillez vous connecter pour envoyer un message.");
         setTimeout(() => base44.auth.redirectToLogin(window.location.pathname), 1500);
       } else {
-        toast.error(`Erreur: Impossible d'initialiser le chat.`);
+        const serverMsg = error?.response?.data?.error || error?.message || "Rejeté par la DB";
+        toast.error(`Erreur Serveur: ${serverMsg}`);
       }
     }
   });
