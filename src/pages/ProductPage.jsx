@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ShoppingCart, Send, Store, MapPin, Share2, MessageCircle } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Send, Store, MapPin, Share2, MessageCircle, Loader2 } from 'lucide-react';
 import { cacheProduct, getCachedProduct } from '@/lib/useProductCache';
 import { enqueueCartAction, useCartSync } from '@/lib/useCartSync';
 import { Helmet } from 'react-helmet-async';
@@ -29,6 +29,9 @@ export default function ProductPage() {
   const [waBoxOpen, setWaBoxOpen] = useState(false);
   const [relatedVisible, setRelatedVisible] = useState(12);
   const [optimisticCart, setOptimisticCart] = useState(0);
+
+  // État pour le message interne pré-rempli
+  const [messengerMsg, setMessengerMsg] = useState('Bonjour, Cet article est-il toujours disponible ?');
 
   useCartSync(user?.id);
 
@@ -118,6 +121,41 @@ export default function ProductPage() {
     });
     setWaMessage(`Bonjour, je suis intéressé par: ${product.name}`);
   }, [product]);
+
+  // Mutation pour créer la conversation interne avec le produit
+  const initiateChatMutation = useMutation({
+    mutationFn: async (text) => {
+      if (!user) {
+        base44.auth.redirectToLogin(window.location.pathname);
+        throw new Error("Non connecté");
+      }
+      const price = applyClientMargin(product.promo_price || product.price);
+      const response = await base44.functions.invoke('chatService', {
+        action: 'send',
+        shop_id: shop?.id,
+        content: text,
+        type: 'product',
+        metadata: {
+          productId: product.id,
+          productName: product.name,
+          productImage: product.image_url,
+          productPrice: price,
+        }
+      });
+      return response;
+    },
+    onSuccess: (res) => {
+      const convId = res.data?.conversation_id || res.data?.id || res.conversation_id;
+      if (convId) {
+        navigate(`/chat?id=${convId}`);
+      } else {
+        navigate('/chat');
+      }
+    },
+    onError: () => {
+      toast.error("Erreur lors de l'ouverture du chat.");
+    }
+  });
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ quantity }) => {
@@ -217,7 +255,6 @@ export default function ProductPage() {
         </button>
         <span className="text-sm font-semibold text-gray-900 truncate flex-1">{product.name}</span>
         
-        {/* BOUTON PARTAGE DANS LE HEADER */}
         <button onClick={handleShare} className="p-1.5 rounded-full hover:bg-gray-100">
           <Share2 className="w-5 h-5 text-gray-700" />
         </button>
@@ -239,7 +276,6 @@ export default function ProductPage() {
         </div>
         {hasPromo && <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">-{Math.round((1 - product.promo_price / product.price) * 100)}%</div>}
         
-        {/* BOUTON PARTAGE FLOTTANT SUR PHOTO (Optionnel, comme sur FB) */}
         <button onClick={handleShare} className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur shadow-md rounded-full">
           <Share2 className="w-4 h-4 text-gray-700" />
         </button>
@@ -259,6 +295,55 @@ export default function ProductPage() {
         <div className="flex items-baseline gap-2 mb-4">
           <span className="text-xl font-bold text-blue-600">{price.toLocaleString()} HTG</span>
           {originalPrice && <span className="text-sm line-through text-gray-400">{originalPrice.toLocaleString()} HTG</span>}
+        </div>
+
+        {/* =================================================== */}
+        {/* BOÎTE MESSENGER INTERNE (STYLE ALIBABA)             */}
+        {/* =================================================== */}
+        <div className="mb-3 w-full animate-in fade-in zoom-in duration-300">
+          <div className="border-2 border-[#0084FF]/20 rounded-xl overflow-hidden bg-white shadow-sm focus-within:border-[#0084FF]/50 transition-colors">
+            
+            <div className="bg-[#EAF3FF] px-3 py-2 flex items-center gap-2 border-b border-[#0084FF]/10">
+              <MessageCircle className="w-4 h-4 text-[#0084FF]" fill="currentColor" />
+              <span className="text-xs font-bold text-[#0084FF] uppercase tracking-wider">
+                Contacter le vendeur
+              </span>
+            </div>
+
+            <div className="p-2 relative">
+              <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100 mb-2">
+                <img src={imgSrc} alt="aperçu" className="w-8 h-8 object-cover rounded" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold text-gray-800 truncate">{product.name}</p>
+                  <p className="text-[10px] text-blue-600 font-bold">{price.toLocaleString()} HTG</p>
+                </div>
+              </div>
+
+              <textarea
+                value={messengerMsg}
+                onChange={e => setMessengerMsg(e.target.value)}
+                rows={2}
+                className="w-full px-2 pt-1 text-[14px] resize-none outline-none text-gray-900 bg-transparent"
+              />
+            </div>
+
+            <div className="flex justify-end px-3 pb-3">
+              <button
+                onClick={() => initiateChatMutation.mutate(messengerMsg)}
+                disabled={initiateChatMutation.isPending || !messengerMsg.trim()}
+                className="px-5 py-2 text-xs font-bold text-white rounded-full flex items-center gap-2 shadow-md shadow-[#0084FF]/20 transition-all active:scale-95 disabled:opacity-50"
+                style={{ backgroundColor: '#0084FF' }}
+              >
+                {initiateChatMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" fill="currentColor" /> Envoyer
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* WhatsApp Message Box */}
