@@ -122,54 +122,88 @@ export default function ProductPage() {
     setWaMessage(`Bonjour, je suis intéressé par: ${product.name}`);
   }, [product]);
 
-  // ==========================================
-  // MUTATION RAYON-X (POUR DÉBOGAGE)
-  // ==========================================
+  // ====================================================================
+  // MUTATION DIRECTE : BYPASS DU BACKEND (Écriture directe dans la BD)
+  // ====================================================================
   const initiateChatMutation = useMutation({
     mutationFn: async (text) => {
       if (!user) {
         throw new Error("NOT_LOGGED_IN");
       }
       
-      const payload = {
-        action: 'init',
-        vendor_id: shop?.user_id || shop?.owner_id, 
-        shop_id: shop?.id,
-        shop_name: shop?.company_name,
-        shop_logo: shop?.company_logo_url,
-        product_id: product?.id,
-        product_name: product?.name,
-        initial_message: text
-      };
+      const price = applyClientMargin(product.promo_price || product.price);
+      let conversationId;
 
-      console.log("📦 PAYLOAD ENVOYÉ AU SERVEUR:", payload);
+      try {
+        // 1. On cherche si la conversation existe déjà
+        const existingConvs = await base44.entities.Conversation.filter({
+          customer_id: user.id,
+          shop_id: shop?.id
+        });
 
-      if (!payload.vendor_id) {
-        toast.warning("Attention: ID du vendeur introuvable sur la boutique.");
+        if (existingConvs && existingConvs.length > 0) {
+          conversationId = existingConvs[0].id;
+          // Mise à jour de la conversation existante
+          await base44.entities.Conversation.update(conversationId, {
+            last_message: text,
+            last_message_date: new Date().toISOString(),
+            product_context_id: product?.id
+          });
+        } else {
+          // 2. Création d'une NOUVELLE conversation si elle n'existe pas
+          const newConv = await base44.entities.Conversation.create({
+            customer_id: user.id,
+            customer_name: user.full_name || 'Client',
+            vendor_id: shop?.user_id || shop?.owner_id, 
+            shop_id: shop?.id,
+            shop_name: shop?.company_name || 'Boutique',
+            shop_logo: shop?.company_logo_url || '',
+            last_message: text,
+            last_message_date: new Date().toISOString(),
+            product_context_id: product?.id
+          });
+          conversationId = newConv.id;
+        }
+
+        // 3. Création du message dans la base de données
+        await base44.entities.ChatMessage.create({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          sender_name: user.full_name || 'Client',
+          content: text,
+          type: 'product',
+          is_read: false,
+          metadata: {
+            productId: product.id,
+            productName: product.name,
+            productImage: product.image_url,
+            productPrice: price,
+          }
+        });
+
+        return { id: conversationId };
+
+      } catch (dbError) {
+        console.error("Erreur d'écriture directe DB:", dbError);
+        throw new Error("DB_REJECTED");
       }
-
-      const response = await base44.functions.invoke('chatService', payload);
-      return response;
     },
     onSuccess: (res) => {
-      console.log("✅ RÉPONSE DU SERVEUR:", res);
-      const convData = res?.data || res;
-      const convId = convData?.id;
-      
-      if (convId) {
-        navigate(`/chat?id=${convId}`);
+      if (res?.id) {
+        navigate(`/chat?id=${res.id}`);
       } else {
         navigate('/chat');
       }
     },
     onError: (error) => {
-      console.error("❌ ERREUR COMPLÈTE:", error);
       if (error.message === "NOT_LOGGED_IN") {
         toast.error("Veuillez vous connecter pour envoyer un message.");
         setTimeout(() => base44.auth.redirectToLogin(window.location.pathname), 1500);
+      } else if (error.message === "DB_REJECTED") {
+        // Si les règles de sécurité (RLS) bloquent l'écriture, cette erreur s'affichera
+        toast.error("Le système exige le backend pour cette action. Veuillez patienter la restauration de la route.");
       } else {
-        const serverMsg = error?.response?.data?.error || error?.message || "Rejeté par la DB";
-        toast.error(`Erreur Serveur: ${serverMsg}`);
+        toast.error("Erreur lors de l'initialisation du chat.");
       }
     }
   });
