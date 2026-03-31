@@ -122,37 +122,36 @@ export default function ProductPage() {
     setWaMessage(`Bonjour, je suis intéressé par: ${product.name}`);
   }, [product]);
 
-  // Mutation robuste pour créer la conversation interne avec le produit
+  // ==========================================
+  // LA MUTATION CORRIGÉE (SYSTÈME ALIBABA)
+  // ==========================================
   const initiateChatMutation = useMutation({
     mutationFn: async (text) => {
       if (!user) {
         throw new Error("NOT_LOGGED_IN");
       }
       
-      const price = applyClientMargin(product.promo_price || product.price);
-      
-      // On envoie le vendor_id en plus du shop_id pour aider le backend à créer la conv
+      // On envoie EXACTEMENT ce que le backend attend dans sa section "init"
       const response = await base44.functions.invoke('chatService', {
-        action: 'send',
+        action: 'init',
+        vendor_id: shop?.user_id,
         shop_id: shop?.id,
-        vendor_id: shop?.user_id, // Ajout crucial ici
-        content: text,
-        type: 'product',
-        metadata: {
-          productId: product.id,
-          productName: product.name,
-          productImage: product.image_url,
-          productPrice: price,
-        }
+        shop_name: shop?.company_name,
+        shop_logo: shop?.company_logo_url,
+        product_id: product?.id,
+        product_name: product?.name,
+        initial_message: text
       });
       return response;
     },
     onSuccess: (res) => {
-      const convId = res?.data?.conversation_id || res?.data?.id || res?.conversation_id;
+      // base44 renvoie la réponse dans `res.data` ou directement dans `res`
+      const convData = res?.data || res;
+      const convId = convData?.id;
+      
       if (convId) {
         navigate(`/chat?id=${convId}`);
       } else {
-        toast.success("Message envoyé !");
         navigate('/chat');
       }
     },
@@ -161,8 +160,7 @@ export default function ProductPage() {
         toast.error("Veuillez vous connecter pour envoyer un message.");
         setTimeout(() => base44.auth.redirectToLogin(window.location.pathname), 1500);
       } else {
-        console.error("Erreur Chat détaillée:", error);
-        toast.error(`Erreur: ${error?.message || "Le serveur a refusé la connexion"}`);
+        toast.error(`Erreur: Impossible d'initialiser le chat.`);
       }
     }
   });
