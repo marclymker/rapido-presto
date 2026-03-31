@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Tag, Store, ChevronRight, X, MapPin } from 'lucide-react';
+import { Search, Tag, Store, ChevronRight, X, MapPin, MessageCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +30,7 @@ const REGIONS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Utilitaires déterministes (définis hors du composant — jamais recréés)
+// Utilitaires déterministes
 // ---------------------------------------------------------------------------
 
 const seededRandom = (seed) => {
@@ -125,8 +125,7 @@ export default function Products() {
     } catch (_) {}
   }, []);
 
-  const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } =
-    useActivityTracker();
+  const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
 
   const [visibleCount,      setVisibleCount]      = useState(60);
   const [searchQuery,       setSearchQuery]        = useState('');
@@ -158,6 +157,22 @@ export default function Products() {
     queryKey: ['shops'],
     queryFn:  () => base44.entities.Shop.filter({ is_active: true }),
   });
+
+  // REQUÊTE POUR CHERCHER LES MESSAGES NON LUS
+  const { data: conversations = [] } = useQuery({
+    queryKey: ['conversations', user?.id],
+    queryFn: async () => {
+      const r = await base44.functions.invoke('chatService', { action: 'list' });
+      return Array.isArray(r.data) ? r.data : (r.data?.data || []);
+    },
+    enabled: !!user?.id,
+    refetchInterval: 15000, // Rafraîchit toutes les 15 sec
+  });
+
+  // Calcul du nombre total de messages non lus
+  const unreadCount = useMemo(() => {
+    return conversations.reduce((sum, conv) => sum + (conv.unread_count || 0), 0);
+  }, [conversations]);
 
   const shopsMap = useMemo(() => {
     const m = {};
@@ -220,6 +235,7 @@ export default function Products() {
     (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
     []
   );
+  
   const fuzzyMatch = useCallback((text, keyword) => {
     const t = normalize(text), k = normalize(keyword);
     if (t.includes(k)) return true;
@@ -238,7 +254,6 @@ export default function Products() {
   const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId || selectedRegion);
 
   const filteredProducts = useMemo(() => {
-    // --- Filtrages de base (catégorie, région, fb taxonomy) ---
     const baseFiltered = allProducts.filter(p => {
       if (selectedCategory && p.category !== selectedCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
@@ -249,7 +264,6 @@ export default function Products() {
       return true;
     });
 
-    // --- Recherche avec priorité : titre > tags > fuzzy ---
     if (searchQuery.trim()) {
       const keywords = searchQuery.trim().split(/\s+/).filter(w => w.length > 1);
 
@@ -278,7 +292,6 @@ export default function Products() {
         .map(p => ({ p, score: scoreProduct(p) }))
         .filter(({ score }) => score >= 0);
 
-      // Trier : score décroissant, puis alphabétique sur le titre pour les ex-aequo
       scored.sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         return normalize(a.p.name).localeCompare(normalize(b.p.name));
@@ -287,7 +300,6 @@ export default function Products() {
       return scored.map(({ p }) => p);
     }
 
-    // --- Pas de recherche : affichage personnalisé ---
     if (isFiltered) return baseFiltered;
 
     let lastViewed = null;
@@ -410,23 +422,33 @@ export default function Products() {
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
       </Helmet>
       <SEO
-        title={
-          selectedCategory
-            ? `${selectedCategory} - Marketplace Rapido Presto`
-            : 'Marketplace - Tous les produits | Rapido Presto'
-        }
-        description={
-          selectedCategory
-            ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Livraison rapide avec Rapido Presto`
-            : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'
-        }
+        title={selectedCategory ? `${selectedCategory} - Marketplace Rapido Presto` : 'Marketplace - Tous les produits | Rapido Presto'}
+        description={selectedCategory ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Livraison rapide avec Rapido Presto` : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
         keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedCategory || 'produits'].filter(Boolean)}
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 
       <header className="sticky top-0 z-40 border-b border-gray-200" style={{backgroundColor: '#ffffff'}}>
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-slate-900">Marketplace</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Marketplace</h1>
+          
+          {/* =================================================== */}
+          {/* BOUTON MESSENGER STYLE FACEBOOK                     */}
+          {/* =================================================== */}
+          <div className="flex items-center">
+            <button
+              onClick={() => user ? navigate('/chat') : base44.auth.redirectToLogin('/chat')}
+              className="relative p-2.5 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full transition-colors text-black active:scale-95"
+              aria-label="Messages"
+            >
+              <MessageCircle className="w-5 h-5" fill="currentColor" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#E41E3F] text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-[2px] border-white shadow-sm">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="px-4 pb-3">
@@ -476,7 +498,7 @@ export default function Products() {
           >
             <SelectTrigger
               className="h-9 w-9 p-0 flex items-center justify-center rounded-full border-0 flex-shrink-0"
-            style={selectedRegion ? {backgroundColor: '#1877F2', color: '#fff'} : {backgroundColor: '#e4e6eb', color: '#050505'}}
+              style={selectedRegion ? {backgroundColor: '#1877F2', color: '#fff'} : {backgroundColor: '#e4e6eb', color: '#050505'}}
               aria-label="Filtrer par région"
             >
               <MapPin className="w-4 h-4" />
@@ -489,7 +511,7 @@ export default function Products() {
         </div>
 
         {showCategories && (
-          <div className="px-4 pb-3 space-y-3">
+          <div className="px-4 pb-3 space-y-3 animate-in fade-in duration-200">
             <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
@@ -631,7 +653,7 @@ export default function Products() {
                 <button
                   type="button"
                   onClick={() => setVisibleCount(c => c + 60)}
-                  className="font-semibold px-8 py-2.5 rounded-full text-sm text-white"
+                  className="font-semibold px-8 py-2.5 rounded-full text-sm text-white transition-transform active:scale-95"
                   style={{backgroundColor: '#1877F2'}}
                 >
                   Voir plus ({filteredProducts.length - visibleCount} restants)
@@ -679,7 +701,7 @@ export default function Products() {
                   <button
                     type="button"
                     onClick={() => setVisibleCount(c => c + 60)}
-                    className="font-semibold px-8 py-2.5 rounded-full text-sm text-white"
+                    className="font-semibold px-8 py-2.5 rounded-full text-sm text-white transition-transform active:scale-95"
                     style={{backgroundColor: '#1877F2'}}
                   >
                     Voir plus ({filteredProducts.length - visibleCount} restants)
