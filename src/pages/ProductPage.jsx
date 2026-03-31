@@ -122,17 +122,20 @@ export default function ProductPage() {
     setWaMessage(`Bonjour, je suis intéressé par: ${product.name}`);
   }, [product]);
 
-  // Mutation pour créer la conversation interne avec le produit
+  // Mutation robuste pour créer la conversation interne avec le produit
   const initiateChatMutation = useMutation({
     mutationFn: async (text) => {
       if (!user) {
-        base44.auth.redirectToLogin(window.location.pathname);
-        throw new Error("Non connecté");
+        throw new Error("NOT_LOGGED_IN");
       }
+      
       const price = applyClientMargin(product.promo_price || product.price);
+      
+      // On envoie le vendor_id en plus du shop_id pour aider le backend à créer la conv
       const response = await base44.functions.invoke('chatService', {
         action: 'send',
         shop_id: shop?.id,
+        vendor_id: shop?.user_id, // Ajout crucial ici
         content: text,
         type: 'product',
         metadata: {
@@ -145,15 +148,22 @@ export default function ProductPage() {
       return response;
     },
     onSuccess: (res) => {
-      const convId = res.data?.conversation_id || res.data?.id || res.conversation_id;
+      const convId = res?.data?.conversation_id || res?.data?.id || res?.conversation_id;
       if (convId) {
         navigate(`/chat?id=${convId}`);
       } else {
+        toast.success("Message envoyé !");
         navigate('/chat');
       }
     },
-    onError: () => {
-      toast.error("Erreur lors de l'ouverture du chat.");
+    onError: (error) => {
+      if (error.message === "NOT_LOGGED_IN") {
+        toast.error("Veuillez vous connecter pour envoyer un message.");
+        setTimeout(() => base44.auth.redirectToLogin(window.location.pathname), 1500);
+      } else {
+        console.error("Erreur Chat détaillée:", error);
+        toast.error(`Erreur: ${error?.message || "Le serveur a refusé la connexion"}`);
+      }
     }
   });
 
