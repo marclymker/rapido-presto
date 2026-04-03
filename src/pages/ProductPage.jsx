@@ -16,7 +16,7 @@ import CompactProductCard from '@/components/home/CompactProductCard';
 function saveScroll() {
   try { sessionStorage.setItem('marketplace_scroll', String(window.scrollY)); } catch (_) {}
 }
-
+ 
 export default function ProductPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
