@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Tag, Store, ChevronRight, X, MapPin, MessageCircle } from 'lucide-react';
+import { Search, Tag, Store, ChevronRight, X, MapPin, MessageCircle, Ticket } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { useNavigate } from 'react-router-dom';
@@ -428,20 +428,17 @@ export default function Products() {
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 
-      <header className="sticky top-0 z-40 border-b border-gray-200" style={{backgroundColor: '#ffffff'}}>
+      <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">Marketplace</h1>
+          <h1 className="text-3xl font-bold text-black tracking-tight">Marketplace</h1>
           
-          {/* =================================================== */}
-          {/* BOUTON MESSENGER STYLE FACEBOOK                     */}
-          {/* =================================================== */}
           <div className="flex items-center">
             <button
               onClick={() => user ? navigate('/Chat') : base44.auth.redirectToLogin('/Chat')}
-              className="relative p-2.5 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full transition-colors text-black active:scale-95"
+              className="relative p-2.5 bg-[#E4E6EB] hover:bg-[#D8DADF] rounded-full transition-colors text-black active:scale-95"
               aria-label="Messages"
             >
-              <MessageCircle className="w-5 h-5" fill="currentColor" />
+              <MessageCircle className="w-5 h-5 text-[#0084FF]" fill="currentColor" stroke="none" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-[#E41E3F] text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-[2px] border-white shadow-sm">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -452,56 +449,67 @@ export default function Products() {
         </div>
 
         <div className="px-4 pb-3">
-          <div className="flex items-center rounded-full px-4 py-2.5 gap-2" style={{backgroundColor: '#f0f2f5'}}>
-            <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <div className="flex items-center rounded-full px-4 py-2.5 gap-2 bg-[#F0F2F5]">
+            <Search className="w-5 h-5 text-[#65676B] flex-shrink-0" />
             <input
               type="text"
               placeholder="Rechercher un produit..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="bg-transparent outline-none w-full text-sm text-slate-700 placeholder:text-slate-400"
+              className="bg-transparent outline-none w-full text-[15px] text-black placeholder:text-[#65676B]"
               aria-label="Rechercher un produit"
             />
             {searchQuery && (
               <button type="button" onClick={() => handleSearchChange('')} aria-label="Effacer la recherche">
-                <X className="w-4 h-4 text-slate-400" />
+                <X className="w-4 h-4 text-[#65676B]" />
               </button>
             )}
           </div>
         </div>
 
-        <div className="px-4 pb-3 flex gap-2">
+        <div className="flex items-center justify-between border-b border-gray-300 bg-white">
           <button
             type="button"
             onClick={() => user ? navigate('/Dashboard') : base44.auth.redirectToLogin('/Dashboard')}
-            className="flex-1 flex items-center justify-center gap-2 text-white py-2 px-4 rounded-full text-sm font-semibold transition"
-            style={{backgroundColor: '#1877F2'}}
+            className="flex-1 flex items-center justify-center gap-2 py-3 text-[#1877F2] font-semibold text-[14px] md:text-[15px] border-b-[3px] border-[#1877F2]"
           >
-            <Store className="w-4 h-4" />
-            <span>Ma boutique</span>
+            <Store className="w-[18px] h-[18px] md:w-5 md:h-5" fill="currentColor" stroke="none" />
+            <span className="whitespace-nowrap">Ma Boutique</span>
           </button>
+
+          <div className="w-[1px] h-5 bg-gray-300"></div>
 
           <button
             type="button"
             onClick={() => setShowCategories(v => !v)}
             aria-pressed={showCategories || !!selectedCategory}
-            className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm font-semibold transition"
-            style={showCategories || selectedCategory ? {backgroundColor: '#1877F2', color: '#fff'} : {backgroundColor: '#e4e6eb', color: '#050505'}}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] border-b-[3px] border-transparent ${showCategories || selectedCategory ? 'text-[#1877F2]' : 'text-[#65676B]'}`}
           >
-            <Tag className="w-4 h-4" />
-            <span>{selectedCategory || 'Catégories'}</span>
+            <Tag className="w-[18px] h-[18px] md:w-5 md:h-5" />
+            <span className="whitespace-nowrap">{selectedCategory || 'Catégories'}</span>
           </button>
+
+          <div className="w-[1px] h-5 bg-gray-300"></div>
+
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] text-[#65676B] border-b-[3px] border-transparent"
+          >
+            <Ticket className="w-[18px] h-[18px] md:w-5 md:h-5" fill="currentColor" stroke="none" />
+            <span className="whitespace-nowrap">Tickets</span>
+          </button>
+
+          <div className="w-[1px] h-5 bg-gray-300"></div>
 
           <Select
             value={selectedRegion}
             onValueChange={(v) => { setSelectedRegion(v === '__all__' ? '' : v); setVisibleCount(60); }}
           >
             <SelectTrigger
-              className="h-9 w-9 p-0 flex items-center justify-center rounded-full border-0 flex-shrink-0"
-              style={selectedRegion ? {backgroundColor: '#1877F2', color: '#fff'} : {backgroundColor: '#e4e6eb', color: '#050505'}}
+              className="flex-shrink-0 w-16 md:w-20 flex justify-center items-center py-3 border-0 bg-transparent shadow-none focus:ring-0 p-0 h-auto text-[#65676B] rounded-none border-b-[3px] border-transparent data-[state=open]:text-[#1877F2]"
               aria-label="Filtrer par région"
             >
-              <MapPin className="w-4 h-4" />
+              <MapPin className="w-5 h-5" fill="currentColor" stroke="none" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Toutes les zones</SelectItem>
@@ -511,7 +519,7 @@ export default function Products() {
         </div>
 
         {showCategories && (
-          <div className="px-4 pb-3 space-y-3 animate-in fade-in duration-200">
+          <div className="px-4 py-3 space-y-3 animate-in fade-in duration-200 bg-white">
             <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
@@ -536,7 +544,7 @@ export default function Products() {
               ))}
             </div>
 
-            <div className="border-t pt-2">
+            <div className="border-t border-gray-200 pt-2">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                 Taxonomy Facebook / Google
               </p>
