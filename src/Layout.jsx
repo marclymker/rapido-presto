@@ -67,7 +67,7 @@ export default function Layout({ children, currentPageName }) {
     setCookiesAccepted(false);
   };
 
-  const noNavPages = ['ProfileSetup', 'ManageProfiles', 'AdminValidation'];
+  const noNavPages = ['ProfileSetup', 'ManageProfiles', 'AdminValidation', 'Chat'];
 
   const { data: dbCartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
