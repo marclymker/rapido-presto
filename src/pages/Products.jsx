@@ -437,7 +437,7 @@ export default function Products() {
           {/* =================================================== */}
           <div className="flex items-center">
             <button
-              onClick={() => user ? navigate('/chat') : base44.auth.redirectToLogin('/chat')}
+              onClick={() => user ? navigate('/Chat') : base44.auth.redirectToLogin('/Chat')}
               className="relative p-2.5 bg-[#F0F2F5] hover:bg-[#E4E6EB] rounded-full transition-colors text-black active:scale-95"
               aria-label="Messages"
             >

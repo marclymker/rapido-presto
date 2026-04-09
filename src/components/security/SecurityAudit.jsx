@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from 'react';
 import { AlertTriangle, Shield, Info, CheckCircle2 } from 'lucide-react';
 
 /**

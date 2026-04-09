@@ -25,6 +25,8 @@ export default function DriverDashboard() {
   const [isAvailable, setIsAvailable] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [navTab, setNavTab] = useState('available');
+  const [orderFilter, setOrderFilter] = useState('all');
   const queryClient = useQueryClient();
   const { requestPermission } = useBrowserNotifications();
   const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound();
@@ -225,9 +227,6 @@ export default function DriverDashboard() {
   }
 
   const livreurData = user.profiles?.livreur || {};
-
-  const [navTab, setNavTab] = useState('available');
-  const [orderFilter, setOrderFilter] = useState('all');
 
   return (
     <div className="min-h-screen bg-slate-50 pb-32">

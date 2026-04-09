@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -190,9 +190,9 @@ export default function ProductPage() {
     },
     onSuccess: (res) => {
       if (res?.id) {
-        navigate(`/chat?id=${res.id}`);
+        navigate(`/Chat?id=${res.id}`);
       } else {
-        navigate('/chat');
+        navigate('/Chat');
       }
     },
     onError: (error) => {

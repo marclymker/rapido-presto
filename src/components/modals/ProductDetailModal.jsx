@@ -209,8 +209,6 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
   const handleSimilarProductClick = (similarProduct) => {
     if (onProductChange && similarProduct?.id) {
-      // ⚡ Isolation des données - passer uniquement l'ID ou l'objet complet
-      setSimilarItems([]);
       setQuantity(1);
       setCurrentImageIndex(0);
       setZoom(1);
