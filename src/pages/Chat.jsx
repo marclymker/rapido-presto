@@ -93,12 +93,24 @@ export default function Chat() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // Fetch direct si la conv n'est pas encore dans la liste (ex: conversation toute fraîche)
+  const { data: directConv } = useQuery({
+    queryKey: ['conversation-direct', convIdFromUrl],
+    queryFn: () => base44.entities.Conversation.filter({ id: convIdFromUrl }).then(r => r[0] || null),
+    enabled: !!convIdFromUrl && !!user?.id,
+    staleTime: 0,
+  });
+
   useEffect(() => {
-    if (convIdFromUrl && conversations.length > 0) {
-      const found = conversations.find(c => String(c.id) === String(convIdFromUrl));
-      if (found && selectedConv?.id !== found.id) setSelectedConv(found);
+    if (!convIdFromUrl || selectedConv?.id === convIdFromUrl) return;
+    // Chercher d'abord dans la liste
+    const found = conversations.find(c => String(c.id) === String(convIdFromUrl));
+    if (found) {
+      setSelectedConv(found);
+    } else if (directConv) {
+      setSelectedConv(directConv);
     }
-  }, [convIdFromUrl, conversations]);
+  }, [convIdFromUrl, conversations, directConv]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
