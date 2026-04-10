@@ -123,15 +123,25 @@ Deno.serve(async (req) => {
         return true;
       }).sort((a, b) => new Date(b.last_message_date || 0) - new Date(a.last_message_date || 0));
 
-      // Calculer unread_count pour chaque conversation (en parallèle)
-      const withUnread = await Promise.all(allConvs.map(async (conv) => {
-        const unreadMsgs = await base44.entities.ChatMessage.filter({
-          conversation_id: conv.id,
-          sender_id: { $ne: user.id },
-          is_read: false
-        });
-        return { ...conv, unread_count: unreadMsgs.length };
-      }));
+      // Calculer unread_count séquentiellement pour éviter le rate limit
+      // On limite aux 10 premières conversations pour éviter trop d'appels
+      const withUnread = [];
+      for (const conv of allConvs.slice(0, 10)) {
+        let unreadCount = 0;
+        try {
+          const unreadMsgs = await base44.asServiceRole.entities.ChatMessage.filter({
+            conversation_id: conv.id,
+            sender_id: { $ne: user.id },
+            is_read: false
+          });
+          unreadCount = unreadMsgs.length;
+        } catch (_) {}
+        withUnread.push({ ...conv, unread_count: unreadCount });
+      }
+      // Les convs au-delà de 10 sans calcul unread
+      for (const conv of allConvs.slice(10)) {
+        withUnread.push({ ...conv, unread_count: 0 });
+      }
 
       return new Response(JSON.stringify({ data: withUnread }), { headers });
     }

@@ -29,6 +29,19 @@ export default function Chat() {
     ? new URLSearchParams(window.location.search).get('id')
     : null;
 
+  // Bouton retour téléphone : écoute popstate et ferme la conv si l'URL n'a plus d'id
+  useEffect(() => {
+    const handlePopState = () => {
+      const id = new URLSearchParams(window.location.search).get('id');
+      if (!id) {
+        setSelectedConv(null);
+        setShowProductPicker(false);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   useEffect(() => {
     base44.auth.me()
       .then(u => { if (!u) base44.auth.redirectToLogin('/Chat'); else setUser(u); })
@@ -103,7 +116,7 @@ export default function Chat() {
   const handleSelectConv = useCallback((c) => {
     setSelectedConv(c);
     setOptimisticMessages([]);
-    window.history.pushState({}, '', `/Chat?id=${c.id}`);
+    window.history.pushState({ convId: c.id }, '', `/Chat?id=${c.id}`);
   }, []);
 
   // Callback du ChatInput — ajoute optimistic ou force refetch
@@ -111,7 +124,6 @@ export default function Chat() {
     if (optimisticMsg) {
       setOptimisticMessages(prev => [...prev, optimisticMsg]);
     }
-    // Refetch après un court délai pour récupérer la réponse IA
     setTimeout(() => {
       queryClient.invalidateQueries({ queryKey: ['messages', selectedConv?.id] });
       queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
@@ -183,6 +195,11 @@ export default function Chat() {
             <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between bg-white shrink-0 shadow-sm z-10">
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="md:hidden -ml-2 text-[#0084FF] h-10 w-10"
+                  onClick={() => { window.history.back(); }}>
+                  <ArrowLeft className="w-6 h-6" />
+                </Button>
+                {/* Flèche retour visible sur desktop aussi */}
+                <Button variant="ghost" size="icon" className="hidden md:flex text-[#0084FF] h-10 w-10"
                   onClick={() => { setSelectedConv(null); window.history.pushState({}, '', '/Chat'); }}>
                   <ArrowLeft className="w-6 h-6" />
                 </Button>
