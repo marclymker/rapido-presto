@@ -23,11 +23,13 @@ const CATEGORIES = [
   'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor'
 ];
 
-// La liste originale exacte pour le Dropdown
+// MISE À JOUR : La Single Source of Truth alignée avec Admin et Panier
 const REGIONS = [
-  'Port-au-Prince', 'Carrefour', 'Delmas', 'Pétion-Ville', 'Cité Soleil',
-  'Tabarre', 'Clercine', 'Croix des Bouquets', 'Kenscoff', 'Gressier',
-  'Cap-Haïtien', 'Limonade', 'Quartier-Morin', 'Les Gonaïves', 'Ennery', "L'Estère"
+  "Port-au-Prince", "Kenscoff", "Pétion-Ville", "Delmas", "Tabarre",
+  "Clercine", "Cité Soleil", "Croix des Bouquets", "Lilavois",
+  "Fontamara", "Carrefour", "Gressier", "Léogâne",
+  "Ennery", "L'Estère", "Gonaïves", "Plaine du Nord", "Vaudreuil",
+  "Cap-Haïtien", "Madeline", "Limonade", "Pignon", "Hinche"
 ];
 
 // ---------------------------------------------------------------------------
@@ -47,9 +49,9 @@ const REGION_DATA = {
   'cite soleil': { index: 5, section: 1 },
   'croix des bouquets': { index: 6, section: 1 },
   'lilavois': { index: 7, section: 1 },
+  'fontamara': { index: 8, section: 1 }, 
   
   // Section 2 : Carrefour
-  'fontamara': { index: 8, section: 2 },
   'carrefour': { index: 9, section: 2 },
   'gressier': { index: 10, section: 2 },
   'leogane': { index: 11, section: 2 },
@@ -697,8 +699,6 @@ export default function Products() {
 
             {Object.entries(categoryGroups).map(([cat, products]) => (
               <CategoryRow
-                // C'EST ICI LA MAGIE : La clé inclut la région.
-                // React détruira et reconstruira la ligne entière au moindre changement de Dropdown.
                 key={`${cat}-${referenceRegion}`}
                 title={cat}
                 products={products}
