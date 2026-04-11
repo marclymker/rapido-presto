@@ -53,21 +53,19 @@ const REGION_DATA = {
 const CATEGORY_GROUP_HEAVY = ['Boutique Fleurs', 'Materiels Decor', 'Maison'];
 
 function calculateSpecificShopFee(clientRegionName, shopRegionName, shopItems) {
-  if (!clientRegionName || !shopRegionName) return 500; // Fallback de sécurité
+  if (!clientRegionName || !shopRegionName) return 500;
 
   const target = REGION_DATA[normalizeForRegion(clientRegionName)];
   const shop = REGION_DATA[normalizeForRegion(shopRegionName)];
 
-  if (!target || !shop) return 500; // Fallback si région inconnue
+  if (!target || !shop) return 500;
 
   const isSameRegion = target.index === shop.index;
 
-  // Calcul du score d'écart (Identique à l'algorithme des produits)
   let diff = Math.abs(target.index - shop.index);
   let penalty = target.section !== shop.section ? 50 : 0;
   let score = diff + penalty;
 
-  // Vérification Dimensionnelle : Y a-t-il un article lourd dans ce groupe ?
   const isHeavyLoad = shopItems.some(item => CATEGORY_GROUP_HEAVY.includes(item.category));
 
   let rawFee = 0;
@@ -78,7 +76,6 @@ function calculateSpecificShopFee(clientRegionName, shopRegionName, shopItems) {
     rawFee = isSameRegion ? 260 : (250 + score) * 1.5;
   }
 
-  // Arrondi mathématique propre aux 50 HTG supérieurs (ex: 378 HTG -> 400 HTG) pour éviter la petite monnaie
   return Math.ceil(rawFee / 50) * 50; 
 }
 
@@ -95,7 +92,7 @@ export default function Cart() {
   const [step, setStep] = useState('cart');
   const [paymentMethod, setPaymentMethod] = useState('moncash');
   const [paymentSplit, setPaymentSplit] = useState('full');
-  const [deliveryOption, setDeliveryOption] = useState('standard'); // 'standard' ou 'express'
+  const [deliveryOption, setDeliveryOption] = useState('standard');
   const [orderNumber, setOrderNumber] = useState('');
   const [confirmCode, setConfirmCode] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
@@ -168,21 +165,18 @@ export default function Cart() {
   
   let expressFee = 0;
   let standardFee = 0;
-  const shopFees = {}; // Mémorise le coût réel par boutique
+  const shopFees = {}; 
 
-  if (subtotal < 3000) {
-    Object.keys(itemsByShop).forEach(shopId => {
-      const shopRegion = itemsByShop[shopId][0].shop_region;
-      const fee = calculateSpecificShopFee(user?.region, shopRegion, itemsByShop[shopId]);
-      shopFees[shopId] = fee;
-      expressFee += fee;
-      if (fee > standardFee) standardFee = fee;
-    });
-  }
+  // SUPPRESSION DE LA LIMITE DE 3000 GOURDES : Le calcul s'applique tout le temps
+  Object.keys(itemsByShop).forEach(shopId => {
+    const shopRegion = itemsByShop[shopId][0].shop_region;
+    const fee = calculateSpecificShopFee(user?.region, shopRegion, itemsByShop[shopId]);
+    shopFees[shopId] = fee;
+    expressFee += fee;
+    if (fee > standardFee) standardFee = fee;
+  });
 
-  // Application du choix asymétrique (Option 1 vs Option 2)
   const deliveryFee = (shopCount > 1 && deliveryOption === 'express') ? expressFee : standardFee;
-
   const pendingBalance = user?.pending_balance || 0;
   const baseTotal = subtotal + deliveryFee + pendingBalance;
   const total = paymentSplit === 'split' ? baseTotal / 2 : baseTotal;
@@ -216,9 +210,6 @@ export default function Cart() {
           const orderNum = `${orderNumBase}-${shopId.slice(-4)}`;
           const code = generateConfirmationCode();
 
-          // RÉPARTITION COMPTABLE DU FRAIS DE LIVRAISON
-          // Si Express : La boutique reçoit son frais complet.
-          // Si Standard : On divise le frais maximum par le nombre de boutiques pour équilibrer la comptabilité.
           const specificShopFee = (shopCount > 1 && deliveryOption === 'standard') 
             ? (standardFee / shopCount) 
             : shopFees[shopId];
@@ -390,7 +381,6 @@ export default function Cart() {
           {step === 'cart' && cartItems.length > 0 && (
             <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               
-              {/* ALERTE MULTI-BOUTIQUES */}
               {shopCount > 1 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800">
                   <p className="font-bold flex items-center gap-2">
@@ -453,8 +443,7 @@ export default function Cart() {
                 ))}
               </div>
 
-              {/* SÉLECTION DU MODE DE LIVRAISON (Illusion du choix) */}
-              {shopCount > 1 && subtotal < 3000 && (
+              {shopCount > 1 && (
                 <div className="bg-white rounded-xl p-4 mt-6 border shadow-sm">
                   <h3 className="font-bold mb-3 flex items-center gap-2 text-slate-800">
                     <Truck className="w-5 h-5 text-orange-500" />
@@ -497,11 +486,7 @@ export default function Cart() {
                     <span>Livraison {shopCount > 1 ? `(${deliveryOption === 'express' ? 'Express' : 'Groupée'})` : ''}</span>
                   </div>
                   <div className="text-right">
-                    {deliveryFee === 0 && subtotal >= 3000 ? (
-                      <div className="font-bold text-green-600">GRATUIT ✓</div>
-                    ) : (
-                      <div className="font-medium">+{deliveryFee} HTG</div>
-                    )}
+                    <div className="font-medium">+{deliveryFee} HTG</div>
                   </div>
                 </div>
                 {pendingBalance > 0 && (
@@ -539,7 +524,6 @@ export default function Cart() {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              {/* Split Option */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                 <h3 className="font-bold mb-4 text-slate-800">Mode de paiement</h3>
                 <RadioGroup value={paymentSplit} onValueChange={setPaymentSplit} className="space-y-3">
@@ -560,7 +544,6 @@ export default function Cart() {
                 </RadioGroup>
               </div>
 
-              {/* Methods */}
               <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                 <h3 className="font-bold mb-4 text-slate-800">Méthode de paiement</h3>
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
