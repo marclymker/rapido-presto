@@ -23,88 +23,146 @@ const CATEGORIES = [
   'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor'
 ];
 
-const REGIONS = [
-  'Port-au-Prince', 'Carrefour', 'Delmas', 'Pétion-Ville', 'Cité Soleil',
-  'Tabarre', 'Clercine', 'Croix des Bouquets', 'Kenscoff', 'Gressier',
-  'Cap-Haïtien', 'Limonade', 'Quartier-Morin', 'Les Gonaïves', 'Ennery', "L'Estère"
-];
-
 // ---------------------------------------------------------------------------
-// Utilitaires déterministes
+// MOTEUR DE PROXIMITÉ (SYSTEMS THINKING)
 // ---------------------------------------------------------------------------
-
-const seededRandom = (seed) => {
-  let s = seed >>> 0;
-  return () => {
-    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
-    return s / 0x100000000;
-  };
+const REGION_DATA = {
+  // Section 1 : Port-au-Prince
+  'Kenscoff': { index: 0, section: 1 },
+  'Pétion-Ville': { index: 1, section: 1 },
+  'Delmas': { index: 2, section: 1 },
+  'Tabarre': { index: 3, section: 1 },
+  'Clercine': { index: 4, section: 1 },
+  'Cité Soleil': { index: 5, section: 1 },
+  'Croix des Bouquets': { index: 6, section: 1 },
+  'Lilavois': { index: 7, section: 1 },
+  
+  // Section 2 : Carrefour
+  'Fontamara': { index: 8, section: 2 },
+  'Carrefour': { index: 9, section: 2 },
+  'Gressier': { index: 10, section: 2 },
+  'Léogâne': { index: 11, section: 2 },
+  
+  // Section 3 : Artibonite et Nord
+  'Ennery': { index: 12, section: 3 },
+  "L'Estère": { index: 13, section: 3 },
+  'Gonaïves': { index: 14, section: 3 },
+  'Plaine du Nord': { index: 15, section: 3 },
+  'Vaudreuil': { index: 16, section: 3 },
+  'Cap-Haïtien': { index: 17, section: 3 }, 
+  'Madeline': { index: 18, section: 3 },
+  'Limonade': { index: 19, section: 3 },
+  'Pignon': { index: 20, section: 3 },
+  'Hinche': { index: 21, section: 3 }
 };
 
-const hashString = (str) =>
-  (str || '').split('').reduce(
-    (h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) | 0,
-    0
-  );
+const REGIONS = Object.keys(REGION_DATA);
 
-const buildCategoryOrder = (products, catName, nowMs) => {
+const calculateProximityScore = (targetRegionName, shopRegionName) => {
+  if (!targetRegionName || !shopRegionName) return 999; 
+  const target = REGION_DATA[targetRegionName];
+  const shop = REGION_DATA[shopRegionName];
+  if (!target || !shop) return 999;
+
+  let diff = Math.abs(target.index - shop.index);
+  // Pénalité Asymétrique : 50 points si on change de macro-région
+  let penalty = target.section !== shop.section ? 50 : 0; 
+  return diff + penalty;
+};
+
+// Algorithme : Proximité >> Récence >> Diversité (Round Robin)
+const sortWithProximityAndDiversity = (products, shopsMap, targetRegion, nowMs) => {
   if (!products.length) return [];
-
-  const catSeed = products.reduce(
-    (acc, p) => acc ^ hashString(p.id),
-    hashString(catName)
-  );
-  const rand = seededRandom(catSeed);
-
   const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+
+  // 1. Scoring
   const scored = products.map(p => {
-    const ageMs        = nowMs - new Date(p.created_date).getTime();
-    const recencyScore = Math.max(0, 1 - ageMs / NINETY_DAYS_MS);
-    const viewScore    = Math.min(1, (p.view_count || 0) / 100);
-    const noise        = rand();
-    return {
-      product: p,
-      score: recencyScore * 0.5 + viewScore * 0.4 + noise * 0.1,
-    };
+    const shop = shopsMap[p.shop_id];
+    const shopRegion = shop?.region;
+    const proximityScore = calculateProximityScore(targetRegion, shopRegion);
+    const ageMs = nowMs - new Date(p.created_date).getTime();
+    const recencyScore = Math.max(0, 1 - ageMs / NINETY_DAYS_MS); 
+    
+    return { product: p, proximityScore, recencyScore, shopId: p.shop_id || '__no_shop__' };
   });
 
-  const shopQueuesMap = {};
-  scored.forEach(({ product, score }) => {
-    const key = product.shop_id || '__no_shop__';
-    if (!shopQueuesMap[key]) shopQueuesMap[key] = [];
-    shopQueuesMap[key].push({ product, score });
+  // 2. Bucketing par score de proximité
+  const proximityBuckets = {};
+  scored.forEach(item => {
+    if (!proximityBuckets[item.proximityScore]) proximityBuckets[item.proximityScore] = [];
+    proximityBuckets[item.proximityScore].push(item);
   });
 
-  const queues = Object.values(shopQueuesMap).map(queue =>
-    queue
-      .sort((a, b) => b.score - a.score)
-      .map(item => item.product)
-  );
+  const finalArray = [];
+  const sortedProximityScores = Object.keys(proximityBuckets).map(Number).sort((a, b) => a - b);
 
-  for (let i = queues.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [queues[i], queues[j]] = [queues[j], queues[i]];
+  // 3. Distribution équitable par boutique pour chaque niveau de proximité
+  for (const score of sortedProximityScores) {
+    const itemsInBucket = proximityBuckets[score];
+    const shopQueuesMap = {};
+    
+    itemsInBucket.forEach(item => {
+       if (!shopQueuesMap[item.shopId]) shopQueuesMap[item.shopId] = [];
+       shopQueuesMap[item.shopId].push(item);
+    });
+
+    const queues = Object.values(shopQueuesMap).map(queue => 
+      queue.sort((a, b) => b.recencyScore - a.recencyScore)
+    );
+
+    let maxLen = Math.max(...queues.map(q => q.length));
+    for (let i = 0; i < maxLen; i++) {
+      queues.forEach(queue => {
+        if (queue[i]) finalArray.push(queue[i].product);
+      });
+    }
   }
 
-  const merged = [];
-  const maxLen = Math.max(...queues.map(q => q.length));
-  for (let i = 0; i < maxLen; i++) {
-    queues.forEach(queue => { if (queue[i]) merged.push(queue[i]); });
-  }
-
-  return merged;
+  return finalArray;
 };
 
 // ---------------------------------------------------------------------------
-// Composant principal
+// UTILITAIRES DE RECHERCHE
 // ---------------------------------------------------------------------------
+const normalize = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
+const fuzzyMatch = (text, keyword) => {
+  const t = normalize(text), k = normalize(keyword);
+  if (t.includes(k)) return true;
+  if (k.length <= 3) return false;
+  for (let i = 0; i <= t.length - k.length + 1; i++) {
+    let diff = 0;
+    for (let j = 0; j < k.length; j++) {
+      if (t[i + j] !== k[j]) diff++;
+      if (diff > 1) break;
+    }
+    if (diff <= 1) return true;
+  }
+  return false;
+};
+
+// ---------------------------------------------------------------------------
+// COMPOSANT PRINCIPAL
+// ---------------------------------------------------------------------------
 export default function Products() {
   const { user } = useAuth();
   const navigate  = useNavigate();
   const queryClient = useQueryClient();
-
   const mountTimeRef = useRef(Date.now());
+
+  const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
+
+  const [visibleCount,      setVisibleCount]      = useState(60);
+  const [searchQuery,       setSearchQuery]       = useState('');
+  const [selectedCategory,  setSelectedCategory]  = useState(null);
+  const [showCategories,    setShowCategories]    = useState(false);
+  const [selectedFbCatId,   setSelectedFbCatId]   = useState(null);
+  const [fbLevel1Id,        setFbLevel1Id]        = useState(null);
+  const [selectedRegion,    setSelectedRegion]    = useState('');
+  const [editingProduct,    setEditingProduct]    = useState(null);
+
+  const isAdmin = user?.role === 'admin';
+  const referenceRegion = selectedRegion || user?.region || 'Port-au-Prince';
 
   useEffect(() => {
     try {
@@ -112,31 +170,13 @@ export default function Products() {
       if (savedSearch) setSearchQuery(savedSearch);
       const savedCategory = sessionStorage.getItem('marketplace_category');
       if (savedCategory) setSelectedCategory(savedCategory);
-    } catch (_) {}
-  }, []);
-
-  useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem('marketplace_scroll');
-      if (saved) {
-        window.scrollTo(0, parseInt(saved, 10));
+      const savedScroll = sessionStorage.getItem('marketplace_scroll');
+      if (savedScroll) {
+        window.scrollTo(0, parseInt(savedScroll, 10));
         sessionStorage.removeItem('marketplace_scroll');
       }
     } catch (_) {}
   }, []);
-
-  const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
-
-  const [visibleCount,      setVisibleCount]      = useState(60);
-  const [searchQuery,       setSearchQuery]        = useState('');
-  const [selectedCategory,  setSelectedCategory]   = useState(null);
-  const [showCategories,    setShowCategories]     = useState(false);
-  const [selectedFbCatId,   setSelectedFbCatId]    = useState(null);
-  const [fbLevel1Id,        setFbLevel1Id]         = useState(null);
-  const [selectedRegion,    setSelectedRegion]     = useState('');
-  const [editingProduct,    setEditingProduct]     = useState(null);
-
-  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     trackMetaEvent('PageView');
@@ -158,7 +198,6 @@ export default function Products() {
     queryFn:  () => base44.entities.Shop.filter({ is_active: true }),
   });
 
-  // REQUÊTE POUR CHERCHER LES MESSAGES NON LUS
   const { data: conversations = [] } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
@@ -166,13 +205,10 @@ export default function Products() {
       return Array.isArray(r.data) ? r.data : (r.data?.data || []);
     },
     enabled: !!user?.id,
-    refetchInterval: 15000, // Rafraîchit toutes les 15 sec
+    refetchInterval: 15000,
   });
 
-  // Calcul du nombre total de messages non lus
-  const unreadCount = useMemo(() => {
-    return conversations.reduce((sum, conv) => sum + (conv.unread_count || 0), 0);
-  }, [conversations]);
+  const unreadCount = useMemo(() => conversations.reduce((sum, conv) => sum + (conv.unread_count || 0), 0), [conversations]);
 
   const shopsMap = useMemo(() => {
     const m = {};
@@ -231,26 +267,6 @@ export default function Products() {
     return ids;
   }, [selectedFbCatId]);
 
-  const normalize = useCallback(
-    (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
-    []
-  );
-  
-  const fuzzyMatch = useCallback((text, keyword) => {
-    const t = normalize(text), k = normalize(keyword);
-    if (t.includes(k)) return true;
-    if (k.length <= 3) return false;
-    for (let i = 0; i <= t.length - k.length + 1; i++) {
-      let diff = 0;
-      for (let j = 0; j < k.length; j++) {
-        if (t[i + j] !== k[j]) diff++;
-        if (diff > 1) break;
-      }
-      if (diff <= 1) return true;
-    }
-    return false;
-  }, [normalize]);
-
   const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId || selectedRegion);
 
   const filteredProducts = useMemo(() => {
@@ -266,7 +282,6 @@ export default function Products() {
 
     if (searchQuery.trim()) {
       const keywords = searchQuery.trim().split(/\s+/).filter(w => w.length > 1);
-
       const scoreProduct = (p) => {
         const normName = normalize(p.name || '');
         const normTags = (p.seo_tags || []).map(t => normalize(t));
@@ -284,7 +299,6 @@ export default function Products() {
           else if (fuzzy)   score += 1;
           else { allMatch = false; break; }
         }
-
         return allMatch ? score : -1;
       };
 
@@ -308,25 +322,18 @@ export default function Products() {
       if (raw) lastViewed = JSON.parse(raw);
     } catch (_) {}
 
-    const shuffle = (arr) => {
-      const a = [...arr];
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    };
-
-    if (!lastViewed) return shuffle(baseFiltered);
+    if (!lastViewed) {
+      return sortWithProximityAndDiversity(baseFiltered, shopsMap, referenceRegion, mountTimeRef.current);
+    }
 
     const nameWords = (lastViewed.name || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
     const tags      = lastViewed.seo_tags || [];
     const category  = lastViewed.category || '';
 
-    const scored = baseFiltered
+    const scoredView = baseFiltered
       .filter(p => p.id !== lastViewed.id)
       .map(p => {
-        let score   = 0;
+        let score = 0;
         const pName = (p.name || '').toLowerCase();
         const pTags = p.seo_tags || [];
         nameWords.forEach(w => { if (pName.includes(w)) score += 2; });
@@ -335,16 +342,19 @@ export default function Products() {
         return { ...p, _score: score };
       });
 
-    const top10 = scored
-      .filter(p => p._score > 0)
-      .sort((a, b) => b._score - a._score)
-      .slice(0, 10);
+    const top10 = scoredView.filter(p => p._score > 0).sort((a, b) => b._score - a._score).slice(0, 10);
     const top10Ids = new Set(top10.map(p => p.id));
-    const rest     = shuffle(scored.filter(p => !top10Ids.has(p.id)));
+    
+    const rest = sortWithProximityAndDiversity(
+      baseFiltered.filter(p => !top10Ids.has(p.id)), 
+      shopsMap, 
+      referenceRegion, 
+      mountTimeRef.current
+    );
 
     return [...top10, ...rest];
   }, [allProducts, searchQuery, selectedCategory, selectedFbCatId, selectedRegion,
-      selectedFbBranchIds, shopsMap, fuzzyMatch, normalize, isFiltered]);
+      selectedFbBranchIds, shopsMap, referenceRegion, isFiltered]);
 
   const visibleProducts = useMemo(
     () => filteredProducts.slice(0, visibleCount),
@@ -353,8 +363,6 @@ export default function Products() {
 
   const categoryGroups = useMemo(() => {
     if (isFiltered) return {};
-
-    const nowMs = mountTimeRef.current;
 
     const byCategory = {};
     allProducts.forEach(p => {
@@ -365,7 +373,7 @@ export default function Products() {
 
     const result = {};
     Object.keys(byCategory).forEach(cat => {
-      result[cat] = buildCategoryOrder(byCategory[cat], cat, nowMs);
+      result[cat] = sortWithProximityAndDiversity(byCategory[cat], shopsMap, referenceRegion, mountTimeRef.current);
     });
 
     const sorted = {};
@@ -373,7 +381,7 @@ export default function Products() {
     Object.keys(result).forEach(cat => { if (!sorted[cat]) sorted[cat] = result[cat]; });
 
     return sorted;
-  }, [allProducts, isFiltered]);
+  }, [allProducts, isFiltered, shopsMap, referenceRegion]);
 
   const handleProductClick = useCallback((product) => {
     if (isAdmin) { setEditingProduct(product); return; }
