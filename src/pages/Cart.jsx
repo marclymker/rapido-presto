@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Clock, AlertTriangle, Truck } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Clock, AlertTriangle, Truck, MapPin } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -53,12 +53,12 @@ const REGION_DATA = {
 const CATEGORY_GROUP_HEAVY = ['Boutique Fleurs', 'Materiels Decor', 'Maison'];
 
 function calculateSpecificShopFee(clientRegionName, shopRegionName, shopItems) {
-  if (!clientRegionName || !shopRegionName) return 500; // Fallback de sécurité
+  if (!clientRegionName || !shopRegionName) return 495; // Fallback de sécurité
 
   const target = REGION_DATA[normalizeForRegion(clientRegionName)];
   const shop = REGION_DATA[normalizeForRegion(shopRegionName)];
 
-  if (!target || !shop) return 500; // Fallback si région inconnue
+  if (!target || !shop) return 495; // Fallback si région inconnue
 
   const isSameRegion = target.index === shop.index;
 
@@ -72,14 +72,14 @@ function calculateSpecificShopFee(clientRegionName, shopRegionName, shopItems) {
 
   let rawFee = 0;
 
+  // NOUVELLE FORMULE EXACTE DU CEO
   if (isHeavyLoad) {
-    rawFee = isSameRegion ? 500 : (500 + score) * 1.5;
+    rawFee = isSameRegion ? 495 : (495 + score) * 1.5;
   } else {
-    rawFee = isSameRegion ? 260 : (250 + score) * 1.5;
+    rawFee = isSameRegion ? 245 : (245 + score) * 1.5;
   }
 
-  // Arrondi aux 50 HTG supérieurs
-  return Math.ceil(rawFee / 50) * 50; 
+  return Math.ceil(rawFee); 
 }
 
 function generateConfirmationCode() {
@@ -166,11 +166,16 @@ export default function Cart() {
 
   const shopCount = Object.keys(itemsByShop).length;
   
+  // DÉTECTION : Y a-t-il un produit dont la boutique est à Delmas ?
+  const hasDelmasShop = Object.keys(itemsByShop).some(shopId => {
+    const shopRegion = itemsByShop[shopId][0].shop_region;
+    return normalizeForRegion(shopRegion) === 'delmas';
+  });
+
   let expressFee = 0;
   let standardFee = 0;
-  const shopFees = {};
+  const shopFees = {}; 
 
-  // CORRECTION: Le calcul s'exécute TOUJOURS, peu importe le sous-total
   Object.keys(itemsByShop).forEach(shopId => {
     const shopRegion = itemsByShop[shopId][0].shop_region;
     const fee = calculateSpecificShopFee(user?.region, shopRegion, itemsByShop[shopId]);
@@ -179,10 +184,26 @@ export default function Cart() {
     if (fee > standardFee) standardFee = fee;
   });
 
-  const deliveryFee = (shopCount > 1 && deliveryOption === 'express') ? expressFee : standardFee;
+  // Application de l'option de livraison sélectionnée
+  let deliveryFee = 0;
+  if (deliveryOption === 'pickup_delimart') {
+    deliveryFee = 0;
+  } else if (shopCount > 1 && deliveryOption === 'express') {
+    deliveryFee = expressFee;
+  } else {
+    deliveryFee = standardFee;
+  }
+
   const pendingBalance = user?.pending_balance || 0;
   const baseTotal = subtotal + deliveryFee + pendingBalance;
   const total = paymentSplit === 'split' ? baseTotal / 2 : baseTotal;
+
+  // Si on vide le panier ou que la condition Delmas disparaît, reset l'option
+  useEffect(() => {
+    if (!hasDelmasShop && deliveryOption === 'pickup_delimart') {
+      setDeliveryOption('standard');
+    }
+  }, [hasDelmasShop, deliveryOption]);
 
   // ---------------------------------------------------------------------------
   // PROCESSUS DE COMMANDE
@@ -213,9 +234,12 @@ export default function Cart() {
           const orderNum = `${orderNumBase}-${shopId.slice(-4)}`;
           const code = generateConfirmationCode();
 
-          const specificShopFee = (shopCount > 1 && deliveryOption === 'standard') 
-            ? (standardFee / shopCount) 
-            : shopFees[shopId];
+          let specificShopFee = 0;
+          if (deliveryOption !== 'pickup_delimart') {
+            specificShopFee = (shopCount > 1 && deliveryOption === 'standard') 
+              ? (standardFee / shopCount) 
+              : shopFees[shopId];
+          }
 
           const order = await base44.entities.Order.create({
             order_number: orderNum,
@@ -244,7 +268,7 @@ export default function Cart() {
             status: 'pending',
             payment_status: paymentMethodType === 'card' ? 'paid' : 'pending',
             confirmation_code: code,
-            special_instructions: specialInstructions,
+            special_instructions: deliveryOption === 'pickup_delimart' ? `(RETRAIT DELIMART DELMAS 32) ${specialInstructions}` : specialInstructions,
             moncash_transaction_id: transactionId
           });
 
@@ -384,7 +408,6 @@ export default function Cart() {
           {step === 'cart' && cartItems.length > 0 && (
             <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               
-              {/* ALERTE MULTI-BOUTIQUES */}
               {shopCount > 1 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800">
                   <p className="font-bold flex items-center gap-2">
@@ -447,8 +470,8 @@ export default function Cart() {
                 ))}
               </div>
 
-              {/* SÉLECTION DU MODE DE LIVRAISON (CORRECTION : S'AFFICHE TOUT LE TEMPS SI shopCount > 1) */}
-              {shopCount > 1 && (
+              {/* SÉLECTION DU MODE DE LIVRAISON (Visible si plusieurs boutiques OU s'il y a une option Retrait Delmas) */}
+              {(shopCount > 1 || hasDelmasShop) && (
                 <div className="bg-white rounded-xl p-4 mt-6 border shadow-sm">
                   <h3 className="font-bold mb-3 flex items-center gap-2 text-slate-800">
                     <Truck className="w-5 h-5 text-orange-500" />
@@ -462,20 +485,37 @@ export default function Cart() {
                           <span className="font-bold text-slate-800">Standard (24h - 48h)</span>
                           <span className="font-bold text-orange-600">+{standardFee} HTG</span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">Vos articles sont regroupés pour réduire les frais. Vous payez uniquement le tarif le plus élevé.</p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {shopCount > 1 ? "Vos articles sont regroupés pour réduire les frais." : "Livraison classique à votre adresse."}
+                        </p>
                       </div>
                     </label>
 
-                    <label className={`flex items-start space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${deliveryOption === 'express' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                      <RadioGroupItem value="express" id="express" className="mt-1" />
-                      <div className="flex-1">
-                        <div className="flex justify-between">
-                          <span className="font-bold text-slate-800">Express (12h - 24h)</span>
-                          <span className="font-bold text-orange-600">+{expressFee} HTG</span>
+                    {shopCount > 1 && (
+                      <label className={`flex items-start space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${deliveryOption === 'express' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                        <RadioGroupItem value="express" id="express" className="mt-1" />
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <span className="font-bold text-slate-800">Express (12h - 24h)</span>
+                            <span className="font-bold text-orange-600">+{expressFee} HTG</span>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">Vos articles sont expédiés immédiatement de chaque boutique séparément.</p>
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">Vos articles sont expédiés immédiatement de chaque boutique séparément.</p>
-                      </div>
-                    </label>
+                      </label>
+                    )}
+
+                    {hasDelmasShop && (
+                      <label className={`flex items-start space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${deliveryOption === 'pickup_delimart' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                        <RadioGroupItem value="pickup_delimart" id="pickup_delimart" className="mt-1" />
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <span className="font-bold text-slate-800 flex items-center gap-1"><MapPin className="w-3 h-3"/> Retrait à Delimart (Delmas 32)</span>
+                            <span className="font-bold text-green-600">GRATUIT</span>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">Passez récupérer votre commande directement au point de retrait sans frais.</p>
+                        </div>
+                      </label>
+                    )}
                   </RadioGroup>
                 </div>
               )}
@@ -488,11 +528,16 @@ export default function Cart() {
                 <div className="flex justify-between items-center text-slate-600 text-sm">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-orange-500" />
-                    <span>Livraison {shopCount > 1 ? `(${deliveryOption === 'express' ? 'Express' : 'Groupée'})` : ''}</span>
+                    <span>
+                      Livraison {deliveryOption === 'pickup_delimart' ? '(Retrait)' : (shopCount > 1 ? (deliveryOption === 'express' ? '(Express)' : '(Groupée)') : '')}
+                    </span>
                   </div>
-                  {/* CORRECTION : Affichage net du prix, plus de mention "GRATUIT" */}
                   <div className="text-right">
-                    <div className="font-medium">+{deliveryFee} HTG</div>
+                    {deliveryFee === 0 ? (
+                      <div className="font-bold text-green-600">GRATUIT</div>
+                    ) : (
+                      <div className="font-medium">+{deliveryFee} HTG</div>
+                    )}
                   </div>
                 </div>
                 {pendingBalance > 0 && (
@@ -569,11 +614,21 @@ export default function Cart() {
                 </RadioGroup>
               </div>
 
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-                <h3 className="font-bold mb-1 text-slate-800">Adresse de livraison</h3>
-                <p className="text-slate-600 font-medium">{user.address || 'Non définie'}</p>
-                <p className="text-slate-400 text-sm">{user.region}</p>
-              </div>
+              {deliveryOption !== 'pickup_delimart' && (
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                  <h3 className="font-bold mb-1 text-slate-800">Adresse de livraison</h3>
+                  <p className="text-slate-600 font-medium">{user.address || 'Non définie'}</p>
+                  <p className="text-slate-400 text-sm">{user.region}</p>
+                </div>
+              )}
+
+              {deliveryOption === 'pickup_delimart' && (
+                <div className="bg-green-50 rounded-xl p-4 shadow-sm border border-green-200">
+                  <h3 className="font-bold mb-1 text-green-800 flex items-center gap-2"><MapPin className="w-4 h-4"/> Point de retrait</h3>
+                  <p className="text-green-700 font-medium">Delimart, Delmas 32</p>
+                  <p className="text-green-600 text-sm mt-1">Vous recevrez un message quand votre commande sera prête.</p>
+                </div>
+              )}
 
               {paymentMethod === 'card' && (
                 <SquarePaymentForm
@@ -586,7 +641,7 @@ export default function Cart() {
               <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                 <h3 className="font-bold mb-3 text-slate-800">Instructions spéciales</h3>
                 <Textarea
-                  placeholder="Ex: Sonnez à la porte, laissez à l'accueil..."
+                  placeholder={deliveryOption === 'pickup_delimart' ? "Ex: C'est mon frère qui viendra récupérer le colis..." : "Ex: Sonnez à la porte, laissez à l'accueil..."}
                   value={specialInstructions}
                   onChange={(e) => setSpecialInstructions(e.target.value.slice(0, 200))}
                   className="min-h-[80px] bg-slate-50 border-slate-200"
@@ -604,7 +659,7 @@ export default function Cart() {
                   </div>
                   <div className="flex justify-between">
                     <span>Livraison</span>
-                    <span>{deliveryFee} HTG</span>
+                    <span>{deliveryFee === 0 ? 'GRATUIT' : `${deliveryFee} HTG`}</span>
                   </div>
                 </div>
 
@@ -616,7 +671,7 @@ export default function Cart() {
                         <span>{(baseTotal / 2).toLocaleString()} HTG</span>
                       </div>
                       <div className="text-right text-xs text-slate-400">
-                        Reste {(baseTotal / 2).toLocaleString()} HTG à la livraison
+                        Reste {(baseTotal / 2).toLocaleString()} HTG {deliveryOption === 'pickup_delimart' ? 'au retrait' : 'à la livraison'}
                       </div>
                     </div>
                   ) : (
