@@ -162,6 +162,7 @@ export default function Products() {
   const [editingProduct,    setEditingProduct]    = useState(null);
 
   const isAdmin = user?.role === 'admin';
+  // Le centre de gravité de l'algorithme
   const referenceRegion = selectedRegion || user?.region || 'Port-au-Prince';
 
   useEffect(() => {
@@ -267,16 +268,16 @@ export default function Products() {
     return ids;
   }, [selectedFbCatId]);
 
-  const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId || selectedRegion);
+  // CORRECTION MAJEURE ICI : La région n'est PLUS un filtre destructif. 
+  // Seuls la recherche, la catégorie, ou la sous-catégorie FB détruisent la vitrine.
+  const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId);
 
   const filteredProducts = useMemo(() => {
     const baseFiltered = allProducts.filter(p => {
       if (selectedCategory && p.category !== selectedCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
-      if (selectedRegion && p.shop_id) {
-        const shop = shopsMap[p.shop_id];
-        if (shop?.region && shop.region !== selectedRegion) return false;
-      }
+      // Nous ne supprimons plus les articles qui ne sont pas de la région.
+      // Ils seront juste triés plus bas par l'algorithme de proximité.
       return true;
     });
 
@@ -323,6 +324,7 @@ export default function Products() {
     } catch (_) {}
 
     if (!lastViewed) {
+      // Tri de base en utilisant la région de référence
       return sortWithProximityAndDiversity(baseFiltered, shopsMap, referenceRegion, mountTimeRef.current);
     }
 
@@ -345,6 +347,7 @@ export default function Products() {
     const top10 = scoredView.filter(p => p._score > 0).sort((a, b) => b._score - a._score).slice(0, 10);
     const top10Ids = new Set(top10.map(p => p.id));
     
+    // Le reste est trié par l'algorithme de proximité basé sur la région choisie
     const rest = sortWithProximityAndDiversity(
       baseFiltered.filter(p => !top10Ids.has(p.id)), 
       shopsMap, 
@@ -353,7 +356,7 @@ export default function Products() {
     );
 
     return [...top10, ...rest];
-  }, [allProducts, searchQuery, selectedCategory, selectedFbCatId, selectedRegion,
+  }, [allProducts, searchQuery, selectedCategory, selectedFbCatId, selectedRegion, // On garde selectedRegion en dépendance pour re-déclencher le calcul
       selectedFbBranchIds, shopsMap, referenceRegion, isFiltered]);
 
   const visibleProducts = useMemo(
@@ -362,6 +365,7 @@ export default function Products() {
   );
 
   const categoryGroups = useMemo(() => {
+    // Si on fait une recherche ou qu'on clique sur une catégorie, on ne calcule plus les groupes (la vitrine disparait)
     if (isFiltered) return {};
 
     const byCategory = {};
@@ -373,6 +377,7 @@ export default function Products() {
 
     const result = {};
     Object.keys(byCategory).forEach(cat => {
+      // Les articles de chaque rangée sont triés selon la région sélectionnée
       result[cat] = sortWithProximityAndDiversity(byCategory[cat], shopsMap, referenceRegion, mountTimeRef.current);
     });
 
