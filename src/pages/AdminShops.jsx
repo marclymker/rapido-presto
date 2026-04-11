@@ -11,11 +11,13 @@ import { toast } from "sonner";
 import { Plus, Store, Trash2, Edit } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 
-const regions = [
-  "Petion-ville", "Route de Freres", "Delmas", "Pelerin", "Thomassain", "Kenscoff",
-  "Lalue", "Nazon", "Pernier", "Sarthe", "Tabarre", "Clercine", "Marrin",
-  "Bon Repos", "Turgeau", "Canapevert", "Lavil", "Madeline", "Vaudreuil",
-  "Morne Rouge", "Cap Haitien", "St Marc", "Gonaives", "Les Cayes", "Limonade"
+// MISE À JOUR : Liste standardisée des régions (Single Source of Truth)
+const REGIONS = [
+  "Port-au-Prince", "Kenscoff", "Pétion-Ville", "Delmas", "Tabarre",
+  "Clercine", "Cité Soleil", "Croix des Bouquets", "Lilavois",
+  "Fontamara", "Carrefour", "Gressier", "Léogâne",
+  "Ennery", "L'Estère", "Gonaïves", "Plaine du Nord", "Vaudreuil",
+  "Cap-Haïtien", "Madeline", "Limonade", "Pignon", "Hinche"
 ];
 
 const categories = [
@@ -308,7 +310,7 @@ export default function AdminShops() {
                     <SelectValue placeholder="Sélectionner" />
                   </SelectTrigger>
                   <SelectContent>
-                    {regions.map(reg => (
+                    {REGIONS.map(reg => (
                       <SelectItem key={reg} value={reg}>{reg}</SelectItem>
                     ))}
                   </SelectContent>
