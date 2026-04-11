@@ -3,43 +3,99 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Clock, AlertTriangle, Truck } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
-import { getHaitiTime } from '@/components/utils/dateFormat';
 import SquarePaymentForm from '@/components/payment/SquarePaymentForm';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 
-function calculateDeliveryFee(clientCommune, shopCommune) {
-  const hour = getHaitiTime().getHours();
-  const sameCommune = clientCommune === shopCommune;
+// ---------------------------------------------------------------------------
+// SINGLE SOURCE OF TRUTH : GÉOGRAPHIE & LOGISTIQUE
+// ---------------------------------------------------------------------------
+const normalizeForRegion = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+const REGION_DATA = {
+  // Section 1 : Port-au-Prince
+  'port-au-prince': { index: 0, section: 1 },
+  'kenscoff': { index: 0, section: 1 },
+  'petion-ville': { index: 1, section: 1 },
+  'delmas': { index: 2, section: 1 },
+  'tabarre': { index: 3, section: 1 },
+  'clercine': { index: 4, section: 1 },
+  'cite soleil': { index: 5, section: 1 },
+  'croix des bouquets': { index: 6, section: 1 },
+  'lilavois': { index: 7, section: 1 },
+  'fontamara': { index: 8, section: 1 }, 
   
-  if (hour >= 8 && hour < 11) {
-    return sameCommune ? 300 : 500;
-  } else if (hour >= 12 && hour < 15) {
-    return sameCommune ? 400 : 750;
-  } else if (hour >= 16 && hour < 21) {
-    return sameCommune ? 300 : 500;
-  } else if (hour >= 21 && hour < 23) {
-    return sameCommune ? 500 : 750;
+  // Section 2 : Carrefour & Sud
+  'carrefour': { index: 9, section: 2 },
+  'gressier': { index: 10, section: 2 },
+  'leogane': { index: 11, section: 2 },
+  
+  // Section 3 : Artibonite et Nord
+  'ennery': { index: 12, section: 3 },
+  "l'estere": { index: 13, section: 3 },
+  'gonaives': { index: 14, section: 3 },
+  'les gonaives': { index: 14, section: 3 },
+  'plaine du nord': { index: 15, section: 3 },
+  'vaudreuil': { index: 16, section: 3 },
+  'cap-haitien': { index: 17, section: 3 }, 
+  'madeline': { index: 18, section: 3 },
+  'limonade': { index: 19, section: 3 },
+  'pignon': { index: 20, section: 3 },
+  'hinche': { index: 21, section: 3 }
+};
+
+const CATEGORY_GROUP_HEAVY = ['Boutique Fleurs', 'Materiels Decor', 'Maison'];
+
+function calculateSpecificShopFee(clientRegionName, shopRegionName, shopItems) {
+  if (!clientRegionName || !shopRegionName) return 500; // Fallback de sécurité
+
+  const target = REGION_DATA[normalizeForRegion(clientRegionName)];
+  const shop = REGION_DATA[normalizeForRegion(shopRegionName)];
+
+  if (!target || !shop) return 500; // Fallback si région inconnue
+
+  const isSameRegion = target.index === shop.index;
+
+  // Calcul du score d'écart (Identique à l'algorithme des produits)
+  let diff = Math.abs(target.index - shop.index);
+  let penalty = target.section !== shop.section ? 50 : 0;
+  let score = diff + penalty;
+
+  // Vérification Dimensionnelle : Y a-t-il un article lourd dans ce groupe ?
+  const isHeavyLoad = shopItems.some(item => CATEGORY_GROUP_HEAVY.includes(item.category));
+
+  let rawFee = 0;
+
+  if (isHeavyLoad) {
+    rawFee = isSameRegion ? 500 : (500 + score) * 1.5;
+  } else {
+    rawFee = isSameRegion ? 260 : (250 + score) * 1.5;
   }
-  return sameCommune ? 400 : 600;
+
+  // Arrondi mathématique propre aux 50 HTG supérieurs (ex: 378 HTG -> 400 HTG) pour éviter la petite monnaie
+  return Math.ceil(rawFee / 50) * 50; 
 }
 
 function generateConfirmationCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
+// ---------------------------------------------------------------------------
+// COMPOSANT PRINCIPAL
+// ---------------------------------------------------------------------------
 export default function Cart() {
   const { trackInitiateCheckout, trackPurchase } = useActivityTracker();
   const [user, setUser] = useState(null);
   const [step, setStep] = useState('cart');
   const [paymentMethod, setPaymentMethod] = useState('moncash');
   const [paymentSplit, setPaymentSplit] = useState('full');
+  const [deliveryOption, setDeliveryOption] = useState('standard'); // 'standard' ou 'express'
   const [orderNumber, setOrderNumber] = useState('');
   const [confirmCode, setConfirmCode] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
@@ -67,9 +123,7 @@ export default function Cart() {
 
   const updateQuantityMutation = useMutation({
     mutationFn: ({ id, quantity }) => {
-      if (quantity <= 0) {
-        return base44.entities.CartItem.delete(id);
-      }
+      if (quantity <= 0) return base44.entities.CartItem.delete(id);
       return base44.entities.CartItem.update(id, { quantity });
     },
     onMutate: async ({ id, quantity }) => {
@@ -96,9 +150,48 @@ export default function Cart() {
     onSettled: () => queryClient.invalidateQueries(['cart'])
   });
 
+  // ---------------------------------------------------------------------------
+  // MOTEUR DE CALCUL DES PRIX
+  // ---------------------------------------------------------------------------
+  const itemsByShop = cartItems.reduce((acc, item) => {
+    if (!acc[item.shop_id]) acc[item.shop_id] = [];
+    acc[item.shop_id].push(item);
+    return acc;
+  }, {});
+
+  const subtotal = cartItems.reduce((sum, item) => {
+    const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
+    return sum + itemTotal;
+  }, 0);
+
+  const shopCount = Object.keys(itemsByShop).length;
+  
+  let expressFee = 0;
+  let standardFee = 0;
+  const shopFees = {}; // Mémorise le coût réel par boutique
+
+  if (subtotal < 3000) {
+    Object.keys(itemsByShop).forEach(shopId => {
+      const shopRegion = itemsByShop[shopId][0].shop_region;
+      const fee = calculateSpecificShopFee(user?.region, shopRegion, itemsByShop[shopId]);
+      shopFees[shopId] = fee;
+      expressFee += fee;
+      if (fee > standardFee) standardFee = fee;
+    });
+  }
+
+  // Application du choix asymétrique (Option 1 vs Option 2)
+  const deliveryFee = (shopCount > 1 && deliveryOption === 'express') ? expressFee : standardFee;
+
+  const pendingBalance = user?.pending_balance || 0;
+  const baseTotal = subtotal + deliveryFee + pendingBalance;
+  const total = paymentSplit === 'split' ? baseTotal / 2 : baseTotal;
+
+  // ---------------------------------------------------------------------------
+  // PROCESSUS DE COMMANDE
+  // ---------------------------------------------------------------------------
   const createOrderMutation = useMutation({
     mutationFn: async () => {
-      // SÉCURITÉ: Valider les prix côté serveur AVANT de créer la commande
       const cartItemIds = cartItems.map(item => item.id);
       const priceValidation = await base44.functions.invoke('validateOrderPrice', {
         cartItemIds,
@@ -110,107 +203,28 @@ export default function Cart() {
       }
 
       const { validation } = priceValidation.data;
-      const { itemsByShop, finalTotal: totalAmount } = validation;
-      const shopIds = Object.keys(itemsByShop);
+      const { itemsByShop: validatedItemsByShop, finalTotal: totalAmount } = validation;
+      const shopIds = Object.keys(validatedItemsByShop);
 
-      // Si Square, traiter le paiement par carte
-      if (paymentMethod === 'card') {
-        if (!squareToken) {
-          throw new Error('Token de paiement manquant');
-        }
-
-        try {
-          const createdOrders = [];
-          for (const shopId of shopIds) {
-            // Utiliser les prix VALIDÉS côté serveur
-            const validatedItems = itemsByShop[shopId].items;
-            const shopSubtotal = validatedItems.reduce((sum, item) => sum + item.verified_total, 0);
-            const orderNum = 'RP' + Date.now().toString().slice(-6) + '-' + shopId.slice(-4);
-            const code = generateConfirmationCode();
-
-            const order = await base44.entities.Order.create({
-              order_number: orderNum,
-              client_id: user.id,
-              client_name: user.full_name,
-              client_phone: user.phone,
-              client_address: user.address || '',
-              client_region: user.region,
-              shop_id: shopId,
-              shop_name: validatedItems[0].shop_name,
-              shop_region: validatedItems[0].shop_region,
-              items: validatedItems.map(item => ({
-                product_id: item.product_id,
-                name: item.product_name,
-                quantity: item.quantity,
-                unit_price: item.verified_price + item.verified_customization_price,
-                total: item.verified_total,
-                customization: item.customization
-              })),
-              subtotal: shopSubtotal,
-              delivery_fee: validation.deliveryFee / shopIds.length,
-              total: shopSubtotal + (validation.deliveryFee / shopIds.length),
-              payment_method: 'card',
-              payment_split: paymentSplit,
-              status: 'pending',
-              payment_status: 'pending',
-              confirmation_code: code
-            });
-
-            createdOrders.push({ orderId: order.id, orderNum, code });
-          }
-
-          const paymentResponse = await base44.functions.invoke('squarePayment', {
-            sourceId: squareToken,
-            amount: totalAmount,
-            orderId: createdOrders[0].orderNum
-          });
-
-          if (!paymentResponse.data.success) {
-            throw new Error('Paiement refusé');
-          }
-
-          for (const order of createdOrders) {
-            await base44.entities.Order.update(order.orderId, {
-              payment_status: 'paid'
-            });
-
-            await base44.functions.invoke('sendOrderNotification', {
-              orderId: order.orderId,
-              status: 'pending'
-            }).catch(err => console.error('Notification error:', err));
-
-            await base44.functions.invoke('sendWhatsAppOrderNotification', {
-              orderId: order.orderId
-            }).catch(err => console.error('WhatsApp error:', err));
-          }
-
-          await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
-
-          return {
-            orderNum: createdOrders[0].orderNum,
-            code: createdOrders[0].code,
-            allOrders: createdOrders
-          };
-        } catch (error) {
-          console.error('Square payment error:', error);
-          throw new Error(error.message || 'Erreur lors du paiement par carte');
-        }
-      }
-
-      // Si MonCash
-      if (paymentMethod === 'moncash') {
-        console.log('🔵 DÉBUT PAIEMENT MONCASH');
-        const orderNum = 'RP' + Date.now().toString().slice(-6);
-        
+      const processOrders = async (paymentMethodType, transactionId = null) => {
         const createdOrders = [];
+        const orderNumBase = 'RP' + Date.now().toString().slice(-6);
+
         for (const shopId of shopIds) {
-          // Utiliser les prix VALIDÉS côté serveur
-          const validatedItems = itemsByShop[shopId].items;
+          const validatedItems = validatedItemsByShop[shopId].items;
           const shopSubtotal = validatedItems.reduce((sum, item) => sum + item.verified_total, 0);
+          const orderNum = `${orderNumBase}-${shopId.slice(-4)}`;
           const code = generateConfirmationCode();
 
+          // RÉPARTITION COMPTABLE DU FRAIS DE LIVRAISON
+          // Si Express : La boutique reçoit son frais complet.
+          // Si Standard : On divise le frais maximum par le nombre de boutiques pour équilibrer la comptabilité.
+          const specificShopFee = (shopCount > 1 && deliveryOption === 'standard') 
+            ? (standardFee / shopCount) 
+            : shopFees[shopId];
+
           const order = await base44.entities.Order.create({
-            order_number: `${orderNum}-${shopId.slice(-4)}`,
+            order_number: orderNum,
             client_id: user.id,
             client_name: user.full_name,
             client_phone: user.phone,
@@ -222,54 +236,68 @@ export default function Cart() {
             items: validatedItems.map(item => ({
               product_id: item.product_id,
               name: item.product_name,
+              category: item.category || 'Non classé',
               quantity: item.quantity,
               unit_price: item.verified_price + item.verified_customization_price,
               total: item.verified_total,
               customization: item.customization
             })),
             subtotal: shopSubtotal,
-            delivery_fee: validation.deliveryFee / shopIds.length,
-            total: shopSubtotal + (validation.deliveryFee / shopIds.length),
-            payment_method: 'moncash',
+            delivery_fee: specificShopFee || 0,
+            total: shopSubtotal + (specificShopFee || 0),
+            payment_method: paymentMethodType,
             payment_split: paymentSplit,
             status: 'pending',
-            payment_status: 'pending',
+            payment_status: paymentMethodType === 'card' ? 'paid' : 'pending',
             confirmation_code: code,
-            special_instructions: specialInstructions
+            special_instructions: specialInstructions,
+            moncash_transaction_id: transactionId
           });
 
-          createdOrders.push({ orderId: order.id, code, orderNum: order.order_number });
+          createdOrders.push({ orderId: order.id, orderNum, code });
         }
+        return { createdOrders, orderNumBase };
+      };
 
-        console.log('✅ Commandes créées:', createdOrders.length);
+      if (paymentMethod === 'card') {
+        if (!squareToken) throw new Error('Token de paiement manquant');
+        try {
+          const { createdOrders, orderNumBase } = await processOrders('card');
+          
+          const paymentResponse = await base44.functions.invoke('squarePayment', {
+            sourceId: squareToken,
+            amount: totalAmount,
+            orderId: createdOrders[0].orderNum
+          });
 
+          if (!paymentResponse.data.success) throw new Error('Paiement refusé');
+
+          for (const order of createdOrders) {
+            await base44.functions.invoke('sendOrderNotification', { orderId: order.orderId, status: 'pending' }).catch(() => {});
+            await base44.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.orderId }).catch(() => {});
+          }
+
+          await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+          return { orderNum: createdOrders[0].orderNum, code: createdOrders[0].code };
+        } catch (error) {
+          throw new Error(error.message || 'Erreur lors du paiement par carte');
+        }
+      }
+
+      if (paymentMethod === 'moncash') {
+        const { createdOrders, orderNumBase } = await processOrders('moncash');
         await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
-        console.log('✅ Panier vidé');
 
-        console.log('📞 Appel API MonCash avec montant:', totalAmount, 'HTG');
-        
         const response = await base44.functions.invoke('moncashCreatePayment', {
-          orderId: orderNum,
+          orderId: orderNumBase,
           amount: totalAmount,
-          description: `Commande ${orderNum}`
+          description: `Commande ${orderNumBase}`
         });
 
-        console.log('📥 Réponse MonCash:', response);
-
         const paymentData = response.data;
-        console.log('📦 Payment Data:', paymentData);
-
-        if (!paymentData?.success) {
-          console.error('❌ Erreur MonCash:', paymentData?.error);
-          throw new Error(paymentData?.error || 'Erreur MonCash: Échec de création du paiement');
+        if (!paymentData?.success || !paymentData?.paymentUrl) {
+          throw new Error(paymentData?.error || 'Erreur MonCash: URL de redirection manquante');
         }
-
-        if (!paymentData?.paymentUrl) {
-          console.error('❌ URL de paiement manquante:', paymentData);
-          throw new Error('URL de redirection MonCash manquante');
-        }
-
-        console.log('✅ URL MonCash reçue:', paymentData.paymentUrl);
 
         for (const order of createdOrders) {
           await base44.entities.Order.update(order.orderId, {
@@ -277,35 +305,22 @@ export default function Cart() {
           });
         }
 
-        console.log('✅ Transaction ID enregistrée');
-
-        // Retourner les données pour déclencher onSuccess PUIS rediriger
-        return {
-          redirectToMoncash: true,
-          paymentUrl: paymentData.paymentUrl,
-          orderNum: createdOrders[0].orderNum
-        };
+        return { redirectToMoncash: true, paymentUrl: paymentData.paymentUrl, orderNum: createdOrders[0].orderNum };
       }
     },
     onSuccess: (data) => {
-      console.log('✅ Mutation success:', data);
-      
       if (!data) return;
-      
-      // MonCash: redirection immédiate
       if (data.redirectToMoncash && data.paymentUrl) {
-        console.log('🚀 REDIRECTION MonCash vers:', data.paymentUrl);
         window.location.href = data.paymentUrl;
         return;
       }
       
-      // Square: afficher confirmation + tracking Purchase
       queryClient.invalidateQueries(['cart']);
       setOrderNumber(data.orderNum);
       setConfirmCode(data.code);
       setStep('confirmed');
       toast.success('Commande confirmée!');
-      // Track achat GA4 + Meta Pixel (Advantage+ catalog)
+      
       trackPurchase({
         order_number: data.orderNum,
         total: baseTotal,
@@ -316,7 +331,7 @@ export default function Cart() {
           unit_price: item.unit_price
         }))
       });
-      // Pixel direct pour garantir le Purchase sur la page panier
+      
       if (window.fbq) {
         window.fbq('track', 'Purchase', {
           content_ids: cartItems.map(i => i.product_id),
@@ -329,10 +344,7 @@ export default function Cart() {
         });
       }
     },
-    onError: (error) => {
-      console.error('❌ Erreur mutation:', error);
-      toast.error(error.message || 'Erreur lors de la création de la commande');
-    }
+    onError: (error) => toast.error(error.message || 'Erreur lors de la création de la commande')
   });
 
   if (!user || isLoading) {
@@ -342,34 +354,6 @@ export default function Cart() {
       </div>
     );
   }
-
-  const itemsByShop = cartItems.reduce((acc, item) => {
-    if (!acc[item.shop_id]) {
-      acc[item.shop_id] = [];
-    }
-    acc[item.shop_id].push(item);
-    return acc;
-  }, {});
-
-  const subtotal = cartItems.reduce((sum, item) => {
-    const itemTotal = (item.unit_price + (item.total_customization_price || 0)) * item.quantity;
-    return sum + itemTotal;
-  }, 0);
-
-  let deliveryFee = 0;
-  
-  // Livraison gratuite si sous-total >= 3000 HTG
-  if (subtotal < 3000) {
-    Object.keys(itemsByShop).forEach(shopId => {
-      const shopRegion = itemsByShop[shopId][0].shop_region;
-      deliveryFee += calculateDeliveryFee(user.region, shopRegion);
-    });
-  }
-
-  const pendingBalance = user?.pending_balance || 0;
-  const baseTotal = subtotal + deliveryFee + pendingBalance;
-  const total = paymentSplit === 'split' ? baseTotal / 2 : baseTotal;
-  const shopCount = Object.keys(itemsByShop).length;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -405,19 +389,23 @@ export default function Cart() {
 
           {step === 'cart' && cartItems.length > 0 && (
             <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              
+              {/* ALERTE MULTI-BOUTIQUES */}
               {shopCount > 1 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800">
-                  <p className="font-medium">📦 Commande multi-boutique</p>
+                  <p className="font-bold flex items-center gap-2">
+                    <Truck className="w-4 h-4" /> Commande multi-boutiques
+                  </p>
                   <p className="text-xs mt-1">
                     Votre panier contient des articles de {shopCount} boutiques différentes.
-                    Les délais de livraison peuvent varier.
+                    Choisissez votre option de livraison ci-dessous.
                   </p>
                 </div>
               )}
 
               <div className="space-y-3">
                 {cartItems.map(item => (
-                  <div key={item.id} className="bg-white rounded-xl p-4 flex gap-4">
+                  <div key={item.id} className="bg-white rounded-xl p-4 flex gap-4 shadow-sm border border-slate-100">
                     <div className="w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
                       {item.product_image ? (
                         <img src={item.product_image} alt="" className="w-full h-full object-cover" />
@@ -427,70 +415,37 @@ export default function Cart() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-slate-800 truncate">{item.product_name}</h3>
-                      <p className="text-sm text-slate-500">{item.shop_name}</p>
-                      {item.customization && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {item.customization.color && (
-                            <span className="inline-flex items-center gap-1 text-xs bg-slate-100 rounded-full px-2 py-0.5">
-                              <div className="w-3 h-3 rounded-full border" style={{ backgroundColor: item.customization.color.hex }} />
-                              {item.customization.color.name}
-                            </span>
-                          )}
-                          {item.customization.size && (
-                            <span className="text-xs bg-slate-100 rounded-full px-2 py-0.5">
-                              Taille: {item.customization.size.name}
-                            </span>
-                          )}
-                          {item.customization.text && (
-                            <span className="text-xs bg-slate-100 rounded-full px-2 py-0.5">
-                              "{item.customization.text}"
-                            </span>
-                          )}
-                          {item.customization.arrangement && (
-                            <span className="text-xs bg-slate-100 rounded-full px-2 py-0.5">
-                              {item.customization.arrangement.name}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs text-slate-500 font-medium">
+                        {item.shop_name} <span className="text-slate-400 font-normal">({item.shop_region})</span>
+                      </p>
+                      
+                      <div className="flex items-center justify-between mt-3">
                         <div>
-                          <span className="font-semibold text-orange-500">
+                          <span className="font-bold text-slate-800">
                             {(item.unit_price + (item.total_customization_price || 0)) * item.quantity} HTG
                           </span>
-                          {item.total_customization_price > 0 && (
-                            <span className="text-xs text-slate-500 ml-1">
-                              (+{item.total_customization_price * item.quantity} HTG)
-                            </span>
-                          )}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
+                        <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-1 border">
+                          <button
+                            className="w-7 h-7 flex items-center justify-center rounded bg-white shadow-sm active:scale-95 text-slate-600"
                             onClick={() => updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity - 1 })}
                           >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-                          <span className="w-8 text-center">{item.quantity}</span>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
+                          <button
+                            className="w-7 h-7 flex items-center justify-center rounded bg-white shadow-sm active:scale-95 text-slate-600"
                             onClick={() => updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity + 1 })}
                           >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-red-500"
+                            <Plus className="w-3 h-3" />
+                          </button>
+                          <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
+                          <button
+                            className="w-7 h-7 flex items-center justify-center rounded active:scale-95 text-red-500 hover:bg-red-50"
                             onClick={() => deleteItemMutation.mutate(item.id)}
                           >
                             <Trash2 className="w-4 h-4" />
-                          </Button>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -498,54 +453,80 @@ export default function Cart() {
                 ))}
               </div>
 
-              <Link to={createPageUrl('Home')}>
-                <Button variant="outline" className="w-full mt-4">
-                  Ajouter plus d'articles
-                </Button>
-              </Link>
+              {/* SÉLECTION DU MODE DE LIVRAISON (Illusion du choix) */}
+              {shopCount > 1 && subtotal < 3000 && (
+                <div className="bg-white rounded-xl p-4 mt-6 border shadow-sm">
+                  <h3 className="font-bold mb-3 flex items-center gap-2 text-slate-800">
+                    <Truck className="w-5 h-5 text-orange-500" />
+                    Options de Livraison
+                  </h3>
+                  <RadioGroup value={deliveryOption} onValueChange={setDeliveryOption} className="space-y-3">
+                    <label className={`flex items-start space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${deliveryOption === 'standard' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                      <RadioGroupItem value="standard" id="standard" className="mt-1" />
+                      <div className="flex-1">
+                        <div className="flex justify-between">
+                          <span className="font-bold text-slate-800">Standard (24h - 48h)</span>
+                          <span className="font-bold text-orange-600">+{standardFee} HTG</span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">Vos articles sont regroupés pour réduire les frais. Vous payez uniquement le tarif le plus élevé.</p>
+                      </div>
+                    </label>
 
-              <div className="bg-white rounded-xl p-4 mt-6 space-y-2">
-                <div className="flex justify-between text-slate-600">
-                  <span>Sous-total</span>
-                  <span>{subtotal} HTG</span>
+                    <label className={`flex items-start space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${deliveryOption === 'express' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                      <RadioGroupItem value="express" id="express" className="mt-1" />
+                      <div className="flex-1">
+                        <div className="flex justify-between">
+                          <span className="font-bold text-slate-800">Express (12h - 24h)</span>
+                          <span className="font-bold text-orange-600">+{expressFee} HTG</span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">Vos articles sont expédiés immédiatement de chaque boutique séparément.</p>
+                      </div>
+                    </label>
+                  </RadioGroup>
                 </div>
-                <div className="flex justify-between items-center text-slate-600">
+              )}
+
+              <div className="bg-white rounded-xl p-4 mt-6 space-y-2 shadow-sm border border-slate-100">
+                <div className="flex justify-between text-slate-600 text-sm">
+                  <span>Sous-total</span>
+                  <span className="font-medium">{subtotal} HTG</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-600 text-sm">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-orange-500" />
-                    <span>Frais de livraison {shopCount > 1 ? `(${shopCount} boutiques)` : ''}</span>
+                    <span>Livraison {shopCount > 1 ? `(${deliveryOption === 'express' ? 'Express' : 'Groupée'})` : ''}</span>
                   </div>
                   <div className="text-right">
                     {deliveryFee === 0 && subtotal >= 3000 ? (
-                      <div className="font-medium text-green-600">GRATUIT ✓</div>
+                      <div className="font-bold text-green-600">GRATUIT ✓</div>
                     ) : (
-                      <div className="font-medium">{deliveryFee} HTG</div>
+                      <div className="font-medium">+{deliveryFee} HTG</div>
                     )}
-                    <div className="text-xs text-slate-400">Livraison: 20-30 min</div>
                   </div>
                 </div>
                 {pendingBalance > 0 && (
-                  <div className="flex justify-between items-center text-orange-600 font-medium">
+                  <div className="flex justify-between items-center text-red-600 text-sm font-medium pt-1">
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4" />
-                      <span>Balance due (annulation)</span>
+                      <span>Balance due (Annulation)</span>
                     </div>
                     <span>+{pendingBalance} HTG</span>
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                <div className="flex justify-between font-black text-xl pt-3 border-t mt-3 text-slate-800">
                   <span>Total</span>
                   <span className="text-orange-500">{baseTotal} HTG</span>
                 </div>
               </div>
 
               <Button
-                className="w-full mt-4 bg-orange-500 hover:bg-orange-600 h-12 text-lg"
+                className="w-full mt-6 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
                 onClick={() => {
                   trackInitiateCheckout(cartItems, baseTotal);
                   setStep('checkout');
                 }}
               >
-                Confirmer la commande
+                Passer à la caisse
               </Button>
             </motion.div>
           )}
@@ -558,139 +539,100 @@ export default function Cart() {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              {/* Payment Split Option */}
-              <div className="bg-white rounded-xl p-4">
-                <h3 className="font-semibold mb-4">Mode de paiement</h3>
+              {/* Split Option */}
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                <h3 className="font-bold mb-4 text-slate-800">Mode de paiement</h3>
                 <RadioGroup value={paymentSplit} onValueChange={setPaymentSplit} className="space-y-3">
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-slate-50">
+                  <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentSplit === 'full' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
                     <RadioGroupItem value="full" id="full" />
-                    <Label htmlFor="full" className="flex items-center gap-3 cursor-pointer flex-1">
-                      <div className="flex-1">
-                        <div className="font-medium">Paiement complet (100%)</div>
-                        <div className="text-xs text-slate-500">Payez {baseTotal.toLocaleString()} HTG maintenant</div>
-                      </div>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-slate-50">
+                    <div className="flex-1">
+                      <div className="font-bold text-slate-800">Paiement complet (100%)</div>
+                      <div className="text-xs text-slate-500">Payez {baseTotal.toLocaleString()} HTG maintenant</div>
+                    </div>
+                  </label>
+                  <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentSplit === 'split' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
                     <RadioGroupItem value="split" id="split" />
-                    <Label htmlFor="split" className="flex items-center gap-3 cursor-pointer flex-1">
-                      <div className="flex-1">
-                        <div className="font-medium">Paiement fractionné (50% / 50%)</div>
-                        <div className="text-xs text-slate-500">Payez {(baseTotal / 2).toLocaleString()} HTG maintenant, le reste à la livraison</div>
-                      </div>
-                    </Label>
-                  </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-slate-800">Paiement fractionné (50/50)</div>
+                      <div className="text-xs text-slate-500">Payez {(baseTotal / 2).toLocaleString()} HTG maintenant, le reste à la livraison</div>
+                    </div>
+                  </label>
                 </RadioGroup>
               </div>
 
-              {/* Payment Method */}
-              <div className="bg-white rounded-xl p-4">
-                <h3 className="font-semibold mb-4">Méthode de paiement</h3>
+              {/* Methods */}
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                <h3 className="font-bold mb-4 text-slate-800">Méthode de paiement</h3>
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border-2 border-orange-500 bg-orange-50 hover:bg-orange-100">
+                  <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentMethod === 'moncash' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
                     <RadioGroupItem value="moncash" id="moncash" />
-                    <Label htmlFor="moncash" className="flex items-center gap-3 cursor-pointer flex-1">
-                      <Wallet className="w-5 h-5 text-orange-600" />
-                      <div className="flex-1">
-                        <span className="font-medium">Moncash</span>
-                        <span className="ml-2 text-xs bg-orange-600 text-white px-2 py-0.5 rounded-full">Recommandé</span>
-                      </div>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-slate-50">
+                    <Wallet className="w-6 h-6 text-orange-500" />
+                    <div className="flex-1 flex justify-between items-center">
+                      <span className="font-bold text-slate-800">MonCash</span>
+                      <span className="text-[10px] uppercase tracking-wider font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">Recommandé</span>
+                    </div>
+                  </label>
+                  <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
                     <RadioGroupItem value="card" id="card" />
-                    <Label htmlFor="card" className="flex items-center gap-3 cursor-pointer flex-1">
-                      <CreditCard className="w-5 h-5 text-blue-600" />
-                      <span>Carte de débit/crédit (Square)</span>
-                    </Label>
-                  </div>
+                    <CreditCard className="w-6 h-6 text-blue-600" />
+                    <span className="font-bold text-slate-800">Carte de crédit/débit</span>
+                  </label>
                 </RadioGroup>
               </div>
 
-              <div className="bg-white rounded-xl p-4">
-                <h3 className="font-semibold mb-3">Adresse de livraison</h3>
-                <p className="text-slate-600">{user.address || 'Non définie'}</p>
-                <p className="text-slate-500 text-sm">{user.region}</p>
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                <h3 className="font-bold mb-1 text-slate-800">Adresse de livraison</h3>
+                <p className="text-slate-600 font-medium">{user.address || 'Non définie'}</p>
+                <p className="text-slate-400 text-sm">{user.region}</p>
               </div>
 
               {paymentMethod === 'card' && (
                 <SquarePaymentForm
                   amount={total}
-                  onSuccess={(token) => {
-                    setSquareToken(token);
-                    toast.success('Carte validée');
-                  }}
-                  onError={(error) => {
-                    setSquareToken(null);
-                    toast.error(error);
-                  }}
+                  onSuccess={(token) => { setSquareToken(token); toast.success('Carte validée'); }}
+                  onError={(error) => { setSquareToken(null); toast.error(error); }}
                 />
               )}
 
-              <div className="bg-white rounded-xl p-4">
-                <h3 className="font-semibold mb-3">Instructions spéciales (optionnel)</h3>
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                <h3 className="font-bold mb-3 text-slate-800">Instructions spéciales</h3>
                 <Textarea
-                  placeholder="Ex: Sonnez à la porte, pas d'interphone..."
+                  placeholder="Ex: Sonnez à la porte, laissez à l'accueil..."
                   value={specialInstructions}
                   onChange={(e) => setSpecialInstructions(e.target.value.slice(0, 200))}
-                  className="min-h-[80px]"
+                  className="min-h-[80px] bg-slate-50 border-slate-200"
                   maxLength={200}
                 />
-                <p className="text-xs text-slate-400 mt-1">{specialInstructions.length}/200 caractères</p>
               </div>
 
-              <div className="bg-white rounded-xl p-4 space-y-2">
-                <h3 className="font-semibold mb-3">Récapitulatif</h3>
-                {Object.keys(itemsByShop).map(shopId => {
-                  const shopItems = itemsByShop[shopId];
-                  return (
-                    <div key={shopId} className="mb-3 pb-3 border-b">
-                      <p className="text-xs font-semibold text-slate-500 mb-2">{shopItems[0].shop_name}</p>
-                      {shopItems.map(item => (
-                        <div key={item.id} className="text-sm text-slate-600">
-                          <div className="flex justify-between">
-                            <span>{item.quantity}x {item.product_name}</span>
-                            <span>{(item.unit_price + (item.total_customization_price || 0)) * item.quantity} HTG</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-                <div className="border-t pt-2 mt-2">
-                  <div className="flex justify-between text-slate-600">
-                    <span>Sous-total</span>
+              <div className="bg-slate-800 rounded-xl p-5 text-white shadow-lg">
+                <h3 className="font-bold text-slate-300 mb-4 uppercase tracking-wider text-sm">Facture finale</h3>
+                
+                <div className="space-y-2 mb-4 text-sm text-slate-300">
+                  <div className="flex justify-between">
+                    <span>Sous-total articles</span>
                     <span>{subtotal} HTG</span>
                   </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Livraison {shopCount > 1 ? `(${shopCount} boutiques)` : ''}</span>
+                  <div className="flex justify-between">
+                    <span>Livraison</span>
                     <span>{deliveryFee} HTG</span>
                   </div>
-                  {pendingBalance > 0 && (
-                    <div className="flex justify-between text-orange-600 font-medium">
-                      <span>Balance due (annulation)</span>
-                      <span>+{pendingBalance} HTG</span>
-                    </div>
-                  )}
+                </div>
 
-                  <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
-                    <span>Total général</span>
-                    <span className="text-slate-600">{baseTotal} HTG</span>
-                  </div>
-
+                <div className="border-t border-slate-600 pt-4 mt-4">
                   {paymentSplit === 'split' ? (
-                    <div className="bg-orange-50 p-3 rounded-lg border border-orange-200 mt-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-orange-800">À payer maintenant (50%)</span>
-                        <span className="text-xl font-bold text-orange-600">{(baseTotal / 2).toLocaleString()} HTG</span>
+                    <div>
+                      <div className="flex justify-between font-black text-2xl text-orange-400 mb-1">
+                        <span>À Payer (50%)</span>
+                        <span>{(baseTotal / 2).toLocaleString()} HTG</span>
                       </div>
-                      <div className="text-xs text-orange-600 mt-1">
-                        Reste {(baseTotal / 2).toLocaleString()} HTG à payer à la livraison
+                      <div className="text-right text-xs text-slate-400">
+                        Reste {(baseTotal / 2).toLocaleString()} HTG à la livraison
                       </div>
                     </div>
                   ) : (
-                    <div className="flex justify-between font-bold text-xl text-orange-500 pt-2 border-t mt-2">
-                      <span>À payer maintenant</span>
+                    <div className="flex justify-between font-black text-2xl text-orange-400">
+                      <span>Total à Payer</span>
                       <span>{baseTotal} HTG</span>
                     </div>
                   )}
@@ -698,34 +640,18 @@ export default function Cart() {
               </div>
 
               <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setStep('cart')}
-                >
+                <Button variant="outline" className="h-14 px-6 bg-white border-slate-300 text-slate-700 font-bold" onClick={() => setStep('cart')}>
                   Retour
                 </Button>
                 <Button
-                  type="button"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
                   onClick={(e) => {
                     e.preventDefault();
-                    console.log('🔘 Clic sur bouton confirmation');
-                    console.log('💳 Méthode de paiement:', paymentMethod);
-                    console.log('💰 Montant total:', total, 'HTG');
                     createOrderMutation.mutate();
                   }}
-                  disabled={
-                    createOrderMutation.isPending ||
-                    redirectingToMoncash ||
-                    (paymentMethod === 'card' && !squareToken)
-                  }
+                  disabled={createOrderMutation.isPending || redirectingToMoncash || (paymentMethod === 'card' && !squareToken)}
                 >
-                  {createOrderMutation.isPending ? (
-                    paymentMethod === 'moncash' ? 'Redirection MonCash...' : 'Traitement...'
-                  ) : (
-                    'Confirmer le paiement'
-                  )}
+                  {createOrderMutation.isPending ? 'Sécurisation...' : 'Payer maintenant'}
                 </Button>
               </div>
             </motion.div>
@@ -736,31 +662,31 @@ export default function Cart() {
               key="confirmed"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-8"
+              className="text-center py-12"
             >
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <svg className="w-12 h-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">Commande Confirmée!</h2>
-              <p className="text-slate-500 mb-6">Numéro: {orderNumber}</p>
+              <h2 className="text-3xl font-black text-slate-800 mb-2">Paiement Réussi !</h2>
+              <p className="text-slate-500 font-medium mb-8">N° de commande : {orderNumber}</p>
 
-              <div className="bg-orange-50 rounded-2xl p-6 mb-6">
-                <p className="text-sm text-orange-700 mb-2">Code de confirmation</p>
-                <p className="text-4xl font-bold text-orange-600 tracking-widest">{confirmCode}</p>
-                <p className="text-xs text-orange-600 mt-2">Donnez ce code au livreur</p>
+              <div className="bg-orange-50 rounded-2xl p-6 mb-8 border border-orange-100 shadow-sm">
+                <p className="text-sm font-bold text-orange-800 uppercase tracking-wider mb-2">Code de Sécurité</p>
+                <p className="text-5xl font-black text-orange-500 tracking-[0.2em]">{confirmCode}</p>
+                <p className="text-sm text-orange-700 mt-3 font-medium">Ne partagez ce code qu'avec le livreur Rapido Presto.</p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 max-w-sm mx-auto">
                 <Link to={createPageUrl('Orders')} className="flex-1">
-                  <Button variant="outline" className="w-full">
-                    Mes Commandes
+                  <Button variant="outline" className="w-full h-12 font-bold text-slate-700">
+                    Suivre
                   </Button>
                 </Link>
                 <Link to={createPageUrl('Home')} className="flex-1">
-                  <Button className="w-full bg-orange-500 hover:bg-orange-600">
-                    Continuer
+                  <Button className="w-full bg-orange-500 hover:bg-orange-600 h-12 font-bold shadow-lg shadow-orange-500/25">
+                    Terminer
                   </Button>
                 </Link>
               </div>
