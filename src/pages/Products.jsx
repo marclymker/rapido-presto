@@ -23,45 +23,58 @@ const CATEGORIES = [
   'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor'
 ];
 
+// La liste originale exacte pour le Dropdown
+const REGIONS = [
+  'Port-au-Prince', 'Carrefour', 'Delmas', 'Pétion-Ville', 'Cité Soleil',
+  'Tabarre', 'Clercine', 'Croix des Bouquets', 'Kenscoff', 'Gressier',
+  'Cap-Haïtien', 'Limonade', 'Quartier-Morin', 'Les Gonaïves', 'Ennery', "L'Estère"
+];
+
 // ---------------------------------------------------------------------------
 // MOTEUR DE PROXIMITÉ (SYSTEMS THINKING)
 // ---------------------------------------------------------------------------
+// Normalisation stricte pour éviter que les accents ne cassent l'algorithme
+const normalizeForRegion = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
 const REGION_DATA = {
   // Section 1 : Port-au-Prince
-  'Kenscoff': { index: 0, section: 1 },
-  'Pétion-Ville': { index: 1, section: 1 },
-  'Delmas': { index: 2, section: 1 },
-  'Tabarre': { index: 3, section: 1 },
-  'Clercine': { index: 4, section: 1 },
-  'Cité Soleil': { index: 5, section: 1 },
-  'Croix des Bouquets': { index: 6, section: 1 },
-  'Lilavois': { index: 7, section: 1 },
+  'port-au-prince': { index: 0, section: 1 },
+  'kenscoff': { index: 0, section: 1 },
+  'petion-ville': { index: 1, section: 1 },
+  'delmas': { index: 2, section: 1 },
+  'tabarre': { index: 3, section: 1 },
+  'clercine': { index: 4, section: 1 },
+  'cite soleil': { index: 5, section: 1 },
+  'croix des bouquets': { index: 6, section: 1 },
+  'lilavois': { index: 7, section: 1 },
   
   // Section 2 : Carrefour
-  'Fontamara': { index: 8, section: 2 },
-  'Carrefour': { index: 9, section: 2 },
-  'Gressier': { index: 10, section: 2 },
-  'Léogâne': { index: 11, section: 2 },
+  'fontamara': { index: 8, section: 2 },
+  'carrefour': { index: 9, section: 2 },
+  'gressier': { index: 10, section: 2 },
+  'leogane': { index: 11, section: 2 },
   
   // Section 3 : Artibonite et Nord
-  'Ennery': { index: 12, section: 3 },
-  "L'Estère": { index: 13, section: 3 },
-  'Gonaïves': { index: 14, section: 3 },
-  'Plaine du Nord': { index: 15, section: 3 },
-  'Vaudreuil': { index: 16, section: 3 },
-  'Cap-Haïtien': { index: 17, section: 3 }, 
-  'Madeline': { index: 18, section: 3 },
-  'Limonade': { index: 19, section: 3 },
-  'Pignon': { index: 20, section: 3 },
-  'Hinche': { index: 21, section: 3 }
+  'ennery': { index: 12, section: 3 },
+  "l'estere": { index: 13, section: 3 },
+  'gonaives': { index: 14, section: 3 },
+  'les gonaives': { index: 14, section: 3 }, // Gestion des variations
+  'plaine du nord': { index: 15, section: 3 },
+  'vaudreuil': { index: 16, section: 3 },
+  'cap-haitien': { index: 17, section: 3 }, 
+  'quartier-morin': { index: 17, section: 3 },
+  'madeline': { index: 18, section: 3 },
+  'limonade': { index: 19, section: 3 },
+  'pignon': { index: 20, section: 3 },
+  'hinche': { index: 21, section: 3 }
 };
-
-const REGIONS = Object.keys(REGION_DATA);
 
 const calculateProximityScore = (targetRegionName, shopRegionName) => {
   if (!targetRegionName || !shopRegionName) return 999; 
-  const target = REGION_DATA[targetRegionName];
-  const shop = REGION_DATA[shopRegionName];
+  
+  const target = REGION_DATA[normalizeForRegion(targetRegionName)];
+  const shop = REGION_DATA[normalizeForRegion(shopRegionName)];
+  
   if (!target || !shop) return 999;
 
   let diff = Math.abs(target.index - shop.index);
@@ -268,16 +281,12 @@ export default function Products() {
     return ids;
   }, [selectedFbCatId]);
 
-  // CORRECTION MAJEURE ICI : La région n'est PLUS un filtre destructif. 
-  // Seuls la recherche, la catégorie, ou la sous-catégorie FB détruisent la vitrine.
   const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId);
 
   const filteredProducts = useMemo(() => {
     const baseFiltered = allProducts.filter(p => {
       if (selectedCategory && p.category !== selectedCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
-      // Nous ne supprimons plus les articles qui ne sont pas de la région.
-      // Ils seront juste triés plus bas par l'algorithme de proximité.
       return true;
     });
 
@@ -324,7 +333,6 @@ export default function Products() {
     } catch (_) {}
 
     if (!lastViewed) {
-      // Tri de base en utilisant la région de référence
       return sortWithProximityAndDiversity(baseFiltered, shopsMap, referenceRegion, mountTimeRef.current);
     }
 
@@ -347,7 +355,6 @@ export default function Products() {
     const top10 = scoredView.filter(p => p._score > 0).sort((a, b) => b._score - a._score).slice(0, 10);
     const top10Ids = new Set(top10.map(p => p.id));
     
-    // Le reste est trié par l'algorithme de proximité basé sur la région choisie
     const rest = sortWithProximityAndDiversity(
       baseFiltered.filter(p => !top10Ids.has(p.id)), 
       shopsMap, 
@@ -356,8 +363,7 @@ export default function Products() {
     );
 
     return [...top10, ...rest];
-  }, [allProducts, searchQuery, selectedCategory, selectedFbCatId, selectedRegion, // On garde selectedRegion en dépendance pour re-déclencher le calcul
-      selectedFbBranchIds, shopsMap, referenceRegion, isFiltered]);
+  }, [allProducts, searchQuery, selectedCategory, selectedFbCatId, shopsMap, referenceRegion, isFiltered]);
 
   const visibleProducts = useMemo(
     () => filteredProducts.slice(0, visibleCount),
@@ -365,7 +371,6 @@ export default function Products() {
   );
 
   const categoryGroups = useMemo(() => {
-    // Si on fait une recherche ou qu'on clique sur une catégorie, on ne calcule plus les groupes (la vitrine disparait)
     if (isFiltered) return {};
 
     const byCategory = {};
@@ -377,7 +382,6 @@ export default function Products() {
 
     const result = {};
     Object.keys(byCategory).forEach(cat => {
-      // Les articles de chaque rangée sont triés selon la région sélectionnée
       result[cat] = sortWithProximityAndDiversity(byCategory[cat], shopsMap, referenceRegion, mountTimeRef.current);
     });
 
@@ -693,7 +697,9 @@ export default function Products() {
 
             {Object.entries(categoryGroups).map(([cat, products]) => (
               <CategoryRow
-                key={cat}
+                // C'EST ICI LA MAGIE : La clé inclut la région.
+                // React détruira et reconstruira la ligne entière au moindre changement de Dropdown.
+                key={`${cat}-${referenceRegion}`}
                 title={cat}
                 products={products}
                 shops={shops}
