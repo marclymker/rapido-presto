@@ -10,11 +10,13 @@ import { User, Building2, Bike, MapPin, Phone, Upload, ChevronRight } from 'luci
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
 
+// MISE À JOUR : Liste standardisée pour correspondre exactement à l'algorithme de proximité
 const REGIONS = [
-  "Petion-ville", "Route de Freres", "Delmas", "Pelerin", "Thomassain", "Kenscoff",
-  "Lalue", "Nazon", "Pernier", "Sarthe", "Tabarre", "Clercine", "Marrin",
-  "Bon Repos", "Turgeau", "Canapevert", "Lavil", "Madeline", "Vaudreuil",
-  "Morne Rouge", "Cap Haitien", "St Marc", "Gonaives", "Les Cayes"
+  "Port-au-Prince", "Kenscoff", "Pétion-Ville", "Delmas", "Tabarre",
+  "Clercine", "Cité Soleil", "Croix des Bouquets", "Lilavois",
+  "Fontamara", "Carrefour", "Gressier", "Léogâne",
+  "Ennery", "L'Estère", "Gonaïves", "Plaine du Nord", "Vaudreuil",
+  "Cap-Haïtien", "Madeline", "Limonade", "Pignon", "Hinche"
 ];
 
 const COMPANY_CATEGORIES = [
