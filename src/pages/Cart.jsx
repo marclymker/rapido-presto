@@ -53,19 +53,21 @@ const REGION_DATA = {
 const CATEGORY_GROUP_HEAVY = ['Boutique Fleurs', 'Materiels Decor', 'Maison'];
 
 function calculateSpecificShopFee(clientRegionName, shopRegionName, shopItems) {
-  if (!clientRegionName || !shopRegionName) return 500;
+  if (!clientRegionName || !shopRegionName) return 500; // Fallback de sécurité
 
   const target = REGION_DATA[normalizeForRegion(clientRegionName)];
   const shop = REGION_DATA[normalizeForRegion(shopRegionName)];
 
-  if (!target || !shop) return 500;
+  if (!target || !shop) return 500; // Fallback si région inconnue
 
   const isSameRegion = target.index === shop.index;
 
+  // Calcul du score d'écart
   let diff = Math.abs(target.index - shop.index);
   let penalty = target.section !== shop.section ? 50 : 0;
   let score = diff + penalty;
 
+  // Vérification Dimensionnelle
   const isHeavyLoad = shopItems.some(item => CATEGORY_GROUP_HEAVY.includes(item.category));
 
   let rawFee = 0;
@@ -76,6 +78,7 @@ function calculateSpecificShopFee(clientRegionName, shopRegionName, shopItems) {
     rawFee = isSameRegion ? 260 : (250 + score) * 1.5;
   }
 
+  // Arrondi aux 50 HTG supérieurs
   return Math.ceil(rawFee / 50) * 50; 
 }
 
@@ -165,9 +168,9 @@ export default function Cart() {
   
   let expressFee = 0;
   let standardFee = 0;
-  const shopFees = {}; 
+  const shopFees = {};
 
-  // SUPPRESSION DE LA LIMITE DE 3000 GOURDES : Le calcul s'applique tout le temps
+  // CORRECTION: Le calcul s'exécute TOUJOURS, peu importe le sous-total
   Object.keys(itemsByShop).forEach(shopId => {
     const shopRegion = itemsByShop[shopId][0].shop_region;
     const fee = calculateSpecificShopFee(user?.region, shopRegion, itemsByShop[shopId]);
@@ -381,6 +384,7 @@ export default function Cart() {
           {step === 'cart' && cartItems.length > 0 && (
             <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               
+              {/* ALERTE MULTI-BOUTIQUES */}
               {shopCount > 1 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800">
                   <p className="font-bold flex items-center gap-2">
@@ -443,6 +447,7 @@ export default function Cart() {
                 ))}
               </div>
 
+              {/* SÉLECTION DU MODE DE LIVRAISON (CORRECTION : S'AFFICHE TOUT LE TEMPS SI shopCount > 1) */}
               {shopCount > 1 && (
                 <div className="bg-white rounded-xl p-4 mt-6 border shadow-sm">
                   <h3 className="font-bold mb-3 flex items-center gap-2 text-slate-800">
@@ -485,6 +490,7 @@ export default function Cart() {
                     <Clock className="w-4 h-4 text-orange-500" />
                     <span>Livraison {shopCount > 1 ? `(${deliveryOption === 'express' ? 'Express' : 'Groupée'})` : ''}</span>
                   </div>
+                  {/* CORRECTION : Affichage net du prix, plus de mention "GRATUIT" */}
                   <div className="text-right">
                     <div className="font-medium">+{deliveryFee} HTG</div>
                   </div>
