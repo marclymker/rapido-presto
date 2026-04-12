@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { cn } from "@/lib/utils";
-import { UtensilsCrossed, Pill, Heart, ShoppingBasket, Coffee, Pizza, Flower, User, Smartphone, UserCircle, Home, Baby, Wrench, ChevronLeft } from 'lucide-react';
+import { 
+  UtensilsCrossed, Pill, Heart, ShoppingBasket, Coffee, Pizza, 
+  Flower, User, Smartphone, UserCircle, Home, Baby, Wrench, 
+  ChevronLeft, Ticket // Ajout de l'icône Ticket
+} from 'lucide-react';
 
 // Structure modifiée pour inclure les sous-catégories
 const categories = [
@@ -32,6 +36,7 @@ const categories = [
   { id: 'Maison', label: 'Maison', icon: Home },
   { id: 'Bébé', label: 'Bébé', icon: Baby },
   { id: 'Outils', label: 'Outils', icon: Wrench },
+  { id: 'Tickets', label: 'Tickets', icon: Ticket }, // Nouvelle catégorie ajoutée ici
 ];
 
 export default function CategoryTabs({ selected, onSelect }) {
@@ -111,8 +116,9 @@ export default function CategoryTabs({ selected, onSelect }) {
                 : "bg-white text-slate-600 hover:bg-orange-50 hover:text-orange-500 border border-slate-200"
             )}
           >
-            <Heart className="w-4 h-4" />
-            <span className="text-xs font-medium">Tous les articles Mariage</span>
+            {/* On utilise l'icône de la catégorie sélectionnée dynamiquement */}
+            {selectedMainCategory.icon && <selectedMainCategory.icon className="w-4 h-4" />}
+            <span className="text-xs font-medium">Tous les articles {selectedMainCategory.label}</span>
           </button>
         </div>
       </div>
