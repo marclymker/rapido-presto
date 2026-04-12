@@ -3,6 +3,10 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Tag, Store, ChevronRight, X, MapPin, MessageCircle, Ticket } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -60,7 +64,7 @@ const REGION_DATA = {
   'ennery': { index: 12, section: 3 },
   "l'estere": { index: 13, section: 3 },
   'gonaives': { index: 14, section: 3 },
-  'les gonaives': { index: 14, section: 3 }, // Gestion des variations
+  'les gonaives': { index: 14, section: 3 },
   'plaine du nord': { index: 15, section: 3 },
   'vaudreuil': { index: 16, section: 3 },
   'cap-haitien': { index: 17, section: 3 }, 
@@ -180,6 +184,10 @@ export default function Products() {
   // Le centre de gravité de l'algorithme
   const referenceRegion = selectedRegion || user?.region || 'Port-au-Prince';
 
+  // --- SYSTÈME DE PIÈGE POUR VENDEURS (DATA COMPLETION) ---
+  const [showSellerTrap, setShowSellerTrap] = useState(false);
+  const [trapData, setTrapData] = useState({ phone: '', region: '' });
+
   useEffect(() => {
     try {
       const savedSearch = sessionStorage.getItem('marketplace_search');
@@ -231,6 +239,48 @@ export default function Products() {
     shops.forEach(s => { m[s.id] = s; });
     return m;
   }, [shops]);
+
+  // --- LOGIQUE DU PIÈGE À VENDEUR ---
+  const isSeller = useMemo(() => {
+    if (!user || !shops.length) return false;
+    return shops.some(shop => shop.user_id === user.id);
+  }, [user, shops]);
+
+  useEffect(() => {
+    if (isSeller && (!user?.phone || !user?.region)) {
+      setTrapData({
+        phone: user?.phone || '',
+        region: user?.region || ''
+      });
+      setShowSellerTrap(true);
+    } else {
+      setShowSellerTrap(false);
+    }
+  }, [isSeller, user]);
+
+  const updateUserMutation = useMutation({
+    mutationFn: async (data) => {
+      return await base44.entities.User.update(user.id, data);
+    },
+    onSuccess: () => {
+      toast.success('Profil mis à jour avec succès !');
+      setShowSellerTrap(false);
+      window.location.reload(); 
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erreur lors de la mise à jour");
+    }
+  });
+
+  const handleTrapSubmit = (e) => {
+    e.preventDefault();
+    if (!trapData.phone || !trapData.region) {
+      toast.error('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+    updateUserMutation.mutate(trapData);
+  };
+  // ---------------------------------------------------------
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity }) => {
@@ -738,6 +788,59 @@ export default function Products() {
             </div>
           </div>
         )}
+
+        {/* LE POP-UP PIÈGE POUR VENDEURS */}
+        <Dialog open={showSellerTrap} onOpenChange={() => {}}>
+          <DialogContent className="max-w-md bg-white rounded-2xl p-6" onInteractOutside={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black text-slate-800">Finalisez votre profil vendeur</DialogTitle>
+              <DialogDescription className="text-slate-500 mt-2">
+                Pour garantir un service logistique parfait à vos clients avec Rapido Presto, nous avons besoin de vos coordonnées exactes.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleTrapSubmit} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label className="font-bold text-slate-700">Numéro WhatsApp *</Label>
+                <Input
+                  type="tel"
+                  placeholder="Ex: +509 3000 0000"
+                  value={trapData.phone}
+                  onChange={(e) => setTrapData({ ...trapData, phone: e.target.value })}
+                  className="h-12 bg-slate-50"
+                  required
+                />
+                <p className="text-[10px] text-slate-400">Ce numéro sera utilisé pour vous contacter lors des commandes.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="font-bold text-slate-700">Votre Région / Commune *</Label>
+                <Select 
+                  value={trapData.region} 
+                  onValueChange={(val) => setTrapData({ ...trapData, region: val })}
+                  required
+                >
+                  <SelectTrigger className="h-12 bg-slate-50 border border-slate-200">
+                    <SelectValue placeholder="Sélectionnez votre zone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REGIONS.map(r => (
+                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg mt-6"
+                disabled={updateUserMutation.isPending || !trapData.phone || !trapData.region}
+              >
+                {updateUserMutation.isPending ? 'Mise à jour...' : 'Enregistrer et continuer'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
