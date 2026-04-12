@@ -396,7 +396,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
                         value={row.name}
                         onChange={e => updateRow(row.id, { name: e.target.value })}
                         placeholder="Titre de l'article"
-                        className={`h-8 text-xs text-slate-900 placeholder:text-slate-400 border-slate-200 ${row.errors.name ? 'border-red-400 focus-visible:ring-red-300' : ''}`}
+                        className={`h-8 text-sm font-bold text-black placeholder:text-slate-400 border-slate-200 ${row.errors.name ? 'border-red-400 focus-visible:ring-red-300' : ''}`}
                       />
                     </td>
 
@@ -425,7 +425,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
                         value={row.description}
                         onChange={e => updateRow(row.id, { description: e.target.value })}
                         placeholder={row.aiDone ? '' : 'Générée par IA ✨'}
-                        className="h-8 text-xs text-slate-900 placeholder:text-slate-400 border-slate-200"
+                        className="h-8 text-sm font-bold text-black placeholder:text-slate-400 border-slate-200"
                       />
                       {row.seo_tags?.length > 0 && (
                         <div className="flex flex-wrap gap-0.5 mt-1">
@@ -444,7 +444,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
                         value={row.price}
                         onChange={e => updateRow(row.id, { price: e.target.value })}
                         placeholder="0"
-                        className={`h-8 text-xs text-slate-900 placeholder:text-slate-400 border-slate-200 ${row.errors.price ? 'border-red-400' : ''}`}
+                        className={`h-8 text-sm font-bold text-black placeholder:text-slate-400 border-slate-200 ${row.errors.price ? 'border-red-400' : ''}`}
                       />
                     </td>
 
@@ -455,7 +455,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
                         value={row.sale_price}
                         onChange={e => updateRow(row.id, { sale_price: e.target.value })}
                         placeholder="0"
-                        className="h-8 text-xs text-slate-900 placeholder:text-slate-400 border-slate-200"
+                        className="h-8 text-sm font-bold text-black placeholder:text-slate-400 border-slate-200"
                       />
                     </td>
 
@@ -465,7 +465,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
                         value={row.fb_category_id ? String(row.fb_category_id) : ''}
                         onValueChange={v => updateRow(row.id, { fb_category_id: Number(v) })}
                       >
-                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
+                        <SelectTrigger className="h-8 text-sm font-bold text-black border-slate-200">
                           <SelectValue placeholder={row.aiDone ? '—' : 'Via IA ✨'} />
                         </SelectTrigger>
                         <SelectContent className="max-h-60">
@@ -484,7 +484,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
                     {/* Condition */}
                     <td className={colClass}>
                       <Select value={row.condition} onValueChange={v => updateRow(row.id, { condition: v })}>
-                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
+                        <SelectTrigger className="h-8 text-sm font-bold text-black border-slate-200">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -498,7 +498,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
                     {/* Availability */}
                     <td className={colClass}>
                       <Select value={row.availability} onValueChange={v => updateRow(row.id, { availability: v })}>
-                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
+                        <SelectTrigger className="h-8 text-sm font-bold text-black border-slate-200">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -512,7 +512,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
                     {/* Status */}
                     <td className="px-3 py-2 bg-white align-top">
                       <Select value={row.status} onValueChange={v => updateRow(row.id, { status: v })}>
-                        <SelectTrigger className="h-8 text-xs text-slate-900 border-slate-200">
+                        <SelectTrigger className="h-8 text-sm font-bold text-black border-slate-200">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
