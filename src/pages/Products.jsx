@@ -240,7 +240,7 @@ export default function Products() {
     return m;
   }, [shops]);
 
-  // --- LOGIQUE DU PIÈGE À VENDEUR (CORRIGÉE) ---
+  // --- LOGIQUE DU PIÈGE À VENDEUR ---
   const isSeller = useMemo(() => {
     if (!user || !shops.length) return false;
     return shops.some(shop => shop.user_id === user.id);
@@ -808,12 +808,13 @@ export default function Products() {
             <form onSubmit={handleTrapSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label className="font-bold text-slate-700">Numéro WhatsApp *</Label>
+                {/* CORRECTION UX: Ajout de text-slate-900 et font-bold pour rendre le texte bien noir et lisible */}
                 <Input
                   type="tel"
                   placeholder="Ex: +509 3000 0000"
                   value={trapData.phone}
                   onChange={(e) => setTrapData({ ...trapData, phone: e.target.value })}
-                  className="h-12 bg-slate-50"
+                  className="h-12 bg-slate-50 text-slate-900 font-bold text-lg"
                   required
                 />
                 <p className="text-[10px] text-slate-400">Ce numéro sera utilisé pour vous contacter lors des commandes.</p>
@@ -826,7 +827,8 @@ export default function Products() {
                   onValueChange={(val) => setTrapData({ ...trapData, region: val })}
                   required
                 >
-                  <SelectTrigger className="h-12 bg-slate-50 border border-slate-200">
+                  {/* CORRECTION UX: Ajout de text-slate-900 et font-bold */}
+                  <SelectTrigger className="h-12 bg-slate-50 border border-slate-200 text-slate-900 font-bold text-lg">
                     <SelectValue placeholder="Sélectionnez votre zone" />
                   </SelectTrigger>
                   <SelectContent>
