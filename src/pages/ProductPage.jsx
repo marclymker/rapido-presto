@@ -30,9 +30,6 @@ export default function ProductPage() {
   const [relatedVisible, setRelatedVisible] = useState(12);
   const [optimisticCart, setOptimisticCart] = useState(0);
 
-  // État pour le message interne pré-rempli
-  const [messengerMsg, setMessengerMsg] = useState('Bonjour, Cet article est-il toujours disponible ?');
-
   useCartSync(user?.id);
 
   useEffect(() => {
@@ -121,92 +118,6 @@ export default function ProductPage() {
     });
     setWaMessage(`Bonjour, je suis intéressé par: ${product.name}`);
   }, [product]);
-
-  // ====================================================================
-  // MUTATION DIRECTE : BYPASS DU BACKEND (Écriture directe dans la BD)
-  // ====================================================================
-  const initiateChatMutation = useMutation({
-    mutationFn: async (text) => {
-      if (!user) {
-        throw new Error("NOT_LOGGED_IN");
-      }
-      
-      const price = applyClientMargin(product.promo_price || product.price);
-      let conversationId;
-
-      try {
-        // 1. On cherche si la conversation existe déjà
-        const existingConvs = await base44.entities.Conversation.filter({
-          customer_id: user.id,
-          shop_id: shop?.id
-        });
-
-        if (existingConvs && existingConvs.length > 0) {
-          conversationId = existingConvs[0].id;
-          // Mise à jour de la conversation existante
-          await base44.entities.Conversation.update(conversationId, {
-            last_message: text,
-            last_message_date: new Date().toISOString(),
-            product_context_id: product?.id
-          });
-        } else {
-          // 2. Création d'une NOUVELLE conversation si elle n'existe pas
-          const newConv = await base44.entities.Conversation.create({
-            customer_id: user.id,
-            customer_name: user.full_name || 'Client',
-            vendor_id: shop?.user_id || shop?.owner_id, 
-            shop_id: shop?.id,
-            shop_name: shop?.company_name || 'Boutique',
-            shop_logo: shop?.company_logo_url || '',
-            last_message: text,
-            last_message_date: new Date().toISOString(),
-            product_context_id: product?.id
-          });
-          conversationId = newConv.id;
-        }
-
-        // 3. Création du message dans la base de données
-        await base44.entities.ChatMessage.create({
-          conversation_id: conversationId,
-          sender_id: user.id,
-          sender_name: user.full_name || 'Client',
-          content: text,
-          type: 'product',
-          is_read: false,
-          metadata: {
-            productId: product.id,
-            productName: product.name,
-            productImage: product.image_url,
-            productPrice: price,
-          }
-        });
-
-        return { id: conversationId };
-
-      } catch (dbError) {
-        console.error("Erreur d'écriture directe DB:", dbError);
-        throw new Error("DB_REJECTED");
-      }
-    },
-    onSuccess: (res) => {
-      if (res?.id) {
-        navigate(`/Chat?id=${res.id}`);
-      } else {
-        navigate('/Chat');
-      }
-    },
-    onError: (error) => {
-      if (error.message === "NOT_LOGGED_IN") {
-        toast.error("Veuillez vous connecter pour envoyer un message.");
-        setTimeout(() => base44.auth.redirectToLogin(window.location.pathname), 1500);
-      } else if (error.message === "DB_REJECTED") {
-        // Si les règles de sécurité (RLS) bloquent l'écriture, cette erreur s'affichera
-        toast.error("Le système exige le backend pour cette action. Veuillez patienter la restauration de la route.");
-      } else {
-        toast.error("Erreur lors de l'initialisation du chat.");
-      }
-    }
-  });
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ quantity }) => {
@@ -348,70 +259,22 @@ export default function ProductPage() {
           {originalPrice && <span className="text-sm line-through text-gray-400">{originalPrice.toLocaleString()} HTG</span>}
         </div>
 
-        {/* =================================================== */}
-        {/* BOÎTE MESSENGER INTERNE (STYLE ALIBABA)             */}
-        {/* =================================================== */}
-        <div className="mb-3 w-full animate-in fade-in zoom-in duration-300">
-          <div className="border-2 border-[#0084FF]/20 rounded-xl overflow-hidden bg-white shadow-sm focus-within:border-[#0084FF]/50 transition-colors">
-            
-            <div className="bg-[#EAF3FF] px-3 py-2 flex items-center gap-2 border-b border-[#0084FF]/10">
-              <MessageCircle className="w-4 h-4 text-[#0084FF]" fill="currentColor" />
-              <span className="text-xs font-bold text-[#0084FF] uppercase tracking-wider">
-                Contacter le vendeur
-              </span>
-            </div>
-
-            <div className="p-2 relative">
-              <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100 mb-2">
-                <img src={imgSrc} alt="aperçu" className="w-8 h-8 object-cover rounded" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold text-gray-800 truncate">{product.name}</p>
-                  <p className="text-[10px] text-blue-600 font-bold">{price.toLocaleString()} HTG</p>
-                </div>
-              </div>
-
-              <textarea
-                value={messengerMsg}
-                onChange={e => setMessengerMsg(e.target.value)}
-                rows={2}
-                className="w-full px-2 pt-1 text-[14px] resize-none outline-none text-gray-900 bg-transparent"
-              />
-            </div>
-
-            <div className="flex justify-end px-3 pb-3">
-              <button
-                onClick={() => initiateChatMutation.mutate(messengerMsg)}
-                disabled={initiateChatMutation.isPending || !messengerMsg.trim()}
-                className="px-5 py-2 text-xs font-bold text-white rounded-full flex items-center gap-2 shadow-md shadow-[#0084FF]/20 transition-all active:scale-95 disabled:opacity-50"
-                style={{ backgroundColor: '#0084FF' }}
-              >
-                {initiateChatMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5" fill="currentColor" /> Envoyer
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* WhatsApp Message Box */}
         <div className="mb-4">
+          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Contacter le vendeur</div>
           {!waBoxOpen ? (
-            <button onClick={() => setWaBoxOpen(true)} className="w-full flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-600 hover:bg-gray-50 transition">
-              <MessageCircle className="w-5 h-5 text-green-500" />
+            <button onClick={() => setWaBoxOpen(true)} className="w-full flex items-center gap-3 border border-green-200 bg-green-50/30 rounded-xl px-4 py-3 text-sm text-gray-700 hover:bg-green-50 transition">
+              <MessageCircle className="w-5 h-5 text-green-500" fill="currentColor" />
               <span className="flex-1 text-left truncate">{waMessage}</span>
-              <Send className="w-4 h-4 text-blue-600" />
+              <Send className="w-4 h-4 text-green-600" />
             </button>
           ) : (
-            <div className="border border-blue-400 rounded-xl overflow-hidden bg-white shadow-lg animate-in fade-in zoom-in duration-200">
+            <div className="border border-green-400 rounded-xl overflow-hidden bg-white shadow-lg animate-in fade-in zoom-in duration-200">
               <textarea value={waMessage} onChange={e => setWaMessage(e.target.value)} rows={3} className="w-full px-4 pt-3 text-sm outline-none resize-none" />
               <div className="flex justify-end gap-2 p-3 bg-gray-50 border-t border-gray-100">
                 <button onClick={() => setWaBoxOpen(false)} className="px-4 py-2 text-xs font-semibold text-gray-500">Annuler</button>
-                <button onClick={handleSendWhatsApp} className="px-5 py-2 text-xs font-bold text-white bg-blue-600 rounded-lg flex items-center gap-2 shadow-md">
-                  <Send className="w-3 h-3" /> Envoyer
+                <button onClick={handleSendWhatsApp} className="px-5 py-2 text-xs font-bold text-white bg-green-600 rounded-lg flex items-center gap-2 shadow-md">
+                  <Send className="w-3 h-3" /> Envoyer sur WhatsApp
                 </button>
               </div>
             </div>
