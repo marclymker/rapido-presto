@@ -24,7 +24,7 @@ import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
 const CATEGORIES = [
   'Pour Femme', 'Bijoux', 'Pour homme', 'Mariage', 'Boutique Fleurs',
   'Maison', 'Electronics', 'Mode', 'Pharmacie',
-  'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor'
+  'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor', 'Tickets'
 ];
 
 // MISE À JOUR : La Single Source of Truth alignée avec Admin et Panier
