@@ -64,7 +64,7 @@ const REGION_DATA = {
   'ennery': { index: 12, section: 3 },
   "l'estere": { index: 13, section: 3 },
   'gonaives': { index: 14, section: 3 },
-  'les gonaives': { index: 14, section: 3 },
+  'les gonaives': { index: 14, section: 3 }, // Gestion des variations
   'plaine du nord': { index: 15, section: 3 },
   'vaudreuil': { index: 16, section: 3 },
   'cap-haitien': { index: 17, section: 3 }, 
@@ -240,7 +240,7 @@ export default function Products() {
     return m;
   }, [shops]);
 
-  // --- LOGIQUE DU PIÈGE À VENDEUR ---
+  // --- LOGIQUE DU PIÈGE À VENDEUR (CORRIGÉE) ---
   const isSeller = useMemo(() => {
     if (!user || !shops.length) return false;
     return shops.some(shop => shop.user_id === user.id);
@@ -248,11 +248,17 @@ export default function Products() {
 
   useEffect(() => {
     if (isSeller && (!user?.phone || !user?.region)) {
-      setTrapData({
-        phone: user?.phone || '',
-        region: user?.region || ''
+      // On ne remplit le piège QUE s'il n'est pas déjà ouvert
+      setShowSellerTrap(prev => {
+        if (!prev) {
+          setTrapData({
+            phone: user?.phone || '',
+            region: user?.region || ''
+          });
+          return true;
+        }
+        return prev;
       });
-      setShowSellerTrap(true);
     } else {
       setShowSellerTrap(false);
     }
