@@ -568,7 +568,13 @@ export default function Products() {
 
           <button
             type="button"
-            className="flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] text-[#65676B] border-b-[3px] border-transparent"
+            onClick={() => handleCategorySelect('Tickets')}
+            aria-pressed={selectedCategory === 'Tickets'}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] border-b-[3px] transition-colors ${
+              selectedCategory === 'Tickets' 
+                ? 'text-[#1877F2] border-[#1877F2]' 
+                : 'text-[#65676B] border-transparent hover:text-[#1877F2]'
+            }`}
           >
             <Ticket className="w-[18px] h-[18px] md:w-5 md:h-5" fill="currentColor" stroke="none" />
             <span className="whitespace-nowrap">Tickets</span>
