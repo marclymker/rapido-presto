@@ -8,8 +8,9 @@ const CompactProductCard = React.memo(({ product, shop, onClick }) => {
   const hasPromo = product.promo_price && product.promo_price < product.price;
   const isNew = product.created_date && (Date.now() - new Date(product.created_date).getTime()) < 7 * 24 * 60 * 60 * 1000;
 
+  // Vignettes 3 colonnes : ~120px réels sur mobile → width=120 suffit
   const imgSrc = product.image_url
-    ? `${product.image_url}${product.image_url.includes('?') ? '&' : '?'}width=200&quality=60&resize=cover`
+    ? `${product.image_url}${product.image_url.includes('?') ? '&' : '?'}width=120&quality=55&resize=cover`
     : null;
 
   return (
@@ -28,6 +29,8 @@ const CompactProductCard = React.memo(({ product, shop, onClick }) => {
               className="w-full h-full object-cover"
               loading="lazy"
               decoding="async"
+              width="120"
+              height="120"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-slate-300">

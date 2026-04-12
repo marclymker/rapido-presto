@@ -27,7 +27,6 @@ const CATEGORIES = [
   'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor', 'Tickets'
 ];
 
-// MISE À JOUR : La Single Source of Truth alignée avec Admin et Panier
 const REGIONS = [
   "Port-au-Prince", "Kenscoff", "Pétion-Ville", "Delmas", "Tabarre",
   "Clercine", "Cité Soleil", "Croix des Bouquets", "Lilavois",
@@ -36,14 +35,9 @@ const REGIONS = [
   "Cap-Haïtien", "Madeline", "Limonade", "Pignon", "Hinche"
 ];
 
-// ---------------------------------------------------------------------------
-// MOTEUR DE PROXIMITÉ (SYSTEMS THINKING)
-// ---------------------------------------------------------------------------
-// Normalisation stricte pour éviter que les accents ne cassent l'algorithme
 const normalizeForRegion = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
 const REGION_DATA = {
-  // Section 1 : Port-au-Prince
   'port-au-prince': { index: 0, section: 1 },
   'kenscoff': { index: 0, section: 1 },
   'petion-ville': { index: 1, section: 1 },
@@ -53,21 +47,17 @@ const REGION_DATA = {
   'cite soleil': { index: 5, section: 1 },
   'croix des bouquets': { index: 6, section: 1 },
   'lilavois': { index: 7, section: 1 },
-  'fontamara': { index: 8, section: 1 }, 
-  
-  // Section 2 : Carrefour
+  'fontamara': { index: 8, section: 1 },
   'carrefour': { index: 9, section: 2 },
   'gressier': { index: 10, section: 2 },
   'leogane': { index: 11, section: 2 },
-  
-  // Section 3 : Artibonite et Nord
   'ennery': { index: 12, section: 3 },
   "l'estere": { index: 13, section: 3 },
   'gonaives': { index: 14, section: 3 },
-  'les gonaives': { index: 14, section: 3 }, // Gestion des variations
+  'les gonaives': { index: 14, section: 3 },
   'plaine du nord': { index: 15, section: 3 },
   'vaudreuil': { index: 16, section: 3 },
-  'cap-haitien': { index: 17, section: 3 }, 
+  'cap-haitien': { index: 17, section: 3 },
   'quartier-morin': { index: 17, section: 3 },
   'madeline': { index: 18, section: 3 },
   'limonade': { index: 19, section: 3 },
@@ -76,36 +66,26 @@ const REGION_DATA = {
 };
 
 const calculateProximityScore = (targetRegionName, shopRegionName) => {
-  if (!targetRegionName || !shopRegionName) return 999; 
-  
+  if (!targetRegionName || !shopRegionName) return 999;
   const target = REGION_DATA[normalizeForRegion(targetRegionName)];
   const shop = REGION_DATA[normalizeForRegion(shopRegionName)];
-  
   if (!target || !shop) return 999;
-
   let diff = Math.abs(target.index - shop.index);
-  // Pénalité Asymétrique : 50 points si on change de macro-région
-  let penalty = target.section !== shop.section ? 50 : 0; 
+  let penalty = target.section !== shop.section ? 50 : 0;
   return diff + penalty;
 };
 
-// Algorithme : Proximité >> Récence >> Diversité (Round Robin)
 const sortWithProximityAndDiversity = (products, shopsMap, targetRegion, nowMs) => {
   if (!products.length) return [];
   const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
-
-  // 1. Scoring
   const scored = products.map(p => {
     const shop = shopsMap[p.shop_id];
-    const shopRegion = shop?.region;
-    const proximityScore = calculateProximityScore(targetRegion, shopRegion);
+    const proximityScore = calculateProximityScore(targetRegion, shop?.region);
     const ageMs = nowMs - new Date(p.created_date).getTime();
-    const recencyScore = Math.max(0, 1 - ageMs / NINETY_DAYS_MS); 
-    
+    const recencyScore = Math.max(0, 1 - ageMs / NINETY_DAYS_MS);
     return { product: p, proximityScore, recencyScore, shopId: p.shop_id || '__no_shop__' };
   });
 
-  // 2. Bucketing par score de proximité
   const proximityBuckets = {};
   scored.forEach(item => {
     if (!proximityBuckets[item.proximityScore]) proximityBuckets[item.proximityScore] = [];
@@ -115,34 +95,24 @@ const sortWithProximityAndDiversity = (products, shopsMap, targetRegion, nowMs) 
   const finalArray = [];
   const sortedProximityScores = Object.keys(proximityBuckets).map(Number).sort((a, b) => a - b);
 
-  // 3. Distribution équitable par boutique pour chaque niveau de proximité
   for (const score of sortedProximityScores) {
     const itemsInBucket = proximityBuckets[score];
     const shopQueuesMap = {};
-    
     itemsInBucket.forEach(item => {
-       if (!shopQueuesMap[item.shopId]) shopQueuesMap[item.shopId] = [];
-       shopQueuesMap[item.shopId].push(item);
+      if (!shopQueuesMap[item.shopId]) shopQueuesMap[item.shopId] = [];
+      shopQueuesMap[item.shopId].push(item);
     });
-
-    const queues = Object.values(shopQueuesMap).map(queue => 
+    const queues = Object.values(shopQueuesMap).map(queue =>
       queue.sort((a, b) => b.recencyScore - a.recencyScore)
     );
-
     let maxLen = Math.max(...queues.map(q => q.length));
     for (let i = 0; i < maxLen; i++) {
-      queues.forEach(queue => {
-        if (queue[i]) finalArray.push(queue[i].product);
-      });
+      queues.forEach(queue => { if (queue[i]) finalArray.push(queue[i].product); });
     }
   }
-
   return finalArray;
 };
 
-// ---------------------------------------------------------------------------
-// UTILITAIRES DE RECHERCHE
-// ---------------------------------------------------------------------------
 const normalize = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 const fuzzyMatch = (text, keyword) => {
@@ -160,31 +130,26 @@ const fuzzyMatch = (text, keyword) => {
   return false;
 };
 
-// ---------------------------------------------------------------------------
-// COMPOSANT PRINCIPAL
-// ---------------------------------------------------------------------------
 export default function Products() {
   const { user } = useAuth();
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const mountTimeRef = useRef(Date.now());
 
   const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
 
-  const [visibleCount,      setVisibleCount]      = useState(60);
-  const [searchQuery,       setSearchQuery]       = useState('');
-  const [selectedCategory,  setSelectedCategory]  = useState(null);
-  const [showCategories,    setShowCategories]    = useState(false);
-  const [selectedFbCatId,   setSelectedFbCatId]   = useState(null);
-  const [fbLevel1Id,        setFbLevel1Id]        = useState(null);
-  const [selectedRegion,    setSelectedRegion]    = useState('');
-  const [editingProduct,    setEditingProduct]    = useState(null);
+  const [visibleCount, setVisibleCount] = useState(60);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [showCategories, setShowCategories] = useState(false);
+  const [selectedFbCatId, setSelectedFbCatId] = useState(null);
+  const [fbLevel1Id, setFbLevel1Id] = useState(null);
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const isAdmin = user?.role === 'admin';
-  // Le centre de gravité de l'algorithme
   const referenceRegion = selectedRegion || user?.region || 'Port-au-Prince';
 
-  // --- SYSTÈME DE PIÈGE POUR VENDEURS (DATA COMPLETION) ---
   const [showSellerTrap, setShowSellerTrap] = useState(false);
   const [trapData, setTrapData] = useState({ phone: '', region: '' });
 
@@ -206,20 +171,40 @@ export default function Products() {
     trackMetaEvent('PageView');
     if (window.gtag) {
       window.gtag('event', 'page_view', {
-        page_title:    'Marketplace - Rapido Presto',
+        page_title: 'Marketplace - Rapido Presto',
         page_location: window.location.href,
       });
     }
   }, []);
 
-  const { data: allProducts = [], isLoading } = useQuery({
-    queryKey: ['all-products'],
-    queryFn:  () => base44.entities.Product.filter({ is_available: true }, '-created_date', 2000),
+  // --- CHARGEMENT PROGRESSIF : 60 produits immédiats, reste différé après 1.5s ---
+  const [loadAll, setLoadAll] = useState(false);
+
+  const { data: firstProducts = [], isLoading } = useQuery({
+    queryKey: ['products-initial'],
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 60),
+    staleTime: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    if (firstProducts.length > 0 && !loadAll) {
+      const t = setTimeout(() => setLoadAll(true), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [firstProducts.length, loadAll]);
+
+  const { data: fullProducts = [] } = useQuery({
+    queryKey: ['products-all'],
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 2000),
+    enabled: loadAll,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const allProducts = (loadAll && fullProducts.length > 0) ? fullProducts : firstProducts;
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn:  () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
   });
 
   const { data: conversations = [] } = useQuery({
@@ -240,7 +225,6 @@ export default function Products() {
     return m;
   }, [shops]);
 
-  // --- LOGIQUE DU PIÈGE À VENDEUR ---
   const isSeller = useMemo(() => {
     if (!user || !shops.length) return false;
     return shops.some(shop => shop.user_id === user.id);
@@ -248,13 +232,9 @@ export default function Products() {
 
   useEffect(() => {
     if (isSeller && (!user?.phone || !user?.region)) {
-      // On ne remplit le piège QUE s'il n'est pas déjà ouvert
       setShowSellerTrap(prev => {
         if (!prev) {
-          setTrapData({
-            phone: user?.phone || '',
-            region: user?.region || ''
-          });
+          setTrapData({ phone: user?.phone || '', region: user?.region || '' });
           return true;
         }
         return prev;
@@ -265,17 +245,13 @@ export default function Products() {
   }, [isSeller, user]);
 
   const updateUserMutation = useMutation({
-    mutationFn: async (data) => {
-      return await base44.entities.User.update(user.id, data);
-    },
+    mutationFn: async (data) => base44.entities.User.update(user.id, data),
     onSuccess: () => {
       toast.success('Profil mis à jour avec succès !');
       setShowSellerTrap(false);
-      window.location.reload(); 
+      window.location.reload();
     },
-    onError: (error) => {
-      toast.error(error.message || "Erreur lors de la mise à jour");
-    }
+    onError: (error) => toast.error(error.message || "Erreur lors de la mise à jour"),
   });
 
   const handleTrapSubmit = (e) => {
@@ -286,26 +262,22 @@ export default function Products() {
     }
     updateUserMutation.mutate(trapData);
   };
-  // ---------------------------------------------------------
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity }) => {
-      if (!user) {
-        base44.auth.redirectToLogin(window.location.pathname);
-        return;
-      }
+      if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
       const price = applyClientMargin(product.promo_price || product.price);
-      const shop  = shopsMap[product.shop_id];
+      const shop = shopsMap[product.shop_id];
       await base44.entities.CartItem.create({
-        user_id:       user.id,
-        product_id:    product.id,
-        product_name:  product.name,
+        user_id: user.id,
+        product_id: product.id,
+        product_name: product.name,
         product_image: product.image_url,
         quantity,
-        unit_price:    price,
-        shop_id:       product.shop_id,
-        shop_name:     shop?.company_name || '',
-        shop_region:   shop?.region       || '',
+        unit_price: price,
+        shop_id: product.shop_id,
+        shop_name: shop?.company_name || '',
+        shop_region: shop?.region || '',
       });
     },
     onSuccess: () => {
@@ -355,30 +327,23 @@ export default function Products() {
         const normTags = (p.seo_tags || []).map(t => normalize(t));
         let score = 0;
         let allMatch = true;
-
         for (const kw of keywords) {
           const normKw = normalize(kw);
           const titleMatch = normName.includes(normKw);
-          const tagMatch   = normTags.some(t => t.includes(normKw));
-          const fuzzy      = !titleMatch && !tagMatch && fuzzyMatch(p.name + ' ' + (p.seo_tags || []).join(' '), kw);
-
-          if (titleMatch)  score += 100;
+          const tagMatch = normTags.some(t => t.includes(normKw));
+          const fuzzy = !titleMatch && !tagMatch && fuzzyMatch(p.name + ' ' + (p.seo_tags || []).join(' '), kw);
+          if (titleMatch) score += 100;
           else if (tagMatch) score += 10;
-          else if (fuzzy)   score += 1;
+          else if (fuzzy) score += 1;
           else { allMatch = false; break; }
         }
         return allMatch ? score : -1;
       };
-
-      const scored = baseFiltered
-        .map(p => ({ p, score: scoreProduct(p) }))
-        .filter(({ score }) => score >= 0);
-
+      const scored = baseFiltered.map(p => ({ p, score: scoreProduct(p) })).filter(({ score }) => score >= 0);
       scored.sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         return normalize(a.p.name).localeCompare(normalize(b.p.name));
       });
-
       return scored.map(({ p }) => p);
     }
 
@@ -395,8 +360,8 @@ export default function Products() {
     }
 
     const nameWords = (lastViewed.name || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
-    const tags      = lastViewed.seo_tags || [];
-    const category  = lastViewed.category || '';
+    const tags = lastViewed.seo_tags || [];
+    const category = lastViewed.category || '';
 
     const scoredView = baseFiltered
       .filter(p => p.id !== lastViewed.id)
@@ -405,21 +370,17 @@ export default function Products() {
         const pName = (p.name || '').toLowerCase();
         const pTags = p.seo_tags || [];
         nameWords.forEach(w => { if (pName.includes(w)) score += 2; });
-        tags.forEach(t      => { if (pTags.includes(t)) score += 3; });
+        tags.forEach(t => { if (pTags.includes(t)) score += 3; });
         if (p.category === category) score += 1;
         return { ...p, _score: score };
       });
 
     const top10 = scoredView.filter(p => p._score > 0).sort((a, b) => b._score - a._score).slice(0, 10);
     const top10Ids = new Set(top10.map(p => p.id));
-    
     const rest = sortWithProximityAndDiversity(
-      baseFiltered.filter(p => !top10Ids.has(p.id)), 
-      shopsMap, 
-      referenceRegion, 
-      mountTimeRef.current
+      baseFiltered.filter(p => !top10Ids.has(p.id)),
+      shopsMap, referenceRegion, mountTimeRef.current
     );
-
     return [...top10, ...rest];
   }, [allProducts, searchQuery, selectedCategory, selectedFbCatId, shopsMap, referenceRegion, isFiltered]);
 
@@ -430,23 +391,19 @@ export default function Products() {
 
   const categoryGroups = useMemo(() => {
     if (isFiltered) return {};
-
     const byCategory = {};
     allProducts.forEach(p => {
       if (!p.category) return;
       if (!byCategory[p.category]) byCategory[p.category] = [];
       byCategory[p.category].push(p);
     });
-
     const result = {};
     Object.keys(byCategory).forEach(cat => {
       result[cat] = sortWithProximityAndDiversity(byCategory[cat], shopsMap, referenceRegion, mountTimeRef.current);
     });
-
     const sorted = {};
     CATEGORIES.forEach(cat => { if (result[cat]) sorted[cat] = result[cat]; });
     Object.keys(result).forEach(cat => { if (!sorted[cat]) sorted[cat] = result[cat]; });
-
     return sorted;
   }, [allProducts, isFiltered, shopsMap, referenceRegion]);
 
@@ -488,7 +445,8 @@ export default function Products() {
           onClose={() => setEditingProduct(null)}
           onSuccess={() => {
             setEditingProduct(null);
-            queryClient.invalidateQueries({ queryKey: ['all-products'] });
+            queryClient.invalidateQueries({ queryKey: ['products-initial'] });
+            queryClient.invalidateQueries({ queryKey: ['products-all'] });
           }}
         />
       )}
@@ -506,7 +464,6 @@ export default function Products() {
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-black tracking-tight">Marketplace</h1>
-          
           <div className="flex items-center">
             <button
               onClick={() => user ? navigate('/Chat') : base44.auth.redirectToLogin('/Chat')}
@@ -571,8 +528,8 @@ export default function Products() {
             onClick={() => handleCategorySelect('Tickets')}
             aria-pressed={selectedCategory === 'Tickets'}
             className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] border-b-[3px] transition-colors ${
-              selectedCategory === 'Tickets' 
-                ? 'text-[#1877F2] border-[#1877F2]' 
+              selectedCategory === 'Tickets'
+                ? 'text-[#1877F2] border-[#1877F2]'
                 : 'text-[#65676B] border-transparent hover:text-[#1877F2]'
             }`}
           >
@@ -629,7 +586,6 @@ export default function Products() {
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                 Taxonomy Facebook / Google
               </p>
-
               <div className="flex flex-wrap gap-1.5 mb-1.5">
                 {FB_TAXONOMY.map(cat => (
                   <button
@@ -801,7 +757,7 @@ export default function Products() {
           </div>
         )}
 
-        {/* LE POP-UP PIÈGE POUR VENDEURS */}
+        {/* POP-UP PIÈGE POUR VENDEURS */}
         <Dialog open={showSellerTrap} onOpenChange={() => {}}>
           <DialogContent className="max-w-md bg-white rounded-2xl p-6" onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
@@ -814,7 +770,6 @@ export default function Products() {
             <form onSubmit={handleTrapSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label className="font-bold text-slate-700">Numéro WhatsApp *</Label>
-                {/* CORRECTION UX: Ajout de text-slate-900 et font-bold pour rendre le texte bien noir et lisible */}
                 <Input
                   type="tel"
                   placeholder="Ex: +509 3000 0000"
@@ -828,12 +783,11 @@ export default function Products() {
 
               <div className="space-y-2">
                 <Label className="font-bold text-slate-700">Votre Région / Commune *</Label>
-                <Select 
-                  value={trapData.region} 
+                <Select
+                  value={trapData.region}
                   onValueChange={(val) => setTrapData({ ...trapData, region: val })}
                   required
                 >
-                  {/* CORRECTION UX: Ajout de text-slate-900 et font-bold */}
                   <SelectTrigger className="h-12 bg-slate-50 border border-slate-200 text-slate-900 font-bold text-lg">
                     <SelectValue placeholder="Sélectionnez votre zone" />
                   </SelectTrigger>
@@ -845,8 +799,8 @@ export default function Products() {
                 </Select>
               </div>
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg mt-6"
                 disabled={updateUserMutation.isPending || !trapData.phone || !trapData.region}
               >
