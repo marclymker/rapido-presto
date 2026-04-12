@@ -1,27 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Home, ShoppingBag, User, Package, Store, Bike, MessageCircle } from 'lucide-react';
 import { Toaster } from "@/components/ui/sonner";
-import { Badge } from "@/components/ui/badge";
 import { useQuery } from '@tanstack/react-query';
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
-import OneSignalInit from '@/components/notifications/OneSignalInit';
-import NotificationPermission from '@/components/notifications/NotificationPermission';
-import { HelmetProvider, Helmet } from 'react-helmet-async';
-import ReactPixel from 'react-facebook-pixel';
 import SmartBottomNav from '@/components/navigation/SmartBottomNav';
-import BusinessSmartNav from '@/components/navigation/BusinessSmartNav';
 import { useAuth } from '@/components/auth/useAuth';
-import CookieConsent from '@/components/cookies/CookieConsent';
-import InstallPrompt from '@/components/pwa/InstallPrompt';
-import SessionValidator from '@/components/auth/SessionValidator';
-import GA4Tracker from '@/components/tracking/GA4Tracker';
-import OfflineIndicator from '@/components/offline/OfflineIndicator';
-import ThemeProvider from '@/components/theme/ThemeProvider';
+import { HelmetProvider, Helmet } from 'react-helmet-async';
 import { useServiceWorker } from '@/components/offline/useServiceWorker';
 import { useCacheManager } from '@/components/offline/useCacheManager';
+import OfflineIndicator from '@/components/offline/OfflineIndicator';
+import ThemeProvider from '@/components/theme/ThemeProvider';
+
+// Composants non-critiques chargés en différé (hors chemin critique de rendu)
+const OneSignalInit = lazy(() => import('@/components/notifications/OneSignalInit'));
+const NotificationPermission = lazy(() => import('@/components/notifications/NotificationPermission'));
+const InstallPrompt = lazy(() => import('@/components/pwa/InstallPrompt'));
+const SessionValidator = lazy(() => import('@/components/auth/SessionValidator'));
+const GA4Tracker = lazy(() => import('@/components/tracking/GA4Tracker'));
+const CookieConsent = lazy(() => import('@/components/cookies/CookieConsent'));
 
 export default function Layout({ children, currentPageName }) {
   const { user, isLoading: loading } = useAuth();
@@ -46,10 +42,12 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     const consent = localStorage.getItem('cookie_consent');
     if (consent) {
-      const preferences = JSON.parse(consent);
-      if (preferences.marketing || preferences.analytics) {
-        setCookiesAccepted(true);
-      }
+      try {
+        const preferences = JSON.parse(consent);
+        if (preferences.marketing || preferences.analytics) {
+          setCookiesAccepted(true);
+        }
+      } catch (_) {}
     }
   }, []);
 
@@ -59,13 +57,8 @@ export default function Layout({ children, currentPageName }) {
     }
   }, [currentPageName]);
 
-  const handleCookieAccept = (preferences) => {
-    setCookiesAccepted(true);
-  };
-
-  const handleCookieReject = () => {
-    setCookiesAccepted(false);
-  };
+  const handleCookieAccept = () => setCookiesAccepted(true);
+  const handleCookieReject = () => setCookiesAccepted(false);
 
   const noNavPages = ['ProfileSetup', 'ManageProfiles', 'AdminValidation', 'Chat'];
 
@@ -111,7 +104,7 @@ export default function Layout({ children, currentPageName }) {
       <Helmet>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#232F3E" />
+        <meta name="theme-color" content="#1877F2" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -165,10 +158,6 @@ export default function Layout({ children, currentPageName }) {
           fbq('init', '1346505637253912');
           fbq('track', 'PageView');
         `}</script>
-        <noscript>{`
-          <img height="1" width="1" style="display:none"
-          src="https://www.facebook.com/tr?id=1346505637253912&ev=PageView&noscript=1" />
-        `}</noscript>
         {cookiesAccepted && (
           <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
         )}
@@ -177,24 +166,21 @@ export default function Layout({ children, currentPageName }) {
       <noscript>
         <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TGFJJPR4" height="0" width="0" style={{display: 'none', visibility: 'hidden'}} />
       </noscript>
-      <noscript>
-        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TR6B9PMQ" height="0" width="0" style={{display: 'none', visibility: 'hidden'}} />
-      </noscript>
-      <noscript>
-        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P7C42MMP" height="0" width="0" style={{display: 'none', visibility: 'hidden'}} />
-      </noscript>
-
-      <CookieConsent onAccept={handleCookieAccept} onReject={handleCookieReject} />
 
       <div className="flex flex-col w-full min-h-screen bg-slate-50">
         <Toaster position="top-center" />
         <ThemeProvider />
-        <OneSignalInit user={user} />
-        <NotificationPermission />
-        <InstallPrompt />
-        <SessionValidator user={user} />
-        <GA4Tracker />
         <OfflineIndicator />
+
+        {/* Composants non-critiques : chargés en différé après le rendu principal */}
+        <Suspense fallback={null}>
+          <CookieConsent onAccept={handleCookieAccept} onReject={handleCookieReject} />
+          <OneSignalInit user={user} />
+          <NotificationPermission />
+          <InstallPrompt />
+          <SessionValidator user={user} />
+          <GA4Tracker />
+        </Suspense>
 
         {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (
           <div className="fixed top-4 right-4 z-50">
