@@ -182,13 +182,17 @@ export default function Products() {
 
   const { data: firstProducts = [], isLoading } = useQuery({
     queryKey: ['products-initial'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 60),
-    staleTime: 5 * 60 * 1000,
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 30),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   useEffect(() => {
     if (firstProducts.length > 0 && !loadAll) {
-      const t = setTimeout(() => setLoadAll(true), 1500);
+      // Délai plus long sur connexion lente (détection via navigator.connection)
+      const slow = navigator.connection && (navigator.connection.saveData || ['slow-2g','2g'].includes(navigator.connection.effectiveType));
+      const delay = slow ? 5000 : 2000;
+      const t = setTimeout(() => setLoadAll(true), delay);
       return () => clearTimeout(t);
     }
   }, [firstProducts.length, loadAll]);
@@ -197,7 +201,8 @@ export default function Products() {
     queryKey: ['products-all'],
     queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 2000),
     enabled: loadAll,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const allProducts = (loadAll && fullProducts.length > 0) ? fullProducts : firstProducts;
@@ -213,8 +218,10 @@ export default function Products() {
       const r = await base44.functions.invoke('chatService', { action: 'list' });
       return Array.isArray(r.data) ? r.data : (r.data?.data || []);
     },
-    enabled: !!user?.id,
-    refetchInterval: 15000,
+    // Ne charger les conversations qu'après les produits initiaux, et seulement si pas en économie de données
+    enabled: !!user?.id && firstProducts.length > 0 && !(navigator.connection?.saveData),
+    refetchInterval: 30000, // Réduit de 15s à 30s
+    staleTime: 20 * 1000,
   });
 
   const unreadCount = useMemo(() => conversations.reduce((sum, conv) => sum + (conv.unread_count || 0), 0), [conversations]);
@@ -711,7 +718,7 @@ export default function Products() {
           <div>
             <TrendingSection
               allProducts={allProducts}
-              shops={shops}
+              shopsMap={shopsMap}
               onProductClick={handleProductClick}
             />
 
@@ -720,7 +727,7 @@ export default function Products() {
                 key={`${cat}-${referenceRegion}`}
                 title={cat}
                 products={products}
-                shops={shops}
+                shopsMap={shopsMap}
                 onProductClick={handleProductClick}
                 onSeeAll={() => handleCategorySelect(cat)}
               />

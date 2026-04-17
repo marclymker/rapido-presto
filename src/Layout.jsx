@@ -19,9 +19,19 @@ const SessionValidator = lazy(() => import('@/components/auth/SessionValidator')
 const GA4Tracker = lazy(() => import('@/components/tracking/GA4Tracker'));
 const CookieConsent = lazy(() => import('@/components/cookies/CookieConsent'));
 
+// Détecte connexion lente (Save-Data ou 2G)
+const isSlowConnection = () => {
+  try {
+    const c = navigator.connection;
+    return !!(c && (c.saveData || ['slow-2g', '2g'].includes(c.effectiveType)));
+  } catch (_) { return false; }
+};
+
 export default function Layout({ children, currentPageName }) {
   const { user, isLoading: loading } = useAuth();
   const [cookiesAccepted, setCookiesAccepted] = useState(false);
+  // Calculé une seule fois au montage du layout
+  const [slowConnection] = useState(() => isSlowConnection());
 
   useServiceWorker();
   useCacheManager(user);
@@ -173,13 +183,14 @@ export default function Layout({ children, currentPageName }) {
         <OfflineIndicator />
 
         {/* Composants non-critiques : chargés en différé après le rendu principal */}
+        {/* Sur connexion lente, on ne charge pas les composants non-essentiels */}
         <Suspense fallback={null}>
           <CookieConsent onAccept={handleCookieAccept} onReject={handleCookieReject} />
-          <OneSignalInit user={user} />
-          <NotificationPermission />
-          <InstallPrompt />
+          {!slowConnection && <OneSignalInit user={user} />}
+          {!slowConnection && <NotificationPermission />}
+          {!slowConnection && <InstallPrompt />}
           <SessionValidator user={user} />
-          <GA4Tracker />
+          {!slowConnection && <GA4Tracker />}
         </Suspense>
 
         {user && !noNavPages.includes(currentPageName) && user.current_profile === 'client' && (

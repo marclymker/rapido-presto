@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import CompactProductCard from './CompactProductCard';
 
@@ -20,8 +20,17 @@ const CATEGORY_EMOJIS = {
   'Matériels Décor': '🎨',
 };
 
-export default function CategoryRow({ title, emoji, products, shops, onProductClick, onSeeAll }) {
+// Accepte shopsMap (pre-calculated) ou shops array (fallback)
+export default function CategoryRow({ title, emoji, products, shops, shopsMap: shopsMapProp, onProductClick, onSeeAll }) {
   const scrollRef = useRef(null);
+
+  // O(1) lookup au lieu de O(n) find dans chaque render
+  const shopsMap = useMemo(() => {
+    if (shopsMapProp) return shopsMapProp;
+    const m = {};
+    (shops || []).forEach(s => { m[s.id] = s; });
+    return m;
+  }, [shopsMapProp, shops]);
 
   if (!products || products.length === 0) return null;
 
@@ -55,7 +64,7 @@ export default function CategoryRow({ title, emoji, products, shops, onProductCl
         }}
       >
         {products.slice(0, 12).map(product => {
-          const shop = shops?.find(s => s.id === product.shop_id);
+          const shop = shopsMap[product.shop_id];
           return (
             <div
               key={product.id}

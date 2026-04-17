@@ -1,7 +1,16 @@
 import React, { useMemo } from 'react';
 import CompactProductCard from './CompactProductCard';
 
-export default function TrendingSection({ allProducts, shops, onProductClick }) {
+// shopsMap doit être passé de préférence, sinon on le calcule localement
+export default function TrendingSection({ allProducts, shops, shopsMap: shopsMapProp, onProductClick }) {
+  // Utiliser la map pré-calculée ou en créer une localement (fallback)
+  const shopsMap = useMemo(() => {
+    if (shopsMapProp) return shopsMapProp;
+    const m = {};
+    (shops || []).forEach(s => { m[s.id] = s; });
+    return m;
+  }, [shopsMapProp, shops]);
+
   const { products, label } = useMemo(() => {
     if (!allProducts || allProducts.length === 0) return { products: [], label: '' };
 
@@ -56,7 +65,7 @@ export default function TrendingSection({ allProducts, shops, onProductClick }) 
         style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
       >
         {products.map(product => {
-          const shop = shops?.find(s => s.id === product.shop_id);
+          const shop = shopsMap[product.shop_id];
           return (
             <div key={product.id} style={{ scrollSnapAlign: 'start', minWidth: '120px', maxWidth: '120px' }}>
               <CompactProductCard product={product} shop={shop} onClick={() => onProductClick(product)} />
