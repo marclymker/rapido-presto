@@ -14,7 +14,6 @@ import { toast } from 'sonner';
 import CompactProductCard from '@/components/home/CompactProductCard';
 import ProductReviews from '@/components/product/ProductReviews';
 import ProductFAQ from '@/components/product/ProductFAQ';
-import { lazy, Suspense } from 'react';
 
 function saveScroll() {
   try { sessionStorage.setItem('marketplace_scroll', String(window.scrollY)); } catch (_) {}
