@@ -12,6 +12,9 @@ import { useAuth } from '@/components/auth/useAuth';
 import { useGuestCart } from '@/components/cart/useGuestCart';
 import { toast } from 'sonner';
 import CompactProductCard from '@/components/home/CompactProductCard';
+import ProductReviews from '@/components/product/ProductReviews';
+import ProductFAQ from '@/components/product/ProductFAQ';
+import { lazy, Suspense } from 'react';
 
 function saveScroll() {
   try { sessionStorage.setItem('marketplace_scroll', String(window.scrollY)); } catch (_) {}
@@ -209,6 +212,22 @@ export default function ProductPage() {
         <title>{product.name} | Rapido Presto</title>
         <meta property="og:image" content={imgSrc} />
       </Helmet>
+      {/* Schema.org Product + AggregateRating (injecté côté client pour crawlers) */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": product.name,
+        "description": product.description || product.name,
+        "image": imgSrc,
+        "brand": { "@type": "Brand", "name": shop?.company_name || "RAPIDOPRESTO" },
+        "offers": {
+          "@type": "Offer",
+          "priceCurrency": "HTG",
+          "price": price,
+          "availability": "https://schema.org/InStock",
+          "url": window.location.href
+        }
+      }) }} />
 
       {/* Header */}
       <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
@@ -301,6 +320,12 @@ export default function ProductPage() {
           </button>
         </div>
       )}
+
+      {/* Avis clients */}
+      <ProductReviews productId={product.id} productName={product.name} />
+
+      {/* FAQ dynamique IA */}
+      <ProductFAQ product={product} shop={shop} />
 
       {/* Related Section */}
       {relatedProducts.length > 0 && (
