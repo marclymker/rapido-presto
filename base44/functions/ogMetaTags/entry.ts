@@ -57,12 +57,30 @@ Deno.serve(async (req) => {
       shop = shops[0];
     }
 
-    if (productSlug && shop) {
-      const products = await base44.asServiceRole.entities.Product.filter({
-        shop_id: shop.id,
-        slug: productSlug
-      });
-      product = products[0];
+    if (productSlug) {
+      // 1. Chercher par slug + shop_id (cas normal)
+      if (shop) {
+        const products = await base44.asServiceRole.entities.Product.filter({
+          shop_id: shop.id,
+          slug: productSlug
+        });
+        product = products[0];
+      }
+      // 2. Fallback: chercher par slug seul (anciens produits sans shop_id correct)
+      if (!product) {
+        const products = await base44.asServiceRole.entities.Product.filter({ slug: productSlug });
+        product = products[0];
+      }
+      // 3. Fallback: le "slug" est peut-être en réalité un ID (anciens articles sans slug)
+      if (!product) {
+        const products = await base44.asServiceRole.entities.Product.filter({ id: productSlug });
+        product = products[0];
+      }
+      // Récupérer la boutique si pas encore trouvée
+      if (product && !shop) {
+        const shops = await base44.asServiceRole.entities.Shop.filter({ id: product.shop_id });
+        shop = shops[0];
+      }
     } else if (productId) {
       const products = await base44.asServiceRole.entities.Product.filter({ id: productId });
       product = products[0];
