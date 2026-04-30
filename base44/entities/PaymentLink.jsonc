@@ -1,0 +1,83 @@
+{
+  "name": "PaymentLink",
+  "type": "object",
+  "properties": {
+    "shop_id": {
+      "type": "string"
+    },
+    "shop_name": {
+      "type": "string"
+    },
+    "shop_logo": {
+      "type": "string"
+    },
+    "vendor_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "description": "Nom du panier / commande"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Description ou instructions pour le client"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "delivery_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "total": {
+      "type": "number"
+    },
+    "note": {
+      "type": "string",
+      "description": "Message au client"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paid",
+        "expired"
+      ],
+      "default": "active"
+    },
+    "order_id": {
+      "type": "string",
+      "description": "Commande cr\u00e9\u00e9e apr\u00e8s paiement"
+    }
+  },
+  "required": [
+    "shop_id",
+    "vendor_id",
+    "items",
+    "total"
+  ]
+}

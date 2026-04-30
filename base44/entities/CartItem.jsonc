@@ -1,0 +1,103 @@
+{
+  "name": "CartItem",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "product_image": {
+      "type": "string"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1
+    },
+    "unit_price": {
+      "type": "number"
+    },
+    "shop_id": {
+      "type": "string"
+    },
+    "shop_name": {
+      "type": "string"
+    },
+    "shop_region": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Notes ou d\u00e9tails suppl\u00e9mentaires sur cet article"
+    },
+    "customization": {
+      "type": "object",
+      "description": "Options de personnalisation choisies",
+      "properties": {
+        "color": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "hex": {
+              "type": "string"
+            },
+            "additional_price": {
+              "type": "number"
+            }
+          }
+        },
+        "size": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "additional_price": {
+              "type": "number"
+            }
+          }
+        },
+        "text": {
+          "type": "string",
+          "description": "Texte personnalis\u00e9"
+        },
+        "text_price": {
+          "type": "number"
+        },
+        "arrangement": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "additional_price": {
+              "type": "number"
+            }
+          }
+        },
+        "other": {
+          "type": "object",
+          "description": "Autres options choisies"
+        }
+      }
+    },
+    "total_customization_price": {
+      "type": "number",
+      "default": 0,
+      "description": "Total des prix des personnalisations"
+    }
+  },
+  "required": [
+    "user_id",
+    "product_id",
+    "quantity",
+    "unit_price"
+  ]
+}

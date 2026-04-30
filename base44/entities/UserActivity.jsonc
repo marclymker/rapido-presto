@@ -1,0 +1,54 @@
+{
+  "name": "UserActivity",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID de l'utilisateur (ou session_id pour invit\u00e9s)"
+    },
+    "activity_type": {
+      "type": "string",
+      "enum": [
+        "product_view",
+        "category_view",
+        "shop_view",
+        "search",
+        "add_to_cart",
+        "purchase"
+      ],
+      "description": "Type d'activit\u00e9"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "ID du produit consult\u00e9"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "description": "Cat\u00e9gorie du produit ou recherch\u00e9e"
+    },
+    "shop_id": {
+      "type": "string",
+      "description": "ID de la boutique"
+    },
+    "search_query": {
+      "type": "string",
+      "description": "Requ\u00eate de recherche"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Contexte ou d\u00e9tails suppl\u00e9mentaires sur cette activit\u00e9"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Donn\u00e9es suppl\u00e9mentaires (dur\u00e9e vue, etc.)"
+    }
+  },
+  "required": [
+    "user_id",
+    "activity_type"
+  ]
+}

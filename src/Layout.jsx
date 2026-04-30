@@ -10,6 +10,7 @@ import { useServiceWorker } from '@/components/offline/useServiceWorker';
 import { useCacheManager } from '@/components/offline/useCacheManager';
 import OfflineIndicator from '@/components/offline/OfflineIndicator';
 import ThemeProvider from '@/components/theme/ThemeProvider';
+import AppFooter from '@/components/layout/AppFooter';
 
 // Composants non-critiques chargés en différé (hors chemin critique de rendu)
 const OneSignalInit = lazy(() => import('@/components/notifications/OneSignalInit'));
@@ -209,6 +210,8 @@ export default function Layout({ children, currentPageName }) {
             activeOrdersCount={activeOrdersCount}
           />
         )}
+
+        <AppFooter />
       </div>
       <style>{`
         html, body, #root {

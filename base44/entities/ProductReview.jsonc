@@ -20,6 +20,11 @@
       "type": "string",
       "description": "Commentaire du client"
     },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Description d\u00e9taill\u00e9e de l'exp\u00e9rience avec ce produit"
+    },
     "is_approved": {
       "type": "boolean",
       "default": true,

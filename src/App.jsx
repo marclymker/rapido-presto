@@ -12,6 +12,8 @@ import { lazy, Suspense } from 'react';
 
 const Products = lazy(() => import('./pages/Products'));
 const ProductPageFull = lazy(() => import('./pages/ProductPage'));
+const About = lazy(() => import('./pages/About'));
+const Contact = lazy(() => import('./pages/Contact'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogArticle = lazy(() => import('./pages/BlogArticle'));
 const BlogManager = lazy(() => import('./pages/BlogManager'));
@@ -76,6 +78,8 @@ const InnerRouter = () => {
         <Route path="/BlogManager" element={<LayoutWrapper currentPageName="BlogManager"><BlogManager /></LayoutWrapper>} />
         <Route path="/payment/callback" element={<LayoutWrapper currentPageName="PaymentCallback"><PaymentCallback /></LayoutWrapper>} />
         <Route path="/product/:slug" element={<LayoutWrapper currentPageName="ProductPage"><ProductPageFull /></LayoutWrapper>} />
+        <Route path="/About" element={<LayoutWrapper currentPageName="About"><About /></LayoutWrapper>} />
+        <Route path="/Contact" element={<LayoutWrapper currentPageName="Contact"><Contact /></LayoutWrapper>} />
         <Route path="/PayLink" element={<PayLink />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>

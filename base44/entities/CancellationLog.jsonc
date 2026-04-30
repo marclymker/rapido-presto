@@ -1,0 +1,99 @@
+{
+  "name": "CancellationLog",
+  "type": "object",
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "description": "ID de la commande annul\u00e9e"
+    },
+    "order_number": {
+      "type": "string",
+      "description": "Num\u00e9ro de la commande"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID du client"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "shop_id": {
+      "type": "string"
+    },
+    "shop_name": {
+      "type": "string"
+    },
+    "cancelled_by": {
+      "type": "string",
+      "enum": [
+        "client",
+        "merchant",
+        "driver",
+        "admin"
+      ],
+      "description": "Qui a annul\u00e9 la commande"
+    },
+    "reason_id": {
+      "type": "string",
+      "description": "ID de la raison d'annulation"
+    },
+    "reason_label": {
+      "type": "string",
+      "description": "Libell\u00e9 de la raison"
+    },
+    "reason_details": {
+      "type": "string",
+      "description": "D\u00e9tails suppl\u00e9mentaires fournis par l'utilisateur"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Description d\u00e9taill\u00e9e du contexte d'annulation"
+    },
+    "order_status_at_cancellation": {
+      "type": "string",
+      "description": "Statut de la commande au moment de l'annulation"
+    },
+    "order_total": {
+      "type": "number",
+      "description": "Montant total de la commande"
+    },
+    "cancellation_fee": {
+      "type": "number",
+      "description": "Frais d'annulation appliqu\u00e9s"
+    },
+    "refund_amount": {
+      "type": "number",
+      "description": "Montant rembours\u00e9"
+    },
+    "fee_percentage": {
+      "type": "number",
+      "description": "Pourcentage des frais appliqu\u00e9s"
+    },
+    "payment_method": {
+      "type": "string",
+      "description": "M\u00e9thode de paiement utilis\u00e9e"
+    },
+    "refund_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processed",
+        "failed",
+        "added_to_balance"
+      ],
+      "default": "pending",
+      "description": "Statut du remboursement"
+    }
+  },
+  "required": [
+    "order_id",
+    "client_id",
+    "cancelled_by",
+    "reason_id",
+    "order_status_at_cancellation",
+    "order_total",
+    "cancellation_fee",
+    "refund_amount"
+  ]
+}
