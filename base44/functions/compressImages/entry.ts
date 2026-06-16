@@ -3,7 +3,7 @@
  * Uses Supabase image transformation (w=800, q=75) by rewriting image_url fields.
  * Admin-only.
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Replace full-res Supabase URLs with compressed transform params
 function compressUrl(url) {

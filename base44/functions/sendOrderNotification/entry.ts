@@ -1,17 +1,8 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Pusher from 'npm:pusher';
 
-// Configuration Pusher unique
-const pusher = new Pusher({
-  appId: Deno.env.get('PUSHER_APP_ID'),
-  key: Deno.env.get('PUSHER_KEY'),
-  secret: Deno.env.get('PUSHER_SECRET'),
-  cluster: Deno.env.get('PUSHER_CLUSTER'),
-  useTLS: true
-});
-
-// Fonction simplifiée pour le temps réel
-async function sendRealtimeUpdate(channel, event, data) {
+// Fonction utilitaire pour envoyer une mise à jour temps réel
+async function sendRealtimeUpdate(pusher, channel, event, data) {
   try {
     await pusher.trigger(channel, event, data);
     console.log(`✅ Pusher envoyé : [${channel}] -> ${event}`);
@@ -30,15 +21,22 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'orderId et status requis' }, { status: 400 });
     }
 
-    // SÉCURITÉ: Récupérer la commande avec les permissions de l'utilisateur d'abord
+    // Initialiser Pusher dans le handler
+    const pusher = new Pusher({
+      appId: Deno.env.get('PUSHER_APP_ID'),
+      key: Deno.env.get('PUSHER_KEY'),
+      secret: Deno.env.get('PUSHER_SECRET'),
+      cluster: Deno.env.get('PUSHER_CLUSTER'),
+      useTLS: true
+    });
+
+    // Vérifier que l'utilisateur est autorisé
     const orderCheck = await base44.entities.Order.get(orderId);
     if (!orderCheck) return Response.json({ error: 'Commande introuvable' }, { status: 404 });
 
-    // SÉCURITÉ: Vérifier que l'utilisateur est autorisé (client, marchand ou admin)
     const isOwner = orderCheck.client_id === user?.id;
     const isAdmin = user?.role === 'admin';
     
-    // Vérifier si l'utilisateur est le marchand de la boutique
     let isMerchant = false;
     if (orderCheck.shop_id) {
       const shop = await base44.entities.Shop.get(orderCheck.shop_id);
@@ -49,59 +47,45 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
-    // 1. Récupération des données de la commande avec asServiceRole (après vérification)
+    // Récupération des données avec asServiceRole
     const order = await base44.asServiceRole.entities.Order.get(orderId);
     const shop = await base44.asServiceRole.entities.Shop.get(order.shop_id);
 
-    // 2. Préparation du contenu de la notification
     let notificationTitle = "";
     let notificationMessage = "";
 
-    // 3. Logique par Statut
     switch (status) {
       case 'pending':
         notificationTitle = '✅ Commande confirmée';
         notificationMessage = `Votre commande #${order.order_number} est en cours.`;
-        
-        // Notification immédiate au Marchand
         if (shop?.user_id) {
-          await sendRealtimeUpdate(`shop-${shop.user_id}`, 'new-order', {
-            orderId: order.id,
-            orderNumber: order.order_number,
-            total: order.total,
-            status: 'pending'
+          await sendRealtimeUpdate(pusher, `shop-${shop.user_id}`, 'new-order', {
+            orderId: order.id, orderNumber: order.order_number, total: order.total, status: 'pending'
           });
         }
         break;
-
       case 'preparing':
         notificationTitle = '👨‍🍳 En préparation';
         notificationMessage = `La commande #${order.order_number} est en cuisine.`;
         break;
-
       case 'ready':
         notificationTitle = '✅ Prête';
         notificationMessage = `La commande #${order.order_number} est prête à être récupérée.`;
         break;
-
       case 'delivered':
         notificationTitle = '🎉 Livrée';
         notificationMessage = `Commande #${order.order_number} livrée. Bon appétit !`;
-        // Notifier aussi le marchand de la fin de livraison
         if (shop?.user_id) {
-          await sendRealtimeUpdate(`shop-${shop.user_id}`, 'order-delivered', { orderId: order.id });
+          await sendRealtimeUpdate(pusher, `shop-${shop.user_id}`, 'order-delivered', { orderId: order.id });
         }
         break;
-
       case 'cancelled':
         notificationTitle = '❌ Annulée';
         notificationMessage = `Votre commande #${order.order_number} a été annulée.`;
         break;
     }
 
-    // 4. Envoi au Client - OneSignal (push native) + Pusher (temps réel)
     if (notificationTitle) {
-      // OneSignal - notification push NATIVE avec son
       try {
         await base44.asServiceRole.functions.invoke('sendOrderNotificationOneSignal', {
           userId: order.client_id,
@@ -110,17 +94,12 @@ Deno.serve(async (req) => {
           orderId: order.id,
           url: `${Deno.env.get('APP_URL') || ''}/orders`
         });
-        console.log('✅ OneSignal envoyé');
       } catch (err) {
         console.error('❌ OneSignal error:', err);
       }
 
-      // Pusher - temps réel dans l'app
-      await sendRealtimeUpdate(`user-${order.client_id}`, 'order-status-update', {
-        orderId: order.id,
-        status: status,
-        title: notificationTitle,
-        message: notificationMessage
+      await sendRealtimeUpdate(pusher, `user-${order.client_id}`, 'order-status-update', {
+        orderId: order.id, status: status, title: notificationTitle, message: notificationMessage
       });
     }
 

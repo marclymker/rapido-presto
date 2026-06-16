@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const MONCASH_BASE = 'https://sandbox.moncashbutton.digicelgroup.com/Api';
 const MONCASH_REDIRECT = 'https://sandbox.moncashbutton.digicelgroup.com/Moncash-middleware/Payment/Redirect';
