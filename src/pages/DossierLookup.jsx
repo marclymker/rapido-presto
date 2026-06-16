@@ -13,6 +13,7 @@ const FIELD_LABELS = {
   'Status': 'Progression',
   'Details important': 'Détails importants',
   'Assigne a': 'Assigné à',
+  'Deja Realisee': 'Déjà Réalisée',
 };
 
 const HIDDEN_FIELDS = ['_RowNumber', 'Row ID'];
@@ -56,6 +57,19 @@ export default function DossierLookup() {
 
   const renderField = (key, value) => {
     const label = FIELD_LABELS[key] || key.replace(/_/g, ' ');
+
+    // Déjà Réalisée — badge Oui/Non
+    if (key === 'Deja Realisee') {
+      const isRealisee = value && String(value).toLowerCase() !== 'non' && String(value).toLowerCase() !== 'false';
+      return (
+        <div key={key} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+          <span className="text-xs font-semibold text-gray-500 uppercase">{label}</span>
+          <span className={`text-sm font-semibold px-3 py-1 rounded-full ${isRealisee ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+            {isRealisee ? 'Oui ✓' : 'Non'}
+          </span>
+        </div>
+      );
+    }
 
     // Barre de progression pour le statut
     if (key === 'Status') {
@@ -118,7 +132,7 @@ export default function DossierLookup() {
 
     const priorityOrder = [
       'INVOICE NUMBER', 'ID', 'Nom Client', 'Date Mariage',
-      'Status', 'Assigne a', 'Details important', 'Description'
+      'Status', 'Deja Realisee', 'Assigne a', 'Details important', 'Description'
     ];
 
     const fields = Object.entries(data)
