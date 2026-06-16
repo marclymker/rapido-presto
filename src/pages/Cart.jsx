@@ -93,13 +93,6 @@ export default function Cart() {
   const { trackInitiateCheckout, trackPurchase } = useActivityTracker();
   const [user, setUser] = useState(null);
   const [step, setStep] = useState('cart');
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('step') === 'checkout' && cartItems.length > 0) {
-      setStep('checkout');
-    }
-  }, [cartItems]);
   const [paymentMethod, setPaymentMethod] = useState('moncash');
   const [paymentSplit, setPaymentSplit] = useState('full');
   const [deliveryOption, setDeliveryOption] = useState('standard');
@@ -127,6 +120,13 @@ export default function Cart() {
     refetchInterval: 60000,
     refetchIntervalInBackground: true
   });
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('step') === 'checkout' && cartItems.length > 0) {
+      setStep('checkout');
+    }
+  }, [cartItems]);
 
   const updateQuantityMutation = useMutation({
     mutationFn: ({ id, quantity }) => {
