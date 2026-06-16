@@ -7,6 +7,21 @@ export function useBrowserNotifications(user) {
   const audioRef = useRef(null);
   const pusherRef = useRef(null);
   const [pusherConfig, setPusherConfig] = useState(null);
+  const [soundInitialized, setSoundInitialized] = useState(false);
+
+  const requestPermission = useCallback(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission().then(perm => {
+        if (perm === "granted") {
+          toast.success("Notifications activées");
+        }
+      });
+    }
+  }, []);
+
+  const initialize = useCallback(() => {
+    setSoundInitialized(true);
+  }, []);
 
   // 1. Précharger l'audio (Inchangé)
   useEffect(() => {
@@ -138,6 +153,12 @@ export function useBrowserNotifications(user) {
       }
     };
   }, [user?.id, pusherConfig, playAlert]);
+
+  return {
+    requestPermission,
+    initialize,
+    isInitialized: soundInitialized
+  };
 }
 
 export const useOrderNotifications = useBrowserNotifications;

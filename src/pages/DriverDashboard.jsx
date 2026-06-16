@@ -28,8 +28,8 @@ export default function DriverDashboard() {
   const [navTab, setNavTab] = useState('available');
   const [orderFilter, setOrderFilter] = useState('all');
   const queryClient = useQueryClient();
-  const { requestPermission } = useBrowserNotifications();
-  const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound();
+  const { requestPermission } = useBrowserNotifications(user);
+  const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound(user);
   
   // WebSocket temps réel
   const { isConnected, broadcast } = useWebSocket({
