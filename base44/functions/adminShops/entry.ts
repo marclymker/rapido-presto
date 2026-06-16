@@ -1,37 +1,15 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { checkRateLimit, rateLimitResponse } from './rateLimiter.js';
-import { validateInput, adminShopActionSchema } from './validationSchemas.js';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
-    // SÉCURITÉ: Rate limiting
-    const rateLimit = checkRateLimit(req, 'admin-shops', 60);
-    if (!rateLimit.allowed) {
-      return rateLimitResponse(rateLimit.retryAfter);
-    }
-
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    // SÉCURITÉ: Vérification stricte admin
     if (!user || user.role !== 'admin') {
-      console.error(`Unauthorized admin access attempt by user ${user?.id || 'unknown'}`);
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 403 });
     }
 
-    const body = await req.json();
-    
-    // SÉCURITÉ: Validation Zod des entrées (action de base)
-    const validation = validateInput(adminShopActionSchema, {
-      action: body.action,
-      shopId: body.shopId
-    });
-    
-    if (!validation.success) {
-      return Response.json({ error: validation.error, details: validation.details }, { status: 400 });
-    }
-
-    const { action, data, shopId } = body;
+    const { action, data, shopId } = await req.json();
 
     switch (action) {
       case 'list':

@@ -51,11 +51,16 @@ export default function AdminProducts() {
 
   const deleteProductMutation = useMutation({
     mutationFn: async (id) => {
-      await base44.functions.invoke('adminProducts', { action: 'delete', productId: id });
+      const res = await base44.functions.invoke('adminProducts', { action: 'delete', productId: id });
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-products']);
       toast.success('Article supprimé');
+    },
+    onError: (err) => {
+      toast.error('Erreur lors de la suppression : ' + err.message);
     }
   });
 
