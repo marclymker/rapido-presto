@@ -5,11 +5,32 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { action, data, productId, shopId } = await req.json();
+
+    // Vérifie si l'utilisateur est admin OU propriétaire de la boutique concernée
+    const isAdmin = user.role === 'admin';
+    let isShopOwner = false;
+
+    if (productId && !isAdmin) {
+      // Pour delete/update d'un produit spécifique, vérifier la propriété
+      const product = await base44.asServiceRole.entities.Product.get(productId);
+      if (product?.shop_id) {
+        const shop = await base44.asServiceRole.entities.Shop.get(product.shop_id);
+        isShopOwner = shop?.user_id === user.id;
+      }
+    } else if (shopId && !isAdmin) {
+      // Pour list d'une boutique, vérifier la propriété
+      const shop = await base44.asServiceRole.entities.Shop.get(shopId);
+      isShopOwner = shop?.user_id === user.id;
+    }
+
+    if (!isAdmin && !isShopOwner) {
+      return Response.json({ error: 'Unauthorized - vous devez être admin ou propriétaire de la boutique' }, { status: 403 });
+    }
 
     switch (action) {
       case 'list':

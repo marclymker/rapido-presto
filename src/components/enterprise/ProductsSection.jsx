@@ -61,13 +61,14 @@ export default function ProductsSection({ shopId }) {
     setDeleting(true);
     try {
       for (const id of selectedIds) {
-        await base44.entities.Product.delete(id);
+        const res = await base44.functions.invoke('adminProducts', { action: 'delete', productId: id });
+        if (res.data?.error) throw new Error(res.data.error);
       }
       toast.success(`${selectedIds.length} article(s) supprimé(s)`);
       setSelectedIds([]);
       queryClient.invalidateQueries(['shop-products']);
     } catch (err) {
-      toast.error("Erreur lors de la suppression");
+      toast.error("Erreur lors de la suppression : " + (err?.message || err));
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
