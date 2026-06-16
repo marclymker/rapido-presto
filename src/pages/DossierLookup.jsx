@@ -78,6 +78,8 @@ export default function DossierLookup() {
 
     // Photos
     if (key.startsWith('PHOTO') && value) {
+      const isImageUrl = value && (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:'));
+      if (!isImageUrl) return null;
       return (
         <div key={key} className="py-3">
           <span className="text-xs font-semibold text-gray-500 uppercase block mb-2">{label}</span>
@@ -130,8 +132,9 @@ export default function DossierLookup() {
         return aIdx - bIdx;
       });
 
+    const isImageUrl = (v) => v && (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('data:'));
     const photoFields = Object.entries(data)
-      .filter(([key]) => key.startsWith('PHOTO') && data[key]);
+      .filter(([key]) => key.startsWith('PHOTO') && isImageUrl(data[key]));
 
     return (
       <>
