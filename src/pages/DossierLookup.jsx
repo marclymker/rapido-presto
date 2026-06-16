@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Search, Loader2, AlertCircle, User, Calendar, FileText, ClipboardList, Image } from 'lucide-react';
-import SEO from '@/components/SEO';
-
 const FIELD_LABELS = {
   'INVOICE NUMBER': 'N° Facture',
   'ID': 'Référence',
@@ -151,10 +149,6 @@ export default function DossierLookup() {
 
   return (
     <>
-      <SEO
-        title="Suivre ma commande | Rapido Presto"
-        description="Suivez l'évolution de votre commande en temps réel avec votre numéro de facture."
-      />
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
           {/* En-tête */}
