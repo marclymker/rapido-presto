@@ -3,8 +3,21 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, Package, Loader2, AlertCircle, CheckCircle, Truck, MapPin, Clock } from 'lucide-react';
+import { Search, Loader2, AlertCircle, User, Calendar, FileText, ClipboardList, Image } from 'lucide-react';
 import SEO from '@/components/SEO';
+
+const FIELD_LABELS = {
+  'INVOICE NUMBER': 'N° Facture',
+  'ID': 'Référence',
+  'Date Mariage': 'Date du mariage',
+  'Nom Client': 'Client',
+  'Description': 'Description',
+  'Status': 'Progression',
+  'Details important': 'Détails importants',
+  'Assigne a': 'Assigné à',
+};
+
+const HIDDEN_FIELDS = ['_RowNumber', 'Row ID'];
 
 export default function DossierLookup() {
   const [invoiceNumber, setInvoiceNumber] = useState('');
@@ -19,10 +32,6 @@ export default function DossierLookup() {
       setError('Veuillez entrer votre numéro de facture');
       return;
     }
-    if (!/^\d+$/.test(code)) {
-      setError('Le numéro de facture doit être numérique');
-      return;
-    }
 
     setLoading(true);
     setError('');
@@ -30,7 +39,6 @@ export default function DossierLookup() {
 
     try {
       const response = await base44.functions.invoke('appsheetQuery', {
-        tableName: 'Commandes',
         accessCode: code
       });
 
@@ -48,69 +56,97 @@ export default function DossierLookup() {
     }
   };
 
-  const getStatusBadge = (status) => {
-    if (!status) return null;
-    const s = String(status).toLowerCase();
-    let color = 'bg-gray-100 text-gray-700';
-    let icon = Clock;
+  const renderField = (key, value) => {
+    const label = FIELD_LABELS[key] || key.replace(/_/g, ' ');
 
-    if (s.includes('livré') || s.includes('delivered') || s.includes('complété')) {
-      color = 'bg-green-100 text-green-700';
-      icon = CheckCircle;
-    } else if (s.includes('cours') || s.includes('progress') || s.includes('prépar')) {
-      color = 'bg-blue-100 text-blue-700';
-      icon = Package;
-    } else if (s.includes('annul')) {
-      color = 'bg-red-100 text-red-700';
-      icon = AlertCircle;
-    } else if (s.includes('livraison') || s.includes('delivery') || s.includes('route')) {
-      color = 'bg-orange-100 text-orange-700';
-      icon = Truck;
+    // Barre de progression pour le statut
+    if (key === 'Status') {
+      const pct = parseInt(String(value).replace('%', ''), 10) || 0;
+      return (
+        <div key={key} className="py-3">
+          <span className="text-xs font-semibold text-gray-500 uppercase block mb-2">{label}</span>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-orange-500 rounded-full transition-all duration-500"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="text-sm font-semibold text-gray-700 min-w-[3rem] text-right">{pct}%</span>
+          </div>
+        </div>
+      );
     }
 
-    const Icon = icon;
+    // Photos
+    if (key.startsWith('PHOTO') && value) {
+      return (
+        <div key={key} className="py-3">
+          <span className="text-xs font-semibold text-gray-500 uppercase block mb-2">{label}</span>
+          <img
+            src={value}
+            alt={label}
+            className="w-full max-w-xs rounded-lg border border-gray-200 object-cover"
+            loading="lazy"
+          />
+        </div>
+      );
+    }
+
+    // Description et détails — texte long
+    if ((key === 'Description' || key === 'Details important') && value) {
+      return (
+        <div key={key} className="py-3">
+          <span className="text-xs font-semibold text-gray-500 uppercase block mb-1">{label}</span>
+          <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{value}</p>
+        </div>
+      );
+    }
+
+    // Champ standard
+    const displayValue = value === null || value === undefined || value === '' ? '—' : String(value);
     return (
-      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${color}`}>
-        <Icon className="w-3.5 h-3.5" />
-        {status}
-      </span>
+      <div key={key} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+        <span className="text-xs font-semibold text-gray-500 uppercase">{label}</span>
+        <span className="text-sm text-gray-900 font-medium text-right ml-4">{displayValue}</span>
+      </div>
     );
   };
 
   const renderDataFields = (data) => {
     if (!data) return null;
-    const priorityKeys = [
-      'Numéro de commande', 'Numero de commande', 'Order Number', 'Invoice Number',
-      'Statut', 'Status', 'État',
-      'Client', 'Customer', 'Nom',
-      'Total', 'Montant', 'Prix',
-      'Date', 'Date de commande',
-      'Adresse', 'Address', 'Livraison'
+
+    const priorityOrder = [
+      'INVOICE NUMBER', 'ID', 'Nom Client', 'Date Mariage',
+      'Status', 'Assigne a', 'Details important', 'Description'
     ];
 
-    const entries = Object.entries(data)
-      .filter(([key]) => key !== 'Row ID' && !key.startsWith('_'))
+    const fields = Object.entries(data)
+      .filter(([key]) => !HIDDEN_FIELDS.includes(key) && !key.startsWith('PHOTO'))
       .sort(([a], [b]) => {
-        const aIdx = priorityKeys.findIndex(k => a.toLowerCase().includes(k.toLowerCase()));
-        const bIdx = priorityKeys.findIndex(k => b.toLowerCase().includes(k.toLowerCase()));
+        const aIdx = priorityOrder.indexOf(a);
+        const bIdx = priorityOrder.indexOf(b);
         if (aIdx === -1 && bIdx === -1) return 0;
         if (aIdx === -1) return 1;
         if (bIdx === -1) return -1;
         return aIdx - bIdx;
       });
 
-    return entries.map(([key, value]) => (
-      <div key={key} className="flex flex-col sm:flex-row sm:items-center py-3 border-b border-gray-100 last:border-0">
-        <span className="text-xs font-semibold text-gray-500 uppercase w-full sm:w-44 shrink-0 mb-1 sm:mb-0">
-          {key.replace(/_/g, ' ')}
-        </span>
-        <span className="text-sm text-gray-900 break-words">
-          {key.toLowerCase().includes('statut') || key.toLowerCase().includes('status') || key.toLowerCase().includes('état')
-            ? getStatusBadge(value)
-            : value === null || value === undefined ? '—' : String(value)}
-        </span>
-      </div>
-    ));
+    const photoFields = Object.entries(data)
+      .filter(([key]) => key.startsWith('PHOTO') && data[key]);
+
+    return (
+      <>
+        {fields.map(([key, value]) => renderField(key, value))}
+        {photoFields.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-2 gap-3">
+              {photoFields.map(([key, value]) => renderField(key, value))}
+            </div>
+          </div>
+        )}
+      </>
+    );
   };
 
   return (
@@ -124,11 +160,11 @@ export default function DossierLookup() {
           {/* En-tête */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 mb-4">
-              <Truck className="w-8 h-8 text-orange-600" />
+              <ClipboardList className="w-8 h-8 text-orange-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Suivre ma commande</h1>
             <p className="text-gray-500 mt-2">
-              Entrez votre numéro de facture pour suivre l'évolution de votre commande.
+              Entrez votre numéro de facture pour suivre votre dossier.
             </p>
           </div>
 
@@ -143,16 +179,15 @@ export default function DossierLookup() {
                   <div className="flex gap-2">
                     <Input
                       type="text"
-                      inputMode="numeric"
                       value={invoiceNumber}
                       onChange={(e) => {
                         setInvoiceNumber(e.target.value);
                         setError('');
                       }}
-                      placeholder="Ex: 10425"
+                      placeholder="Ex: 1122334455"
                       className="flex-1 text-lg text-center tracking-widest"
                       autoFocus
-                      maxLength={20}
+                      maxLength={50}
                       disabled={loading}
                     />
                     <Button type="submit" disabled={loading} className="bg-orange-500 hover:bg-orange-600">
@@ -164,7 +199,7 @@ export default function DossierLookup() {
                     </Button>
                   </div>
                   <p className="text-xs text-gray-400 mt-1.5">
-                    Il s'agit du numéro unique figurant sur votre facture.
+                    Numéro unique figurant sur votre facture.
                   </p>
                 </div>
 
@@ -183,14 +218,12 @@ export default function DossierLookup() {
             <Card className="shadow-sm">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-orange-600" />
-                  <CardTitle className="text-lg">Détails de la commande</CardTitle>
+                  <FileText className="w-5 h-5 text-orange-600" />
+                  <CardTitle className="text-lg">Détails du dossier</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="divide-y divide-gray-100">
-                  {renderDataFields(result.data)}
-                </div>
+                {renderDataFields(result.data)}
               </CardContent>
             </Card>
           )}
