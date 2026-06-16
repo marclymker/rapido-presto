@@ -19,7 +19,6 @@ import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 const normalizeForRegion = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
 const REGION_DATA = {
-  // Section 1 : Port-au-Prince
   'port-au-prince': { index: 0, section: 1 },
   'kenscoff': { index: 0, section: 1 },
   'petion-ville': { index: 1, section: 1 },
@@ -30,13 +29,9 @@ const REGION_DATA = {
   'croix des bouquets': { index: 6, section: 1 },
   'lilavois': { index: 7, section: 1 },
   'fontamara': { index: 8, section: 1 }, 
-  
-  // Section 2 : Carrefour & Sud
   'carrefour': { index: 9, section: 2 },
   'gressier': { index: 10, section: 2 },
   'leogane': { index: 11, section: 2 },
-  
-  // Section 3 : Artibonite et Nord
   'ennery': { index: 12, section: 3 },
   "l'estere": { index: 13, section: 3 },
   'gonaives': { index: 14, section: 3 },
@@ -53,26 +48,21 @@ const REGION_DATA = {
 const CATEGORY_GROUP_HEAVY = ['Boutique Fleurs', 'Materiels Decor', 'Maison'];
 
 function calculateSpecificShopFee(clientRegionName, shopRegionName, shopItems) {
-  if (!clientRegionName || !shopRegionName) return 495; // Fallback de sécurité
+  if (!clientRegionName || !shopRegionName) return 495;
 
   const target = REGION_DATA[normalizeForRegion(clientRegionName)];
   const shop = REGION_DATA[normalizeForRegion(shopRegionName)];
 
-  if (!target || !shop) return 495; // Fallback si région inconnue
+  if (!target || !shop) return 495;
 
   const isSameRegion = target.index === shop.index;
-
-  // Calcul du score d'écart
   let diff = Math.abs(target.index - shop.index);
   let penalty = target.section !== shop.section ? 50 : 0;
   let score = diff + penalty;
 
-  // Vérification Dimensionnelle
   const isHeavyLoad = shopItems.some(item => CATEGORY_GROUP_HEAVY.includes(item.category));
 
   let rawFee = 0;
-
-  // NOUVELLE FORMULE EXACTE DU CEO
   if (isHeavyLoad) {
     rawFee = isSameRegion ? 495 : (495 + score) * 1.5;
   } else {
@@ -159,9 +149,6 @@ export default function Cart() {
     onSettled: () => queryClient.invalidateQueries(['cart'])
   });
 
-  // ---------------------------------------------------------------------------
-  // MOTEUR DE CALCUL DES PRIX
-  // ---------------------------------------------------------------------------
   const itemsByShop = cartItems.reduce((acc, item) => {
     if (!acc[item.shop_id]) acc[item.shop_id] = [];
     acc[item.shop_id].push(item);
@@ -175,7 +162,6 @@ export default function Cart() {
 
   const shopCount = Object.keys(itemsByShop).length;
   
-  // DÉTECTION : Y a-t-il un produit dont la boutique est à Delmas ?
   const hasDelmasShop = Object.keys(itemsByShop).some(shopId => {
     const shopRegion = itemsByShop[shopId][0].shop_region;
     return normalizeForRegion(shopRegion) === 'delmas';
@@ -193,7 +179,6 @@ export default function Cart() {
     if (fee > standardFee) standardFee = fee;
   });
 
-  // Application de l'option de livraison sélectionnée
   let deliveryFee = 0;
   if (deliveryOption === 'pickup_delimart') {
     deliveryFee = 0;
@@ -207,16 +192,12 @@ export default function Cart() {
   const baseTotal = subtotal + deliveryFee + pendingBalance;
   const total = paymentSplit === 'split' ? baseTotal / 2 : baseTotal;
 
-  // Si on vide le panier ou que la condition Delmas disparaît, reset l'option
   useEffect(() => {
     if (!hasDelmasShop && deliveryOption === 'pickup_delimart') {
       setDeliveryOption('standard');
     }
   }, [hasDelmasShop, deliveryOption]);
 
-  // ---------------------------------------------------------------------------
-  // PROCESSUS DE COMMANDE
-  // ---------------------------------------------------------------------------
   const createOrderMutation = useMutation({
     mutationFn: async () => {
       const cartItemIds = cartItems.map(item => item.id);
@@ -388,7 +369,7 @@ export default function Cart() {
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Link to={createPageUrl('Home')}>
-              <Button variant="ghost" size="icon">
+              <Button type="button" variant="ghost" size="icon">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
@@ -407,7 +388,7 @@ export default function Cart() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
               <p className="text-slate-500 mb-4">Votre panier est vide</p>
               <Link to={createPageUrl('Home')}>
-                <Button className="bg-orange-500 hover:bg-orange-600">
+                <Button type="button" className="bg-orange-500 hover:bg-orange-600">
                   Continuer vos achats
                 </Button>
               </Link>
@@ -453,22 +434,25 @@ export default function Cart() {
                         </div>
                         <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-1 border">
                           <button
+                            type="button"
                             className="w-7 h-7 flex items-center justify-center rounded bg-white shadow-sm active:scale-95 text-slate-600"
-                            onClick={() => updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity - 1 })}
+                            onClick={(e) => { e.preventDefault(); updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity - 1 }); }}
                           >
                             <Minus className="w-3 h-3" />
                           </button>
                           <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
                           <button
+                            type="button"
                             className="w-7 h-7 flex items-center justify-center rounded bg-white shadow-sm active:scale-95 text-slate-600"
-                            onClick={() => updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity + 1 })}
+                            onClick={(e) => { e.preventDefault(); updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity + 1 }); }}
                           >
                             <Plus className="w-3 h-3" />
                           </button>
                           <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
                           <button
+                            type="button"
                             className="w-7 h-7 flex items-center justify-center rounded active:scale-95 text-red-500 hover:bg-red-50"
-                            onClick={() => deleteItemMutation.mutate(item.id)}
+                            onClick={(e) => { e.preventDefault(); deleteItemMutation.mutate(item.id); }}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -479,7 +463,6 @@ export default function Cart() {
                 ))}
               </div>
 
-              {/* SÉLECTION DU MODE DE LIVRAISON (Visible si plusieurs boutiques OU s'il y a une option Retrait Delmas) */}
               {(shopCount > 1 || hasDelmasShop) && (
                 <div className="bg-white rounded-xl p-4 mt-6 border shadow-sm">
                   <h3 className="font-bold mb-3 flex items-center gap-2 text-slate-800">
@@ -565,9 +548,15 @@ export default function Cart() {
               </div>
 
               <Button
+                type="button"
                 className="w-full mt-6 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
-                onClick={() => {
-                  trackInitiateCheckout(cartItems, baseTotal);
+                onClick={(e) => {
+                  e.preventDefault();
+                  try {
+                    trackInitiateCheckout(cartItems, baseTotal);
+                  } catch (err) {
+                    console.error("Tracking Error:", err);
+                  }
                   setStep('checkout');
                 }}
               >
@@ -693,10 +682,16 @@ export default function Cart() {
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" className="h-14 px-6 bg-white border-slate-300 text-slate-700 font-bold" onClick={() => setStep('cart')}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="h-14 px-6 bg-white border-slate-300 text-slate-700 font-bold" 
+                  onClick={(e) => { e.preventDefault(); setStep('cart'); }}
+                >
                   Retour
                 </Button>
                 <Button
+                  type="button"
                   className="flex-1 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
                   onClick={(e) => {
                     e.preventDefault();
@@ -728,17 +723,17 @@ export default function Cart() {
               <div className="bg-orange-50 rounded-2xl p-6 mb-8 border border-orange-100 shadow-sm">
                 <p className="text-sm font-bold text-orange-800 uppercase tracking-wider mb-2">Code de Sécurité</p>
                 <p className="text-5xl font-black text-orange-500 tracking-[0.2em]">{confirmCode}</p>
-                <p className="text-sm text-orange-700 mt-3 font-medium">Ne partagez ce code qu'avec le livreur Rapido Presto.</p>
+                <p className="text-sm text-orange-700 mt-3 font-medium">Ne partagez ce code qu'avec le livreur.</p>
               </div>
 
               <div className="flex gap-3 max-w-sm mx-auto">
                 <Link to={createPageUrl('Orders')} className="flex-1">
-                  <Button variant="outline" className="w-full h-12 font-bold text-slate-700">
+                  <Button type="button" variant="outline" className="w-full h-12 font-bold text-slate-700">
                     Suivre
                   </Button>
                 </Link>
                 <Link to={createPageUrl('Home')} className="flex-1">
-                  <Button className="w-full bg-orange-500 hover:bg-orange-600 h-12 font-bold shadow-lg shadow-orange-500/25">
+                  <Button type="button" className="w-full bg-orange-500 hover:bg-orange-600 h-12 font-bold shadow-lg shadow-orange-500/25">
                     Terminer
                   </Button>
                 </Link>
