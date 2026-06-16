@@ -92,7 +92,10 @@ function generateConfirmationCode() {
 export default function Cart() {
   const { trackInitiateCheckout, trackPurchase } = useActivityTracker();
   const [user, setUser] = useState(null);
-  const [step, setStep] = useState('cart');
+  const [step, setStep] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('step') === 'checkout' ? 'checkout' : 'cart';
+  });
   const [paymentMethod, setPaymentMethod] = useState('moncash');
   const [paymentSplit, setPaymentSplit] = useState('full');
   const [deliveryOption, setDeliveryOption] = useState('standard');
@@ -122,11 +125,10 @@ export default function Cart() {
   });
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('step') === 'checkout' && cartItems.length > 0) {
-      setStep('checkout');
+    if (step === 'checkout' && cartItems.length === 0 && !isLoading) {
+      setStep('cart');
     }
-  }, [cartItems]);
+  }, [step, cartItems, isLoading]);
 
   const updateQuantityMutation = useMutation({
     mutationFn: ({ id, quantity }) => {
