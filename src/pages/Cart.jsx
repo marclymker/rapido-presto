@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Clock, AlertTriangle, Truck, MapPin } from 'lucide-react';
+import { useAuth } from '@/components/auth/useAuth';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -81,7 +82,7 @@ function generateConfirmationCode() {
 // ---------------------------------------------------------------------------
 export default function Cart() {
   const { trackInitiateCheckout, trackPurchase } = useActivityTracker();
-  const [user, setUser] = useState(null);
+  const { user, isLoading: authLoading } = useAuth();
   const [step, setStep] = useState(() => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('step') === 'checkout' ? 'checkout' : 'cart';
@@ -96,17 +97,8 @@ export default function Cart() {
   const [squareToken, setSquareToken] = useState(null);
   
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    base44.auth.me().then(u => {
-      setUser(u);
-    }).catch(() => {
-      navigate(createPageUrl('Home'));
-    });
-  }, [navigate]);
-
-  const { data: cartItems = [], isLoading } = useQuery({
+  const { data: cartItems = [], isLoading: cartLoading } = useQuery({
     queryKey: ['cart', user?.id],
     queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id,
@@ -115,10 +107,10 @@ export default function Cart() {
   });
 
   useEffect(() => {
-    if (step === 'checkout' && cartItems.length === 0 && !isLoading) {
+    if (step === 'checkout' && cartItems.length === 0 && !cartLoading) {
       setStep('cart');
     }
-  }, [step, cartItems, isLoading]);
+  }, [step, cartItems, cartLoading]);
 
   const updateQuantityMutation = useMutation({
     mutationFn: ({ id, quantity }) => {
@@ -355,7 +347,7 @@ export default function Cart() {
     onError: (error) => toast.error(error.message || 'Erreur lors de la création de la commande')
   });
 
-  if (!user || isLoading) {
+  if (!user || authLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full" />

@@ -145,7 +145,11 @@ export default function ProductPage() {
       queryClient.invalidateQueries(['cart', user?.id]);
       toast.success('Ajouté au panier !');
     },
-    onError: () => setOptimisticCart(c => Math.max(0, c - 1)),
+    onError: (err) => {
+      setOptimisticCart(c => Math.max(0, c - 1));
+      toast.error(err?.message || 'Erreur lors de l\'ajout au panier');
+      console.error('Add to cart error:', err);
+    },
   });
 
   const handleAddToCart = useCallback(() => {
