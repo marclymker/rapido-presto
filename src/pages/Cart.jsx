@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Clock, AlertTriangle, Truck, MapPin } from 'lucide-react';
 import { useAuth } from '@/components/auth/useAuth';
@@ -83,6 +83,7 @@ function generateConfirmationCode() {
 export default function Cart() {
   const { trackInitiateCheckout, trackPurchase } = useActivityTracker();
   const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState(() => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('step') === 'checkout' ? 'checkout' : 'cart';
@@ -105,6 +106,13 @@ export default function Cart() {
     refetchInterval: 60000,
     refetchIntervalInBackground: true
   });
+
+  // Protection asymétrique de session
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate(createPageUrl('Home'));
+    }
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (step === 'checkout' && cartItems.length === 0 && !cartLoading) {
@@ -286,6 +294,7 @@ export default function Cart() {
 
       if (paymentMethod === 'moncash') {
         const { createdOrders, orderNumBase } = await processOrders('moncash');
+        // Attention : Suppression des articles AVANT l'aboutissement de l'URL MonCash.
         await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
 
         const response = await base44.functions.invoke('moncashCreatePayment', {
@@ -347,7 +356,8 @@ export default function Cart() {
     onError: (error) => toast.error(error.message || 'Erreur lors de la création de la commande')
   });
 
-  if (!user || authLoading) {
+  // La "Loading Gate" : Empêche tout rendu tant que les états critiques ne sont pas résolus.
+  if (authLoading || cartLoading || !user) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full" />
