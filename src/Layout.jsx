@@ -73,33 +73,6 @@ export default function Layout({ children, currentPageName }) {
 
   const noNavPages = ['ProfileSetup', 'ManageProfiles', 'AdminValidation', 'Chat'];
 
-  const { data: dbCartItems = [] } = useQuery({
-    queryKey: ['cart', user?.id],
-    queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
-    enabled: !!user?.id
-  });
-
-  const [guestCartCount, setGuestCartCount] = useState(0);
-
-  useEffect(() => {
-    if (!user) {
-      const stored = localStorage.getItem('guest_cart');
-      if (stored) {
-        try {
-          const guestCart = JSON.parse(stored);
-          const count = guestCart.reduce((sum, item) => sum + item.quantity, 0);
-          setGuestCartCount(count);
-        } catch (e) {
-          setGuestCartCount(0);
-        }
-      }
-    }
-  }, [user]);
-
-  const cartCount = user
-    ? dbCartItems.reduce((sum, item) => sum + item.quantity, 0)
-    : guestCartCount;
-
   const { data: orders = [] } = useQuery({
     queryKey: ['orders', user?.id],
     queryFn: () => base44.entities.Order.filter({ client_id: user?.id }),
@@ -206,7 +179,6 @@ export default function Layout({ children, currentPageName }) {
 
         {!noNavPages.includes(currentPageName) && (
           <SmartBottomNav
-            cartCount={cartCount}
             activeOrdersCount={activeOrdersCount}
           />
         )}

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Package, User, ShoppingBag, Grid, Truck } from 'lucide-react';
+import { Home, Package, User, Grid, Truck } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 
-export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 }) {
+export default function SmartBottomNav({ activeOrdersCount = 0 }) {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const location = useLocation();
@@ -33,13 +33,6 @@ export default function SmartBottomNav({ cartCount = 0, activeOrdersCount = 0 })
       label: 'Accueil', 
       icon: Home, 
       page: 'Products'
-    },
-    { 
-      id: 'cart', 
-      label: 'Panier', 
-      icon: ShoppingBag, 
-      page: 'Cart',
-      badge: cartCount
     },
     { 
       id: 'tracking', 

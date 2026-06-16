@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ShoppingCart, Send, Store, MapPin, Share2, MessageCircle, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, Send, Store, MapPin, Share2, MessageCircle, Loader2 } from 'lucide-react';
 import { cacheProduct, getCachedProduct } from '@/lib/useProductCache';
-import { enqueueCartAction, useCartSync } from '@/lib/useCartSync';
 import { Helmet } from 'react-helmet-async';
-import { applyClientMargin, getClientPrice } from '@/components/utils/priceCalculation';
+import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { useAuth } from '@/components/auth/useAuth';
-import { useGuestCart } from '@/components/cart/useGuestCart';
 import { toast } from 'sonner';
 import CompactProductCard from '@/components/home/CompactProductCard';
 import ProductReviews from '@/components/product/ProductReviews';
@@ -23,16 +21,10 @@ export default function ProductPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addToGuestCart } = useGuestCart();
-  const queryClient = useQueryClient();
-  const [qty] = useState(1);
   const [imgIndex, setImgIndex] = useState(0);
   const [waMessage, setWaMessage] = useState('');
   const [waBoxOpen, setWaBoxOpen] = useState(false);
   const [relatedVisible, setRelatedVisible] = useState(12);
-  const [optimisticCart, setOptimisticCart] = useState(0);
-
-  useCartSync(user?.id);
 
   useEffect(() => {
     window.history.pushState({ productPage: true }, '');
@@ -77,12 +69,6 @@ export default function ProductPage() {
     enabled: !!product?.category,
   });
 
-  const { data: cartItems = [] } = useQuery({
-    queryKey: ['cart', user?.id],
-    queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
-    enabled: !!user?.id,
-  });
-
   // LOGIQUE DE PARTAGE (PREVIEW WHATSAPP)
   const getShareUrl = useCallback(() => {
     if (!product) return window.location.href;
@@ -120,65 +106,6 @@ export default function ProductPage() {
     });
     setWaMessage(`Bonjour, je suis intéressé par: ${product.name}`);
   }, [product]);
-
-  const addToCartMutation = useMutation({
-    mutationFn: async ({ quantity }) => {
-      const existing = cartItems.find(i => i.product_id === product.id);
-      const price = getClientPrice(product);
-      if (existing) {
-        return base44.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
-      }
-      return base44.entities.CartItem.create({
-        user_id: user.id,
-        product_id: product.id,
-        product_name: product.name,
-        product_image: product.image_url,
-        quantity,
-        unit_price: price,
-        shop_id: product.shop_id,
-        shop_name: shop?.company_name || '',
-        shop_region: shop?.region || '',
-      });
-    },
-    onMutate: () => setOptimisticCart(c => c + 1),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['cart', user?.id]);
-      toast.success('Ajouté au panier !');
-    },
-    onError: (err) => {
-      setOptimisticCart(c => Math.max(0, c - 1));
-      toast.error(err?.message || 'Erreur lors de l\'ajout au panier');
-      console.error('Add to cart error:', err);
-    },
-  });
-
-  const handleAddToCart = useCallback(() => {
-    if (!user) {
-      setOptimisticCart(c => c + 1);
-      addToGuestCart({
-        product_id: product.id, product_name: product.name, product_image: product.image_url,
-        quantity: qty, unit_price: getClientPrice(product),
-        shop_id: product.shop_id, shop_name: shop?.company_name, shop_region: shop?.region
-      });
-      enqueueCartAction({
-        type: 'add',
-        data: {
-          product_id: product.id, product_name: product.name,
-          product_image: product.image_url, quantity: qty,
-          unit_price: getClientPrice(product), shop_id: product.shop_id,
-          shop_name: shop?.company_name, shop_region: shop?.region,
-        },
-      });
-      toast.success('Ajouté au panier');
-      return;
-    }
-    addToCartMutation.mutate({ quantity: qty });
-  }, [product, qty, user, shop, addToGuestCart, addToCartMutation]);
-
-  const handlePayNow = useCallback(() => {
-    handleAddToCart();
-    setTimeout(() => navigate('/Cart?step=checkout'), 300);
-  }, [handleAddToCart, navigate]);
 
   const handleSendWhatsApp = useCallback(() => {
     const previewUrl = getShareUrl();
@@ -242,16 +169,6 @@ export default function ProductPage() {
         <button onClick={handleShare} className="p-1.5 rounded-full hover:bg-gray-100">
           <Share2 className="w-5 h-5 text-gray-700" />
         </button>
-        
-        <button onClick={() => navigate('/Cart')} className="relative p-1.5 flex items-center gap-1">
-          <ShoppingCart className="w-5 h-5 text-gray-700" />
-          <span className="text-xs font-semibold text-gray-700">Panier</span>
-          {(cartItems.length > 0 || optimisticCart > 0) && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-              {cartItems.reduce((s, i) => s + i.quantity, 0) + optimisticCart}
-            </span>
-          )}
-        </button>
       </div>
 
       {/* Photo Section */}
@@ -302,12 +219,6 @@ export default function ProductPage() {
               </div>
             </div>
           )}
-        </div>
-
-        {/* CTA Buttons */}
-        <div className="flex gap-3">
-          <button onClick={handleAddToCart} className="flex-1 py-3 rounded-xl text-sm font-bold border border-gray-200 text-blue-600 hover:bg-gray-50 active:scale-95 transition-all">Ajouter au panier</button>
-          <button onClick={handlePayNow} className="flex-1 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 shadow-lg shadow-blue-100 active:scale-95 transition-all">Payer maintenant</button>
         </div>
 
         {product.description && <p className="text-sm text-gray-600 mt-5 border-t border-gray-100 pt-4 leading-relaxed">{product.description}</p>}
