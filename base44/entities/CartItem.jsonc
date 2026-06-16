@@ -99,5 +99,17 @@
     "product_id",
     "quantity",
     "unit_price"
-  ]
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "user_id": "{{user.id}}"
+    },
+    "update": {
+      "user_id": "{{user.id}}"
+    },
+    "delete": {
+      "user_id": "{{user.id}}"
+    }
+  }
 }

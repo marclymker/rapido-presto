@@ -1,0 +1,46 @@
+{
+  "name": "ChatMessage",
+  "type": "object",
+  "properties": {
+    "conversation_id": {
+      "type": "string",
+      "description": "ID de la conversation"
+    },
+    "sender_id": {
+      "type": "string",
+      "description": "ID de l'exp\u00e9diteur"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Nom de l'exp\u00e9diteur"
+    },
+    "content": {
+      "type": "string",
+      "description": "Contenu du message"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "image",
+        "product"
+      ],
+      "default": "text",
+      "description": "Type de message"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "M\u00e9tadonn\u00e9es (URL image, infos produit, etc.)"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Message lu ou non"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "sender_id",
+    "content"
+  ]
+}

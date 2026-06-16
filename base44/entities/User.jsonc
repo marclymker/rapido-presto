@@ -1,0 +1,162 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "phone": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "region": {
+      "type": "string"
+    },
+    "current_profile": {
+      "type": "string",
+      "enum": [
+        "client",
+        "entreprise",
+        "livreur",
+        "agent"
+      ]
+    },
+    "profiles": {
+      "type": "object",
+      "properties": {
+        "client": {
+          "type": "object",
+          "properties": {
+            "is_active": {
+              "type": "boolean"
+            },
+            "created_at": {
+              "type": "string"
+            }
+          }
+        },
+        "entreprise": {
+          "type": "object",
+          "properties": {
+            "is_active": {
+              "type": "boolean"
+            },
+            "created_at": {
+              "type": "string"
+            },
+            "company_name": {
+              "type": "string"
+            },
+            "company_category": {
+              "type": "string"
+            },
+            "company_logo_url": {
+              "type": "string"
+            },
+            "numero_moncash": {
+              "type": "string"
+            },
+            "numero_natcash": {
+              "type": "string"
+            },
+            "numero_whatsapp": {
+              "type": "string"
+            }
+          }
+        },
+        "livreur": {
+          "type": "object",
+          "properties": {
+            "is_active": {
+              "type": "boolean"
+            },
+            "created_at": {
+              "type": "string"
+            },
+            "vehicle_type": {
+              "type": "string"
+            },
+            "license_number": {
+              "type": "string"
+            },
+            "vehicle_photo_url": {
+              "type": "string"
+            }
+          }
+        },
+        "agent": {
+          "type": "object",
+          "properties": {
+            "is_active": {
+              "type": "boolean"
+            },
+            "created_at": {
+              "type": "string"
+            },
+            "company_name": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "payment_methods": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "session_version": {
+      "type": "number",
+      "description": "Version de session pour forcer d\u00e9connexion"
+    },
+    "notification_preferences": {
+      "type": "object",
+      "description": "Pr\u00e9f\u00e9rences de notifications push de l'utilisateur",
+      "properties": {
+        "order_updates": {
+          "type": "boolean",
+          "default": true,
+          "description": "Notifications pour les mises \u00e0 jour de commande"
+        },
+        "delivery_status": {
+          "type": "boolean",
+          "default": true,
+          "description": "Notifications pour le statut de livraison"
+        },
+        "promotions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Notifications pour les promotions et offres"
+        },
+        "new_products": {
+          "type": "boolean",
+          "default": false,
+          "description": "Notifications pour les nouveaux produits"
+        },
+        "followed_shops": {
+          "type": "boolean",
+          "default": false,
+          "description": "Notifications des boutiques suivies"
+        },
+        "cart_reminders": {
+          "type": "boolean",
+          "default": false,
+          "description": "Rappels pour les articles dans le panier"
+        }
+      }
+    },
+    "pwa_installed": {
+      "type": "boolean",
+      "description": "Indicateur d'installation PWA"
+    }
+  },
+  "required": [
+    "phone",
+    "address",
+    "region",
+    "current_profile",
+    "profiles",
+    "payment_methods",
+    "session_version"
+  ]
+}
