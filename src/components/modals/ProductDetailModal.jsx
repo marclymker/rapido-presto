@@ -413,13 +413,11 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
           <Button
             className="w-full py-6 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl shadow-lg"
-            onClick={async () => {
+            onClick={() => {
               if (!user) {
                 base44.auth.redirectToLogin(window.location.pathname);
                 return;
               }
-
-              // Track InitiateCheckout
               trackMetaEvent('InitiateCheckout', {
                 content_ids: [product.id],
                 content_type: 'product',
@@ -427,27 +425,11 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                 value: price * quantity,
                 currency: 'HTG',
               });
-
-              // Track AddToCart
-              trackMetaEvent('AddToCart', {
-                content_ids: [product.id],
-                content_type: 'product',
-                content_name: product.name,
-                value: price * quantity,
-                currency: 'HTG',
-              });
-
-              // Ajouter au panier d'abord
-              await onAddToCart(product, quantity);
-              
-              // Fermer la modale
               onClose();
-              
-              // Rediriger vers le panier
-              window.location.href = createPageUrl('Cart');
+              window.location.href = `/QuickCheckout?product_id=${product.id}&quantity=${quantity}`;
             }}
           >
-            Payer Maintenant
+            Commander Maintenant
           </Button>
 
           <Button 

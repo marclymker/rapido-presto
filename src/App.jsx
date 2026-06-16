@@ -20,6 +20,7 @@ const BlogManager = lazy(() => import('./pages/BlogManager'));
 const DossierLookup = lazy(() => import('./pages/DossierLookup'));
 const PaymentCallback = lazy(() => import('./pages/PaymentCallback'));
 const PayLink = lazy(() => import('./pages/PayLink'));
+const QuickCheckout = lazy(() => import('./pages/QuickCheckout'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -83,6 +84,7 @@ const InnerRouter = () => {
         <Route path="/Contact" element={<LayoutWrapper currentPageName="Contact"><Contact /></LayoutWrapper>} />
         <Route path="/PayLink" element={<PayLink />} />
         <Route path="/DossierLookup" element={<DossierLookup />} />
+        <Route path="/QuickCheckout" element={<QuickCheckout />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </PageTransitionWrapper>
