@@ -17,6 +17,7 @@ const Contact = lazy(() => import('./pages/Contact'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogArticle = lazy(() => import('./pages/BlogArticle'));
 const BlogManager = lazy(() => import('./pages/BlogManager'));
+const DossierLookup = lazy(() => import('./pages/DossierLookup'));
 const PaymentCallback = lazy(() => import('./pages/PaymentCallback'));
 const PayLink = lazy(() => import('./pages/PayLink'));
 
@@ -81,6 +82,7 @@ const InnerRouter = () => {
         <Route path="/About" element={<LayoutWrapper currentPageName="About"><About /></LayoutWrapper>} />
         <Route path="/Contact" element={<LayoutWrapper currentPageName="Contact"><Contact /></LayoutWrapper>} />
         <Route path="/PayLink" element={<PayLink />} />
+        <Route path="/DossierLookup" element={<DossierLookup />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </PageTransitionWrapper>
