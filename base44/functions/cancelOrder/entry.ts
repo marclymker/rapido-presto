@@ -1,20 +1,40 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { checkRateLimit, rateLimitResponse } from './rateLimiter.js';
-import { validateInput, cancelOrderSchema } from './validationSchemas.js';
-import { verifyCSRF } from './csrfProtection.js';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+
+// --- Rate Limiting simplifié (in-memory) ---
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 10;
+
+function checkRateLimit(ip, key, maxRequests) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key) || { count: 0, resetAt: now + RATE_LIMIT_WINDOW };
+  if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + RATE_LIMIT_WINDOW; }
+  entry.count++;
+  rateLimitMap.set(key, entry);
+  return entry.count <= maxRequests;
+}
+
+// Nettoyage périodique
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitMap) {
+    if (now > entry.resetAt) rateLimitMap.delete(key);
+  }
+}, 60_000);
+
+// --- Validation simplifiée ---
+function validateCancelInput(body) {
+  if (!body.orderId) return { valid: false, error: 'orderId requis' };
+  if (!body.reason_id) return { valid: false, error: 'reason_id requis' };
+  return { valid: true };
+}
 
 Deno.serve(async (req) => {
   try {
-    // SÉCURITÉ: Protection CSRF
-    const csrfCheck = verifyCSRF(req);
-    if (!csrfCheck.valid) {
-      return Response.json({ error: 'CSRF validation failed' }, { status: 403 });
-    }
-
-    // SÉCURITÉ: Rate limiting
-    const rateLimit = checkRateLimit(req, 'cancel-order', 10);
-    if (!rateLimit.allowed) {
-      return rateLimitResponse(rateLimit.retryAfter);
+    // Rate limiting
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!checkRateLimit(ip, `cancel-${ip}`, RATE_LIMIT_MAX)) {
+      return Response.json({ error: 'Trop de requêtes, veuillez patienter' }, { status: 429 });
     }
 
     const base44 = createClientFromRequest(req);
@@ -25,48 +45,32 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    
-    // SÉCURITÉ: Validation Zod des entrées (champs de base)
-    const basicValidation = validateInput(cancelOrderSchema, {
-      orderId: body.orderId,
-      reasonId: body.reason_id,
-      reasonLabel: body.reason_label,
-      reasonDetails: body.reason_details
-    });
-    
-    if (!basicValidation.success) {
-      return Response.json({ error: basicValidation.error, details: basicValidation.details }, { status: 400 });
+    const validation = validateCancelInput(body);
+    if (!validation.valid) {
+      return Response.json({ error: validation.error }, { status: 400 });
     }
 
-    const {
-      orderId,
-      reason_id,
-      reason_label,
-      reason_details
-    } = body;
-    
-    // SÉCURITÉ: Ne JAMAIS faire confiance aux montants du client - toujours recalculer côté serveur
+    const { orderId, reason_id, reason_label, reason_details } = body;
 
-    // SÉCURITÉ: Utiliser entities normal (pas asServiceRole) pour vérifier propriété
-    const order = await base44.entities.Order.filter({ id: orderId });
-    if (!order || order.length === 0) {
+    // Vérifier la commande avec les permissions utilisateur
+    const orders = await base44.entities.Order.filter({ id: orderId });
+    if (!orders || orders.length === 0) {
       return Response.json({ error: 'Commande introuvable' }, { status: 404 });
     }
 
-    const orderData = order[0];
+    const orderData = orders[0];
 
-    // SÉCURITÉ: Vérification stricte de propriété
+    // Vérification propriété
     if (orderData.client_id !== user.id) {
-      console.error(`Unauthorized cancellation attempt: User ${user.id} tried to cancel order ${orderId} owned by ${orderData.client_id}`);
       return Response.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
-    // Check if order can be cancelled
+    // Vérifier si la commande peut être annulée
     if (['delivered', 'cancelled'].includes(orderData.status)) {
       return Response.json({ error: 'Cette commande ne peut pas être annulée' }, { status: 400 });
     }
 
-    // SÉCURITÉ: Recalculer les frais d'annulation côté serveur (politique stricte)
+    // Calcul des frais d'annulation côté serveur
     const statusFeeMap = {
       'pending': 0,
       'accepted': 0.10,
@@ -81,7 +85,7 @@ Deno.serve(async (req) => {
     const cancelFee = Math.round(orderData.total * feePercent);
     const refundAmount = orderData.total - cancelFee;
 
-    // Create cancellation log avec montants RECALCULÉS
+    // Créer le log d'annulation
     await base44.asServiceRole.entities.CancellationLog.create({
       order_id: orderId,
       order_number: orderData.order_number,
@@ -91,7 +95,7 @@ Deno.serve(async (req) => {
       shop_name: orderData.shop_name,
       cancelled_by: 'client',
       reason_id,
-      reason_label,
+      reason_label: reason_label || '',
       reason_details: reason_details || '',
       order_status_at_cancellation: orderData.status,
       order_total: orderData.total,
@@ -102,31 +106,27 @@ Deno.serve(async (req) => {
       refund_status: orderData.payment_method === 'CASH' && cancelFee > 0 ? 'added_to_balance' : 'pending'
     });
 
-    // Update order status
+    // Mettre à jour le statut de la commande
     await base44.asServiceRole.entities.Order.update(orderId, {
       status: 'cancelled'
     });
 
-    // Handle refund based on payment method (utiliser montants RECALCULÉS)
+    // Gestion du remboursement
     if (orderData.payment_method === 'CASH' && cancelFee > 0) {
-      // SÉCURITÉ: Utiliser asServiceRole uniquement pour MAJ de balance (cas légitime)
-      const freshUser = await base44.asServiceRole.entities.User.filter({ id: user.id });
-      const currentBalance = freshUser[0]?.pending_balance || 0;
+      const freshUsers = await base44.asServiceRole.entities.User.filter({ id: user.id });
+      const currentBalance = freshUsers[0]?.pending_balance || 0;
       await base44.asServiceRole.entities.User.update(user.id, {
         pending_balance: currentBalance + cancelFee
       });
     } else if (orderData.payment_method !== 'CASH' && refundAmount > 0) {
-      // For digital payments, initiate refund process
-      // This would integrate with Moncash/NatCash APIs
-      // For now, we just log it
       console.log(`Refund of ${refundAmount} HTG should be processed for order ${orderData.order_number}`);
     }
 
-    // Send notifications to shop and driver
+    // Notifications
     try {
       await base44.asServiceRole.functions.invoke('sendOrderNotification', {
         orderId,
-        type: 'cancelled',
+        status: 'cancelled',
         message: `La commande ${orderData.order_number} a été annulée par le client.`
       });
     } catch (e) {
