@@ -173,7 +173,7 @@ export default function ProductPage() {
 
   const handlePayNow = useCallback(() => {
     handleAddToCart();
-    setTimeout(() => navigate('/Cart'), 300);
+    setTimeout(() => navigate('/Cart?step=checkout'), 300);
   }, [handleAddToCart, navigate]);
 
   const handleSendWhatsApp = useCallback(() => {
@@ -239,8 +239,9 @@ export default function ProductPage() {
           <Share2 className="w-5 h-5 text-gray-700" />
         </button>
         
-        <button onClick={() => navigate('/Cart')} className="relative p-1.5">
+        <button onClick={() => navigate('/Cart')} className="relative p-1.5 flex items-center gap-1">
           <ShoppingCart className="w-5 h-5 text-gray-700" />
+          <span className="text-xs font-semibold text-gray-700">Panier</span>
           {(cartItems.length > 0 || optimisticCart > 0) && (
             <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
               {cartItems.reduce((s, i) => s + i.quantity, 0) + optimisticCart}
