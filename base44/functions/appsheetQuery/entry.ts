@@ -10,14 +10,18 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'JSON invalide' }, { status: 400 });
     }
 
+    const base44 = createClientFromRequest(req);
     const { tableName, accessCode } = body || {};
 
     if (!tableName || !accessCode) {
-      return Response.json({ error: 'tableName et accessCode requis' }, { status: 400 });
+      return Response.json({ error: 'Table et code d\'accès requis' }, { status: 400 });
     }
 
     const code = (accessCode || '').trim();
-    if (code.length < 3 || code.length > 50 || /[<>{}()\[\]\\;]/.test(code)) {
+    if (tableName === 'Commandes' && !/^\d+$/.test(code)) {
+      return Response.json({ error: 'Le numéro de facture doit être numérique' }, { status: 400 });
+    }
+    if (code.length < 1 || code.length > 50 || /[<>{}()\[\]\\;]/.test(code)) {
       return Response.json({ error: 'Code d\'accès invalide' }, { status: 400 });
     }
 
@@ -28,13 +32,18 @@ Deno.serve(async (req) => {
 
     const APP_ID = Deno.env.get('APPSHEET_APP_ID');
     const API_KEY = Deno.env.get('APPSHEET_API_KEY');
-
     if (!APP_ID || !API_KEY) {
       return Response.json({ error: 'Configuration manquante' }, { status: 500 });
     }
 
+    let selector;
+    if (tableName === 'Commandes') {
+      selector = `FILTER("Commandes", OR([Invoice Number]="${code}", [InvoiceNumber]="${code}", [Numero_Facture]="${code}", [Numero Commande]="${code}", [Order Number]="${code}", [OrderNumber]="${code}", [Commande ID]="${code}"))`;
+    } else {
+      selector = `FILTER("${tableName}", OR([CodeAcces]="${code}", [Code_Acces]="${code}", [Dossier]="${code}", [CodeDossier]="${code}", [Numero_Dossier]="${code}", [NumeroFacture]="${code}"))`;
+    }
+
     const apiUrl = `https://api.appsheet.com/api/v2/apps/${APP_ID}/tables/${encodeURIComponent(tableName)}/Action`;
-    const filterExpression = `OR([CodeAcces]="${code}", [Code_Acces]="${code}", [Dossier]="${code}", [CodeDossier]="${code}", [Numero_Dossier]="${code}")`;
 
     const appResponse = await fetch(apiUrl, {
       method: 'POST',
@@ -45,26 +54,44 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         Action: 'Find',
         Properties: {
-          Selector: `FILTER("${tableName}", ${filterExpression})`,
-          Options: { Skip: 0, Top: 1 }
-        }
+          Locale: 'fr-FR',
+          Selector: selector
+        },
+        Rows: []
       })
     });
 
+    // Lire le corps comme texte d'abord (car AppSheet peut renvoyer un corps vide sur 200)
+    const responseText = await appResponse.text();
+
     if (!appResponse.ok) {
-      return Response.json({ error: 'Erreur AppSheet ' + appResponse.status }, { status: 502 });
+      return Response.json({
+        error: 'Erreur AppSheet ' + appResponse.status,
+        detail: responseText.substring(0, 300)
+      }, { status: 502 });
     }
 
-    const apiData = await appResponse.json();
-    const rows = Array.isArray(apiData) ? apiData : (apiData.Rows || []);
+    // Corps vide = pas de données
+    if (!responseText || responseText.trim() === '') {
+      return Response.json({ error: 'Aucune commande trouvée avec ce numéro de facture' }, { status: 404 });
+    }
+
+    let apiData;
+    try {
+      apiData = JSON.parse(responseText);
+    } catch (_) {
+      return Response.json({ error: 'Réponse AppSheet invalide', detail: responseText.substring(0, 200) }, { status: 502 });
+    }
+
+    const rows = Array.isArray(apiData) ? apiData : (apiData?.Rows || []);
 
     if (!rows || rows.length === 0) {
-      return Response.json({ error: 'Aucun dossier trouvé' }, { status: 404 });
+      return Response.json({ error: 'Aucune commande trouvée avec ce numéro de facture' }, { status: 404 });
     }
 
     return Response.json({ success: true, data: rows[0], table: tableName });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'Erreur interne', detail: error.message }, { status: 500 });
   }
 });
