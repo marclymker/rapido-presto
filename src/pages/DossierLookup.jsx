@@ -58,15 +58,12 @@ export default function DossierLookup() {
   const renderField = (key, value) => {
     const label = FIELD_LABELS[key] || key.replace(/_/g, ' ');
 
-    // Déjà Réalisée — badge Oui/Non
-    if (key === 'Deja Realisee') {
-      const isRealisee = value && String(value).toLowerCase() !== 'non' && String(value).toLowerCase() !== 'false';
+    // Déjà Réalisée — description des travaux complétés
+    if (key === 'Deja Realisee' && value) {
       return (
-        <div key={key} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-          <span className="text-xs font-semibold text-gray-500 uppercase">{label}</span>
-          <span className={`text-sm font-semibold px-3 py-1 rounded-full ${isRealisee ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-            {isRealisee ? 'Oui ✓' : 'Non'}
-          </span>
+        <div key={key} className="py-3">
+          <span className="text-xs font-semibold text-gray-500 uppercase block mb-1">{label}</span>
+          <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{value}</p>
         </div>
       );
     }
