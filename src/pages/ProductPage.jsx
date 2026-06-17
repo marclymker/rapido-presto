@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Send, Store, MapPin, Share2, MessageCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Store, MapPin, Share2, MessageCircle, Loader2, Minus, Plus } from 'lucide-react';
 import { cacheProduct, getCachedProduct } from '@/lib/useProductCache';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
@@ -24,6 +24,7 @@ export default function ProductPage() {
   const [imgIndex, setImgIndex] = useState(0);
   const [waMessage, setWaMessage] = useState('');
   const [waBoxOpen, setWaBoxOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   const [relatedVisible, setRelatedVisible] = useState(12);
 
   useEffect(() => {
@@ -256,6 +257,36 @@ export default function ProductPage() {
           )}
         </div>
       )}
+
+      {/* Barre fixe bas — Commander */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-40 safe-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center bg-gray-100 rounded-xl p-1 shrink-0">
+            <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 rounded-lg hover:bg-gray-200 transition"><Minus size={16} className="text-gray-700" /></button>
+            <span className="font-black text-sm w-8 text-center text-gray-900">{quantity}</span>
+            <button onClick={() => setQuantity(quantity + 1)} className="p-2 rounded-lg hover:bg-gray-200 transition"><Plus size={16} className="text-gray-700" /></button>
+          </div>
+          <button
+            onClick={() => {
+              if (!user) {
+                base44.auth.redirectToLogin(window.location.pathname);
+                return;
+              }
+              trackMetaEvent('InitiateCheckout', {
+                content_ids: [product.id],
+                content_type: 'product',
+                content_name: product.name,
+                value: price * quantity,
+                currency: 'HTG',
+              });
+              window.location.href = `/QuickCheckout?product_id=${product.id}&quantity=${quantity}`;
+            }}
+            className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-lg shadow-blue-600/25 transition"
+          >
+            Commander Maintenant · {price.toLocaleString()} HTG
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
