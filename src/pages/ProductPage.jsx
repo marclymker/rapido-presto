@@ -199,6 +199,19 @@ export default function ProductPage() {
           {originalPrice && <span className="text-sm line-through text-gray-400">{originalPrice.toLocaleString()} HTG</span>}
         </div>
 
+        {/* Bouton Commander maintenant */}
+        <button
+          onClick={() => {
+            if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+            trackMetaEvent('InitiateCheckout', { content_ids: [product.id], content_type: 'product', content_name: product.name, value: price, currency: 'HTG' });
+            window.location.href = `/QuickCheckout?product_id=${product.id}&quantity=1`;
+          }}
+          className="w-full mb-4 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+        >
+          <CreditCard className="w-5 h-5" />
+          Commander Maintenant
+        </button>
+
         {/* WhatsApp Message Box */}
         <div className="mb-4">
           <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Contacter le vendeur</div>

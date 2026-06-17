@@ -28,6 +28,7 @@ export default function QuickCheckout() {
   const [squareToken, setSquareToken] = useState(null);
   const [confOrder, setConfOrder] = useState(null);
   const [confCode, setConfCode] = useState(null);
+  const [splitPercent, setSplitPercent] = useState(50);
 
   const { data: products = [], isLoading: productLoading } = useQuery({
     queryKey: ['quick-product', productId],
@@ -96,10 +97,11 @@ export default function QuickCheckout() {
       }
 
       if (paymentMethod === 'moncash') {
+        const payAmount = Math.round(total * splitPercent / 100);
         const response = await base44.functions.invoke('moncashCreatePayment', {
           orderId: orderNum,
-          amount: total,
-          description: `Commande ${orderNum} - ${product.name}`,
+          amount: payAmount,
+          description: `Commande ${orderNum} - ${product.name} (${splitPercent}%)`,
         });
         const paymentData = response.data;
         if (!paymentData?.success || !paymentData?.paymentUrl) {
@@ -211,6 +213,38 @@ export default function QuickCheckout() {
               <span className="font-bold text-slate-800">Carte de crédit/débit</span>
             </label>
           </RadioGroup>
+
+          {paymentMethod === 'moncash' && (
+            <div className="mt-4 pt-4 border-t border-slate-100">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Paiement fractionné</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setSplitPercent(50)}
+                  className={`p-4 rounded-xl border-2 text-center transition-all ${
+                    splitPercent === 50
+                      ? 'border-orange-500 bg-orange-50 shadow-sm'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <p className="text-2xl font-black text-orange-500">50%</p>
+                  <p className="text-sm font-bold text-slate-700 mt-1">Payer 50%</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{Math.round(total * 0.5).toLocaleString()} HTG</p>
+                </button>
+                <button
+                  onClick={() => setSplitPercent(100)}
+                  className={`p-4 rounded-xl border-2 text-center transition-all ${
+                    splitPercent === 100
+                      ? 'border-orange-500 bg-orange-50 shadow-sm'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <p className="text-2xl font-black text-slate-700">100%</p>
+                  <p className="text-sm font-bold text-slate-700 mt-1">Payer 100%</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{total.toLocaleString()} HTG</p>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Adresse */}
@@ -244,9 +278,12 @@ export default function QuickCheckout() {
         {/* Total + Payer */}
         <div className="bg-slate-800 rounded-xl p-5 text-white">
           <div className="flex justify-between font-black text-2xl text-orange-400">
-            <span>Total à Payer</span>
-            <span>{total.toLocaleString()} HTG</span>
+            <span>{paymentMethod === 'moncash' && splitPercent < 100 ? `Payer ${splitPercent}%` : 'Total à Payer'}</span>
+            <span>{paymentMethod === 'moncash' ? Math.round(total * splitPercent / 100).toLocaleString() : total.toLocaleString()} HTG</span>
           </div>
+          {paymentMethod === 'moncash' && splitPercent < 100 && (
+            <p className="text-slate-400 text-xs mt-1 text-right">Reste {Math.round(total * (100 - splitPercent) / 100).toLocaleString()} HTG à la livraison</p>
+          )}
         </div>
 
         <Button
