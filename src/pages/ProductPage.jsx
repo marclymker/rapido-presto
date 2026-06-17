@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Send, Store, MapPin, Share2, MessageCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Store, MapPin, Share2, MessageCircle, Loader2, CreditCard } from 'lucide-react';
 import { cacheProduct, getCachedProduct } from '@/lib/useProductCache';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
@@ -256,6 +256,36 @@ export default function ProductPage() {
           )}
         </div>
       )}
+
+      {/* Barre d'achat fixée en bas */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 py-3 safe-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center gap-3 max-w-lg mx-auto">
+          <div className="flex-1">
+            <p className="text-xl font-black text-orange-500">{price.toLocaleString()} HTG</p>
+            {originalPrice && <p className="text-xs text-gray-400 line-through">{originalPrice.toLocaleString()} HTG</p>}
+          </div>
+          <button
+            onClick={() => {
+              if (!user) {
+                base44.auth.redirectToLogin(window.location.pathname);
+                return;
+              }
+              trackMetaEvent('InitiateCheckout', {
+                content_ids: [product.id],
+                content_type: 'product',
+                content_name: product.name,
+                value: price,
+                currency: 'HTG',
+              });
+              window.location.href = `/QuickCheckout?product_id=${product.id}&quantity=1`;
+            }}
+            className="flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/25 transition-all active:scale-95"
+          >
+            <CreditCard className="w-5 h-5" />
+            Commander Maintenant
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
