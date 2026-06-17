@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
-import { Home, Package, User, Grid, Truck } from 'lucide-react';
+import { Home, Package, User, Truck } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
+import { useTabNavigation } from '@/lib/TabNavigationContext';
 
 export default function SmartBottomNav({ activeOrdersCount = 0 }) {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const location = useLocation();
+  const { activeTab, switchToTab } = useTabNavigation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,40 +26,31 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
   }, []);
 
   const navItems = [
-    // { id: 'home', label: 'Accueil', icon: Home, page: 'Home' }, // Caché - utiliser Products comme accueil
     { 
       id: 'products', 
       label: 'Accueil', 
       icon: Home, 
-      page: 'Products'
+      badge: null
     },
     { 
       id: 'tracking', 
       label: 'Suivi', 
       icon: Truck, 
-      page: 'DossierLookup'
+      badge: null
     },
     { 
       id: 'dashboard', 
       label: 'Boutique', 
       icon: Package, 
-      page: 'Dashboard',
       badge: activeOrdersCount
     },
     { 
       id: 'account', 
       label: 'Compte', 
       icon: User, 
-      page: 'Account'
+      badge: null
     }
   ];
-
-  const isActive = (page) => {
-    if (page === 'Home') {
-      return location.pathname === '/' || location.pathname === '/home' || location.pathname.includes('/home');
-    }
-    return location.pathname.includes(page.toLowerCase());
-  };
 
   return (
     <nav 
@@ -68,31 +58,31 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
         isVisible ? 'translate-y-0' : 'translate-y-full'
       }`}
       style={{ boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.05)' }}
+      aria-label="Navigation principale"
+      role="navigation"
     >
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const active = isActive(item.page);
+          const isActiveTab = item.id === activeTab;
           
           return (
-            <Link
+            <button
               key={item.id}
-              to={createPageUrl(item.page)}
-              onClick={() => {
-                if (active) {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-              }}
-              className="flex flex-col items-center justify-center w-full h-full gap-1 group relative"
+              onClick={() => switchToTab(item.id)}
+              className="flex flex-col items-center justify-center w-full h-full gap-1 group relative min-h-11 min-w-11 touch-manipulation"
+              aria-label={item.label}
+              aria-current={isActiveTab ? 'page' : undefined}
             >
               <div className="relative">
                 <Icon 
                   className={`w-6 h-6 transition-all ${
-                    active 
+                    isActiveTab 
                       ? 'text-orange-500 scale-110' 
                       : 'text-gray-400 group-active:scale-90'
                   }`}
-                  strokeWidth={active ? 2.5 : 2}
+                  strokeWidth={isActiveTab ? 2.5 : 2}
+                  aria-hidden="true"
                 />
                 {item.badge > 0 && (
                   <Badge className="absolute -top-1 -right-2 h-4 w-4 p-0 flex items-center justify-center bg-red-500 text-white text-[10px] border-2 border-white">
@@ -102,15 +92,15 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
               </div>
               <span 
                 className={`text-[10px] font-bold uppercase tracking-wide transition-colors ${
-                  active ? 'text-orange-500' : 'text-gray-400'
+                  isActiveTab ? 'text-orange-500' : 'text-gray-400'
                 }`}
               >
                 {item.label}
               </span>
-              {active && (
-                <div className="absolute bottom-0 w-8 h-0.5 bg-orange-500 rounded-full"></div>
+              {isActiveTab && (
+                <div className="absolute bottom-0 w-8 h-0.5 bg-orange-500 rounded-full" aria-hidden="true"></div>
               )}
-            </Link>
+            </button>
           );
         })}
       </div>
