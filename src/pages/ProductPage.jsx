@@ -95,7 +95,7 @@ export default function ProductPage() {
 
   useEffect(() => {
     if (!product) return;
-    const price = applyClientMargin(product.promo_price || product.price);
+    const price = applyClientMargin(product.promo_price || product.price, shop?.company_name || product.shop_name);
     trackMetaEvent('ViewContent', {
       content_ids: [product.id],
       content_type: 'product',
@@ -129,8 +129,8 @@ export default function ProductPage() {
   if (isLoading) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" /></div>;
   if (!product) return <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4"><p className="text-gray-500">Produit introuvable</p><button onClick={() => navigate(-1)} className="text-blue-600 font-semibold">← Retour</button></div>;
 
-  const price = applyClientMargin(product.promo_price || product.price);
-  const originalPrice = product.promo_price ? applyClientMargin(product.price) : null;
+  const price = applyClientMargin(product.promo_price || product.price, shop?.company_name || product.shop_name);
+  const originalPrice = product.promo_price ? applyClientMargin(product.price, shop?.company_name || product.shop_name) : null;
   const hasPromo = product.promo_price && product.promo_price < product.price;
   const allImages = [product.image_url, ...(product.additional_images || [])].filter(Boolean);
   const currentImg = allImages[imgIndex] || product.image_url;

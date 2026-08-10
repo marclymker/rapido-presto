@@ -3,8 +3,9 @@ import { ShoppingBag } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 
 const CompactProductCard = React.memo(({ product, shop, onClick }) => {
-  const price = applyClientMargin(product.promo_price || product.price);
-  const originalPrice = product.promo_price ? applyClientMargin(product.price) : null;
+  const shopName = shop?.company_name || product.shop_name;
+  const price = applyClientMargin(product.promo_price || product.price, shopName);
+  const originalPrice = product.promo_price ? applyClientMargin(product.price, shopName) : null;
   const hasPromo = product.promo_price && product.promo_price < product.price;
   const isNew = product.created_date && (Date.now() - new Date(product.created_date).getTime()) < 7 * 24 * 60 * 60 * 1000;
 

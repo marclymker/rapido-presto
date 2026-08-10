@@ -273,7 +273,7 @@ export default function Products() {
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity }) => {
       if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-      const price = applyClientMargin(product.promo_price || product.price);
+      const price = applyClientMargin(product.promo_price || product.price, product.shop_name);
       const shop = shopsMap[product.shop_id];
       await base44.entities.CartItem.create({
         user_id: user.id,

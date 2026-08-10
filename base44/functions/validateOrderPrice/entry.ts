@@ -26,7 +26,13 @@ function validateInput(schema, data) {
  * Empêche la manipulation des montants par le client
  */
 
-function applyClientMargin(price) {
+function isMarginExemptShop(shopName) {
+  const n = (shopName || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  return n.includes('makarios bridal') || n.includes('makarios');
+}
+
+function applyClientMargin(price, shopName) {
+  if (isMarginExemptShop(shopName)) return Math.round(price);
   return Math.round(price * 1.10);
 }
 
@@ -91,7 +97,7 @@ Deno.serve(async (req) => {
       }
 
       // Prix RÉEL depuis la base de données (avec marge)
-      const realPrice = applyClientMargin(product.promo_price || product.price);
+      const realPrice = applyClientMargin(product.promo_price || product.price, product.shop_name);
       
       // Calculer le total des personnalisations
       let customizationPrice = 0;

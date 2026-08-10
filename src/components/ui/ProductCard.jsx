@@ -3,11 +3,12 @@ import { Plus, Zap, Truck } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 
 const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, shop }) {
+  const shopName = shop?.company_name || product.shop_name;
   const hasPromo = product.promo_price && product.promo_price < product.price;
   const displayPrice = hasPromo
-    ? applyClientMargin(product.promo_price)
-    : applyClientMargin(product.price);
-  const originalDisplayPrice = applyClientMargin(product.price);
+    ? applyClientMargin(product.promo_price, shopName)
+    : applyClientMargin(product.price, shopName);
+  const originalDisplayPrice = applyClientMargin(product.price, shopName);
 
   // Texte dynamique pour le badge
   const fastText = shop?.name === "MAKARIOS BRIDAL" ? "Réponse Rapide" : "Livraison Rapide";

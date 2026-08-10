@@ -45,7 +45,7 @@ export default function QuickCheckout() {
   });
 
   const shop = shops[0];
-  const price = product ? applyClientMargin(product.promo_price || product.price) : 0;
+  const price = product ? applyClientMargin(product.promo_price || product.price, shop?.company_name || product.shop_name) : 0;
   const total = price * qty;
 
   const createOrderMutation = useMutation({
