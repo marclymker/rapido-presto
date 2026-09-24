@@ -1608,7 +1608,7 @@ key={i}
 
 className="bg-white h-8 text-sm text-slate-900"
 
-value={formData.product_attributes.custom_labels[`label_${i}`]}
+value={formData.product_attributes.custom_labels?.[`label_${i}`] ?? ''}
 
 onChange={(e) => setFormData({
 
@@ -1620,7 +1620,7 @@ product_attributes: {
 
 custom_labels: {
 
-...formData.product_attributes.custom_labels,
+...(formData.product_attributes.custom_labels || {}),
 
 [`label_${i}`]: e.target.value
 
