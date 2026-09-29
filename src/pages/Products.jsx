@@ -138,7 +138,7 @@ export default function Products() {
 
   const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
 
-  const [visibleCount, setVisibleCount] = useState(60);
+  const [visibleCount, setVisibleCount] = useState(24);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategories, setShowCategories] = useState(false);
@@ -199,7 +199,7 @@ export default function Products() {
 
   const { data: fullProducts = [] } = useQuery({
     queryKey: ['products-all'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 2000),
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200),
     enabled: loadAll,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
@@ -220,8 +220,8 @@ export default function Products() {
     },
     // Ne charger les conversations qu'après les produits initiaux, et seulement si pas en économie de données
     enabled: !!user?.id && firstProducts.length > 0 && !(navigator.connection?.saveData),
-    refetchInterval: 30000, // Réduit de 15s à 30s
-    staleTime: 20 * 1000,
+    refetchInterval: 60000, // Réduit à 60s pour économiser la data
+    staleTime: 40 * 1000,
   });
 
   const unreadCount = useMemo(() => conversations.reduce((sum, conv) => sum + (conv.unread_count || 0), 0), [conversations]);
@@ -429,14 +429,14 @@ export default function Products() {
 
   const handleSearchChange = useCallback((value) => {
     setSearchQuery(value);
-    setVisibleCount(60);
+    setVisibleCount(24);
     try { sessionStorage.setItem('marketplace_search', value); } catch (_) {}
     if (value.length > 2) trackSearch(value);
   }, [trackSearch]);
 
   const handleCategorySelect = useCallback((cat) => {
     setSelectedCategory(cat);
-    setVisibleCount(60);
+    setVisibleCount(24);
     setShowCategories(false);
     try { sessionStorage.setItem('marketplace_category', cat || ''); } catch (_) {}
     if (cat) trackCategoryView(cat);
@@ -704,7 +704,7 @@ export default function Products() {
               <div className="flex justify-center mt-4">
                 <button
                   type="button"
-                  onClick={() => setVisibleCount(c => c + 60)}
+                  onClick={() => setVisibleCount(c => c + 36)}
                   className="font-semibold px-8 py-2.5 rounded-full text-sm text-white transition-transform active:scale-95"
                   style={{backgroundColor: '#1877F2'}}
                 >
@@ -752,7 +752,7 @@ export default function Products() {
                 <div className="flex justify-center mt-4">
                   <button
                     type="button"
-                    onClick={() => setVisibleCount(c => c + 60)}
+                    onClick={() => setVisibleCount(c => c + 36)}
                     className="font-semibold px-8 py-2.5 rounded-full text-sm text-white transition-transform active:scale-95"
                     style={{backgroundColor: '#1877F2'}}
                   >
