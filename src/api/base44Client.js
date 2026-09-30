@@ -26,7 +26,7 @@ import {
   OAuthProvider
 } from "firebase/auth";
 
-// Clés officielles de votre projet Google Firebase
+// Vos clés officielles Google Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyC33gtUjuwvkgoEynx4HxoYpkEgPw2EK5k",
   authDomain: "rapido-presto-f072a.firebaseapp.com",
@@ -37,7 +37,6 @@ const firebaseConfig = {
   measurementId: "G-MSRQPDQJ5S"
 };
 
-// Initialisation de Google Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 export const auth = getAuth(app);
@@ -57,7 +56,7 @@ function showAuthModal() {
       <h3 style="font-size:20px;font-weight:700;margin:0 0 6px;text-align:center;">Connexion Kairos</h3>
       <p style="font-size:13px;color:#6b7280;text-align:center;margin:0 0 20px;">Connectez-vous pour accéder à votre boutique et vos commandes.</p>
       
-      <button id="kairos-google-btn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:white;border:1px solid #d1d5db;border-radius:10px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:14px;transition:background 0.2s;">
+      <button id="kairos-google-btn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:white;border:1px solid #d1d5db;border-radius:10px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:14px;">
         <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3h3.86c2.26-2.09 3.68-5.17 3.68-9.09z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.7 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
         Continuer avec Google
       </button>
@@ -68,8 +67,8 @@ function showAuthModal() {
         <div style="flex:1;height:1px;background:#e5e7eb;"></div>
       </div>
 
-      <input id="kairos-email" type="email" placeholder="Adresse e-mail" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:10px;outline:none;" />
-      <input id="kairos-password" type="password" placeholder="Mot de passe" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:14px;outline:none;" />
+      <input id="kairos-email" type="email" placeholder="Adresse e-mail" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:10px;" />
+      <input id="kairos-password" type="password" placeholder="Mot de passe" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:14px;" />
       
       <button id="kairos-submit-btn" style="width:100%;background:#ea580c;color:white;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;">Se connecter / S'inscrire</button>
       <div id="kairos-error" style="color:#dc2626;font-size:12px;margin-top:10px;text-align:center;display:none;"></div>
@@ -114,13 +113,13 @@ function showAuthModal() {
       modal.remove();
       window.location.reload();
     } catch (e) {
-      err.innerText = e.message || "Erreur lors de la connexion.";
+      err.innerText = e.message || "Erreur de connexion";
       err.style.display = "block";
     }
   };
 }
 
-// Gestionnaire dynamique universel pour vos 16 tables (Product, Shop, Order, CartItem, etc.)
+// Gestionnaire dynamique universel pour vos 16 tables
 const createEntityHandler = (entityName) => ({
   async list(sortField, maxLimit = 100) {
     try {
@@ -252,7 +251,13 @@ export const base44 = {
       };
     },
 
-    // Déclencheurs de la fenêtre de connexion
+    async updateMe(data) {
+      const user = auth.currentUser;
+      if (!user) return null;
+      await setDoc(doc(db, "User", user.uid), data, { merge: true });
+      return { id: user.uid, ...data };
+    },
+
     redirectToLogin() {
       showAuthModal();
     },
