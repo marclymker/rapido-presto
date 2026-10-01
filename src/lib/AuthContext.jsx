@@ -1,7 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { auth, base44, db } from '@/api/base44Client';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { base44 } from '@/api/base44Client';
 
 const AuthContext = createContext();
 
@@ -11,32 +9,13 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState(null);
+  const [appPublicSettings, setAppPublicSettings] = useState({ id: 'rapido-presto' });
 
   useEffect(() => {
-    // Écoute en direct l'état de connexion Google Firebase
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        let profileData = {};
-        try {
-          const userDoc = await getDoc(doc(db, "User", firebaseUser.uid));
-          if (userDoc.exists()) {
-            profileData = userDoc.data();
-          }
-        } catch (e) {
-          console.warn("Profil Firestore non trouvé:", e);
-        }
-
-        const userData = {
-          id: firebaseUser.uid,
-          email: firebaseUser.email,
-          full_name: firebaseUser.displayName || profileData.full_name || firebaseUser.email?.split('@')[0],
-          avatar_url: firebaseUser.photoURL || profileData.avatar_url,
-          current_profile: profileData.current_profile || 'client',
-          role: profileData.role || 'user',
-          ...profileData
-        };
-
-        setUser(userData);
+    // Écoute en temps réel l'état d'authentification Firebase
+    const unsubscribe = base44.auth.onAuthStateChanged((currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
         setIsAuthenticated(true);
       } else {
         setUser(null);
@@ -55,7 +34,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
-    base44.auth.redirectToLogin();
+    base44.auth.redirectToLogin('/Dashboard');
+  };
+
+  const checkAppState = async () => {
+    setIsLoadingAuth(false);
+    setIsLoadingPublicSettings(false);
   };
 
   return (
@@ -65,9 +49,10 @@ export const AuthProvider = ({ children }) => {
       isLoadingAuth,
       isLoadingPublicSettings,
       authError,
+      appPublicSettings,
       logout,
       navigateToLogin,
-      checkAppState: () => {}
+      checkAppState
     }}>
       {children}
     </AuthContext.Provider>
