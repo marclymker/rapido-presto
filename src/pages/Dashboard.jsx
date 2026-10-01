@@ -21,7 +21,7 @@ export default function Dashboard() {
     });
   }, []);
 
-  // Récupère la boutique de l'utilisateur (ou la crée automatiquement)
+  // Récupère la boutique de l'utilisateur ou la crée
   const { data: myShop } = useQuery({
     queryKey: ['my-shop', user?.id],
     queryFn: async () => {
@@ -41,14 +41,14 @@ export default function Dashboard() {
     enabled: !!user?.id
   });
 
-  // Commandes reçues par la boutique
+  // Commandes reçues pour la boutique
   const { data: receivedOrders = [] } = useQuery({
     queryKey: ['shop-orders', myShop?.id],
     queryFn: () => base44.entities.Order.filter({ shop_id: myShop?.id }, '-created_date'),
     enabled: !!myShop?.id
   });
 
-  // Achats passés par l'utilisateur
+  // Achats passés en tant que client
   const { data: placedOrders = [] } = useQuery({
     queryKey: ['client-orders', user?.id],
     queryFn: () => base44.entities.Order.filter({ client_id: user?.id }, '-created_date'),
@@ -71,9 +71,9 @@ export default function Dashboard() {
           <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Store className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold text-slate-800 mb-1">Espace Marchand</h2>
+          <h2 className="text-xl font-bold text-slate-800 mb-1">Espace Boutique</h2>
           <p className="text-slate-500 text-sm mb-6">
-            Connectez-vous pour accéder à votre boutique, gérer vos produits et suivre vos commandes.
+            Connectez-vous pour accéder à votre boutique, publier des articles et gérer vos commandes.
           </p>
           <Button 
             onClick={() => base44.auth.redirectToLogin('/Dashboard')}
