@@ -26,7 +26,6 @@ import {
   OAuthProvider
 } from "firebase/auth";
 
-// Configuration Firebase officielle de Rapido Presto
 const firebaseConfig = {
   apiKey: "AIzaSyC33gtUjuwvkgoEynx4HxoYpkEgPw2EK5k",
   authDomain: "rapido-presto-f072a.firebaseapp.com",
@@ -41,7 +40,6 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-// Gestionnaire d'entités Firestore
 const createEntityHandler = (entityName) => ({
   async list(sortField, maxLimit = 100) {
     try {
@@ -159,7 +157,7 @@ export const base44 = {
       };
     },
 
-    // Ouvre la popup de connexion Google et redirige ensuite vers la page demandée
+    // Ouvre la fenêtre Google en 1 clic et redirige vers la bonne page
     async redirectToLogin(nextUrl = '/Dashboard') {
       try {
         const provider = new GoogleAuthProvider();
@@ -172,7 +170,7 @@ export const base44 = {
           }
         }
       } catch (err) {
-        console.error("Erreur de connexion Google:", err);
+        console.error("Erreur connexion Google:", err);
       }
     },
 
