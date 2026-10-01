@@ -12,7 +12,6 @@ export const AuthProvider = ({ children }) => {
   const [appPublicSettings, setAppPublicSettings] = useState({ id: 'rapido-presto' });
 
   useEffect(() => {
-    // Écoute en temps réel l'état d'authentification Firebase
     const unsubscribe = base44.auth.onAuthStateChanged((currentUser) => {
       if (currentUser) {
         setUser(currentUser);
