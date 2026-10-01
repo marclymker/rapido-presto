@@ -3,7 +3,7 @@
 // Optimisé pour connexions lentes (Haïti)
 // ============================================================
 
-const CACHE_VERSION = 'rp-v3';
+const CACHE_VERSION = 'rp-v4';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const IMAGE_CACHE   = `${CACHE_VERSION}-images`;
 const PAGE_CACHE    = `${CACHE_VERSION}-pages`;
