@@ -125,8 +125,7 @@ export const firebase = {
   },
   functions: {
     async invoke(name, params = {}) {
-      const baseUrl = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL;
-      if (!baseUrl) throw new Error(`Fonction Firebase « ${name} » non configurée. Définissez VITE_FIREBASE_FUNCTIONS_URL et déployez la fonction côté serveur.`);
+      const baseUrl = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || 'https://us-central1-rapido-presto-f072a.cloudfunctions.net/api';
       const user = auth.currentUser;
       const token = user ? await user.getIdToken() : null;
       const response = await fetch(`${baseUrl.replace(/\/$/, '')}/${encodeURIComponent(name)}`, {
