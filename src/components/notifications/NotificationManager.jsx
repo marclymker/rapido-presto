@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import Pusher from 'pusher-js';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 
 export function useBrowserNotifications(user) {
   const audioRef = useRef(null);
@@ -27,7 +27,7 @@ export function useBrowserNotifications(user) {
   useEffect(() => {
     audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
     audioRef.current.load();
-    
+
     const unlockAudio = () => {
       audioRef.current.play().then(() => {
         audioRef.current.pause();
@@ -36,16 +36,16 @@ export function useBrowserNotifications(user) {
       document.removeEventListener('click', unlockAudio);
       document.removeEventListener('touchstart', unlockAudio);
     };
-    
+
     document.addEventListener('click', unlockAudio);
     document.addEventListener('touchstart', unlockAudio);
-    
+
     return () => {
       document.removeEventListener('click', unlockAudio);
       document.removeEventListener('touchstart', unlockAudio);
     };
   }, []);
-  
+
   // 2. Fonction d'alerte visuelle et sonore
   const playAlert = useCallback((data) => {
     // 1. Extraire les données de façon sécurisée (Backend utilise camelCase pour orderId)
@@ -53,12 +53,12 @@ export function useBrowserNotifications(user) {
     const orderNum = data.orderNumber || data.order_number || 'Inconnu';
     const total = data.total || '0';
     const orderInfo = `Commande #${orderNum} - ${total} HTG`;
-    
+
     console.log("🔔 Exécution de playAlert pour:", orderInfo);
 
     // 2. VIBRATION (Important pour Android)
     if ("vibrate" in navigator) {
-      navigator.vibrate([500, 200, 500, 200, 500]); 
+      navigator.vibrate([500, 200, 500, 200, 500]);
     }
 
     // 3. LE SON (On force le reset avant de jouer)
@@ -66,7 +66,7 @@ export function useBrowserNotifications(user) {
       audioRef.current.pause(); // Stop si déjà en cours
       audioRef.current.currentTime = 0;
       audioRef.current.volume = 1.0;
-      
+
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch(err => console.error("Audio bloqué par Android/Browser:", err));
@@ -82,7 +82,7 @@ export function useBrowserNotifications(user) {
           tag: `order-${orderId}`,
           requireInteraction: true,
           vibrate: [500, 200, 500],
-          silent: false 
+          silent: false
         });
 
         notification.onclick = () => {
@@ -108,7 +108,7 @@ export function useBrowserNotifications(user) {
 
   // 3. Récupérer la config Pusher
   useEffect(() => {
-    base44.functions.invoke('getPusherConfig')
+    firebase.functions.invoke('getPusherConfig')
       .then(res => setPusherConfig(res.data))
       .catch(err => console.error('Erreur config Pusher:', err));
   }, []);
@@ -126,7 +126,7 @@ export function useBrowserNotifications(user) {
      * Correspond au backend : `shop-${shop.user_id}`
      */
     const shopChannel = pusherRef.current.subscribe(`shop-${user.id}`);
-    
+
     shopChannel.bind('new-order', (data) => {
       console.log('🔔 Nouvelle commande reçue via Pusher:', data);
       playAlert(data);
@@ -136,7 +136,7 @@ export function useBrowserNotifications(user) {
      * Correspond au backend : `user-${order.client_id}`
      */
     const userChannel = pusherRef.current.subscribe(`user-${user.id}`);
-    
+
     userChannel.bind('order-status-update', (data) => {
       console.log('📦 Mise à jour de commande:', data);
       toast.info(data.title, {

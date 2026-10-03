@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Tag, Store, ShoppingBag, ShoppingCart, X, Clock, ChevronRight } from 'lucide-react';
+import { Search, Store, ShoppingBag, X, Bell, Bookmark, ChevronLeft, ChevronsRight } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -14,14 +14,38 @@ import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { createPageUrl } from '@/utils';
 import { useGuestCart } from '@/components/cart/useGuestCart';
-import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
-import CompactProductCard from '@/components/home/CompactProductCard';
-import CategoryRow from '@/components/home/CategoryRow';
+import { FB_TAXONOMY, findById } from '@/lib/fbTaxonomy';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
-import { Button } from "@/components/ui/button";
 
 const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
+
+
+// Tuile "Suggestions pour vous" : image, boutique + chevrons rouges, nom, prix, signet à droite
+const ShopTile = React.memo(({ product, shop, saved, onSave, onClick }) => {
+  const shopName = shop?.company_name || product.shop_name;
+  const price = applyClientMargin(product.promo_price || product.price, shopName);
+  const img = product.image_url ? `${product.image_url}${product.image_url.includes('?') ? '&' : '?'}width=400&quality=70&resize=cover` : null;
+  return (
+    <div className="cursor-pointer" onClick={onClick}>
+      <div className="w-full bg-[#EFEFEF] overflow-hidden" style={{ aspectRatio: '10 / 11' }}>
+        {img ? <img src={img} alt={product.image_alt || product.name} loading="lazy" className="w-full h-full object-cover" />
+             : <div className="w-full h-full flex items-center justify-center text-neutral-300"><ShoppingBag className="w-8 h-8" /></div>}
+      </div>
+      <div className="flex items-start justify-between gap-1 pt-1.5">
+        <div className="min-w-0 text-[13px] leading-[17px]">
+          <p className="font-semibold text-[#262626] truncate">{shopName}<ChevronsRight className="inline w-3.5 h-3.5 text-red-500 -mt-0.5" /></p>
+          <p className="text-[#8E8E8E] truncate">{product.name}</p>
+          <p className="text-[#8E8E8E]">{price.toLocaleString()} HTG</p>
+        </div>
+        <button aria-label="Enregistrer" onClick={(e) => { e.stopPropagation(); onSave(product.id); }} className="p-0.5 shrink-0">
+          <Bookmark className="w-[22px] h-[22px] text-[#262626]" fill={saved ? 'currentColor' : 'none'} strokeWidth={1.75} />
+        </button>
+      </div>
+    </div>
+  );
+});
+ShopTile.displayName = 'ShopTile';
 
 export default function Home() {
   const { user } = useAuth();
@@ -51,21 +75,21 @@ export default function Home() {
 
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 1000),
+    queryFn: () => firebase.entities.Product.filter({ is_available: true }, '-created_date', 1000),
     staleTime: 10 * 60 * 1000,
     refetchInterval: false,
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => firebase.entities.Shop.filter({ is_active: true }),
     staleTime: 10 * 60 * 1000,
     refetchInterval: false,
   });
 
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
-    queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
+    queryFn: () => firebase.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id,
   });
 
@@ -92,9 +116,9 @@ export default function Home() {
       const price = getClientPrice(product);
       const shop = shops.find(s => s.id === product.shop_id);
       if (existing) {
-        return base44.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
+        return firebase.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
       }
-      return base44.entities.CartItem.create({
+      return firebase.entities.CartItem.create({
         user_id: user.id,
         product_id: product.id,
         product_name: product.name,
@@ -264,258 +288,124 @@ export default function Home() {
     return groups;
   }, [allProducts, isFiltered]);
 
+  const [savedIds, setSavedIds] = useState(() => { try { return JSON.parse(localStorage.getItem('saved_products') || '[]'); } catch (_) { return []; } });
+  const [allShops, setAllShops] = useState(false);
+  const toggleSave = useCallback((id) => {
+    setSavedIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      try { localStorage.setItem('saved_products', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
+  }, []);
+  const featured = useMemo(() => allProducts.filter(p => p.image_url).slice(0, 3), [allProducts]);
+  const collage = useMemo(() => {
+    const imgs = [...cartItems.map(i => i.product_image), ...allProducts.filter(p => savedIds.includes(p.id)).map(p => p.image_url), ...allProducts.slice(0, 8).map(p => p.image_url)].filter(Boolean);
+    return [...new Set(imgs)].slice(0, 4);
+  }, [cartItems, allProducts, savedIds]);
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
-
-
-      <Helmet>
-        <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
-      </Helmet>
-
+    <div className="flex flex-col min-h-screen bg-white pb-20 text-[#262626]">
+      <Helmet><meta name="google-adsense-account" content="ca-pub-2183521622591299" /></Helmet>
       <SEO
-        title={selectedFbCatId ? `${findById(selectedFbCatId)?.name} - Marketplace Rapido Presto` : 'Marketplace - Tous les produits | Rapido Presto'}
-        description={selectedFbCatId ? `Découvrez tous nos produits ${findById(selectedFbCatId)?.name} disponibles en Haïti - Livraison rapide avec Rapido Presto` : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
-        keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedFbCatId ? findById(selectedFbCatId)?.name : 'produits'].filter(Boolean)}
+        title={selectedFbCatId ? `${findById(selectedFbCatId)?.name} - Shop Rapido Presto` : 'Shop - Tous les produits | Rapido Presto'}
+        description="Découvrez les produits des boutiques haïtiennes sur Rapido Presto. Livraison rapide en Haïti."
+        keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide']}
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
-
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-          <div className="flex flex-col leading-tight cursor-pointer" onClick={() => window.location.reload()}>
-            <h1 className="text-xl font-bold tracking-tight leading-none m-0 p-0 text-slate-900">Rapido</h1>
-            <span className="text-sm text-orange-400 -mt-1 ml-4">Presto</span>
-          </div>
-          <div
-            className="relative flex items-center cursor-pointer"
-            onClick={() => window.location.href = createPageUrl('Cart')}
-          >
-            <ShoppingCart className="w-6 h-6 text-slate-700" />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
-                {cartCount}
-              </span>
-            )}
+      <header className="bg-white sticky top-0 z-40 border-b border-[#DBDBDB]" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="h-11 px-3 grid grid-cols-3 items-center">
+          <button onClick={() => navigate(-1)} aria-label="Retour" className="justify-self-start"><ChevronLeft className="w-7 h-7" strokeWidth={1.75} /></button>
+          <h1 className="text-[16px] font-semibold text-center">Rapido Shop</h1>
+          <div className="justify-self-end flex items-center gap-4">
+            <button onClick={() => navigate(createPageUrl('Orders'))} aria-label="Notifications"><Bell className="w-6 h-6" strokeWidth={1.75} /></button>
+            <button onClick={() => navigate(createPageUrl('Cart'))} aria-label="Panier" className="flex items-center gap-1">
+              <ShoppingBag className="w-6 h-6" strokeWidth={1.75} /><span className="text-[15px]">{cartCount}</span>
+            </button>
           </div>
         </div>
+      </header>
 
-        {/* Search Bar */}
-        <div className="px-4 pb-3">
-          <div className="flex items-center bg-slate-100 rounded-full px-4 py-2.5 gap-2">
-            <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="Rechercher un produit..."
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="bg-transparent outline-none w-full text-sm text-slate-700 placeholder:text-slate-400"
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery('')}>
-                <X className="w-4 h-4 text-slate-400" />
-              </button>
-            )}
+      <PullToRefresh onRefresh={async () => { queryClient.invalidateQueries(['all-products']); queryClient.invalidateQueries(['shops']); }}>
+        <main className="flex-1">
+          <div className="px-4 pt-3">
+            <div className="flex items-center bg-[#EFEFEF] rounded-lg px-3 py-2 gap-2">
+              <Search className="w-4 h-4 text-[#8E8E8E]" />
+              <input type="text" placeholder="Rechercher" value={searchQuery} onChange={(e) => handleSearchChange(e.target.value)} className="bg-transparent outline-none w-full text-sm" />
+              {searchQuery && <button onClick={() => setSearchQuery('')}><X className="w-4 h-4 text-[#8E8E8E]" /></button>}
+            </div>
           </div>
-        </div>
+          <Suspense fallback={null}><MerchantProfileAlert user={user} /></Suspense>
 
-        {/* Action Buttons */}
-        <div className="px-4 pb-3 flex gap-2">
-          <button
-            onClick={() => navigate('/Dashboard')}
-            className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white py-2 px-4 rounded-full text-sm font-semibold hover:bg-orange-600 transition"
-          >
-            <Store className="w-4 h-4" />
-            <span>Ma boutique</span>
-          </button>
-          <button
-            onClick={() => setShowCategories(!showCategories)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm font-semibold transition ${
-              showCategories || selectedFbCatId
-                ? 'bg-orange-500 text-white'
-                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-            }`}
-          >
-            <Tag className="w-4 h-4" />
-            <span>{selectedFbCatId ? findById(selectedFbCatId)?.name : 'Catégories'}</span>
-          </button>
-        </div>
-
-        {/* Categories dropdown - Taxonomy Facebook/Google uniquement */}
-        {showCategories && (
-          <div className="px-4 pb-3 space-y-2">
-            <div className="flex flex-wrap gap-1.5">
-              {FB_TAXONOMY.map(cat => (
-                <button key={cat.id} onClick={() => { setFbLevel1Id(fbLevel1Id === cat.id ? null : cat.id); if (selectedFbCatId) setSelectedFbCatId(null); }}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${fbLevel1Id === cat.id ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'}`}>
-                  {cat.icon} {cat.name}
+          {!isFiltered && featured.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto snap-x snap-mandatory no-scrollbar px-4 pt-3">
+              {featured.map(p => (
+                <button key={p.id} onClick={() => handleProductClick(p)} className="relative shrink-0 w-full snap-center overflow-hidden rounded-lg bg-[#EFEFEF]" style={{ height: 150 }}>
+                  <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                  <span className="absolute inset-x-0 bottom-0 p-3 text-left text-white bg-gradient-to-t from-black/60 to-transparent">
+                    <span className="block text-[17px] font-semibold leading-tight">{p.name}</span>
+                    <span className="block text-[12px] opacity-90">Sélectionné par Rapido Presto</span>
+                  </span>
                 </button>
               ))}
             </div>
-            {fbLevel1Id && getChildren(fbLevel1Id).length > 0 && (
-              <div className="flex flex-wrap gap-1.5 ml-3 items-center">
-                <ChevronRight className="w-3 h-3 text-slate-400" />
-                {getChildren(fbLevel1Id).map(child => (
-                  <button key={child.id} onClick={() => setSelectedFbCatId(selectedFbCatId === child.id ? null : child.id)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${selectedFbCatId === child.id ? 'bg-orange-500 text-white border-orange-500' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
-                    {child.name}{child.children?.length > 0 && ' ›'}
+          )}
+
+          {!isFiltered && shops.length > 0 && (
+            <section className="pt-5">
+              <div className="flex items-center justify-between px-4 mb-3">
+                <h2 className="text-[16px] font-semibold">Boutiques</h2>
+                <button onClick={() => setAllShops(v => !v)} className="text-[14px]" style={{ color: '#3897F0' }}>{allShops ? 'Réduire' : 'Voir tout'}</button>
+              </div>
+              <div className={allShops ? 'flex flex-wrap gap-x-3 gap-y-4 px-4' : 'flex gap-3 overflow-x-auto no-scrollbar px-4'}>
+                {shops.map(s => (
+                  <button key={s.id} onClick={() => handleSearchChange(s.company_name || '')} className="shrink-0 w-[72px] flex flex-col items-center gap-1.5">
+                    {s.company_logo_url
+                      ? <img src={s.company_logo_url} alt={s.company_name} loading="lazy" className="w-16 h-16 rounded-full object-cover border border-[#DBDBDB]" />
+                      : <span className="w-16 h-16 rounded-full bg-[#EFEFEF] flex items-center justify-center"><Store className="w-6 h-6 text-[#8E8E8E]" /></span>}
+                    <span className="text-[12px] w-full truncate text-center">{s.company_name}</span>
                   </button>
                 ))}
               </div>
-            )}
-            {selectedFbCatId && getChildren(selectedFbCatId).length > 0 && (
-              <div className="flex flex-wrap gap-1.5 ml-6 items-center">
-                <ChevronRight className="w-3 h-3 text-slate-400" />
-                {getChildren(selectedFbCatId).map(child => (
-                  <button key={child.id} onClick={() => setSelectedFbCatId(child.id)}
-                    className="px-2.5 py-1 rounded-full text-[11px] font-medium border bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 transition">
-                    {child.name}
-                  </button>
+            </section>
+          )}
+
+          <section className="px-4 pt-5">
+            <h2 className="text-[16px] font-semibold mb-3">{selectedFbCatId ? findById(selectedFbCatId)?.name : searchQuery ? 'Résultats' : 'Suggestions pour vous'}</h2>
+            {!searchQuery && (
+              <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-3">
+                {FB_TAXONOMY.map(c => (
+                  <button key={c.id} onClick={() => { const on = selectedFbCatId === c.id; setFbLevel1Id(on ? null : c.id); setSelectedFbCatId(on ? null : c.id); }}
+                    className={`shrink-0 px-3 py-1.5 rounded-lg text-[13px] font-semibold ${selectedFbCatId === c.id ? 'bg-[#262626] text-white' : 'bg-[#EFEFEF]'}`}>{c.name}</button>
                 ))}
               </div>
             )}
-            {selectedFbCatId && (
-              <div className="mt-1">
-                <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                  {findById(selectedFbCatId)?.name}
-                  <button onClick={() => { setSelectedFbCatId(null); setFbLevel1Id(null); }}><X className="w-2.5 h-2.5" /></button>
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-      </header>
-
-      <Suspense fallback={null}>
-        <MerchantProfileAlert user={user} />
-      </Suspense>
-
-      {/* Main Content */}
-      <PullToRefresh onRefresh={async () => { queryClient.invalidateQueries(['all-products']); queryClient.invalidateQueries(['shops']); }}>
-        <main className="flex-1 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-slate-800">
-              {selectedFbCatId ? findById(selectedFbCatId)?.name : 'Sélection du jour'}
-            </h2>
-            <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
-          </div>
-
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
-              <p className="text-sm text-slate-500">Chargement...</p>
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-5xl mb-3">📦</div>
-              <p className="text-slate-500">Aucun produit trouvé</p>
-            </div>
-          ) : isFiltered ? (
-            /* Grille filtrée compacte */
-            <div className="grid grid-cols-3 gap-1.5">
-              {visibleProducts.map(product => (
-                <CompactProductCard
-                  key={product.id}
-                  product={product}
-                  shop={shopsMap[product.shop_id]}
-                  onClick={() => handleProductClick(product)}
-                />
-              ))}
-            </div>
-          ) : (
-            /* Mode sections horizontales par catégorie */
-            <div className="-mx-4">
-              {/* Sections catégories horizontales */}
-              {Object.entries(categoryGroups).map(([cat, products]) => (
-                <CategoryRow
-                  key={cat}
-                  title={cat}
-                  products={products}
-                  shops={shops}
-                  onProductClick={handleProductClick}
-                  onSeeAll={() => {
-                    setSelectedCategory(cat);
-                    setShowCategories(false);
-                  }}
-                />
-              ))}
-
-              {/* Grille globale compacte en bas */}
-              <div className="px-4 mt-2">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-bold text-slate-800">🔀 Tout voir</h3>
-                  <span className="text-[11px] text-slate-400">{filteredProducts.length} produits</span>
-                </div>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {visibleProducts.map(product => (
-                    <CompactProductCard
-                      key={product.id}
-                      product={product}
-                      shop={shopsMap[product.shop_id]}
-                      onClick={() => handleProductClick(product)}
-                    />
-                  ))}
-                </div>
-                {visibleCount < filteredProducts.length && (
-                  <div className="flex justify-center mt-4">
-                    <button
-                      onClick={() => setVisibleCount(c => c + 60)}
-                      className="bg-orange-500 text-white font-semibold px-8 py-2.5 rounded-full text-sm"
-                    >
-                      Voir plus ({filteredProducts.length - visibleCount} restants)
-                    </button>
+            {isLoading ? (
+              <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#262626]" /></div>
+            ) : visibleProducts.length === 0 ? (
+              <p className="text-center text-[#8E8E8E] py-16 text-sm">Aucun produit trouvé</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-x-2.5 gap-y-5">
+                {!isFiltered && collage.length > 0 && (
+                  <div className="cursor-pointer" onClick={() => navigate(createPageUrl('Cart'))}>
+                    <div className="grid grid-cols-2 gap-[2px] overflow-hidden bg-[#EFEFEF]" style={{ aspectRatio: '10 / 11' }}>
+                      {[0, 1, 2, 3].map(i => collage[i] ? <img key={i} src={collage[i]} alt="" className="w-full h-full object-cover" loading="lazy" /> : <span key={i} />)}
+                    </div>
+                    <div className="pt-1.5 text-[13px] leading-[17px]">
+                      <p className="font-semibold">Continuer vos achats</p>
+                      <p className="text-[#8E8E8E]">Panier, enregistrés et vus récemment</p>
+                    </div>
                   </div>
                 )}
+                {visibleProducts.map(p => (
+                  <ShopTile key={p.id} product={p} shop={shopsMap[p.shop_id]} saved={savedIds.includes(p.id)} onSave={toggleSave} onClick={() => handleProductClick(p)} />
+                ))}
               </div>
-            </div>
-          )}
+            )}
+            {visibleCount < filteredProducts.length && (
+              <div className="flex justify-center my-5"><button onClick={() => setVisibleCount(c => c + 60)} className="px-6 py-2 rounded-lg bg-[#EFEFEF] text-sm font-semibold">Voir plus</button></div>
+            )}
+          </section>
         </main>
       </PullToRefresh>
-
-      {/* Floating cart button */}
-      {user && cartCount > 0 && (
-        <div
-          className="fixed bottom-24 right-4 z-40 cursor-pointer"
-          onClick={() => window.location.href = createPageUrl('Cart')}
-        >
-          <div className="bg-white border-2 border-orange-500 rounded-full p-3 shadow-2xl flex items-center gap-2 hover:scale-105 transition-transform">
-            <div className="relative">
-              <ShoppingCart className="w-6 h-6 text-gray-800" />
-              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                {cartCount}
-              </span>
-            </div>
-            <span className="font-bold text-sm text-gray-900 pr-2">{cartTotal.toFixed(0)} G</span>
-          </div>
-        </div>
-      )}
-
-      {/* Cart reminder */}
-      {showCartReminder && cartCount > 0 && (
-        <div className="fixed top-32 right-4 z-50 animate-in slide-in-from-right duration-500 max-w-sm w-full md:w-80">
-          <div className="bg-white border-l-4 border-orange-500 shadow-2xl rounded-lg p-4 relative">
-            <button onClick={() => setShowCartReminder(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
-              <X className="w-4 h-4" />
-            </button>
-            <div className="flex items-start gap-3">
-              <div className="bg-orange-100 p-2 rounded-full">
-                <Clock className="w-6 h-6 text-orange-600" />
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900">N'oubliez pas vos achats !</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  Il vous reste <span className="font-bold">{cartCount} article{cartCount > 1 ? 's' : ''}</span> dans votre panier.
-                </p>
-              </div>
-            </div>
-            <Button
-              className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold"
-              onClick={() => window.location.href = createPageUrl('Cart')}
-            >
-              Finaliser ma commande
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

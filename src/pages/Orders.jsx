@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -28,14 +28,14 @@ export default function Orders() {
   const [reviewOrder, setReviewOrder] = useState(null);
   const [cancellingOrder, setCancellingOrder] = useState(null);
   const queryClient = useQueryClient();
-  
+
   // Auto-refresh toutes les 60 secondes
-  useAutoRefresh({ 
-    queryKey: ['my-orders'], 
+  useAutoRefresh({
+    queryKey: ['my-orders'],
     refetchInterval: 60000,
-    enabled: !!user?.id 
+    enabled: !!user?.id
   });
-  
+
   // Background sync intelligent
   const { syncStatus, lastSync, connectionType } = useBackgroundSync({
     userType: 'client',
@@ -43,14 +43,14 @@ export default function Orders() {
   });
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebase.auth.me().then(u => {
       setUser(u);
     }).catch(() => {});
   }, []);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', user?.id],
-    queryFn: () => base44.entities.Order.filter({ client_id: user?.id }, '-created_date'),
+    queryFn: () => firebase.entities.Order.filter({ client_id: user?.id }, '-created_date'),
     enabled: !!user?.id,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
@@ -81,7 +81,7 @@ export default function Orders() {
   // Fetch reviews to check if order was already reviewed
   const { data: reviews = [] } = useQuery({
     queryKey: ['reviews', user?.id],
-    queryFn: () => base44.entities.Review.filter({ client_id: user?.id }),
+    queryFn: () => firebase.entities.Review.filter({ client_id: user?.id }),
     enabled: !!user?.id
   });
 
@@ -91,7 +91,7 @@ export default function Orders() {
 
   const handleSubmitReview = async (orderId, reviewData) => {
     try {
-      await base44.functions.invoke('submitReview', {
+      await firebase.functions.invoke('submitReview', {
         orderId,
         ...reviewData
       });
@@ -104,7 +104,7 @@ export default function Orders() {
 
   const cancelOrderMutation = useMutation({
     mutationFn: async ({ orderId, cancellationData }) => {
-      return await base44.functions.invoke('cancelOrder', {
+      return await firebase.functions.invoke('cancelOrder', {
         orderId,
         ...cancellationData
       });
@@ -112,7 +112,7 @@ export default function Orders() {
     onSuccess: () => {
       queryClient.invalidateQueries(['orders']);
       queryClient.invalidateQueries(['cart']);
-      base44.auth.me().then(u => setUser(u));
+      firebase.auth.me().then(u => setUser(u));
       toast.success('Commande annulée avec succès');
       setCancellingOrder(null);
     },
@@ -129,10 +129,10 @@ export default function Orders() {
     });
   };
 
-  const activeOrders = orders.filter(o => 
+  const activeOrders = orders.filter(o =>
     !['delivered', 'cancelled'].includes(o.status)
   );
-  const historyOrders = orders.filter(o => 
+  const historyOrders = orders.filter(o =>
     ['delivered', 'cancelled'].includes(o.status)
   );
 
@@ -141,7 +141,7 @@ export default function Orders() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={() => setSelectedOrder(order)}
-      className="bg-white rounded-xl p-4 cursor-pointer hover:shadow-lg transition-shadow border border-slate-100"
+      className="bg-white rounded-lg p-4 cursor-pointer hover: transition-shadow border border-slate-100"
     >
       <div className="flex items-start justify-between mb-4">
         <div>
@@ -153,7 +153,7 @@ export default function Orders() {
             {formatHaitiDate(order.created_date)}
           </p>
         </div>
-        <span className="font-bold text-orange-500">{order.total} HTG</span>
+        <span className="font-bold text-neutral-900">{order.total} HTG</span>
       </div>
 
       {/* Progress Bar */}
@@ -161,11 +161,11 @@ export default function Orders() {
 
       {/* Carte en temps réel pour les commandes en livraison */}
       {['driver_assigned', 'in_delivery'].includes(order.status) && order.driver_location && (
-        <div className="mt-4 h-48 rounded-xl overflow-hidden border border-slate-200">
+        <div className="mt-4 h-48 rounded-lg overflow-hidden border border-slate-200">
           <DeliveryMap order={order} />
         </div>
       )}
-      
+
       <div className="mt-4 pt-4 border-t">
         <p className="text-sm font-medium text-slate-700">{order.shop_name}</p>
         <p className="text-xs text-slate-500">
@@ -177,7 +177,7 @@ export default function Orders() {
         <div className="mt-3 text-xs text-slate-500 flex items-center justify-between">
           <span>Livreur: {order.driver_name}</span>
           {order.driver_phone && (
-            <a href={`tel:${order.driver_phone}`} onClick={(e) => e.stopPropagation()} className="text-orange-500 font-medium">
+            <a href={`tel:${order.driver_phone}`} onClick={(e) => e.stopPropagation()} className="text-neutral-900 font-medium">
               Appeler
             </a>
           )}
@@ -208,7 +208,7 @@ export default function Orders() {
             e.stopPropagation();
             setReviewOrder(order);
           }}
-          className="mt-3 w-full border-orange-200 text-orange-600 hover:bg-orange-50"
+          className="mt-3 w-full border-amber-200 text-neutral-900 hover:bg-amber-50"
         >
           <Star className="w-4 h-4 mr-2" />
           Laisser un avis
@@ -219,8 +219,8 @@ export default function Orders() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-neutral-900 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -230,7 +230,7 @@ export default function Orders() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
       <header className="bg-white sticky top-0 z-40 border-b shrink-0">
         <div className="max-w-2xl mx-auto px-4 py-4">
@@ -262,7 +262,7 @@ export default function Orders() {
           <TabsContent value="active" className="mt-4 space-y-3">
             {isLoading ? (
               <div className="text-center py-8">
-                <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full mx-auto" />
+                <div className="animate-spin w-8 h-8 border-4 border-neutral-900 border-t-transparent rounded-full mx-auto" />
               </div>
             ) : activeOrders.length === 0 ? (
               <div className="text-center py-12">
@@ -271,7 +271,7 @@ export default function Orders() {
                 </div>
                 <p className="text-slate-500 mb-4">Aucune commande active</p>
                 <Link to={createPageUrl('Home')}>
-                  <Button className="bg-orange-500 hover:bg-orange-600">
+                  <Button className="bg-neutral-900 hover:bg-neutral-800">
                     Commander maintenant
                   </Button>
                 </Link>
@@ -307,7 +307,7 @@ export default function Orders() {
               variant="ghost"
               size="icon"
               onClick={() => setSelectedOrder(null)}
-              className="absolute top-4 right-4 bg-white shadow-lg rounded-full z-50"
+              className="absolute top-4 right-4 bg-white  rounded-full z-50"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -337,9 +337,9 @@ export default function Orders() {
         loading={cancelOrderMutation.isPending}
       />
 
-      <BackgroundSyncIndicator 
-        syncStatus={syncStatus} 
-        lastSync={lastSync} 
+      <BackgroundSyncIndicator
+        syncStatus={syncStatus}
+        lastSync={lastSync}
         connectionType={connectionType}
       />
     </div>

@@ -25,6 +25,7 @@ const EnterpriseAccount = lazy(() => import('./pages/EnterpriseAccount'));
 const EnterpriseDashboard = lazy(() => import('./pages/EnterpriseDashboard'));
 const EventPlannerHaiti = lazy(() => import('./pages/EventPlannerHaiti'));
 const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/login'));
 const ManageProfiles = lazy(() => import('./pages/ManageProfiles'));
 const Orders = lazy(() => import('./pages/Orders'));
 const PaymentCallback = lazy(() => import('./pages/PaymentCallback'));
@@ -61,6 +62,7 @@ export const PAGES = {
     "EnterpriseDashboard": EnterpriseDashboard,
     "EventPlannerHaiti": EventPlannerHaiti,
     "Home": Home,
+    "Login": Login,
     "ManageProfiles": ManageProfiles,
     "Orders": Orders,
     "PaymentCallback": PaymentCallback,
@@ -75,7 +77,7 @@ export const PAGES = {
     "TestNotifications": TestNotifications,
     "UpdateProducts": UpdateProducts,
     "WeddingPlannerHaiti": WeddingPlannerHaiti,
-}
+};
 
 export const pagesConfig = {
     mainPage: "Home",

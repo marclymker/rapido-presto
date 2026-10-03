@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Clock, AlertTriangle, Truck, MapPin } from 'lucide-react';
+import { Plus, Minus, CreditCard, Wallet, AlertTriangle, MapPin, Lock } from 'lucide-react';
 import { useAuth } from '@/components/auth/useAuth';
-import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from 'framer-motion';
 import SquarePaymentForm from '@/components/payment/SquarePaymentForm';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 
@@ -29,7 +25,7 @@ const REGION_DATA = {
   'cite soleil': { index: 5, section: 1 },
   'croix des bouquets': { index: 6, section: 1 },
   'lilavois': { index: 7, section: 1 },
-  'fontamara': { index: 8, section: 1 }, 
+  'fontamara': { index: 8, section: 1 },
   'carrefour': { index: 9, section: 2 },
   'gressier': { index: 10, section: 2 },
   'leogane': { index: 11, section: 2 },
@@ -39,7 +35,7 @@ const REGION_DATA = {
   'les gonaives': { index: 14, section: 3 },
   'plaine du nord': { index: 15, section: 3 },
   'vaudreuil': { index: 16, section: 3 },
-  'cap-haitien': { index: 17, section: 3 }, 
+  'cap-haitien': { index: 17, section: 3 },
   'madeline': { index: 18, section: 3 },
   'limonade': { index: 19, section: 3 },
   'pignon': { index: 20, section: 3 },
@@ -70,7 +66,7 @@ function calculateSpecificShopFee(clientRegionName, shopRegionName, shopItems) {
     rawFee = isSameRegion ? 245 : (245 + score) * 1.5;
   }
 
-  return Math.ceil(rawFee); 
+  return Math.ceil(rawFee);
 }
 
 function generateConfirmationCode() {
@@ -96,12 +92,12 @@ export default function Cart() {
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [redirectingToMoncash, setRedirectingToMoncash] = useState(false);
   const [squareToken, setSquareToken] = useState(null);
-  
+
   const queryClient = useQueryClient();
 
   const { data: cartItems = [], isLoading: cartLoading } = useQuery({
     queryKey: ['cart', user?.id],
-    queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
+    queryFn: () => firebase.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
@@ -122,8 +118,8 @@ export default function Cart() {
 
   const updateQuantityMutation = useMutation({
     mutationFn: ({ id, quantity }) => {
-      if (quantity <= 0) return base44.entities.CartItem.delete(id);
-      return base44.entities.CartItem.update(id, { quantity });
+      if (quantity <= 0) return firebase.entities.CartItem.delete(id);
+      return firebase.entities.CartItem.update(id, { quantity });
     },
     onMutate: async ({ id, quantity }) => {
       await queryClient.cancelQueries(['cart', user?.id]);
@@ -138,7 +134,7 @@ export default function Cart() {
   });
 
   const deleteItemMutation = useMutation({
-    mutationFn: (id) => base44.entities.CartItem.delete(id),
+    mutationFn: (id) => firebase.entities.CartItem.delete(id),
     onMutate: async (id) => {
       await queryClient.cancelQueries(['cart', user?.id]);
       const previous = queryClient.getQueryData(['cart', user?.id]);
@@ -161,7 +157,7 @@ export default function Cart() {
   }, 0);
 
   const shopCount = Object.keys(itemsByShop).length;
-  
+
   const hasDelmasShop = Object.keys(itemsByShop).some(shopId => {
     const shopRegion = itemsByShop[shopId][0].shop_region;
     return normalizeForRegion(shopRegion) === 'delmas';
@@ -169,7 +165,7 @@ export default function Cart() {
 
   let expressFee = 0;
   let standardFee = 0;
-  const shopFees = {}; 
+  const shopFees = {};
 
   Object.keys(itemsByShop).forEach(shopId => {
     const shopRegion = itemsByShop[shopId][0].shop_region;
@@ -201,7 +197,7 @@ export default function Cart() {
   const createOrderMutation = useMutation({
     mutationFn: async () => {
       const cartItemIds = cartItems.map(item => item.id);
-      const priceValidation = await base44.functions.invoke('validateOrderPrice', {
+      const priceValidation = await firebase.functions.invoke('validateOrderPrice', {
         cartItemIds,
         paymentSplit
       });
@@ -226,12 +222,12 @@ export default function Cart() {
 
           let specificShopFee = 0;
           if (deliveryOption !== 'pickup_delimart') {
-            specificShopFee = (shopCount > 1 && deliveryOption === 'standard') 
-              ? (standardFee / shopCount) 
+            specificShopFee = (shopCount > 1 && deliveryOption === 'standard')
+              ? (standardFee / shopCount)
               : shopFees[shopId];
           }
 
-          const order = await base44.entities.Order.create({
+          const order = await firebase.entities.Order.create({
             order_number: orderNum,
             client_id: user.id,
             client_name: user.full_name,
@@ -271,8 +267,8 @@ export default function Cart() {
         if (!squareToken) throw new Error('Token de paiement manquant');
         try {
           const { createdOrders, orderNumBase } = await processOrders('card');
-          
-          const paymentResponse = await base44.functions.invoke('squarePayment', {
+
+          const paymentResponse = await firebase.functions.invoke('squarePayment', {
             sourceId: squareToken,
             amount: totalAmount,
             orderId: createdOrders[0].orderNum
@@ -281,11 +277,11 @@ export default function Cart() {
           if (!paymentResponse.data.success) throw new Error('Paiement refusé');
 
           for (const order of createdOrders) {
-            await base44.functions.invoke('sendOrderNotification', { orderId: order.orderId, status: 'pending' }).catch(() => {});
-            await base44.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.orderId }).catch(() => {});
+            await firebase.functions.invoke('sendOrderNotification', { orderId: order.orderId, status: 'pending' }).catch(() => {});
+            await firebase.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.orderId }).catch(() => {});
           }
 
-          await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+          await Promise.all(cartItems.map(item => firebase.entities.CartItem.delete(item.id)));
           return { orderNum: createdOrders[0].orderNum, code: createdOrders[0].code };
         } catch (error) {
           throw new Error(error.message || 'Erreur lors du paiement par carte');
@@ -295,9 +291,9 @@ export default function Cart() {
       if (paymentMethod === 'moncash') {
         const { createdOrders, orderNumBase } = await processOrders('moncash');
         // Attention : Suppression des articles AVANT l'aboutissement de l'URL MonCash.
-        await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+        await Promise.all(cartItems.map(item => firebase.entities.CartItem.delete(item.id)));
 
-        const response = await base44.functions.invoke('moncashCreatePayment', {
+        const response = await firebase.functions.invoke('moncashCreatePayment', {
           orderId: orderNumBase,
           amount: totalAmount,
           description: `Commande ${orderNumBase}`
@@ -309,7 +305,7 @@ export default function Cart() {
         }
 
         for (const order of createdOrders) {
-          await base44.entities.Order.update(order.orderId, {
+          await firebase.entities.Order.update(order.orderId, {
             moncash_transaction_id: paymentData.transactionId
           });
         }
@@ -323,13 +319,13 @@ export default function Cart() {
         window.location.href = data.paymentUrl;
         return;
       }
-      
+
       queryClient.invalidateQueries(['cart']);
       setOrderNumber(data.orderNum);
       setConfirmCode(data.code);
       setStep('confirmed');
       toast.success('Commande confirmée!');
-      
+
       trackPurchase({
         order_number: data.orderNum,
         total: baseTotal,
@@ -340,7 +336,7 @@ export default function Cart() {
           unit_price: item.unit_price
         }))
       });
-      
+
       if (window.fbq) {
         window.fbq('track', 'Purchase', {
           content_ids: cartItems.map(i => i.product_id),
@@ -365,384 +361,139 @@ export default function Cart() {
     );
   }
 
+  const Radio = ({ on }) => (
+    <span className={`w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center shrink-0 ${on ? 'border-[#3897F0]' : 'border-[#DBDBDB]'}`}>
+      {on && <span className="w-3 h-3 rounded-full bg-[#3897F0]" />}
+    </span>
+  );
+  const Row = ({ label, value, bold }) => (
+    <div className={`flex justify-between text-[14px] ${bold ? 'font-bold text-[#262626] pt-2' : 'text-[#8E8E8E]'}`}><span>{label}</span><span>{value}</span></div>
+  );
+  const Option = ({ on, onClick, title, sub, right }) => (
+    <button type="button" onClick={onClick} className="w-full flex items-center gap-3 py-3 text-left border-b border-[#EFEFEF] last:border-0">
+      <Radio on={on} />
+      <span className="flex-1 min-w-0"><span className="block text-[14px] text-[#262626]">{title}</span>{sub && <span className="block text-[12px] text-[#8E8E8E]">{sub}</span>}</span>
+      {right && <span className="text-[14px] text-[#8E8E8E]">{right}</span>}
+    </button>
+  );
+  const placeOrder = () => {
+    try { trackInitiateCheckout(cartItems, baseTotal); } catch (err) { console.error('Tracking Error:', err); }
+    createOrderMutation.mutate();
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white sticky top-0 z-40 border-b" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link to={createPageUrl('Home')}>
-              <Button type="button" variant="ghost" size="icon">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
-            <h1 className="text-lg font-semibold">
-              {step === 'cart' && 'Mon Panier'}
-              {step === 'checkout' && 'Paiement'}
-              {step === 'confirmed' && 'Commande Confirmée'}
-            </h1>
-          </div>
+    <div className="min-h-screen bg-white text-[#262626]">
+      <header className="bg-white sticky top-0 z-40 border-b border-[#DBDBDB]" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="h-11 px-4 grid grid-cols-3 items-center">
+          {step !== 'confirmed'
+            ? <Link to={createPageUrl('Home')} className="text-[14px] justify-self-start">Annuler</Link>
+            : <span />}
+          <h1 className="text-[16px] font-semibold flex items-center justify-center gap-1.5">
+            {step !== 'confirmed' && <Lock className="w-3.5 h-3.5" />}{step === 'confirmed' ? 'Commande' : 'Paiement'}
+          </h1>
+          <span />
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
-        <AnimatePresence mode="wait">
-          {cartItems.length === 0 && step === 'cart' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
-              <p className="text-slate-500 mb-4">Votre panier est vide</p>
-              <Link to={createPageUrl('Home')}>
-                <Button type="button" className="bg-orange-500 hover:bg-orange-600">
-                  Continuer vos achats
-                </Button>
-              </Link>
-            </motion.div>
-          )}
+      <main className="max-w-lg mx-auto px-4 pb-10">
+        {cartItems.length === 0 && step !== 'confirmed' && (
+          <div className="text-center py-16">
+            <p className="text-[#8E8E8E] mb-4 text-sm">Votre panier est vide</p>
+            <Link to={createPageUrl('Home')} className="text-[14px] font-semibold" style={{ color: '#3897F0' }}>Continuer vos achats</Link>
+          </div>
+        )}
 
-          {step === 'cart' && cartItems.length > 0 && (
-            <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              
-              {shopCount > 1 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800">
-                  <p className="font-bold flex items-center gap-2">
-                    <Truck className="w-4 h-4" /> Commande multi-boutiques
-                  </p>
-                  <p className="text-xs mt-1">
-                    Votre panier contient des articles de {shopCount} boutiques différentes.
-                    Choisissez votre option de livraison ci-dessous.
-                  </p>
+        {cartItems.length > 0 && step !== 'confirmed' && (
+          <>
+            {cartItems.map(item => (
+              <div key={item.id} className="flex gap-3 py-4 border-b border-[#EFEFEF]">
+                <div className="w-[60px] h-[75px] bg-[#EFEFEF] overflow-hidden shrink-0">
+                  {item.product_image && <img src={item.product_image} alt="" className="w-full h-full object-cover" />}
                 </div>
-              )}
-
-              <div className="space-y-3">
-                {cartItems.map(item => (
-                  <div key={item.id} className="bg-white rounded-xl p-4 flex gap-4 shadow-sm border border-slate-100">
-                    <div className="w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
-                      {item.product_image ? (
-                        <img src={item.product_image} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xl">📦</div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-slate-800 truncate">{item.product_name}</h3>
-                      <p className="text-xs text-slate-500 font-medium">
-                        {item.shop_name} <span className="text-slate-400 font-normal">({item.shop_region})</span>
-                      </p>
-                      
-                      <div className="flex items-center justify-between mt-3">
-                        <div>
-                          <span className="font-bold text-slate-800">
-                            {(item.unit_price + (item.total_customization_price || 0)) * item.quantity} HTG
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-1 border">
-                          <button
-                            type="button"
-                            className="w-7 h-7 flex items-center justify-center rounded bg-white shadow-sm active:scale-95 text-slate-600"
-                            onClick={(e) => { e.preventDefault(); updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity - 1 }); }}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
-                          <button
-                            type="button"
-                            className="w-7 h-7 flex items-center justify-center rounded bg-white shadow-sm active:scale-95 text-slate-600"
-                            onClick={(e) => { e.preventDefault(); updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity + 1 }); }}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                          <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
-                          <button
-                            type="button"
-                            className="w-7 h-7 flex items-center justify-center rounded active:scale-95 text-red-500 hover:bg-red-50"
-                            onClick={(e) => { e.preventDefault(); deleteItemMutation.mutate(item.id); }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {(shopCount > 1 || hasDelmasShop) && (
-                <div className="bg-white rounded-xl p-4 mt-6 border shadow-sm">
-                  <h3 className="font-bold mb-3 flex items-center gap-2 text-slate-800">
-                    <Truck className="w-5 h-5 text-orange-500" />
-                    Options de Livraison
-                  </h3>
-                  <RadioGroup value={deliveryOption} onValueChange={setDeliveryOption} className="space-y-3">
-                    <label className={`flex items-start space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${deliveryOption === 'standard' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                      <RadioGroupItem value="standard" id="standard" className="mt-1" />
-                      <div className="flex-1">
-                        <div className="flex justify-between">
-                          <span className="font-bold text-slate-800">Standard (24h - 48h)</span>
-                          <span className="font-bold text-orange-600">+{standardFee} HTG</span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {shopCount > 1 ? "Vos articles sont regroupés pour réduire les frais." : "Livraison classique à votre adresse."}
-                        </p>
-                      </div>
-                    </label>
-
-                    {shopCount > 1 && (
-                      <label className={`flex items-start space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${deliveryOption === 'express' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                        <RadioGroupItem value="express" id="express" className="mt-1" />
-                        <div className="flex-1">
-                          <div className="flex justify-between">
-                            <span className="font-bold text-slate-800">Express (12h - 24h)</span>
-                            <span className="font-bold text-orange-600">+{expressFee} HTG</span>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-1">Vos articles sont expédiés immédiatement de chaque boutique séparément.</p>
-                        </div>
-                      </label>
-                    )}
-
-                    {hasDelmasShop && (
-                      <label className={`flex items-start space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${deliveryOption === 'pickup_delimart' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                        <RadioGroupItem value="pickup_delimart" id="pickup_delimart" className="mt-1" />
-                        <div className="flex-1">
-                          <div className="flex justify-between">
-                            <span className="font-bold text-slate-800 flex items-center gap-1"><MapPin className="w-3 h-3"/> Retrait à Delimart (Delmas 32)</span>
-                            <span className="font-bold text-green-600">GRATUIT</span>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-1">Passez récupérer votre commande directement au point de retrait sans frais.</p>
-                        </div>
-                      </label>
-                    )}
-                  </RadioGroup>
-                </div>
-              )}
-
-              <div className="bg-white rounded-xl p-4 mt-6 space-y-2 shadow-sm border border-slate-100">
-                <div className="flex justify-between text-slate-600 text-sm">
-                  <span>Sous-total</span>
-                  <span className="font-medium">{subtotal} HTG</span>
-                </div>
-                <div className="flex justify-between items-center text-slate-600 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-orange-500" />
-                    <span>
-                      Livraison {deliveryOption === 'pickup_delimart' ? '(Retrait)' : (shopCount > 1 ? (deliveryOption === 'express' ? '(Express)' : '(Groupée)') : '')}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold truncate">{item.product_name}</p>
+                  {(item.customization?.color || item.customization?.size) && (
+                    <p className="text-[12px] text-[#8E8E8E]">{[item.customization.color?.name, item.customization.size?.name].filter(Boolean).join(' · ')}</p>
+                  )}
+                  <p className="text-[12px] text-[#8E8E8E] truncate">Vendu et expédié par {item.shop_name}</p>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span className="text-[14px]">{((item.unit_price + (item.total_customization_price || 0)) * item.quantity).toLocaleString()} HTG</span>
+                    <span className="flex items-center gap-3 border border-[#DBDBDB] rounded-md px-2 py-0.5">
+                      <button type="button" aria-label="Moins" onClick={() => updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity - 1 })}><Minus className="w-3.5 h-3.5" /></button>
+                      <span className="text-[13px] w-4 text-center">{item.quantity}</span>
+                      <button type="button" aria-label="Plus" onClick={() => updateQuantityMutation.mutate({ id: item.id, quantity: item.quantity + 1 })}><Plus className="w-3.5 h-3.5" /></button>
                     </span>
                   </div>
-                  <div className="text-right">
-                    {deliveryFee === 0 ? (
-                      <div className="font-bold text-green-600">GRATUIT</div>
-                    ) : (
-                      <div className="font-medium">+{deliveryFee} HTG</div>
-                    )}
-                  </div>
-                </div>
-                {pendingBalance > 0 && (
-                  <div className="flex justify-between items-center text-red-600 text-sm font-medium pt-1">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4" />
-                      <span>Balance due (Annulation)</span>
-                    </div>
-                    <span>+{pendingBalance} HTG</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-black text-xl pt-3 border-t mt-3 text-slate-800">
-                  <span>Total</span>
-                  <span className="text-orange-500">{baseTotal} HTG</span>
                 </div>
               </div>
+            ))}
 
-              <Button
-                type="button"
-                className="w-full mt-6 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
-                onClick={(e) => {
-                  e.preventDefault();
-                  try {
-                    trackInitiateCheckout(cartItems, baseTotal);
-                  } catch (err) {
-                    console.error("Tracking Error:", err);
-                  }
-                  setStep('checkout');
-                }}
-              >
-                Passer à la caisse
-              </Button>
-            </motion.div>
-          )}
-
-          {step === 'checkout' && (
-            <motion.div
-              key="checkout"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-                <h3 className="font-bold mb-4 text-slate-800">Mode de paiement</h3>
-                <RadioGroup value={paymentSplit} onValueChange={setPaymentSplit} className="space-y-3">
-                  <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentSplit === 'full' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                    <RadioGroupItem value="full" id="full" />
-                    <div className="flex-1">
-                      <div className="font-bold text-slate-800">Paiement complet (100%)</div>
-                      <div className="text-xs text-slate-500">Payez {baseTotal.toLocaleString()} HTG maintenant</div>
-                    </div>
-                  </label>
-                  <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentSplit === 'split' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                    <RadioGroupItem value="split" id="split" />
-                    <div className="flex-1">
-                      <div className="font-bold text-slate-800">Paiement fractionné (50/50)</div>
-                      <div className="text-xs text-slate-500">Payez {(baseTotal / 2).toLocaleString()} HTG maintenant, le reste à la livraison</div>
-                    </div>
-                  </label>
-                </RadioGroup>
-              </div>
-
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-                <h3 className="font-bold mb-4 text-slate-800">Méthode de paiement</h3>
-                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
-                  <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentMethod === 'moncash' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                    <RadioGroupItem value="moncash" id="moncash" />
-                    <Wallet className="w-6 h-6 text-orange-500" />
-                    <div className="flex-1 flex justify-between items-center">
-                      <span className="font-bold text-slate-800">MonCash</span>
-                      <span className="text-[10px] uppercase tracking-wider font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">Recommandé</span>
-                    </div>
-                  </label>
-                  <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                    <RadioGroupItem value="card" id="card" />
-                    <CreditCard className="w-6 h-6 text-blue-600" />
-                    <span className="font-bold text-slate-800">Carte de crédit/débit</span>
-                  </label>
-                </RadioGroup>
-              </div>
-
-              {deliveryOption !== 'pickup_delimart' && (
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-                  <h3 className="font-bold mb-1 text-slate-800">Adresse de livraison</h3>
-                  <p className="text-slate-600 font-medium">{user.address || 'Non définie'}</p>
-                  <p className="text-slate-400 text-sm">{user.region}</p>
-                </div>
+            <div className="py-4 space-y-1.5 border-b border-[#EFEFEF]">
+              <Row label="Sous-total" value={`${subtotal.toLocaleString()} HTG`} />
+              <Row label="Livraison" value={deliveryFee === 0 ? 'Gratuit' : `${deliveryFee.toLocaleString()} HTG`} />
+              {pendingBalance > 0 && (
+                <div className="flex justify-between text-[14px] text-red-600"><span className="flex items-center gap-1.5"><AlertTriangle className="w-4 h-4" />Solde dû (annulation)</span><span>{pendingBalance} HTG</span></div>
               )}
+              <Row bold label="Total" value={`${baseTotal.toLocaleString()} HTG`} />
+            </div>
 
-              {deliveryOption === 'pickup_delimart' && (
-                <div className="bg-green-50 rounded-xl p-4 shadow-sm border border-green-200">
-                  <h3 className="font-bold mb-1 text-green-800 flex items-center gap-2"><MapPin className="w-4 h-4"/> Point de retrait</h3>
-                  <p className="text-green-700 font-medium">Delimart, Delmas 32</p>
-                  <p className="text-green-600 text-sm mt-1">Vous recevrez un message quand votre commande sera prête.</p>
-                </div>
-              )}
+            <section className="pt-4">
+              <h2 className="text-[16px] font-bold mb-1">Livraison</h2>
+              <Option on={deliveryOption === 'standard'} onClick={() => setDeliveryOption('standard')} title="Standard" sub="24 h - 48 h" right={`${standardFee.toLocaleString()} HTG`} />
+              {shopCount > 1 && <Option on={deliveryOption === 'express'} onClick={() => setDeliveryOption('express')} title="Express" sub="12 h - 24 h, chaque boutique expédie séparément" right={`${expressFee.toLocaleString()} HTG`} />}
+              {hasDelmasShop && <Option on={deliveryOption === 'pickup_delimart'} onClick={() => setDeliveryOption('pickup_delimart')} title="Retrait à Delimart (Delmas 32)" sub="Récupérez votre commande sans frais" right="Gratuit" />}
+              <div className="py-3 text-[13px]">
+                <p className="text-[#8E8E8E] flex items-center gap-1">{deliveryOption === 'pickup_delimart' && <MapPin className="w-3.5 h-3.5" />}{deliveryOption === 'pickup_delimart' ? 'Point de retrait' : 'Adresse de livraison'}</p>
+                <p>{deliveryOption === 'pickup_delimart' ? 'Delimart, Delmas 32' : `${user?.address || 'Non définie'}${user?.region ? `, ${user.region}` : ''}`}</p>
+              </div>
+            </section>
 
+            <section className="pt-2">
+              <h2 className="text-[16px] font-bold mb-1">Paiement</h2>
+              <Option on={paymentMethod === 'moncash'} onClick={() => setPaymentMethod('moncash')} title="MonCash" right={<Wallet className="w-5 h-5" />} />
+              <Option on={paymentMethod === 'card'} onClick={() => setPaymentMethod('card')} title="Carte de crédit / débit" right={<CreditCard className="w-5 h-5" />} />
               {paymentMethod === 'card' && (
-                <SquarePaymentForm
-                  amount={total}
-                  onSuccess={(token) => { setSquareToken(token); toast.success('Carte validée'); }}
-                  onError={(error) => { setSquareToken(null); toast.error(error); }}
-                />
+                <div className="py-3">
+                  <SquarePaymentForm amount={total} onSuccess={(token) => { setSquareToken(token); toast.success('Carte validée'); }} onError={(error) => { setSquareToken(null); toast.error(error); }} />
+                </div>
               )}
+              <Option on={paymentSplit === 'full'} onClick={() => setPaymentSplit('full')} title="Payer 100 % maintenant" sub={`${baseTotal.toLocaleString()} HTG`} />
+              <Option on={paymentSplit === 'split'} onClick={() => setPaymentSplit('split')} title="Payer 50 % maintenant" sub={`${(baseTotal / 2).toLocaleString()} HTG maintenant, le reste ${deliveryOption === 'pickup_delimart' ? 'au retrait' : 'à la livraison'}`} />
+            </section>
 
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-                <h3 className="font-bold mb-3 text-slate-800">Instructions spéciales</h3>
-                <Textarea
-                  placeholder={deliveryOption === 'pickup_delimart' ? "Ex: C'est mon frère qui viendra récupérer le colis..." : "Ex: Sonnez à la porte, laissez à l'accueil..."}
-                  value={specialInstructions}
-                  onChange={(e) => setSpecialInstructions(e.target.value.slice(0, 200))}
-                  className="min-h-[80px] bg-slate-50 border-slate-200"
-                  maxLength={200}
-                />
-              </div>
+            <Textarea
+              placeholder="Instructions pour la livraison (facultatif)"
+              value={specialInstructions}
+              onChange={(e) => setSpecialInstructions(e.target.value.slice(0, 200))}
+              className="mt-3 min-h-[64px] text-[14px] border-[#DBDBDB]"
+              maxLength={200}
+            />
 
-              <div className="bg-slate-800 rounded-xl p-5 text-white shadow-lg">
-                <h3 className="font-bold text-slate-300 mb-4 uppercase tracking-wider text-sm">Facture finale</h3>
-                
-                <div className="space-y-2 mb-4 text-sm text-slate-300">
-                  <div className="flex justify-between">
-                    <span>Sous-total articles</span>
-                    <span>{subtotal} HTG</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Livraison</span>
-                    <span>{deliveryFee === 0 ? 'GRATUIT' : `${deliveryFee} HTG`}</span>
-                  </div>
-                </div>
+            <button type="button" onClick={placeOrder}
+              disabled={createOrderMutation.isPending || redirectingToMoncash || (paymentMethod === 'card' && !squareToken)}
+              className="w-full mt-5 h-11 rounded-md text-white text-[14px] font-semibold disabled:opacity-50 active:opacity-80" style={{ backgroundColor: '#3897F0' }}>
+              {createOrderMutation.isPending ? 'Sécurisation...' : `Passer la commande · ${total.toLocaleString()} HTG`}
+            </button>
+            <p className="text-center text-[11px] text-[#8E8E8E] mt-3">En appuyant sur « Passer la commande », vous acceptez les conditions de paiement et de livraison de Rapido Presto.</p>
+          </>
+        )}
 
-                <div className="border-t border-slate-600 pt-4 mt-4">
-                  {paymentSplit === 'split' ? (
-                    <div>
-                      <div className="flex justify-between font-black text-2xl text-orange-400 mb-1">
-                        <span>À Payer (50%)</span>
-                        <span>{(baseTotal / 2).toLocaleString()} HTG</span>
-                      </div>
-                      <div className="text-right text-xs text-slate-400">
-                        Reste {(baseTotal / 2).toLocaleString()} HTG {deliveryOption === 'pickup_delimart' ? 'au retrait' : 'à la livraison'}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex justify-between font-black text-2xl text-orange-400">
-                      <span>Total à Payer</span>
-                      <span>{baseTotal} HTG</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="h-14 px-6 bg-white border-slate-300 text-slate-700 font-bold" 
-                  onClick={(e) => { e.preventDefault(); setStep('cart'); }}
-                >
-                  Retour
-                </Button>
-                <Button
-                  type="button"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    createOrderMutation.mutate();
-                  }}
-                  disabled={createOrderMutation.isPending || redirectingToMoncash || (paymentMethod === 'card' && !squareToken)}
-                >
-                  {createOrderMutation.isPending ? 'Sécurisation...' : 'Payer maintenant'}
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {step === 'confirmed' && (
-            <motion.div
-              key="confirmed"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-12"
-            >
-              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <svg className="w-12 h-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-3xl font-black text-slate-800 mb-2">Paiement Réussi !</h2>
-              <p className="text-slate-500 font-medium mb-8">N° de commande : {orderNumber}</p>
-
-              <div className="bg-orange-50 rounded-2xl p-6 mb-8 border border-orange-100 shadow-sm">
-                <p className="text-sm font-bold text-orange-800 uppercase tracking-wider mb-2">Code de Sécurité</p>
-                <p className="text-5xl font-black text-orange-500 tracking-[0.2em]">{confirmCode}</p>
-                <p className="text-sm text-orange-700 mt-3 font-medium">Ne partagez ce code qu'avec le livreur.</p>
-              </div>
-
-              <div className="flex gap-3 max-w-sm mx-auto">
-                <Link to={createPageUrl('Orders')} className="flex-1">
-                  <Button type="button" variant="outline" className="w-full h-12 font-bold text-slate-700">
-                    Suivre
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('Home')} className="flex-1">
-                  <Button type="button" className="w-full bg-orange-500 hover:bg-orange-600 h-12 font-bold shadow-lg shadow-orange-500/25">
-                    Terminer
-                  </Button>
-                </Link>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {step === 'confirmed' && (
+          <div className="text-center py-12">
+            <div className="w-20 h-20 rounded-full border-2 border-[#262626] flex items-center justify-center mx-auto mb-5">
+              <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <h2 className="text-[20px] font-semibold">Commande passée</h2>
+            <p className="text-[14px] text-[#8E8E8E] mb-6">N° de commande : {orderNumber}</p>
+            <div className="border border-[#DBDBDB] rounded-lg p-5 mb-6">
+              <p className="text-[12px] text-[#8E8E8E] mb-1">Code de sécurité</p>
+              <p className="text-[36px] font-semibold tracking-[0.2em]">{confirmCode}</p>
+              <p className="text-[12px] text-[#8E8E8E] mt-1">Ne partagez ce code qu'avec le livreur.</p>
+            </div>
+            <Link to={createPageUrl('Orders')} className="block w-full h-11 leading-[44px] rounded-md text-white text-[14px] font-semibold" style={{ backgroundColor: '#3897F0' }}>Suivre ma commande</Link>
+            <Link to={createPageUrl('Home')} className="block mt-3 text-[14px] font-semibold">Continuer vos achats</Link>
+          </div>
+        )}
       </main>
     </div>
   );

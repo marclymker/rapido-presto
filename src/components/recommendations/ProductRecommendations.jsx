@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import ProductCard from '@/components/ui/ProductCard';
 import { Sparkles, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -9,14 +9,14 @@ export default function ProductRecommendations({ user, onProductClick, onAddToCa
   // Fetch all products and shops
   const { data: allProducts = [] } = useQuery({
     queryKey: ['all-products-recommendations'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }),
+    queryFn: () => firebase.entities.Product.filter({ is_available: true }),
     refetchInterval: 300000,
     staleTime: 240000
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops-recommendations'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => firebase.entities.Shop.filter({ is_active: true }),
     refetchInterval: 300000,
     staleTime: 240000
   });
@@ -91,7 +91,7 @@ export default function ProductRecommendations({ user, onProductClick, onAddToCa
           </>
         )}
       </div>
-      
+
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
         {recommendations.map((product) => {
           const productShop = shops.find(s => s.id === product.shop_id);

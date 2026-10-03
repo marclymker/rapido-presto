@@ -1,12 +1,12 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { ShoppingBag, Loader2 } from 'lucide-react';
 
 export default function ProductContextCard({ productId }) {
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', productId],
-    queryFn: () => base44.entities.Product.get(productId),
+    queryFn: () => firebase.entities.Product.get(productId),
     enabled: !!productId
   });
 
@@ -33,8 +33,8 @@ export default function ProductContextCard({ productId }) {
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm max-w-sm mx-auto">
         <div className="flex gap-3 p-3">
           {product.image_url && (
-            <img 
-              src={product.image_url} 
+            <img
+              src={product.image_url}
               alt={product.name}
               className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
             />

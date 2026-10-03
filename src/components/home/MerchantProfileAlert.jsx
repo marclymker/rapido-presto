@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Store, CheckCircle, XCircle } from 'lucide-react';
+import { AlertCircle, Store, XCircle } from 'lucide-react';
 
 export default function MerchantProfileAlert({ user }) {
   const [open, setOpen] = useState(false);
@@ -13,7 +13,7 @@ export default function MerchantProfileAlert({ user }) {
     if (!user) return;
 
     const entrepriseProfile = user.profiles?.entreprise;
-    
+
     // Si le profil entreprise existe mais n'est pas actif ou incomplet
     if (entrepriseProfile && !entrepriseProfile.is_active) {
       const required = [
@@ -25,14 +25,14 @@ export default function MerchantProfileAlert({ user }) {
       ];
 
       const missing = required.filter(item => !entrepriseProfile[item.field]);
-      
+
       if (missing.length > 0) {
         setMissingFields(missing);
-        
+
         // Vérifier si on a déjà affiché la popup récemment
         const lastShown = localStorage.getItem('merchantProfileAlertLastShown');
         const now = Date.now();
-        
+
         if (!lastShown || now - parseInt(lastShown) >= 24 * 60 * 60 * 1000) {
           // Afficher après 2 secondes
           setTimeout(() => {
@@ -55,7 +55,7 @@ export default function MerchantProfileAlert({ user }) {
             Complétez votre profil marchand
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4 pt-4">
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
@@ -92,8 +92,8 @@ export default function MerchantProfileAlert({ user }) {
                 Compléter mon profil
               </Button>
             </Link>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full mt-2"
               onClick={() => setOpen(false)}
             >

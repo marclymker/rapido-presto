@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Tag, Store, ChevronRight, X, MapPin, MessageCircle, Ticket } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -182,7 +182,7 @@ export default function Products() {
 
   const { data: firstProducts = [], isLoading } = useQuery({
     queryKey: ['products-initial'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 30),
+    queryFn: () => firebase.entities.Product.filter({ is_available: true }, '-created_date', 30),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
@@ -199,7 +199,7 @@ export default function Products() {
 
   const { data: fullProducts = [] } = useQuery({
     queryKey: ['products-all'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200),
+    queryFn: () => firebase.entities.Product.filter({ is_available: true }, '-created_date', 200),
     enabled: loadAll,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
@@ -209,13 +209,13 @@ export default function Products() {
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => firebase.entities.Shop.filter({ is_active: true }),
   });
 
   const { data: conversations = [] } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
-      const r = await base44.functions.invoke('chatService', { action: 'list' });
+      const r = await firebase.functions.invoke('chatService', { action: 'list' });
       return Array.isArray(r.data) ? r.data : (r.data?.data || []);
     },
     // Ne charger les conversations qu'après les produits initiaux, et seulement si pas en économie de données
@@ -252,7 +252,7 @@ export default function Products() {
   }, [isSeller, user]);
 
   const updateUserMutation = useMutation({
-    mutationFn: async (data) => base44.entities.User.update(user.id, data),
+    mutationFn: async (data) => firebase.entities.User.update(user.id, data),
     onSuccess: () => {
       toast.success('Profil mis à jour avec succès !');
       setShowSellerTrap(false);
@@ -272,10 +272,10 @@ export default function Products() {
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity }) => {
-      if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+      if (!user) { firebase.auth.redirectToLogin(window.location.pathname); return; }
       const price = applyClientMargin(product.promo_price || product.price, product.shop_name);
       const shop = shopsMap[product.shop_id];
-      await base44.entities.CartItem.create({
+      await firebase.entities.CartItem.create({
         user_id: user.id,
         product_id: product.id,
         product_name: product.name,
@@ -443,7 +443,7 @@ export default function Products() {
   }, [trackCategoryView]);
 
   return (
-    <div className="flex flex-col min-h-screen pb-20" style={{backgroundColor: '#f0f2f5'}}>
+    <div className="flex flex-col min-h-screen pb-20" style={{backgroundColor: '#ffffff'}}>
       {isAdmin && editingProduct && (
         <ProductFormModal
           product={editingProduct}
@@ -468,16 +468,16 @@ export default function Products() {
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 
-      <header className="sticky top-0 z-40 bg-white shadow-sm">
+      <header className="sticky top-0 z-40 bg-white border-b border-neutral-200">
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-black tracking-tight">Marketplace</h1>
+          <h1 className="text-xl font-bold text-black tracking-tight">Shop</h1>
           <div className="flex items-center">
             <button
-              onClick={() => user ? navigate('/Chat') : base44.auth.redirectToLogin('/Chat')}
-              className="relative p-2.5 bg-[#E4E6EB] hover:bg-[#D8DADF] rounded-full transition-colors text-black active:scale-95"
+              onClick={() => user ? navigate('/Chat') : firebase.auth.redirectToLogin('/Chat')}
+              className="relative p-2.5 bg-[#EFEFEF] hover:bg-[#DBDBDB] rounded-full transition-colors text-black active:scale-95"
               aria-label="Messages"
             >
-              <MessageCircle className="w-5 h-5 text-[#0084FF]" fill="currentColor" stroke="none" />
+              <MessageCircle className="w-5 h-5 text-[#262626]" fill="currentColor" stroke="none" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-[#E41E3F] text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-[2px] border-white shadow-sm">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -488,19 +488,19 @@ export default function Products() {
         </div>
 
         <div className="px-4 pb-3">
-          <div className="flex items-center rounded-full px-4 py-2.5 gap-2 bg-[#F0F2F5]">
-            <Search className="w-5 h-5 text-[#65676B] flex-shrink-0" />
+          <div className="flex items-center rounded-full px-4 py-2.5 gap-2 bg-[#EFEFEF]">
+            <Search className="w-5 h-5 text-[#737373] flex-shrink-0" />
             <input
               type="text"
               placeholder="Rechercher un produit..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="bg-transparent outline-none w-full text-[15px] text-black placeholder:text-[#65676B]"
+              className="bg-transparent outline-none w-full text-[15px] text-black placeholder:text-[#737373]"
               aria-label="Rechercher un produit"
             />
             {searchQuery && (
               <button type="button" onClick={() => handleSearchChange('')} aria-label="Effacer la recherche">
-                <X className="w-4 h-4 text-[#65676B]" />
+                <X className="w-4 h-4 text-[#737373]" />
               </button>
             )}
           </div>
@@ -509,8 +509,8 @@ export default function Products() {
         <div className="flex items-center justify-between border-b border-gray-300 bg-white">
           <button
             type="button"
-            onClick={() => user ? navigate('/Dashboard') : base44.auth.redirectToLogin('/Dashboard')}
-            className="flex-1 flex items-center justify-center gap-2 py-3 text-[#1877F2] font-semibold text-[14px] md:text-[15px] border-b-[3px] border-[#1877F2]"
+            onClick={() => user ? navigate('/Dashboard') : firebase.auth.redirectToLogin('/Dashboard')}
+            className="flex-1 flex items-center justify-center gap-2 py-3 text-[#262626] font-semibold text-[14px] md:text-[15px] border-b-[3px] border-[#262626]"
           >
             <Store className="w-[18px] h-[18px] md:w-5 md:h-5" fill="currentColor" stroke="none" />
             <span className="whitespace-nowrap">Ma Boutique</span>
@@ -522,7 +522,7 @@ export default function Products() {
             type="button"
             onClick={() => setShowCategories(v => !v)}
             aria-pressed={showCategories || !!selectedCategory}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] border-b-[3px] border-transparent ${showCategories || selectedCategory ? 'text-[#1877F2]' : 'text-[#65676B]'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] border-b-[3px] border-transparent ${showCategories || selectedCategory ? 'text-[#262626]' : 'text-[#737373]'}`}
           >
             <Tag className="w-[18px] h-[18px] md:w-5 md:h-5" />
             <span className="whitespace-nowrap">{selectedCategory || 'Catégories'}</span>
@@ -536,8 +536,8 @@ export default function Products() {
             aria-pressed={selectedCategory === 'Tickets'}
             className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] border-b-[3px] transition-colors ${
               selectedCategory === 'Tickets'
-                ? 'text-[#1877F2] border-[#1877F2]'
-                : 'text-[#65676B] border-transparent hover:text-[#1877F2]'
+                ? 'text-[#262626] border-[#262626]'
+                : 'text-[#737373] border-transparent hover:text-[#262626]'
             }`}
           >
             <Ticket className="w-[18px] h-[18px] md:w-5 md:h-5" fill="currentColor" stroke="none" />
@@ -551,7 +551,7 @@ export default function Products() {
             onValueChange={(v) => { setSelectedRegion(v === '__all__' ? '' : v); setVisibleCount(60); }}
           >
             <SelectTrigger
-              className="flex-shrink-0 w-16 md:w-20 flex justify-center items-center py-3 border-0 bg-transparent shadow-none focus:ring-0 p-0 h-auto text-[#65676B] rounded-none border-b-[3px] border-transparent data-[state=open]:text-[#1877F2]"
+              className="flex-shrink-0 w-16 md:w-20 flex justify-center items-center py-3 border-0 bg-transparent shadow-none focus:ring-0 p-0 h-auto text-[#737373] rounded-none border-b-[3px] border-transparent data-[state=open]:text-[#262626]"
               aria-label="Filtrer par région"
             >
               <MapPin className="w-5 h-5" fill="currentColor" stroke="none" />
@@ -571,7 +571,7 @@ export default function Products() {
                 onClick={() => handleCategorySelect(null)}
                 aria-pressed={!selectedCategory}
                 className="px-3 py-1.5 rounded-full text-xs font-semibold border transition"
-                style={!selectedCategory ? {backgroundColor: '#1877F2', color: '#fff', borderColor: '#1877F2'} : {backgroundColor: '#fff', color: '#050505', borderColor: '#ddd'}}
+                style={!selectedCategory ? {backgroundColor: '#262626', color: '#fff', borderColor: '#262626'} : {backgroundColor: '#fff', color: '#050505', borderColor: '#ddd'}}
               >
                 Tous
               </button>
@@ -582,7 +582,7 @@ export default function Products() {
                   onClick={() => handleCategorySelect(cat)}
                   aria-pressed={selectedCategory === cat}
                   className="px-3 py-1.5 rounded-full text-xs font-semibold border transition"
-                  style={selectedCategory === cat ? {backgroundColor: '#1877F2', color: '#fff', borderColor: '#1877F2'} : {backgroundColor: '#fff', color: '#050505', borderColor: '#ddd'}}
+                  style={selectedCategory === cat ? {backgroundColor: '#262626', color: '#fff', borderColor: '#262626'} : {backgroundColor: '#fff', color: '#050505', borderColor: '#ddd'}}
                 >
                   {cat}
                 </button>
@@ -672,7 +672,7 @@ export default function Products() {
       <main className="flex-1 pt-2 pb-4">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500" />
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-neutral-900" />
             <p className="text-sm text-slate-500">Chargement...</p>
           </div>
 
@@ -690,7 +690,7 @@ export default function Products() {
               </span>
               <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 gap-x-1">
               {visibleProducts.map(product => (
                 <CompactProductCard
                   key={product.id}
@@ -706,7 +706,7 @@ export default function Products() {
                   type="button"
                   onClick={() => setVisibleCount(c => c + 36)}
                   className="font-semibold px-8 py-2.5 rounded-full text-sm text-white transition-transform active:scale-95"
-                  style={{backgroundColor: '#1877F2'}}
+                  style={{backgroundColor: '#262626'}}
                 >
                   Voir plus ({filteredProducts.length - visibleCount} restants)
                 </button>
@@ -738,7 +738,7 @@ export default function Products() {
                 <h3 className="text-sm font-bold text-slate-800">🔀 Tout voir</h3>
                 <span className="text-[11px] text-slate-400">{filteredProducts.length} produits</span>
               </div>
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="grid grid-cols-2 gap-x-1">
                 {visibleProducts.map(product => (
                   <CompactProductCard
                     key={product.id}
@@ -754,7 +754,7 @@ export default function Products() {
                     type="button"
                     onClick={() => setVisibleCount(c => c + 36)}
                     className="font-semibold px-8 py-2.5 rounded-full text-sm text-white transition-transform active:scale-95"
-                    style={{backgroundColor: '#1877F2'}}
+                    style={{backgroundColor: '#262626'}}
                   >
                     Voir plus ({filteredProducts.length - visibleCount} restants)
                   </button>
@@ -766,7 +766,7 @@ export default function Products() {
 
         {/* POP-UP PIÈGE POUR VENDEURS */}
         <Dialog open={showSellerTrap} onOpenChange={() => {}}>
-          <DialogContent className="max-w-md bg-white rounded-2xl p-6" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogContent className="max-w-md bg-white rounded-lg p-6" onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="text-xl font-black text-slate-800">Finalisez votre profil vendeur</DialogTitle>
               <DialogDescription className="text-slate-500 mt-2">
@@ -782,7 +782,7 @@ export default function Products() {
                   placeholder="Ex: +509 3000 0000"
                   value={trapData.phone}
                   onChange={(e) => setTrapData({ ...trapData, phone: e.target.value })}
-                  className="h-12 bg-slate-50 text-slate-900 font-bold text-lg"
+                  className="h-12 bg-white text-slate-900 font-bold text-lg"
                   required
                 />
                 <p className="text-[10px] text-slate-400">Ce numéro sera utilisé pour vous contacter lors des commandes.</p>
@@ -795,7 +795,7 @@ export default function Products() {
                   onValueChange={(val) => setTrapData({ ...trapData, region: val })}
                   required
                 >
-                  <SelectTrigger className="h-12 bg-slate-50 border border-slate-200 text-slate-900 font-bold text-lg">
+                  <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-900 font-bold text-lg">
                     <SelectValue placeholder="Sélectionnez votre zone" />
                   </SelectTrigger>
                   <SelectContent>
@@ -808,7 +808,7 @@ export default function Products() {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg mt-6"
+                className="w-full h-12 bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-lg mt-6"
                 disabled={updateUserMutation.isPending || !trapData.phone || !trapData.region}
               >
                 {updateUserMutation.isPending ? 'Mise à jour...' : 'Enregistrer et continuer'}

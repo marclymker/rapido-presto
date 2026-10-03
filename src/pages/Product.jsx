@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { 
-  ArrowLeft, 
-  ShoppingCart, 
-  Minus, 
-  Plus, 
-  Store, 
-  MapPin, 
-  Check, 
+import { firebase } from '@/api/firebaseClient';
+import {
+  ArrowLeft,
+  ShoppingCart,
+  Minus,
+  Plus,
+  Check,
   MessageCircle,
   Maximize2,
   Download,
@@ -62,9 +60,9 @@ const StarRating = ({ rating, count }) => (
   <div className="flex items-center gap-1">
     <div className="flex text-yellow-400">
       {[1, 2, 3, 4, 5].map((star) => (
-        <Star 
-          key={star} 
-          className={`w-4 h-4 ${star <= Math.round(rating) ? 'fill-current' : 'text-slate-200 fill-slate-200'}`} 
+        <Star
+          key={star}
+          className={`w-4 h-4 ${star <= Math.round(rating) ? 'fill-current' : 'text-slate-200 fill-slate-200'}`}
         />
       ))}
     </div>
@@ -127,8 +125,8 @@ const CustomizationOptions = ({ product, onChange }) => {
                 key={size.name}
                 onClick={() => setSelectedSize(size)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
-                  selectedSize?.name === size.name 
-                    ? 'border-orange-500 bg-orange-50 text-orange-700' 
+                  selectedSize?.name === size.name
+                    ? 'border-orange-500 bg-orange-50 text-orange-700'
                     : 'border-slate-100 bg-white text-slate-600 hover:border-slate-200'
                 }`}
               >
@@ -168,7 +166,7 @@ export default function Product() {
         }
 
         // Charger le produit depuis la base de données
-        const allProducts = await base44.entities.Product.list();
+        const allProducts = await firebase.entities.Product.list();
         const foundProduct = allProducts.find(p => p.slug === slug);
 
         if (!foundProduct) {
@@ -181,14 +179,14 @@ export default function Product() {
         }
 
         setProduct(foundProduct);
-        
+
         // Préparer les images (image principale + images additionnelles)
         const images = [foundProduct.image_url, ...(foundProduct.additional_images || [])].filter(Boolean);
         foundProduct.images = images;
         setActiveImage(images[0]);
 
         // Charger la boutique
-        const allShops = await base44.entities.Shop.list();
+        const allShops = await firebase.entities.Shop.list();
         const foundShop = allShops.find(s => s.id === foundProduct.shop_id);
         setShop(foundShop);
 
@@ -200,7 +198,7 @@ export default function Product() {
 
         // Charger l'utilisateur
         try {
-          const currentUser = await base44.auth.me();
+          const currentUser = await firebase.auth.me();
           setUser(currentUser);
         } catch (e) {
           // Utilisateur non connecté
@@ -229,22 +227,22 @@ export default function Product() {
 
   const handleAddToCart = async () => {
     if (!user) {
-      base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+      firebase.auth.redirectToLogin(window.location.pathname + window.location.search);
       return;
     }
-    
+
     try {
-      const existingCart = await base44.entities.CartItem.filter({ 
-        user_id: user.id, 
-        product_id: product.id 
+      const existingCart = await firebase.entities.CartItem.filter({
+        user_id: user.id,
+        product_id: product.id
       });
-      
+
       if (existingCart.length > 0) {
-        await base44.entities.CartItem.update(existingCart[0].id, {
+        await firebase.entities.CartItem.update(existingCart[0].id, {
           quantity: existingCart[0].quantity + quantity
         });
       } else {
-        await base44.entities.CartItem.create({
+        await firebase.entities.CartItem.create({
           user_id: user.id,
           product_id: product.id,
           product_name: product.name,
@@ -256,7 +254,7 @@ export default function Product() {
           shop_region: shop?.region
         });
       }
-      
+
       window.location.href = '/cart';
     } catch (error) {
       alert('Erreur lors de l\'ajout au panier');
@@ -296,7 +294,7 @@ export default function Product() {
 
   return (
     <div className="min-h-screen bg-white pb-32 font-sans text-slate-900">
-      
+
       {/* 1. AMAZON STYLE BREADCRUMBS */}
       <div className="sticky top-0 bg-white/95 backdrop-blur-sm z-40 border-b border-slate-100">
          <div className="px-4 py-2 text-xs text-slate-500 flex items-center gap-1 max-w-lg mx-auto">
@@ -307,7 +305,7 @@ export default function Product() {
       </div>
 
       <div className="max-w-lg mx-auto">
-        
+
         {/* Header Navigation */}
         <div className="absolute top-10 left-4 z-30">
           <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="bg-white/80 rounded-full shadow-sm hover:bg-white">
@@ -318,8 +316,8 @@ export default function Product() {
         {/* 2. GALLERY SYSTEM */}
         <div className="relative w-full bg-slate-50">
           <div className="relative w-full aspect-square group">
-            <img 
-              src={activeImage} 
+            <img
+              src={activeImage}
               alt={product.name}
               className="w-full h-full object-cover transition-opacity duration-300"
               onClick={() => setIsZoomed(true)}
@@ -340,11 +338,11 @@ export default function Product() {
                </Button>
             </div>
           </div>
-          
+
           {/* Thumbnail Strip */}
           <div className="flex gap-2 p-4 overflow-x-auto scrollbar-hide">
              {product.images?.map((img, idx) => (
-                <button 
+                <button
                   key={idx}
                   onClick={() => setActiveImage(img)}
                   className={`relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 ${activeImage === img ? 'border-orange-500' : 'border-transparent'}`}
@@ -357,7 +355,7 @@ export default function Product() {
 
         {/* Content */}
         <div className="px-6 pt-2 pb-6 space-y-6">
-          
+
           {/* Title, Rating & Price */}
           <div className="space-y-3">
             <h2 className="text-xl font-bold text-slate-900 leading-tight">{product.name}</h2>
@@ -432,17 +430,17 @@ export default function Product() {
                      <p className="text-xs text-slate-500">{shop.region}</p>
                   </div>
                </div>
-               
+
                <div className="flex flex-col gap-3">
-                  <button 
+                  <button
                     onClick={() => window.location.href = '/chat'}
                     className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-md active:scale-[0.98]"
                   >
                      <MessageCircle className="w-5 h-5" /> Discuter avec le vendeur
                   </button>
-                  
+
                   {shop.company_name?.toLowerCase().includes('makarios') && (
-                    <button 
+                    <button
                        onClick={() => window.open('https://wa.me/c/50948690366', '_blank')}
                        className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white py-3 rounded-xl font-bold hover:bg-[#20bd5a] transition-all shadow-md active:scale-[0.98]"
                     >
@@ -460,8 +458,8 @@ export default function Product() {
               <h3 className="font-bold text-slate-900 mb-4 text-lg">Produits similaires</h3>
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
                 {similarProducts.map((simProduct) => (
-                  <div 
-                    key={simProduct.id} 
+                  <div
+                    key={simProduct.id}
                     className="flex-shrink-0 w-36 group cursor-pointer"
                     onClick={() => {
                       if (simProduct.slug) {

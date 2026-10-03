@@ -11,22 +11,22 @@ export default function FreeShippingBanner() {
     >
       {/* Effet de brillance animé */}
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-      
+
       <div className="relative flex items-center justify-center gap-3">
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, 10, 0],
             rotate: [0, 5, 0]
           }}
-          transition={{ 
-            duration: 2, 
+          transition={{
+            duration: 2,
             repeat: Infinity,
             ease: "easeInOut"
           }}
         >
           <Truck className="w-6 h-6 md:w-8 md:h-8" />
         </motion.div>
-        
+
         <div className="flex flex-col md:flex-row md:items-center md:gap-2">
           <span className="text-sm md:text-lg font-black uppercase tracking-wide">
             Livraison Gratuite
@@ -35,7 +35,7 @@ export default function FreeShippingBanner() {
             à partir de 3,000 Gourdes
           </span>
         </div>
-        
+
         <Zap className="w-5 h-5 md:w-6 md:h-6 fill-current animate-pulse" />
       </div>
     </motion.div>

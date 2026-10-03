@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Plus, Edit2, Trash2, Eye, EyeOff, Loader2, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format } from 'date-fns';
@@ -21,7 +19,7 @@ export default function BlogManager() {
   const handleShareToSocial = async (article) => {
     setPublishingId(article.id);
     try {
-      const res = await base44.functions.invoke('publishBlogToSocial', { articleId: article.id });
+      const res = await firebase.functions.invoke('publishBlogToSocial', { articleId: article.id });
       const data = res.data;
       if (data.success) {
         const fb = data.results?.facebook?.success ? '✅ Facebook' : `❌ Facebook: ${data.results?.facebook?.error}`;
@@ -40,11 +38,11 @@ export default function BlogManager() {
 
   const { data: articles = [], isLoading } = useQuery({
     queryKey: ['blog-articles-all'],
-    queryFn: () => base44.entities.BlogArticle.list('-created_date', 100)
+    queryFn: () => firebase.entities.BlogArticle.list('-created_date', 100)
   });
 
   const deleteArticleMutation = useMutation({
-    mutationFn: (id) => base44.entities.BlogArticle.delete(id),
+    mutationFn: (id) => firebase.entities.BlogArticle.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['blog-articles-all']);
       toast.success('Article supprimé');
@@ -53,8 +51,8 @@ export default function BlogManager() {
   });
 
   const togglePublishMutation = useMutation({
-    mutationFn: ({ id, isPublished }) => 
-      base44.entities.BlogArticle.update(id, { is_published: !isPublished }),
+    mutationFn: ({ id, isPublished }) =>
+      firebase.entities.BlogArticle.update(id, { is_published: !isPublished }),
     onSuccess: () => {
       queryClient.invalidateQueries(['blog-articles-all']);
       toast.success('Statut mis à jour');
@@ -84,7 +82,7 @@ export default function BlogManager() {
             </Link>
             <h1 className="text-2xl font-bold text-slate-900">Gestion du Blog</h1>
           </div>
-          <Button 
+          <Button
             onClick={() => setShowForm(true)}
             className="bg-orange-600 hover:bg-orange-700"
           >

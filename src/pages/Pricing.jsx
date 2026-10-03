@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,10 @@ export default function Pricing() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebase.auth.me().then(u => {
       setUser(u);
       // Fetch shop
-      base44.entities.Shop.filter({ user_id: u.id }).then(shops => {
+      firebase.entities.Shop.filter({ user_id: u.id }).then(shops => {
         if (shops.length > 0) setShop(shops[0]);
       });
     }).catch(() => {});
@@ -30,7 +30,7 @@ export default function Pricing() {
 
     setLoading(true);
     try {
-      const response = await base44.functions.invoke('moncashCreatePayment', {
+      const response = await firebase.functions.invoke('moncashCreatePayment', {
         amount: 1000,
         orderId: `SUB_${shop.id}_${Date.now()}`,
         description: `Abonnement Premium - ${shop.company_name}`
@@ -60,8 +60,8 @@ export default function Pricing() {
       {/* Header */}
       <header className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => navigate(createPageUrl('EnterpriseDashboard'))}
           >

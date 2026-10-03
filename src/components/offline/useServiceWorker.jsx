@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { readQueue } from '@/lib/useCartSync';
 
 export function useServiceWorker() {
   useEffect(() => {

@@ -15,7 +15,7 @@ const statusConfig = {
 
 export default function OrderStatusBadge({ status }) {
   const config = statusConfig[status] || { label: status, color: 'bg-slate-100 text-slate-700' };
-  
+
   return (
     <span className={cn(
       "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium",

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { X, Cookie, Settings } from 'lucide-react';
+import { Cookie, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 
 export default function CookieConsent({ onAccept, onReject }) {
   const [showBanner, setShowBanner] = useState(false);
@@ -79,7 +78,7 @@ export default function CookieConsent({ onAccept, onReject }) {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex gap-2 w-full md:w-auto">
               <Button
                 variant="outline"

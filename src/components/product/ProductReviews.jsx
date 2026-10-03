@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { Star } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -35,7 +35,7 @@ export default function ProductReviews({ productId, productName }) {
 
   const { data: reviews = [] } = useQuery({
     queryKey: ['reviews', productId],
-    queryFn: () => base44.entities.ProductReview.filter({ product_id: productId, is_approved: true }),
+    queryFn: () => firebase.entities.ProductReview.filter({ product_id: productId, is_approved: true }),
     enabled: !!productId,
     staleTime: 5 * 60 * 1000,
   });
@@ -44,8 +44,8 @@ export default function ProductReviews({ productId, productName }) {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      const user = await base44.auth.me();
-      return base44.entities.ProductReview.create({
+      const user = await firebase.auth.me();
+      return firebase.entities.ProductReview.create({
         product_id: productId,
         user_name: user?.full_name || 'Client anonyme',
         rating,

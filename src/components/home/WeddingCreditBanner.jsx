@@ -3,25 +3,25 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 
 export default function WeddingCreditBanner() {
-  const imageUrl = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/d9e40cce4_file_00000000fb8071f7853e3497a634f6e71.png";
+  const imageUrl = "/assets/wedding-credit.svg";
 
   return (
     <div className="relative overflow-hidden rounded-xl shadow-lg">
       {/* Background Image - Layer de base */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center opacity-100"
         style={{
           backgroundImage: `url('${imageUrl}')`,
           backgroundPosition: 'left center'
         }}
       />
-      
+
       {/* Gradient Overlay - gradient doux pour la lisibilité */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/20 to-transparent" />
-      
+
       {/* Content Container - Responsive */}
       <div className="relative px-6 md:px-8 py-8 md:py-12 flex flex-col justify-center min-h-[200px] md:min-h-[280px]">
-        
+
         {/* Logo Rapido Presto */}
         <div className="mb-4 md:mb-6">
           <div className="text-amber-700 text-xs md:text-sm font-semibold tracking-widest">
@@ -44,7 +44,7 @@ export default function WeddingCreditBanner() {
 
         {/* CTA Button */}
         <div>
-          <Button 
+          <Button
             className="bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold text-sm md:text-base px-6 md:px-8 py-2 md:py-3 h-auto rounded-lg transition-all shadow-lg hover:shadow-xl group"
             onClick={() => {
               // Scroll to wedding category

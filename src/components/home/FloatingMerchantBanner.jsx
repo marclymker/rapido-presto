@@ -62,7 +62,7 @@ export default function FloatingMerchantBanner({ user }) {
                 <X className="w-4 h-4 text-white" />
               </button>
 
-              <Link 
+              <Link
                 to={createPageUrl('Dashboard')}
                 className="flex items-center gap-3"
               >

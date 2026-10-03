@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft } from 'lucide-react';
@@ -10,7 +10,7 @@ import ProductCard from '@/components/ui/ProductCard';
 /**
  * PAGE CATÉGORIE - SEO OPTIMISÉE
  * URL: /categories/{slug-categorie}
- * 
+ *
  * Exemples:
  * - /categories/mariage
  * - /categories/robes-de-mariee
@@ -41,9 +41,9 @@ export default function CategoryPage() {
   // Produits de la catégorie
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['category-products', category],
-    queryFn: () => base44.entities.Product.filter({ 
+    queryFn: () => firebase.entities.Product.filter({
       category,
-      is_available: true 
+      is_available: true
     }),
     enabled: category !== 'Tout'
   });
@@ -51,7 +51,7 @@ export default function CategoryPage() {
   // Boutiques actives
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true })
+    queryFn: () => firebase.entities.Shop.filter({ is_active: true })
   });
 
   if (isLoading) {
@@ -93,14 +93,14 @@ export default function CategoryPage() {
     <>
       <Helmet>
         <title>{category} - Livraison rapide en Haïti | Rapido Presto</title>
-        <meta 
-          name="description" 
+        <meta
+          name="description"
           content={`Découvrez ${products.length} produits dans la catégorie ${category}. Livraison rapide partout en Haïti.`}
         />
         <meta name="keywords" content={`${category}, Haïti, livraison, e-commerce, shopping`} />
-        
+
         <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
-        
+
         <script type="application/ld+json">
           {JSON.stringify(breadcrumbSchema)}
         </script>

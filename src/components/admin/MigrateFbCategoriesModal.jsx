@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Sparkles, CheckCircle2, AlertCircle, Eye, Play } from 'lucide-react';
 
@@ -15,7 +14,7 @@ export default function MigrateFbCategoriesModal({ open, onClose }) {
   const runMigration = async (dryRun) => {
     setStep(dryRun ? 'previewing' : 'running');
     try {
-      const { data } = await base44.functions.invoke('migrateToFbCategories', {
+      const { data } = await firebase.functions.invoke('migrateToFbCategories', {
         dry_run: dryRun,
         force_all: forceAll,
       });
