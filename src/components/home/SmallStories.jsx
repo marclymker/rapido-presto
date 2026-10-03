@@ -10,6 +10,7 @@ const stories = [
   { id: 'Electronics', title: 'Tech', icon: '📱' },
   { id: 'Bijoux', title: 'Bijoux', icon: '💎', badge: 'Nouveau' },
   { id: 'Maison', title: 'Maison', icon: '🏠' },
+  { id: 'Hotels/Piscine', title: 'Hôtels / Piscine', icon: '🏨' },
   { id: 'Bébé', title: 'Bébé', icon: '👶' },
   { id: 'Epicerie', title: 'Épicerie', icon: '🛒' },
   { id: 'Café', title: 'Café', icon: '☕' },

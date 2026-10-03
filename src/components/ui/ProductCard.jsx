@@ -9,9 +9,10 @@ const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, s
   const originalDisplayPrice = applyClientMargin(product.price, shopName);
   const image = product.image_url;
   const seller = shopName || 'Vendeur Rapido Presto';
+  const isHotel = product.category === 'Hotels/Piscine';
 
   return (
-    <article id={`product-card-${product.id}`} className="rp-product-card group">
+    <article id={`product-card-${product.id}`} className={`rp-product-card ${isHotel ? 'rp-hotel-card' : ''} group`}>
       <div className="rp-product-media" onClick={() => product.is_available !== false && onClick?.(product)} role="button" tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && onClick?.(product)}>
         {image ? <img src={`${image}${image.includes('?') ? '&' : '?'}w=600&q=82`} className="rp-product-image" alt={product.image_alt || product.name} loading="lazy" decoding="async" /> : <div className="rp-product-empty">Pas de photo</div>}
         <div className="rp-product-gradient" aria-hidden="true" />

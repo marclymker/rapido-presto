@@ -32,6 +32,7 @@ export default function CategoryPage() {
     'electronique': 'Electronics',
     'bijoux': 'Bijoux',
     'maison': 'Maison',
+    'hotels-piscine': 'Hotels/Piscine',
     'bebe': 'Bébé',
     'outils': 'Outils'
   };

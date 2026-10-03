@@ -40,7 +40,7 @@ export default function AdvancedSearch({ onSearch, allProducts, shops, initialQu
 
   const categories = [
     'Mariage', 'Pour Femme', 'Boutique Fleurs', 'Pour homme',
-    'Electronics', 'Bijoux', 'Maison', 'Bébé', 'Outils'
+    'Electronics', 'Bijoux', 'Maison', 'Bébé', 'Outils', 'Hotels/Piscine'
   ];
 
   const handleSearch = async () => {

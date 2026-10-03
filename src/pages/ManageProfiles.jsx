@@ -24,7 +24,7 @@ const COMPANY_CATEGORIES = [
   "Pour Femme", 
   "Electronics", 
   "Pour homme", 
-  "Maison", 
+  "Maison", "Hotels/Piscine",
   "Bébé", 
   "Outils"
 ];

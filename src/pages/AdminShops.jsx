@@ -22,7 +22,7 @@ const REGIONS = [
 
 const categories = [
   "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Vêtements", 
-  "Epicerie", "Café", "Boulangerie", "Pour Femme", "Electronics", "Pour homme", "Maison"
+  "Epicerie", "Café", "Boulangerie", "Pour Femme", "Electronics", "Pour homme", "Maison", "Hotels/Piscine"
 ];
 
 export default function AdminShops() {

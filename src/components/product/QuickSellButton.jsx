@@ -12,7 +12,7 @@ import { toast } from "sonner";
 const CATEGORIES = [
   "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Mariage",
   "Epicerie", "Café", "Pour Femme", "Electronics", "Pour homme",
-  "Maison", "Bébé", "Outils", "Bijoux"
+  "Maison", "Bébé", "Outils", "Bijoux", "Hotels/Piscine"
 ];
 
 export default function QuickSellButton({ user }) {

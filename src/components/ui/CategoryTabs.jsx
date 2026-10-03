@@ -33,6 +33,7 @@ const categories = [
   { id: 'Electronics', label: 'Electronics', icon: Smartphone },
   { id: 'Pour homme', label: 'Homme', icon: UserCircle },
   { id: 'Maison', label: 'Maison', icon: Home },
+  { id: 'Hotels/Piscine', label: 'Hôtels / Piscine', icon: Home },
   { id: 'Bébé', label: 'Bébé', icon: Baby },
   { id: 'Outils', label: 'Outils', icon: Wrench },
   { id: 'Tickets', label: 'Tickets', icon: Ticket }, // Catégorie Tickets ajoutée

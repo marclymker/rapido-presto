@@ -9,8 +9,10 @@ const CompactProductCard = React.memo(({ product, shop, onClick, onAdd }) => {
   const hasPromo = Number(product.promo_price) > 0 && Number(product.promo_price) < Number(product.price);
   const imgSrc = product.image_url ? `${product.image_url}${product.image_url.includes('?') ? '&' : '?'}w=500&q=78` : null;
 
+  const isHotel = product.category === 'Hotels/Piscine';
+
   return (
-    <article className="rp-product-card group" onClick={onClick} style={{ WebkitTapHighlightColor: 'transparent' }}>
+    <article className={`rp-product-card ${isHotel ? 'rp-hotel-card' : ''} group`} onClick={onClick} style={{ WebkitTapHighlightColor: 'transparent' }}>
       <div className="rp-product-media">
         {imgSrc ? <img src={imgSrc} alt={product.image_alt || product.name} className="rp-product-image" loading="lazy" decoding="async" /> : <div className="rp-product-empty"><ShoppingBag size={25} /></div>}
         <div className="rp-product-gradient" aria-hidden="true" />

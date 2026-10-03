@@ -21,7 +21,7 @@ const REGIONS = [
 
 const COMPANY_CATEGORIES = [
   "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Mariage",
-  "Epicerie", "Café", "Pour Femme", "Electronics", "Pour homme", "Maison", "Bébé", "Outils"
+  "Epicerie", "Café", "Pour Femme", "Electronics", "Pour homme", "Maison", "Bébé", "Outils", "Hotels/Piscine"
 ];
 
 const VEHICLE_TYPES = ["Moto", "Voiture", "Bicyclette"];

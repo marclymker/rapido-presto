@@ -18,6 +18,7 @@ const CATEGORY_EMOJIS = {
   'Outils': '🔧',
   'Bijoux': '💎',
   'Matériels Décor': '🎨',
+  'Hotels/Piscine': '🏨',
 };
 
 // Accepte shopsMap (pre-calculated) ou shops array (fallback)
@@ -35,7 +36,7 @@ export default function CategoryRow({ title, emoji, products, shops, shopsMap: s
   const displayEmoji = emoji || CATEGORY_EMOJIS[title] || '📦';
 
   return (
-    <section className="rp-category-row mb-6">
+    <section className={`rp-category-row mb-6 ${title === 'Hotels/Piscine' ? 'rp-category-hotels' : ''}`}>
       {/* Header section */}
       <div className="flex items-center justify-between px-4 mb-2">
         <h3 className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
