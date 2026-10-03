@@ -3,9 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Tag, Store, ChevronRight, X, MapPin, MessageCircle, Ticket } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { useNavigate } from 'react-router-dom';
@@ -150,8 +147,6 @@ export default function Products() {
   const isAdmin = user?.role === 'admin';
   const referenceRegion = selectedRegion || user?.region || 'Port-au-Prince';
 
-  const [showSellerTrap, setShowSellerTrap] = useState(false);
-  const [trapData, setTrapData] = useState({ phone: '', region: '' });
 
   useEffect(() => {
     try {
@@ -232,43 +227,6 @@ export default function Products() {
     return m;
   }, [shops]);
 
-  const isSeller = useMemo(() => {
-    if (!user || !shops.length) return false;
-    return shops.some(shop => shop.user_id === user.id);
-  }, [user, shops]);
-
-  useEffect(() => {
-    if (isSeller && (!user?.phone || !user?.region)) {
-      setShowSellerTrap(prev => {
-        if (!prev) {
-          setTrapData({ phone: user?.phone || '', region: user?.region || '' });
-          return true;
-        }
-        return prev;
-      });
-    } else {
-      setShowSellerTrap(false);
-    }
-  }, [isSeller, user]);
-
-  const updateUserMutation = useMutation({
-    mutationFn: async (data) => base44.entities.User.update(user.id, data),
-    onSuccess: () => {
-      toast.success('Profil mis à jour avec succès !');
-      setShowSellerTrap(false);
-      window.location.reload();
-    },
-    onError: (error) => toast.error(error.message || "Erreur lors de la mise à jour"),
-  });
-
-  const handleTrapSubmit = (e) => {
-    e.preventDefault();
-    if (!trapData.phone || !trapData.region) {
-      toast.error('Veuillez remplir tous les champs obligatoires.');
-      return;
-    }
-    updateUserMutation.mutate(trapData);
-  };
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity }) => {
@@ -764,58 +722,6 @@ export default function Products() {
           </div>
         )}
 
-        {/* POP-UP PIÈGE POUR VENDEURS */}
-        <Dialog open={showSellerTrap} onOpenChange={() => {}}>
-          <DialogContent className="max-w-md bg-white rounded-2xl p-6" onInteractOutside={(e) => e.preventDefault()}>
-            <DialogHeader>
-              <DialogTitle className="text-xl font-black text-slate-800">Finalisez votre profil vendeur</DialogTitle>
-              <DialogDescription className="text-slate-500 mt-2">
-                Pour garantir un service logistique parfait à vos clients avec Rapido Presto, nous avons besoin de vos coordonnées exactes.
-              </DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleTrapSubmit} className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label className="font-bold text-slate-700">Numéro WhatsApp *</Label>
-                <Input
-                  type="tel"
-                  placeholder="Ex: +509 3000 0000"
-                  value={trapData.phone}
-                  onChange={(e) => setTrapData({ ...trapData, phone: e.target.value })}
-                  className="h-12 bg-slate-50 text-slate-900 font-bold text-lg"
-                  required
-                />
-                <p className="text-[10px] text-slate-400">Ce numéro sera utilisé pour vous contacter lors des commandes.</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="font-bold text-slate-700">Votre Région / Commune *</Label>
-                <Select
-                  value={trapData.region}
-                  onValueChange={(val) => setTrapData({ ...trapData, region: val })}
-                  required
-                >
-                  <SelectTrigger className="h-12 bg-slate-50 border border-slate-200 text-slate-900 font-bold text-lg">
-                    <SelectValue placeholder="Sélectionnez votre zone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {REGIONS.map(r => (
-                      <SelectItem key={r} value={r}>{r}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg mt-6"
-                disabled={updateUserMutation.isPending || !trapData.phone || !trapData.region}
-              >
-                {updateUserMutation.isPending ? 'Mise à jour...' : 'Enregistrer et continuer'}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
       </main>
     </div>
   );
