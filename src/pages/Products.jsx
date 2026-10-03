@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Tag, Store, ChevronRight, X, MapPin, MessageCircle, Ticket } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from "@/components/ui/button";
@@ -772,75 +771,80 @@ export default function Products() {
           </div>
         )}
 
-        <Dialog open={showSellerProfilePrompt} onOpenChange={() => {}}>
-          <DialogContent
-            className="max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white rounded-2xl p-6"
-            onOpenAutoFocus={(event) => event.preventDefault()}
-            onInteractOutside={(event) => event.preventDefault()}
-            onEscapeKeyDown={(event) => event.preventDefault()}
+        {showSellerProfilePrompt && (
+          <div
+            className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-slate-950/60 p-3 sm:items-center sm:p-6"
+            role="presentation"
           >
-            <DialogHeader>
-              <DialogTitle className="text-xl font-black text-slate-800">Finalisez votre profil vendeur</DialogTitle>
-              <DialogDescription className="text-slate-500 mt-2">
-                Ajoutez vos coordonnées pour recevoir les commandes et organiser la livraison.
-              </DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleSellerProfileSubmit} className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="seller-phone" className="font-bold text-slate-700">Numéro WhatsApp *</Label>
-                <Input
-                  id="seller-phone"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  placeholder="Ex: +509 3000 0000"
-                  value={sellerProfile.phone}
-                  onChange={(event) => setSellerProfile((current) => ({ ...current, phone: event.target.value }))}
-                  className="h-12 bg-slate-50 text-slate-900 font-bold text-lg"
-                  required
-                />
+            <div
+              className="my-3 w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl sm:my-6 sm:p-6"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="seller-profile-title"
+            >
+              <div className="mb-4">
+                <h2 id="seller-profile-title" className="text-xl font-black text-slate-800">Finalisez votre profil vendeur</h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  Ajoutez vos coordonnées pour recevoir les commandes et organiser la livraison.
+                </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="seller-address" className="font-bold text-slate-700">Adresse de livraison / collecte *</Label>
-                <Input
-                  id="seller-address"
-                  type="text"
-                  autoComplete="street-address"
-                  placeholder="Rue, zone, repère"
-                  value={sellerProfile.address}
-                  onChange={(event) => setSellerProfile((current) => ({ ...current, address: event.target.value }))}
-                  className="h-12 bg-slate-50 text-slate-900 font-bold"
-                  required
-                />
-              </div>
+              <form onSubmit={handleSellerProfileSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="seller-phone" className="font-bold text-slate-700">Numéro WhatsApp *</Label>
+                  <Input
+                    id="seller-phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="Ex: +509 3000 0000"
+                    value={sellerProfile.phone}
+                    onChange={(event) => setSellerProfile((current) => ({ ...current, phone: event.target.value }))}
+                    className="h-12 bg-slate-50 text-slate-900 font-bold text-lg"
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label className="font-bold text-slate-700">Votre région / commune *</Label>
-                <Select
-                  value={sellerProfile.region}
-                  onValueChange={(region) => setSellerProfile((current) => ({ ...current, region }))}
+                <div className="space-y-2">
+                  <Label htmlFor="seller-address" className="font-bold text-slate-700">Adresse de livraison / collecte *</Label>
+                  <Input
+                    id="seller-address"
+                    type="text"
+                    autoComplete="street-address"
+                    placeholder="Rue, zone, repère"
+                    value={sellerProfile.address}
+                    onChange={(event) => setSellerProfile((current) => ({ ...current, address: event.target.value }))}
+                    className="h-12 bg-slate-50 text-slate-900 font-bold"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="font-bold text-slate-700">Votre région / commune *</Label>
+                  <Select
+                    value={sellerProfile.region}
+                    onValueChange={(region) => setSellerProfile((current) => ({ ...current, region }))}
+                  >
+                    <SelectTrigger className="h-12 bg-slate-50 border border-slate-200 text-slate-900 font-bold">
+                      <SelectValue placeholder="Sélectionnez votre zone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {REGIONS.map((region) => <SelectItem key={region} value={region}>{region}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg mt-6"
+                  disabled={updateSellerProfileMutation.isPending}
                 >
-                  <SelectTrigger className="h-12 bg-slate-50 border border-slate-200 text-slate-900 font-bold">
-                    <SelectValue placeholder="Sélectionnez votre zone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {REGIONS.map((region) => <SelectItem key={region} value={region}>{region}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg mt-6"
-                disabled={updateSellerProfileMutation.isPending}
-              >
-                {updateSellerProfileMutation.isPending ? 'Enregistrement...' : 'Enregistrer et continuer'}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+                  {updateSellerProfileMutation.isPending ? 'Enregistrement...' : 'Enregistrer et continuer'}
+                </Button>
+              </form>
+            </div>
+          </div>
+        )}
 
       </main>
     </div>
