@@ -7,7 +7,6 @@ import {
   getDocs, 
   setDoc, 
   addDoc, 
-  updateDoc, 
   deleteDoc, 
   query, 
   where, 
@@ -114,7 +113,9 @@ const createEntityHandler = (entityName) => ({
     try {
       const docRef = doc(db, entityName, id);
       const payload = { ...data, updated_date: serverTimestamp() };
-      await updateDoc(docRef, payload);
+      // setDoc + merge gère aussi le premier profil Google/Apple
+      // lorsque le document Firestore n'a pas encore été créé.
+      await setDoc(docRef, payload, { merge: true });
       return { id, ...payload };
     } catch (err) {
       console.error(`Erreur update ${entityName}:`, err);

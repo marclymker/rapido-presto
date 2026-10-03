@@ -3,6 +3,9 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Tag, Store, ChevronRight, X, MapPin, MessageCircle, Ticket } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Button } from "@/components/ui/button";
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { useNavigate } from 'react-router-dom';
@@ -143,6 +146,8 @@ export default function Products() {
   const [fbLevel1Id, setFbLevel1Id] = useState(null);
   const [selectedRegion, setSelectedRegion] = useState('');
   const [editingProduct, setEditingProduct] = useState(null);
+  const [showSellerProfilePrompt, setShowSellerProfilePrompt] = useState(false);
+  const [sellerProfile, setSellerProfile] = useState({ phone: '', address: '', region: '' });
 
   const isAdmin = user?.role === 'admin';
   const referenceRegion = selectedRegion || user?.region || 'Port-au-Prince';
@@ -226,6 +231,51 @@ export default function Products() {
     shops.forEach(s => { m[s.id] = s; });
     return m;
   }, [shops]);
+
+  const isSeller = useMemo(() => {
+    if (!user || !shops.length) return false;
+    return shops.some(shop => shop.user_id === user.id);
+  }, [user, shops]);
+
+  useEffect(() => {
+    if (!isSeller || !user) {
+      setShowSellerProfilePrompt(false);
+      return;
+    }
+
+    const missingContact = !user.phone || !user.address || !user.region;
+    if (missingContact) {
+      setSellerProfile({
+        phone: user.phone || '',
+        address: user.address || '',
+        region: user.region || ''
+      });
+      setShowSellerProfilePrompt(true);
+    }
+  }, [isSeller, user]);
+
+  const updateSellerProfileMutation = useMutation({
+    mutationFn: (data) => base44.entities.User.update(user.id, data),
+    onSuccess: () => {
+      toast.success('Profil vendeur enregistré.');
+      setShowSellerProfilePrompt(false);
+    },
+    onError: (error) => toast.error(error.message || 'Impossible d’enregistrer le profil.')
+  });
+
+  const handleSellerProfileSubmit = (event) => {
+    event.preventDefault();
+    const { phone, address, region } = sellerProfile;
+    if (!phone.trim() || !address.trim() || !region.trim()) {
+      toast.error('Le WhatsApp, l’adresse et la région sont obligatoires.');
+      return;
+    }
+    updateSellerProfileMutation.mutate({
+      phone: phone.trim(),
+      address: address.trim(),
+      region: region.trim()
+    });
+  };
 
 
   const addToCartMutation = useMutation({
@@ -721,6 +771,76 @@ export default function Products() {
             </div>
           </div>
         )}
+
+        <Dialog open={showSellerProfilePrompt} onOpenChange={() => {}}>
+          <DialogContent
+            className="max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white rounded-2xl p-6"
+            onOpenAutoFocus={(event) => event.preventDefault()}
+            onInteractOutside={(event) => event.preventDefault()}
+            onEscapeKeyDown={(event) => event.preventDefault()}
+          >
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black text-slate-800">Finalisez votre profil vendeur</DialogTitle>
+              <DialogDescription className="text-slate-500 mt-2">
+                Ajoutez vos coordonnées pour recevoir les commandes et organiser la livraison.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSellerProfileSubmit} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="seller-phone" className="font-bold text-slate-700">Numéro WhatsApp *</Label>
+                <Input
+                  id="seller-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="Ex: +509 3000 0000"
+                  value={sellerProfile.phone}
+                  onChange={(event) => setSellerProfile((current) => ({ ...current, phone: event.target.value }))}
+                  className="h-12 bg-slate-50 text-slate-900 font-bold text-lg"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="seller-address" className="font-bold text-slate-700">Adresse de livraison / collecte *</Label>
+                <Input
+                  id="seller-address"
+                  type="text"
+                  autoComplete="street-address"
+                  placeholder="Rue, zone, repère"
+                  value={sellerProfile.address}
+                  onChange={(event) => setSellerProfile((current) => ({ ...current, address: event.target.value }))}
+                  className="h-12 bg-slate-50 text-slate-900 font-bold"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="font-bold text-slate-700">Votre région / commune *</Label>
+                <Select
+                  value={sellerProfile.region}
+                  onValueChange={(region) => setSellerProfile((current) => ({ ...current, region }))}
+                >
+                  <SelectTrigger className="h-12 bg-slate-50 border border-slate-200 text-slate-900 font-bold">
+                    <SelectValue placeholder="Sélectionnez votre zone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REGIONS.map((region) => <SelectItem key={region} value={region}>{region}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg mt-6"
+                disabled={updateSellerProfileMutation.isPending}
+              >
+                {updateSellerProfileMutation.isPending ? 'Enregistrement...' : 'Enregistrer et continuer'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
 
       </main>
     </div>
