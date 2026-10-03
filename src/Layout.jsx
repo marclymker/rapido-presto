@@ -14,11 +14,8 @@ import AppFooter from '@/components/layout/AppFooter';
 
 // Composants non-critiques chargés en différé (hors chemin critique de rendu)
 const OneSignalInit = lazy(() => import('@/components/notifications/OneSignalInit'));
-const NotificationPermission = lazy(() => import('@/components/notifications/NotificationPermission'));
-const InstallPrompt = lazy(() => import('@/components/pwa/InstallPrompt'));
 const SessionValidator = lazy(() => import('@/components/auth/SessionValidator'));
 const GA4Tracker = lazy(() => import('@/components/tracking/GA4Tracker'));
-const CookieConsent = lazy(() => import('@/components/cookies/CookieConsent'));
 
 // Détecte connexion lente (Save-Data ou 2G)
 const isSlowConnection = () => {
@@ -29,8 +26,7 @@ const isSlowConnection = () => {
 };
 
 export default function Layout({ children, currentPageName }) {
-  const { user, isLoading: loading } = useAuth();
-  const [cookiesAccepted, setCookiesAccepted] = useState(false);
+  const { user } = useAuth();
   // Calculé une seule fois au montage du layout
   const [slowConnection] = useState(() => isSlowConnection());
 
@@ -51,25 +47,10 @@ export default function Layout({ children, currentPageName }) {
   }, [user, currentPageName]);
 
   useEffect(() => {
-    const consent = localStorage.getItem('cookie_consent');
-    if (consent) {
-      try {
-        const preferences = JSON.parse(consent);
-        if (preferences.marketing || preferences.analytics) {
-          setCookiesAccepted(true);
-        }
-      } catch (_) {}
-    }
-  }, []);
-
-  useEffect(() => {
     if (window.fbq) {
       window.fbq('track', 'PageView');
     }
   }, [currentPageName]);
-
-  const handleCookieAccept = () => setCookiesAccepted(true);
-  const handleCookieReject = () => setCookiesAccepted(false);
 
   const noNavPages = ['ProfileSetup', 'ManageProfiles', 'AdminValidation', 'Chat'];
 
@@ -142,9 +123,6 @@ export default function Layout({ children, currentPageName }) {
           fbq('init', '1346505637253912');
           fbq('track', 'PageView');
         `}</script>
-        {cookiesAccepted && (
-          <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2183521622591299" crossOrigin="anonymous"></script>
-        )}
       </Helmet>
 
       <noscript>
@@ -159,10 +137,7 @@ export default function Layout({ children, currentPageName }) {
         {/* Composants non-critiques : chargés en différé après le rendu principal */}
         {/* Sur connexion lente, on ne charge pas les composants non-essentiels */}
         <Suspense fallback={null}>
-          <CookieConsent onAccept={handleCookieAccept} onReject={handleCookieReject} />
           {!slowConnection && <OneSignalInit user={user} />}
-          {!slowConnection && <NotificationPermission />}
-          {!slowConnection && <InstallPrompt />}
           <SessionValidator user={user} />
           {!slowConnection && <GA4Tracker />}
         </Suspense>

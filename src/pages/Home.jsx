@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Tag, Store, ShoppingBag, ShoppingCart, X, Clock, ChevronRight } from 'lucide-react';
+import { Search, Tag, Store, ShoppingCart, X, ChevronRight } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
 const ProductDetailModal = lazy(() => import('@/components/modals/ProductDetailModal'));
 import { toast } from 'sonner';
@@ -20,9 +19,6 @@ import CategoryRow from '@/components/home/CategoryRow';
 import SmallStories from '@/components/home/SmallStories';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
-import { Button } from "@/components/ui/button";
-
-const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
 
 export default function Home() {
   const { user } = useAuth();
@@ -36,7 +32,6 @@ export default function Home() {
   const [showCategories, setShowCategories] = useState(false);
   const [selectedFbCatId, setSelectedFbCatId] = useState(null);
   const [fbLevel1Id, setFbLevel1Id] = useState(null);
-  const [showCartReminder, setShowCartReminder] = useState(false);
   const [visibleCount, setVisibleCount] = useState(40);
 
   // Track PageView Meta Pixel
@@ -79,13 +74,6 @@ export default function Home() {
     cartItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0),
     [cartItems]
   );
-
-  useEffect(() => {
-    if (cartItems.length > 0) {
-      const timer = setTimeout(() => setShowCartReminder(true), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [cartItems.length]);
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity }) => {
@@ -386,10 +374,6 @@ export default function Home() {
         )}
       </header>
 
-      <Suspense fallback={null}>
-        <MerchantProfileAlert user={user} />
-      </Suspense>
-
       <SmallStories onCategorySelect={(category) => { setSelectedCategory(category); setSearchQuery(''); }} />
 
       {/* Main Content */}
@@ -492,33 +476,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Cart reminder */}
-      {showCartReminder && cartCount > 0 && (
-        <div className="fixed top-32 right-4 z-50 animate-in slide-in-from-right duration-500 max-w-sm w-full md:w-80">
-          <div className="bg-white border-l-4 border-orange-500 shadow-2xl rounded-lg p-4 relative">
-            <button onClick={() => setShowCartReminder(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
-              <X className="w-4 h-4" />
-            </button>
-            <div className="flex items-start gap-3">
-              <div className="bg-orange-100 p-2 rounded-full">
-                <Clock className="w-6 h-6 text-orange-600" />
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900">N'oubliez pas vos achats !</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  Il vous reste <span className="font-bold">{cartCount} article{cartCount > 1 ? 's' : ''}</span> dans votre panier.
-                </p>
-              </div>
-            </div>
-            <Button
-              className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold"
-              onClick={() => window.location.href = createPageUrl('Cart')}
-            >
-              Finaliser ma commande
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
