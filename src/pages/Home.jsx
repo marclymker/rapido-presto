@@ -16,9 +16,9 @@ import { useGuestCart } from '@/components/cart/useGuestCart';
 import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
 import CompactProductCard from '@/components/home/CompactProductCard';
 import CategoryRow from '@/components/home/CategoryRow';
-import SmallStories from '@/components/home/SmallStories';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
+import { MARKETPLACE_SPACES, getMarketplaceSpace } from '@/lib/marketplaceSpaces';
 
 export default function Home() {
   const { user } = useAuth();
@@ -148,6 +148,7 @@ export default function Home() {
 
   const filteredProducts = useMemo(() => {
     const base = allProducts.filter(p => {
+      if (selectedCategory && getMarketplaceSpace(p) !== selectedCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
 
       // Recherche hybride multi-mots : titre + description + nom boutique + tags SEO
@@ -170,7 +171,7 @@ export default function Home() {
     });
 
     // Si recherche ou catégorie active, pas de personnalisation
-    if (searchQuery || selectedFbCatId) return base;
+    if (searchQuery || selectedCategory || selectedFbCatId) return base;
 
     // Récupérer le dernier produit visualisé
     let lastViewed = null;
@@ -212,7 +213,7 @@ export default function Home() {
     const rest = shuffle(scored.filter(p => !top10Ids.has(p.id)));
 
     return [...top10, ...rest];
-  }, [allProducts, searchQuery, selectedFbCatId]);
+  }, [allProducts, searchQuery, selectedCategory, selectedFbCatId]);
 
   const handleProductClick = useCallback((product) => {
     const shop = shops.find(s => s.id === product.shop_id);
@@ -235,22 +236,22 @@ export default function Home() {
     return m;
   }, [shops]);
 
-  const isFiltered = !!(searchQuery || selectedFbCatId);
+  const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId);
 
   // Group products by category for horizontal sections
   const categoryGroups = useMemo(() => {
     if (isFiltered) return {};
     const groups = {};
     allProducts.forEach(p => {
-      if (!p.category) return;
-      if (!groups[p.category]) groups[p.category] = [];
-      groups[p.category].push(p);
+      const space = getMarketplaceSpace(p);
+      if (!groups[space]) groups[space] = [];
+      groups[space].push(p);
     });
     // Sort each group by newest
     Object.keys(groups).forEach(k => {
       groups[k].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     });
-    return groups;
+    return Object.fromEntries(MARKETPLACE_SPACES.map(({ id }) => [id, groups[id] || []]).filter(([, products]) => products.length));
   }, [allProducts, isFiltered]);
 
   return (
@@ -307,81 +308,29 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="px-4 pb-3 flex gap-2">
-          <button
-            onClick={() => navigate('/Dashboard')}
-            className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white py-2 px-4 rounded-full text-sm font-semibold hover:bg-orange-600 transition"
-          >
-            <Store className="w-4 h-4" />
-            <span>Ma boutique</span>
-          </button>
-          <button
-            onClick={() => setShowCategories(!showCategories)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm font-semibold transition ${
-              showCategories || selectedFbCatId
-                ? 'bg-orange-500 text-white'
-                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-            }`}
-          >
-            <Tag className="w-4 h-4" />
-            <span>{selectedFbCatId ? findById(selectedFbCatId)?.name : 'Catégories'}</span>
-          </button>
-        </div>
-
-        {/* Categories dropdown - Taxonomy Facebook/Google uniquement */}
-        {showCategories && (
-          <div className="px-4 pb-3 space-y-2">
-            <div className="flex flex-wrap gap-1.5">
-              {FB_TAXONOMY.map(cat => (
-                <button key={cat.id} onClick={() => { setFbLevel1Id(fbLevel1Id === cat.id ? null : cat.id); if (selectedFbCatId) setSelectedFbCatId(null); }}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${fbLevel1Id === cat.id ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'}`}>
-                  {cat.icon} {cat.name}
-                </button>
-              ))}
-            </div>
-            {fbLevel1Id && getChildren(fbLevel1Id).length > 0 && (
-              <div className="flex flex-wrap gap-1.5 ml-3 items-center">
-                <ChevronRight className="w-3 h-3 text-slate-400" />
-                {getChildren(fbLevel1Id).map(child => (
-                  <button key={child.id} onClick={() => setSelectedFbCatId(selectedFbCatId === child.id ? null : child.id)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${selectedFbCatId === child.id ? 'bg-orange-500 text-white border-orange-500' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
-                    {child.name}{child.children?.length > 0 && ' ›'}
-                  </button>
-                ))}
-              </div>
-            )}
-            {selectedFbCatId && getChildren(selectedFbCatId).length > 0 && (
-              <div className="flex flex-wrap gap-1.5 ml-6 items-center">
-                <ChevronRight className="w-3 h-3 text-slate-400" />
-                {getChildren(selectedFbCatId).map(child => (
-                  <button key={child.id} onClick={() => setSelectedFbCatId(child.id)}
-                    className="px-2.5 py-1 rounded-full text-[11px] font-medium border bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 transition">
-                    {child.name}
-                  </button>
-                ))}
-              </div>
-            )}
-            {selectedFbCatId && (
-              <div className="mt-1">
-                <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                  {findById(selectedFbCatId)?.name}
-                  <button onClick={() => { setSelectedFbCatId(null); setFbLevel1Id(null); }}><X className="w-2.5 h-2.5" /></button>
-                </span>
-              </div>
-            )}
+        <nav className="rp-space-tabs px-4 pb-3" aria-label="Grands espaces Rapido Presto">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            {MARKETPLACE_SPACES.map((space) => (
+              <button
+                key={space.id}
+                type="button"
+                onClick={() => { setSelectedCategory(selectedCategory === space.id ? null : space.id); setSearchQuery(''); setShowCategories(false); }}
+                aria-pressed={selectedCategory === space.id}
+                className={`shrink-0 rounded-xl px-4 py-3 text-sm font-bold transition ${selectedCategory === space.id ? 'bg-white text-slate-950' : 'bg-[#20242b] text-white hover:bg-[#2a3038]'}`}
+              >
+                <span className="mr-1.5">{space.icon}</span>{space.label}
+              </button>
+            ))}
           </div>
-        )}
+        </nav>
       </header>
-
-      <SmallStories onCategorySelect={(category) => { setSelectedCategory(category); setSearchQuery(''); }} />
 
       {/* Main Content */}
       <PullToRefresh onRefresh={async () => { queryClient.invalidateQueries(['all-products']); queryClient.invalidateQueries(['shops']); }}>
         <main className="rp-feed flex-1 p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-800">
-              {selectedFbCatId ? findById(selectedFbCatId)?.name : 'Sélection du jour'}
+              {selectedCategory || 'Sélection du jour'}
             </h2>
             <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
           </div>

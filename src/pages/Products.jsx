@@ -19,11 +19,10 @@ import SEO from '@/components/SEO';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
+import { MARKETPLACE_SPACES, getMarketplaceSpace } from '@/lib/marketplaceSpaces';
 
 const CATEGORIES = [
-  'Pour Femme', 'Bijoux', 'Pour homme', 'Mariage', 'Boutique Fleurs',
-  'Maison', 'Electronics', 'Mode', 'Pharmacie',
-  'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor', 'Hotels/Piscine', 'Tickets'
+  ...MARKETPLACE_SPACES.map((space) => space.id)
 ];
 
 const REGIONS = [
@@ -160,7 +159,12 @@ export default function Products() {
       const savedSearch = sessionStorage.getItem('marketplace_search');
       if (savedSearch) setSearchQuery(savedSearch);
       const savedCategory = sessionStorage.getItem('marketplace_category');
-      if (savedCategory) setSelectedCategory(savedCategory);
+      if (savedCategory && MARKETPLACE_SPACES.some((space) => space.id === savedCategory)) {
+        setSelectedCategory(savedCategory);
+      } else if (savedCategory) {
+        sessionStorage.removeItem('marketplace_category');
+        setSelectedCategory(null);
+      }
       const savedScroll = sessionStorage.getItem('marketplace_scroll');
       if (savedScroll) {
         window.scrollTo(0, parseInt(savedScroll, 10));
@@ -352,7 +356,7 @@ export default function Products() {
 
   const filteredProducts = useMemo(() => {
     const baseFiltered = allProducts.filter(p => {
-      if (selectedCategory && p.category !== selectedCategory) return false;
+      if (selectedCategory && getMarketplaceSpace(p) !== selectedCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
       return true;
     });
@@ -430,9 +434,9 @@ export default function Products() {
     if (isFiltered) return {};
     const byCategory = {};
     allProducts.forEach(p => {
-      if (!p.category) return;
-      if (!byCategory[p.category]) byCategory[p.category] = [];
-      byCategory[p.category].push(p);
+      const space = getMarketplaceSpace(p);
+      if (!byCategory[space]) byCategory[space] = [];
+      byCategory[space].push(p);
     });
     const result = {};
     Object.keys(byCategory).forEach(cat => {
@@ -536,167 +540,38 @@ export default function Products() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-b border-gray-300 bg-white">
-          <button
-            type="button"
-            onClick={() => user ? navigate('/Dashboard') : base44.auth.redirectToLogin('/Dashboard')}
-            className="flex-1 flex items-center justify-center gap-2 py-3 text-[#1877F2] font-semibold text-[14px] md:text-[15px] border-b-[3px] border-[#1877F2]"
-          >
-            <Store className="w-[18px] h-[18px] md:w-5 md:h-5" fill="currentColor" stroke="none" />
-            <span className="whitespace-nowrap">Ma Boutique</span>
-          </button>
+        <nav className="rp-space-tabs px-4 pb-3" aria-label="Grands espaces Rapido Presto">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            {MARKETPLACE_SPACES.map((space) => (
+              <button
+                key={space.id}
+                type="button"
+                onClick={() => handleCategorySelect(selectedCategory === space.id ? null : space.id)}
+                aria-pressed={selectedCategory === space.id}
+                className={`shrink-0 rounded-xl px-4 py-3 text-sm font-bold transition ${selectedCategory === space.id ? 'bg-white text-slate-950' : 'bg-[#20242b] text-white hover:bg-[#2a3038]'}`}
+              >
+                <span className="mr-1.5">{space.icon}</span>{space.label}
+              </button>
+            ))}
+          </div>
+        </nav>
 
-          <div className="w-[1px] h-5 bg-gray-300"></div>
-
-          <button
-            type="button"
-            onClick={() => setShowCategories(v => !v)}
-            aria-pressed={showCategories || !!selectedCategory}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] border-b-[3px] border-transparent ${showCategories || selectedCategory ? 'text-[#1877F2]' : 'text-[#65676B]'}`}
-          >
-            <Tag className="w-[18px] h-[18px] md:w-5 md:h-5" />
-            <span className="whitespace-nowrap">{selectedCategory || 'Catégories'}</span>
-          </button>
-
-          <div className="w-[1px] h-5 bg-gray-300"></div>
-
-          <button
-            type="button"
-            onClick={() => handleCategorySelect('Tickets')}
-            aria-pressed={selectedCategory === 'Tickets'}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] border-b-[3px] transition-colors ${
-              selectedCategory === 'Tickets'
-                ? 'text-[#1877F2] border-[#1877F2]'
-                : 'text-[#65676B] border-transparent hover:text-[#1877F2]'
-            }`}
-          >
-            <Ticket className="w-[18px] h-[18px] md:w-5 md:h-5" fill="currentColor" stroke="none" />
-            <span className="whitespace-nowrap">Tickets</span>
-          </button>
-
-          <div className="w-[1px] h-5 bg-gray-300"></div>
-
+        <div className="flex items-center justify-between px-4 pb-3">
+          <span className="text-xs text-slate-400">{selectedCategory || 'Tous les espaces'}</span>
           <Select
             value={selectedRegion}
             onValueChange={(v) => { setSelectedRegion(v === '__all__' ? '' : v); setVisibleCount(60); }}
           >
-            <SelectTrigger
-              className="flex-shrink-0 w-16 md:w-20 flex justify-center items-center py-3 border-0 bg-transparent shadow-none focus:ring-0 p-0 h-auto text-[#65676B] rounded-none border-b-[3px] border-transparent data-[state=open]:text-[#1877F2]"
-              aria-label="Filtrer par région"
-            >
-              <MapPin className="w-5 h-5" fill="currentColor" stroke="none" />
+            <SelectTrigger className="h-9 w-auto min-w-[150px] border-0 bg-[#20242b] px-3 text-xs text-white shadow-none focus:ring-0">
+              <MapPin className="mr-1.5 h-4 w-4" fill="currentColor" stroke="none" />
+              <SelectValue placeholder="Toutes les zones" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Toutes les zones</SelectItem>
-              {REGIONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              {REGIONS.map((region) => <SelectItem key={region} value={region}>{region}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
-
-        {showCategories && (
-          <div className="px-4 py-3 space-y-3 animate-in fade-in duration-200 bg-white">
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleCategorySelect(null)}
-                aria-pressed={!selectedCategory}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold border transition"
-                style={!selectedCategory ? {backgroundColor: '#1877F2', color: '#fff', borderColor: '#1877F2'} : {backgroundColor: '#fff', color: '#050505', borderColor: '#ddd'}}
-              >
-                Tous
-              </button>
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => handleCategorySelect(cat)}
-                  aria-pressed={selectedCategory === cat}
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold border transition"
-                  style={selectedCategory === cat ? {backgroundColor: '#1877F2', color: '#fff', borderColor: '#1877F2'} : {backgroundColor: '#fff', color: '#050505', borderColor: '#ddd'}}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            <div className="border-t border-gray-200 pt-2">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                Taxonomy Facebook / Google
-              </p>
-              <div className="flex flex-wrap gap-1.5 mb-1.5">
-                {FB_TAXONOMY.map(cat => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => {
-                      setFbLevel1Id(fbLevel1Id === cat.id ? null : cat.id);
-                      if (selectedFbCatId && !String(selectedFbCatId).startsWith(String(cat.id))) {
-                        setSelectedFbCatId(null);
-                      }
-                    }}
-                    aria-pressed={fbLevel1Id === cat.id}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
-                      fbLevel1Id === cat.id ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-slate-600 border-slate-200'
-                    }`}
-                  >
-                    {cat.icon} {cat.name}
-                  </button>
-                ))}
-              </div>
-
-              {fbLevel1Id && getChildren(fbLevel1Id).length > 0 && (
-                <div className="flex flex-wrap gap-1.5 ml-3 mb-1.5">
-                  <ChevronRight className="w-3 h-3 text-slate-400 self-center" />
-                  {getChildren(fbLevel1Id).map(child => (
-                    <button
-                      key={child.id}
-                      type="button"
-                      onClick={() => setSelectedFbCatId(selectedFbCatId === child.id ? null : child.id)}
-                      aria-pressed={selectedFbCatId === child.id}
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
-                        selectedFbCatId === child.id ? 'bg-blue-500 text-white border-blue-500' : 'bg-blue-50 text-blue-700 border-blue-100'
-                      }`}
-                    >
-                      {child.name}{child.children?.length > 0 && ' ›'}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {selectedFbCatId && getChildren(selectedFbCatId).length > 0 && (
-                <div className="flex flex-wrap gap-1.5 ml-6">
-                  <ChevronRight className="w-3 h-3 text-slate-400 self-center" />
-                  {getChildren(selectedFbCatId).map(child => (
-                    <button
-                      key={child.id}
-                      type="button"
-                      onClick={() => setSelectedFbCatId(prev => prev === child.id ? fbLevel1Id : child.id)}
-                      className="px-2.5 py-1 rounded-full text-[11px] font-medium border bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 transition"
-                    >
-                      {child.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {selectedFbCatId && (
-                <div className="mt-1.5 flex items-center gap-1">
-                  <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    ID {selectedFbCatId} · {findById(selectedFbCatId)?.name}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedFbCatId(null)}
-                      className="ml-0.5 hover:text-blue-900"
-                      aria-label="Supprimer le filtre"
-                    >
-                      <X className="w-2.5 h-2.5" />
-                    </button>
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </header>
 
       <main className="flex-1 pt-2 pb-4">
