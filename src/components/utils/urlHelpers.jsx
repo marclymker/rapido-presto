@@ -58,7 +58,7 @@ export const subcategoryToSlug = (subcategory) => {
 // Conversion des slugs en sous-catégories
 export const slugToSubcategory = (slug, weddingStructure) => {
   if (!slug) return null;
-  
+
   for (const group of weddingStructure) {
     if (group.subtypes) {
       for (const subtype of group.subtypes) {

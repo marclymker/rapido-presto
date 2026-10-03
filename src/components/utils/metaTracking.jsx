@@ -45,12 +45,12 @@ export function trackMetaPixelEvent(eventName, data = {}, eventId) {
  */
 export async function trackMetaConversionEvent(eventName, customData = {}, userData = {}, eventId) {
   try {
-    const { base44 } = await import('@/api/base44Client');
-    
+    const { firebase } = await import('@/api/firebaseClient');
+
     const metaCookies = getMetaCookies();
     const clientInfo = getClientInfo();
 
-    const response = await base44.functions.invoke('metaConversionsAPI', {
+    const response = await firebase.functions.invoke('metaConversionsAPI', {
       event_name: eventName,
       event_id: eventId,
       custom_data: {
@@ -75,10 +75,10 @@ export async function trackMetaConversionEvent(eventName, customData = {}, userD
  */
 export async function trackMetaEvent(eventName, data = {}, userData = {}) {
   const eventId = generateEventId();
-  
+
   // 1. Pixel (synchrone, frontend)
   trackMetaPixelEvent(eventName, data, eventId);
-  
+
   // 2. CAPI (asynchrone, backend)
   await trackMetaConversionEvent(eventName, data, userData, eventId);
 }

@@ -1,17 +1,15 @@
 // ============================================================
-// Rapido Presto — Service Worker v3 (Stale-While-Revalidate)
+// Rapido Presto — Service Worker v5
 // Optimisé pour connexions lentes (Haïti)
 // ============================================================
 
-const CACHE_VERSION = 'rp-v4';
+const CACHE_VERSION = 'rp-v5'; // purge le build précédent qui contenait le tracker legacy
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const IMAGE_CACHE   = `${CACHE_VERSION}-images`;
 const PAGE_CACHE    = `${CACHE_VERSION}-pages`;
 
 // Assets statiques à précacher dès l'installation
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
   '/offline.html',
 ];
 
@@ -47,15 +45,17 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET
   if (request.method !== 'GET') return;
 
+  // Ignorer chrome-extension://, data:, etc. (cache.put les refuse)
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
   // ── API calls → Network First (fallback: nothing cached)
-  if (url.pathname.includes('/api/') || url.hostname.includes('supabase')) {
+  if (url.pathname.includes('/api/')) {
     event.respondWith(networkFirst(request, PAGE_CACHE, 4000));
     return;
   }
 
   // ── Images → Cache First (saves bandwidth on slow connections)
-  if (/\.(png|jpg|jpeg|gif|webp|svg|ico)$/i.test(url.pathname) ||
-      url.hostname.includes('supabase') && url.pathname.includes('storage')) {
+  if (/\.(png|jpg|jpeg|gif|webp|svg|ico)$/i.test(url.pathname)) {
     event.respondWith(cacheFirst(request, IMAGE_CACHE, 200));
     return;
   }
@@ -66,9 +66,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ── Navigation (HTML pages) → Stale While Revalidate
+  // ── Navigation (HTML pages) → Network First (jamais de vieux index.html)
   if (request.mode === 'navigate') {
-    event.respondWith(staleWhileRevalidate(request, PAGE_CACHE));
+    event.respondWith(
+      fetch(request).catch(async () => (await caches.match(request)) || offlineFallback())
+    );
     return;
   }
 });
@@ -115,8 +117,10 @@ async function cacheFirst(request, cacheName, maxEntries) {
 
   try {
     const response = await fetch(request);
-    if (response.ok) {
-      cache.put(request, response.clone());
+    const type = response.headers.get('content-type') || '';
+    // Un fichier manquant renvoie index.html (text/html) avec un code 200 : ne jamais le mémoriser
+    if (response.ok && !type.includes('text/html')) {
+      cache.put(request, response.clone()).catch(() => {});
       if (maxEntries) trimCache(cacheName, maxEntries);
     }
     return response;
@@ -132,7 +136,7 @@ async function staleWhileRevalidate(request, cacheName) {
 
   const fetchPromise = fetch(request)
     .then((response) => {
-      if (response.ok) cache.put(request, response.clone());
+      if (response.ok) cache.put(request, response.clone()).catch(() => {});
       return response;
     })
     .catch(() => null);
@@ -149,7 +153,7 @@ async function networkFirst(request, cacheName, timeoutMs) {
     const tid = setTimeout(() => controller.abort(), timeoutMs);
     const response = await fetch(request, { signal: controller.signal });
     clearTimeout(tid);
-    if (response.ok) cache.put(request, response.clone());
+    if (response.ok) cache.put(request, response.clone()).catch(() => {});
     return response;
   } catch {
     const cached = await cache.match(request);

@@ -24,8 +24,8 @@ export default function OrdersSection({ orders = [], onAddProduct, userType = 'e
     return statusConfig[status] || statusConfig.pending;
   };
 
-  const filteredOrders = filter === 'all' 
-    ? orders 
+  const filteredOrders = filter === 'all'
+    ? orders
     : orders.filter(order => order.status === filter);
 
   return (
@@ -46,7 +46,7 @@ export default function OrdersSection({ orders = [], onAddProduct, userType = 'e
           <div className="text-6xl mb-4">📈</div>
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Augmentez vos revenus</h3>
           <p className="text-gray-600 mb-6">Ajoutez des articles pour recevoir vos premières commandes</p>
-          <button 
+          <button
             onClick={onAddProduct}
             className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105 shadow-lg"
           >
@@ -63,11 +63,11 @@ export default function OrdersSection({ orders = [], onAddProduct, userType = 'e
           {filteredOrders.map(order => {
             const statusInfo = getStatusBadge(order.status);
             return (
-              <div 
-                key={order.id} 
+              <div
+                key={order.id}
                 className="bg-white p-4 rounded-xl border shadow-[0_4px_12px_rgba(251,146,60,0.3)] hover:shadow-[0_6px_16px_rgba(251,146,60,0.4)] transition-all"
               >
-                <div 
+                <div
                   onClick={() => setSelectedOrder(order)}
                   className="flex justify-between items-center cursor-pointer"
                 >

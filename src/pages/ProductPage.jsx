@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Send, Store, MapPin, Share2, MessageCircle, Loader2, CreditCard } from 'lucide-react';
+import { firebase } from '@/api/firebaseClient';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ChevronLeft, ChevronDown, Send, Bookmark, MoreHorizontal } from 'lucide-react';
 import { cacheProduct, getCachedProduct } from '@/lib/useProductCache';
 import { Helmet } from 'react-helmet-async';
-import { applyClientMargin } from '@/components/utils/priceCalculation';
+import { applyClientMargin, getClientPrice } from '@/components/utils/priceCalculation';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { useAuth } from '@/components/auth/useAuth';
 import { toast } from 'sonner';
@@ -16,15 +16,20 @@ import ProductFAQ from '@/components/product/ProductFAQ';
 function saveScroll() {
   try { sessionStorage.setItem('marketplace_scroll', String(window.scrollY)); } catch (_) {}
 }
- 
+
 export default function ProductPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [imgIndex, setImgIndex] = useState(0);
   const [waMessage, setWaMessage] = useState('');
   const [waBoxOpen, setWaBoxOpen] = useState(false);
   const [relatedVisible, setRelatedVisible] = useState(12);
+  const [saved, setSaved] = useState(false);
+  const [selColor, setSelColor] = useState(0);
+  const [selSize, setSelSize] = useState(0);
+  const [ordering, setOrdering] = useState(false);
 
   useEffect(() => {
     window.history.pushState({ productPage: true }, '');
@@ -38,9 +43,9 @@ export default function ProductPage() {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['product', slug],
     queryFn: async () => {
-      const bySlug = await base44.entities.Product.filter({ slug });
+      const bySlug = await firebase.entities.Product.filter({ slug });
       if (bySlug.length > 0) return bySlug;
-      return base44.entities.Product.filter({ id: slug });
+      return firebase.entities.Product.filter({ id: slug });
     },
     enabled: !!slug,
     initialData: cached?.product ? [cached.product] : undefined,
@@ -51,7 +56,7 @@ export default function ProductPage() {
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => firebase.entities.Shop.filter({ is_active: true }),
     staleTime: 10 * 60 * 1000,
   });
 
@@ -59,24 +64,20 @@ export default function ProductPage() {
 
   const { data: sameShopProducts = [] } = useQuery({
     queryKey: ['sameShop', product?.shop_id],
-    queryFn: () => base44.entities.Product.filter({ shop_id: product.shop_id, is_available: true }, '-created_date', 20),
+    queryFn: () => firebase.entities.Product.filter({ shop_id: product.shop_id, is_available: true }, '-created_date', 20),
     enabled: !!product?.shop_id,
   });
 
   const { data: similarProducts = [] } = useQuery({
     queryKey: ['similar', product?.category],
-    queryFn: () => base44.entities.Product.filter({ category: product.category, is_available: true }, '-created_date', 30),
+    queryFn: () => firebase.entities.Product.filter({ category: product.category, is_available: true }, '-created_date', 30),
     enabled: !!product?.category,
   });
 
   // LOGIQUE DE PARTAGE (PREVIEW WHATSAPP)
   const getShareUrl = useCallback(() => {
     if (!product) return window.location.href;
-    const base = 'https://rapido-presto.base44.app/functions/ogMetaTags';
-    const params = new URLSearchParams();
-    if (shop?.slug) params.set('slug', shop.slug);
-    if (product.slug || product.id) params.set('product', product.slug || product.id);
-    return `${base}?${params.toString()}`;
+    return `${window.location.origin}/product/${encodeURIComponent(product.slug || product.id)}`;
   }, [product, shop]);
 
   const handleShare = useCallback(() => {
@@ -126,6 +127,11 @@ export default function ProductPage() {
     return [...sameShop, ...scored.slice(0, 5)];
   }, [sameShopProducts, similarProducts, product]);
 
+  useEffect(() => {
+    if (!product) return;
+    try { setSaved(JSON.parse(localStorage.getItem('saved_products') || '[]').includes(product.id)); } catch (_) {}
+  }, [product]);
+
   if (isLoading) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" /></div>;
   if (!product) return <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4"><p className="text-gray-500">Produit introuvable</p><button onClick={() => navigate(-1)} className="text-blue-600 font-semibold">← Retour</button></div>;
 
@@ -136,169 +142,138 @@ export default function ProductPage() {
   const currentImg = allImages[imgIndex] || product.image_url;
   const imgSrc = currentImg ? `${currentImg}${currentImg.includes('?') ? '&' : '?'}width=800&quality=80` : null;
 
+  const toggleSave = () => {
+    try {
+      const list = JSON.parse(localStorage.getItem('saved_products') || '[]');
+      const next = list.includes(product.id) ? list.filter(x => x !== product.id) : [...list, product.id];
+      localStorage.setItem('saved_products', JSON.stringify(next));
+      setSaved(next.includes(product.id));
+    } catch (_) {}
+  };
+  const co = product.customization_options || {};
+  const colors = co.colors || [];
+  const sizes = co.sizes || [];
+  const color = colors[selColor];
+  const size = sizes[selSize];
+  const extra = (color?.additional_price || 0) + (size?.additional_price || 0);
+  const shopName = shop?.company_name || product.shop_name;
+  const soldOut = product.is_available === false;
+
+  // 3 clics : ouvrir le produit -> Commander -> Passer la commande
+  const orderNow = async () => {
+    if (!user) { firebase.auth.redirectToLogin(window.location.pathname); return; }
+    setOrdering(true);
+    try {
+      const items = await firebase.entities.CartItem.filter({ user_id: user.id });
+      const same = items.find(i => i.product_id === product.id && i.customization?.color?.name === color?.name && i.customization?.size?.name === size?.name);
+      if (!same) {
+        await firebase.entities.CartItem.create({
+          user_id: user.id, product_id: product.id, product_name: product.name, product_image: product.image_url,
+          quantity: 1, unit_price: getClientPrice(product), shop_id: product.shop_id,
+          shop_name: shopName || '', shop_region: shop?.region || '',
+          customization: { ...(color && { color }), ...(size && { size }) }, total_customization_price: extra,
+        });
+        queryClient.invalidateQueries({ queryKey: ['cart', user.id] });
+      }
+      trackMetaEvent('InitiateCheckout', { content_ids: [product.id], content_type: 'product', content_name: product.name, value: price + extra, currency: 'HTG' });
+      navigate('/Cart?step=checkout');
+    } catch (e) {
+      toast.error("Impossible de lancer la commande. Réessayez.");
+      setOrdering(false);
+    }
+  };
+  const Select = ({ label, options, value, onChange }) => (
+    <label className="relative block border-t border-b border-[#DBDBDB] py-2">
+      <span className="block text-[11px] text-[#8E8E8E]">{label}</span>
+      <select value={value} onChange={e => onChange(Number(e.target.value))} className="w-full appearance-none bg-transparent outline-none text-[14px] text-[#262626] pr-6">
+        {options.map((o, i) => <option key={i} value={i}>{o.name}</option>)}
+      </select>
+      <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E8E8E] pointer-events-none" />
+    </label>
+  );
+
   return (
-    <div className="min-h-screen pb-24" style={{ backgroundColor: '#f0f2f5' }}>
+    <div className="min-h-screen pb-24 bg-white text-[#262626]">
       <Helmet>
         <title>{product.name} | Rapido Presto</title>
         <meta property="og:image" content={imgSrc} />
       </Helmet>
-      {/* Schema.org Product + AggregateRating (injecté côté client pour crawlers) */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": product.name,
-        "description": product.description || product.name,
-        "image": imgSrc,
-        "brand": { "@type": "Brand", "name": shop?.company_name || "RAPIDOPRESTO" },
-        "offers": {
-          "@type": "Offer",
-          "priceCurrency": "HTG",
-          "price": price,
-          "availability": "https://schema.org/InStock",
-          "url": window.location.href
-        }
+        "@context": "https://schema.org", "@type": "Product", "name": product.name,
+        "description": product.description || product.name, "image": imgSrc,
+        "brand": { "@type": "Brand", "name": shopName || "RAPIDOPRESTO" },
+        "offers": { "@type": "Offer", "priceCurrency": "HTG", "price": price + extra, "availability": soldOut ? "https://schema.org/OutOfStock" : "https://schema.org/InStock", "url": window.location.href }
       }) }} />
 
-      {/* Header */}
-      <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => { saveScroll(); navigate(-1); }} className="p-1.5 -ml-1.5 rounded-full hover:bg-gray-100">
-          <ArrowLeft className="w-5 h-5 text-gray-700" />
-        </button>
-        <span className="text-sm font-semibold text-gray-900 truncate flex-1">{product.name}</span>
-        
-        <button onClick={handleShare} className="p-1.5 rounded-full hover:bg-gray-100">
-          <Share2 className="w-5 h-5 text-gray-700" />
-        </button>
-      </div>
-
-      {/* Photo Section */}
-      <div className="bg-white relative">
-        <div className="w-full" style={{ aspectRatio: '1/1' }}>
-          <img src={imgSrc} alt={product.name} className="w-full h-full object-contain" />
+      <div className="relative bg-[#EFEFEF]">
+        <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar" style={{ aspectRatio: '4 / 5' }}
+          onScroll={(e) => setImgIndex(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
+          {allImages.map((u, i) => (
+            <img key={i} src={`${u}${u.includes('?') ? '&' : '?'}width=800&quality=80`} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover shrink-0 snap-center" />
+          ))}
         </div>
-        {hasPromo && <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">-{Math.round((1 - product.promo_price / product.price) * 100)}%</div>}
-        
-        <button onClick={handleShare} className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur shadow-md rounded-full">
-          <Share2 className="w-4 h-4 text-gray-700" />
-        </button>
-
+        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/30 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 flex items-center justify-between px-3 text-white" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 10px)' }}>
+          <button onClick={() => { saveScroll(); navigate(-1); }} aria-label="Retour"><ChevronLeft className="w-8 h-8 drop-shadow" strokeWidth={1.75} /></button>
+          <button onClick={handleShare} aria-label="Plus"><MoreHorizontal className="w-6 h-6 drop-shadow" /></button>
+        </div>
         {allImages.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {allImages.map((_, i) => (
-              <button key={i} onClick={() => setImgIndex(i)} className="rounded-full transition-all" style={{ width: i === imgIndex ? 20 : 8, height: 8, backgroundColor: i === imgIndex ? '#1877F2' : 'rgba(255,255,255,0.7)' }} />
-            ))}
+          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {allImages.map((_, i) => <span key={i} className={`w-1.5 h-1.5 rounded-full ${i === imgIndex ? 'bg-[#262626]' : 'bg-white/80'}`} />)}
           </div>
         )}
       </div>
 
-      {/* Info Card */}
-      <div className="bg-white mt-2 px-4 py-4 shadow-sm">
-        <h1 className="text-xl font-bold leading-snug mb-1" style={{ color: '#050505' }}>{product.name}</h1>
-        <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-xl font-bold text-blue-600">{price.toLocaleString()} HTG</span>
-          {originalPrice && <span className="text-sm line-through text-gray-400">{originalPrice.toLocaleString()} HTG</span>}
+      <div className="px-4 pt-3">
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-[18px] font-semibold leading-snug">{product.name}</h1>
+          <div className="flex items-center gap-4 pt-1 shrink-0">
+            <button onClick={handleShare} aria-label="Partager"><Send className="w-6 h-6" strokeWidth={1.75} /></button>
+            <button onClick={toggleSave} aria-label="Enregistrer"><Bookmark className="w-6 h-6" strokeWidth={1.75} fill={saved ? 'currentColor' : 'none'} /></button>
+          </div>
         </div>
+        <p className="text-[12px] text-[#8E8E8E] mt-0.5">
+          De{' '}
+          {shop ? <button onClick={() => navigate(`/ShopView?slug=${shop.slug || ''}&id=${shop.id}`)} className="font-semibold text-[#262626]">{shopName}</button> : <span className="font-semibold text-[#262626]">{shopName}</span>}
+          {product.delivery_time && <> · Livraison {product.delivery_time}</>}
+        </p>
+        <p className="text-[16px] mt-1" style={{ color: '#3897F0' }}>
+          {(price + extra).toLocaleString()} HTG
+          {originalPrice && <span className="ml-2 text-[13px] text-[#8E8E8E] line-through">{(originalPrice + extra).toLocaleString()}</span>}
+        </p>
 
-        {/* Bouton Commander maintenant */}
-        <button
-          onClick={() => {
-            if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
-            trackMetaEvent('InitiateCheckout', { content_ids: [product.id], content_type: 'product', content_name: product.name, value: price, currency: 'HTG' });
-            window.location.href = `/QuickCheckout?product_id=${product.id}&quantity=1`;
-          }}
-          className="w-full mb-4 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-        >
-          <CreditCard className="w-5 h-5" />
-          Commander Maintenant
+        {(colors.length > 0 || sizes.length > 0) && (
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            {colors.length > 0 && <Select label="Couleur" options={colors} value={selColor} onChange={setSelColor} />}
+            {sizes.length > 0 && <Select label="Taille" options={sizes} value={selSize} onChange={setSelSize} />}
+          </div>
+        )}
+
+        <button onClick={orderNow} disabled={ordering || soldOut}
+          className="w-full mt-4 h-11 rounded-md text-white text-[14px] font-semibold disabled:opacity-50 active:opacity-80" style={{ backgroundColor: '#3897F0' }}>
+          {soldOut ? 'Épuisé' : ordering ? 'Un instant...' : 'Commander sur Rapido'}
         </button>
+        <button onClick={handleSendWhatsApp} className="w-full mt-3 text-[13px] font-semibold" style={{ color: '#3897F0' }}>Contacter le vendeur sur WhatsApp</button>
 
-        {/* WhatsApp Message Box */}
-        <div className="mb-4">
-          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Contacter le vendeur</div>
-          {!waBoxOpen ? (
-            <button onClick={() => setWaBoxOpen(true)} className="w-full flex items-center gap-3 border border-green-200 bg-green-50/30 rounded-xl px-4 py-3 text-sm text-gray-700 hover:bg-green-50 transition">
-              <MessageCircle className="w-5 h-5 text-green-500" fill="currentColor" />
-              <span className="flex-1 text-left truncate">{waMessage}</span>
-              <Send className="w-4 h-4 text-green-600" />
-            </button>
-          ) : (
-            <div className="border border-green-400 rounded-xl overflow-hidden bg-white shadow-lg animate-in fade-in zoom-in duration-200">
-              <textarea value={waMessage} onChange={e => setWaMessage(e.target.value)} rows={3} className="w-full px-4 pt-3 text-sm outline-none resize-none" />
-              <div className="flex justify-end gap-2 p-3 bg-gray-50 border-t border-gray-100">
-                <button onClick={() => setWaBoxOpen(false)} className="px-4 py-2 text-xs font-semibold text-gray-500">Annuler</button>
-                <button onClick={handleSendWhatsApp} className="px-5 py-2 text-xs font-bold text-white bg-green-600 rounded-lg flex items-center gap-2 shadow-md">
-                  <Send className="w-3 h-3" /> Envoyer sur WhatsApp
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {product.description && <p className="text-sm text-gray-600 mt-5 border-t border-gray-100 pt-4 leading-relaxed">{product.description}</p>}
+        {product.description && <p className="text-[14px] text-[#262626] mt-4 leading-relaxed whitespace-pre-line">{product.description}</p>}
       </div>
 
-      {/* Seller info */}
-      {shop && (
-        <div className="bg-white mt-2 px-4 py-4 shadow-sm">
-          <h2 className="text-sm font-bold mb-3 text-gray-900">Vendeur</h2>
-          <button onClick={() => navigate(`/ShopView?slug=${shop.slug || ''}&id=${shop.id}`)} className="flex items-center gap-3 w-full">
-            {shop.company_logo_url ? <img src={shop.company_logo_url} alt={shop.company_name} className="w-12 h-12 rounded-full border border-gray-100" /> : <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center"><Store className="w-6 h-6 text-blue-600" /></div>}
-            <div className="flex-1 text-left"><p className="text-sm font-bold text-gray-900">{shop.company_name}</p>{shop.region && <p className="text-xs text-gray-500 flex items-center gap-1"><MapPin className="w-3 h-3" />{shop.region}</p>}</div>
-            <span className="text-xs font-bold text-blue-600">Boutique →</span>
-          </button>
-        </div>
-      )}
-
-      {/* Avis clients */}
       <ProductReviews productId={product.id} productName={product.name} />
-
-      {/* FAQ dynamique IA */}
       <ProductFAQ product={product} shop={shop} />
 
-      {/* Related Section */}
       {relatedProducts.length > 0 && (
-        <div className="bg-white mt-2 px-4 py-4 shadow-sm">
-          <h2 className="text-sm font-bold mb-4 text-gray-900">Articles similaires</h2>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="px-4 mt-6 border-t border-[#DBDBDB] pt-4">
+          <h2 className="text-[16px] font-semibold mb-3">Plus de produits</h2>
+          <div className="grid grid-cols-2 gap-x-2.5">
             {relatedProducts.slice(0, relatedVisible).map(p => (
               <CompactProductCard key={p.id} product={p} shop={shops.find(sh => sh.id === p.shop_id)} onClick={() => navigate(`/product/${p.slug || p.id}`)} />
             ))}
           </div>
           {relatedVisible < relatedProducts.length && (
-            <button onClick={() => setRelatedVisible(v => v + 12)} className="w-full mt-6 py-3 rounded-xl bg-gray-100 text-sm font-bold text-gray-700">Voir plus d'articles</button>
+            <button onClick={() => setRelatedVisible(v => v + 12)} className="w-full my-3 py-2.5 rounded-lg bg-[#EFEFEF] text-sm font-semibold">Voir plus</button>
           )}
         </div>
       )}
-
-      {/* Barre d'achat fixée en bas */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 py-3 safe-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="flex items-center gap-3 max-w-lg mx-auto">
-          <div className="flex-1">
-            <p className="text-xl font-black text-orange-500">{price.toLocaleString()} HTG</p>
-            {originalPrice && <p className="text-xs text-gray-400 line-through">{originalPrice.toLocaleString()} HTG</p>}
-          </div>
-          <button
-            onClick={() => {
-              if (!user) {
-                base44.auth.redirectToLogin(window.location.pathname);
-                return;
-              }
-              trackMetaEvent('InitiateCheckout', {
-                content_ids: [product.id],
-                content_type: 'product',
-                content_name: product.name,
-                value: price,
-                currency: 'HTG',
-              });
-              window.location.href = `/QuickCheckout?product_id=${product.id}&quantity=1`;
-            }}
-            className="flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/25 transition-all active:scale-95"
-          >
-            <CreditCard className="w-5 h-5" />
-            Commander Maintenant
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

@@ -20,11 +20,7 @@ SelectItem,
 
 SelectTrigger,
 
-SelectValue,
-
-SelectGroup, // Ajouté pour le correctif
-
-SelectLabel // Ajouté pour le correctif
+SelectValue // Ajouté pour le correctif
 
 } from "@/components/ui/select";
 
@@ -66,19 +62,17 @@ ShoppingBag,
 
 Type,
 
-CheckCircle2,
-
 ShieldCheck
 
 } from 'lucide-react';
 
 
 
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 
 import FbCategorySelector from '@/components/product/FbCategorySelector';
 
-import { getTaxonomyMappingPrompt, getCategoryPath } from '@/lib/fbTaxonomy';
+import { getTaxonomyMappingPrompt } from '@/lib/fbTaxonomy';
 
 
 
@@ -318,7 +312,7 @@ if (open && !product) {
 
 // Check if user has phone number
 
-base44.auth.me().then(u => {
+firebase.auth.me().then(u => {
 
 if (!u?.phone) {
 
@@ -573,13 +567,13 @@ const dataWithSlug = { ...formData, slug: slug || undefined, image_alt: formData
 
 if (product) {
 
-await base44.entities.Product.update(product.id, dataWithSlug);
+await firebase.entities.Product.update(product.id, dataWithSlug);
 
 toast.success('Article mis à jour');
 
 } else {
 
-await base44.entities.Product.create({ ...dataWithSlug, shop_id: shopId });
+await firebase.entities.Product.create({ ...dataWithSlug, shop_id: shopId });
 
 toast.success('Article créé');
 
@@ -619,13 +613,13 @@ toast.info('📸 Téléchargement et vérification en cours...');
 
 try {
 
-const { file_url } = await base44.integrations.Core.UploadFile({ file });
+const { file_url } = await firebase.integrations.Core.UploadFile({ file });
 
 
 
 // Scan for phone numbers in the image
 
-const scanResult = await base44.integrations.Core.InvokeLLM({
+const scanResult = await firebase.integrations.Core.InvokeLLM({
 
 prompt: `Analyse cette image. Y a-t-il un numéro de téléphone visible (ex: +509, 509, 3xxxxxxx, 4xxxxxxx, numéro haïtien ou autre) écrit ou imprimé sur l'image ? Réponds UNIQUEMENT par JSON : {"has_phone": true/false, "reason": "..."}`,
 
@@ -695,7 +689,7 @@ try {
 
 const taxonomyList = getTaxonomyMappingPrompt();
 
-const result = await base44.integrations.Core.InvokeLLM({
+const result = await firebase.integrations.Core.InvokeLLM({
 
 prompt: `Tu es un expert en vision par ordinateur ET en e-commerce haïtien (RapidoPresto).
 
@@ -836,7 +830,7 @@ open={showContactModal}
 
 onConfirm={async ({ phone, region }) => {
 
-await base44.auth.updateMe({ phone, region });
+await firebase.auth.updateMe({ phone, region });
 
 setShowContactModal(false);
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import GenerateAltTextsModal from '@/components/admin/GenerateAltTextsModal';
 import MigrateFbCategoriesModal from '@/components/admin/MigrateFbCategoriesModal';
@@ -19,9 +19,9 @@ export default function UpdateProducts() {
   const handleUpdate = async () => {
     setLoading(true);
     setResult(null);
-    
+
     try {
-      const response = await base44.functions.invoke('updateProductsDescriptions');
+      const response = await firebase.functions.invoke('updateProductsDescriptions');
       setResult(response.data);
     } catch (error) {
       setResult({ error: error.message });
@@ -33,9 +33,9 @@ export default function UpdateProducts() {
   const handleRenewInventory = async () => {
     setLoadingInventory(true);
     setInventoryResult(null);
-    
+
     try {
-      const response = await base44.functions.invoke('renewInventory');
+      const response = await firebase.functions.invoke('renewInventory');
       setInventoryResult(response.data);
     } catch (error) {
       setInventoryResult({ error: error.message });
@@ -47,9 +47,9 @@ export default function UpdateProducts() {
   const handleCompressImages = async () => {
     setCompressingImages(true);
     setCompressResult(null);
-    
+
     try {
-      const response = await base44.functions.invoke('compressAllImages');
+      const response = await firebase.functions.invoke('compressAllImages');
       setCompressResult(response.data);
     } catch (error) {
       setCompressResult({ error: error.message });
@@ -69,8 +69,8 @@ export default function UpdateProducts() {
             <p className="text-sm text-gray-600">
               Cette action va générer automatiquement les descriptions et tags manquants pour tous les produits.
             </p>
-            
-            <Button 
+
+            <Button
               onClick={handleUpdate}
               disabled={loading}
               className="w-full"
@@ -125,8 +125,8 @@ export default function UpdateProducts() {
             <p className="text-sm text-gray-600">
               Cette action va mettre à jour le stock de tous les produits à 20 unités.
             </p>
-            
-            <Button 
+
+            <Button
               onClick={handleRenewInventory}
               disabled={loadingInventory}
               className="w-full bg-blue-600 hover:bg-blue-700"
@@ -181,8 +181,8 @@ export default function UpdateProducts() {
             <p className="text-sm text-gray-600">
               Cette action va optimiser toutes les photos des produits en ajoutant des paramètres de compression (800px, qualité 80%).
             </p>
-            
-            <Button 
+
+            <Button
               onClick={handleCompressImages}
               disabled={compressingImages}
               className="w-full bg-purple-600 hover:bg-purple-700"

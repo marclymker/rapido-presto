@@ -54,7 +54,7 @@ export default function WelcomeModal({ user, open, onClose }) {
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={handleGetStarted}
             className="w-full bg-orange-500 hover:bg-orange-600 h-12 text-lg font-bold"
           >

@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Users, DollarSign, Package, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import ProductCard from '@/components/ui/ProductCard';
-import { getClientPrice } from '@/components/utils/priceCalculation';
 import { toast } from 'sonner';
 
 export default function AgentDashboard() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    firebase.auth.me().then(setUser).catch(() => {});
   }, []);
 
   // Stats
   const { data: myClients = [] } = useQuery({
     queryKey: ['agent-clients', user?.id],
-    queryFn: () => base44.entities.AgentClient.filter({ agent_id: user?.id }),
+    queryFn: () => firebase.entities.AgentClient.filter({ agent_id: user?.id }),
     enabled: !!user?.id
   });
 
@@ -32,18 +31,18 @@ export default function AgentDashboard() {
   // Produits Makarios Bridal uniquement
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true })
+    queryFn: () => firebase.entities.Shop.filter({ is_active: true })
   });
 
-  const makariosShop = shops.find(s => 
+  const makariosShop = shops.find(s =>
     s.company_name?.toLowerCase().includes('makarios')
   );
 
   const { data: products = [] } = useQuery({
     queryKey: ['makarios-products', makariosShop?.id],
-    queryFn: () => base44.entities.Product.filter({ 
+    queryFn: () => firebase.entities.Product.filter({
       shop_id: makariosShop?.id,
-      is_available: true 
+      is_available: true
     }),
     enabled: !!makariosShop?.id
   });

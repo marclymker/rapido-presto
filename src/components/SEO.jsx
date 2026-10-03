@@ -11,7 +11,7 @@ const SEO = ({ title, description, image, url, keywords, type = "website" }) => 
     <Helmet>
       {/* Vérification Google Search Console */}
       <meta name="google-site-verification" content="mte9s9KgpFxd96KZsGD9Amos2lp-2dmG9k7OIIBWY3Y" />
-      
+
       {/* Balises standard */}
       <title>{fullTitle}</title>
       <meta name="description" content={finalDescription} />
@@ -38,7 +38,7 @@ const SEO = ({ title, description, image, url, keywords, type = "website" }) => 
       <meta name="twitter:description" content={finalDescription} />
       {image && <meta name="twitter:image" content={image} />}
       {image && <meta name="twitter:image:alt" content={fullTitle} />}
-      
+
       {/* Rich Snippets JSON-LD */}
       <script type="application/ld+json">
         {JSON.stringify(
@@ -62,11 +62,11 @@ const SEO = ({ title, description, image, url, keywords, type = "website" }) => 
                 "@context": "https://schema.org",
                 "@type": "WebSite",
                 "name": siteName,
-                "url": "https://rapido-presto.base44.app",
+                "url": "https://rapidopresto.shop",
                 "description": finalDescription,
                 "potentialAction": {
                   "@type": "SearchAction",
-                  "target": "https://rapido-presto.base44.app/?q={search_term_string}",
+                  "target": "https://rapidopresto.shop/?q={search_term_string}",
                   "query-input": "required name=search_term_string"
                 }
               }

@@ -75,16 +75,16 @@
     user-select: none;
     -webkit-user-select: none;
   }
-  
+
   /* Safe area for iOS notch */
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   .safe-pb {
     padding-bottom: calc(5rem + env(safe-area-inset-bottom));
   }
-  
+
   /* ⚡ Optimisation images */
   img {
     content-visibility: auto;

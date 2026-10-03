@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -57,22 +57,10 @@ export default function ShopView() {
     trackMetaEvent('PageView');
   }, []);
 
-  // 🔥 Pour les crawlers : rediriger vers la fonction backend avec meta tags statiques
-  useEffect(() => {
-    const userAgent = navigator.userAgent || '';
-    const isCrawler = /facebookexternalhit|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Slackbot/i.test(userAgent);
-    if (isCrawler && shopSlug) {
-      const backendUrl = productSlug
-        ? `/functions/ogMetaTags?slug=${shopSlug}&product=${productSlug}`
-        : `/functions/ogMetaTags?slug=${shopSlug}`;
-      window.location.href = backendUrl;
-    }
-  }, [shopSlug, productSlug]);
-
   // Fetch shop by slug
   const { data: shops = [], isLoading: loadingShop } = useQuery({
     queryKey: ['shop', shopSlug],
-    queryFn: () => base44.entities.Shop.filter({ slug: shopSlug }),
+    queryFn: () => firebase.entities.Shop.filter({ slug: shopSlug }),
     enabled: !!shopSlug
   });
 
@@ -81,7 +69,7 @@ export default function ShopView() {
   // Fetch products for this shop
   const { data: allProducts = [] } = useQuery({
     queryKey: ['shop-products', shop?.id],
-    queryFn: () => base44.entities.Product.filter({ shop_id: shop?.id, is_available: true }),
+    queryFn: () => firebase.entities.Product.filter({ shop_id: shop?.id, is_available: true }),
     enabled: !!shop?.id
   });
 
@@ -140,7 +128,7 @@ export default function ShopView() {
   // Cart management
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
-    queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
+    queryFn: () => firebase.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id
   });
 
@@ -149,9 +137,9 @@ export default function ShopView() {
       const existing = cartItems.find(item => item.product_id === product.id);
       const clientPrice = getClientPrice(product);
       if (existing) {
-        return base44.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
+        return firebase.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
       } else {
-        return base44.entities.CartItem.create({
+        return firebase.entities.CartItem.create({
           user_id: user.id,
           product_id: product.id,
           product_name: product.name,

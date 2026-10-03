@@ -1,7 +1,7 @@
 import React from 'react';
 
 export default function OrderFilters({ currentFilter, setFilter, userRole }) {
-  const filterConfigs = userRole === 'livreur' 
+  const filterConfigs = userRole === 'livreur'
     ? [
         { label: 'Toutes', value: 'all', color: 'gray' },
         { label: 'Disponibles', value: 'searching_driver', color: 'blue', dot: '🔵' },

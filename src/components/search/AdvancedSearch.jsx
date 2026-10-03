@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { Search, SlidersHorizontal, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ export default function AdvancedSearch({ onSearch, allProducts, shops, initialQu
     const colors = new Set();
     const sizes = new Set();
     const materials = new Set();
-    
+
     allProducts.forEach(p => {
       if (p.product_attributes?.color) colors.add(p.product_attributes.color);
       if (p.product_attributes?.size) sizes.add(p.product_attributes.size);
@@ -59,11 +59,11 @@ export default function AdvancedSearch({ onSearch, allProducts, shops, initialQu
     });
   };
 
-  const activeFilterCount = 
-    filters.categories.length + 
-    filters.colors.length + 
-    filters.sizes.length + 
-    filters.materials.length + 
+  const activeFilterCount =
+    filters.categories.length +
+    filters.colors.length +
+    filters.sizes.length +
+    filters.materials.length +
     filters.shops.length +
     ((filters.priceRange[0] > 0 || filters.priceRange[1] < 100000) ? 1 : 0);
 
@@ -88,7 +88,7 @@ export default function AdvancedSearch({ onSearch, allProducts, shops, initialQu
             className="pl-10 pr-4 h-12 text-base"
           />
         </div>
-        <Button 
+        <Button
           onClick={() => setShowFilters(!showFilters)}
           variant="outline"
           className="h-12 px-4 relative"
@@ -210,7 +210,7 @@ function FilterGroup({ title, items, selected, onChange, isShop = false }) {
         {displayItems.map((item) => {
           const value = isShop ? item.id : item;
           const label = isShop ? item.name : item;
-          
+
           return (
             <div key={value} className="flex items-center gap-2">
               <Checkbox
@@ -262,19 +262,19 @@ async function performAISearch(query, filters, allProducts, shops) {
   }
 
   if (filters.colors.length > 0) {
-    results = results.filter(p => 
+    results = results.filter(p =>
       filters.colors.includes(p.product_attributes?.color)
     );
   }
 
   if (filters.sizes.length > 0) {
-    results = results.filter(p => 
+    results = results.filter(p =>
       filters.sizes.includes(p.product_attributes?.size)
     );
   }
 
   if (filters.materials.length > 0) {
-    results = results.filter(p => 
+    results = results.filter(p =>
       filters.materials.includes(p.product_attributes?.material)
     );
   }
@@ -299,7 +299,7 @@ async function performAISearch(query, filters, allProducts, shops) {
     // Use LLM for semantic search if query is complex
     if (query.split(' ').length > 2) {
       try {
-        const response = await base44.integrations.Core.InvokeLLM({
+        const response = await firebase.integrations.Core.InvokeLLM({
           prompt: `Given the search query "${query}", which of these product categories and keywords are most relevant? Categories: ${results.map(p => p.category).filter((v, i, a) => a.indexOf(v) === i).join(', ')}. Return a JSON array of relevant terms.`,
           response_json_schema: {
             type: "object",
@@ -314,7 +314,7 @@ async function performAISearch(query, filters, allProducts, shops) {
 
         if (response.relevantTerms) {
           results = results.map(product => {
-            const aiBoost = response.relevantTerms.some(term => 
+            const aiBoost = response.relevantTerms.some(term =>
               product.name.toLowerCase().includes(term.toLowerCase()) ||
               product.description?.toLowerCase().includes(term.toLowerCase())
             ) ? 0.5 : 0;
@@ -336,7 +336,7 @@ async function performAISearch(query, filters, allProducts, shops) {
 function calculateRelevanceScore(query, product, shops) {
   const queryLower = query.toLowerCase().trim();
   if (!queryLower) return 0;
-  
+
   const terms = queryLower.split(' ').filter(t => t.length > 1);
   let score = 0;
 

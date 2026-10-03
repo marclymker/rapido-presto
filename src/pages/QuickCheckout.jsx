@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Wallet, MapPin } from 'lucide-react';
@@ -32,7 +32,7 @@ export default function QuickCheckout() {
 
   const { data: products = [], isLoading: productLoading } = useQuery({
     queryKey: ['quick-product', productId],
-    queryFn: () => base44.entities.Product.filter({ id: productId }),
+    queryFn: () => firebase.entities.Product.filter({ id: productId }),
     enabled: !!productId,
   });
 
@@ -40,7 +40,7 @@ export default function QuickCheckout() {
 
   const { data: shops = [] } = useQuery({
     queryKey: ['quick-shop', product?.shop_id],
-    queryFn: () => base44.entities.Shop.filter({ id: product.shop_id }),
+    queryFn: () => firebase.entities.Shop.filter({ id: product.shop_id }),
     enabled: !!product?.shop_id,
   });
 
@@ -55,7 +55,7 @@ export default function QuickCheckout() {
       const orderNum = 'RP' + Date.now().toString().slice(-6);
       const code = generateConfirmationCode();
 
-      const order = await base44.entities.Order.create({
+      const order = await firebase.entities.Order.create({
         order_number: orderNum,
         client_id: user.id,
         client_name: user.full_name,
@@ -84,21 +84,21 @@ export default function QuickCheckout() {
 
       if (paymentMethod === 'card') {
         if (!squareToken) throw new Error('Token de paiement manquant');
-        const paymentResponse = await base44.functions.invoke('squarePayment', {
+        const paymentResponse = await firebase.functions.invoke('squarePayment', {
           sourceId: squareToken,
           amount: total,
           orderId: orderNum,
         });
         if (!paymentResponse.data.success) throw new Error('Paiement refusé');
 
-        await base44.functions.invoke('sendOrderNotification', { orderId: order.id, status: 'pending' }).catch(() => {});
-        await base44.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.id }).catch(() => {});
+        await firebase.functions.invoke('sendOrderNotification', { orderId: order.id, status: 'pending' }).catch(() => {});
+        await firebase.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.id }).catch(() => {});
         return { orderNum, code };
       }
 
       if (paymentMethod === 'moncash') {
         const payAmount = Math.round(total * splitPercent / 100);
-        const response = await base44.functions.invoke('moncashCreatePayment', {
+        const response = await firebase.functions.invoke('moncashCreatePayment', {
           orderId: orderNum,
           amount: payAmount,
           description: `Commande ${orderNum} - ${product.name} (${splitPercent}%)`,
@@ -107,7 +107,7 @@ export default function QuickCheckout() {
         if (!paymentData?.success || !paymentData?.paymentUrl) {
           throw new Error(paymentData?.error || 'Erreur MonCash');
         }
-        await base44.entities.Order.update(order.id, { moncash_transaction_id: paymentData.transactionId });
+        await firebase.entities.Order.update(order.id, { moncash_transaction_id: paymentData.transactionId });
         return { redirectToMoncash: true, paymentUrl: paymentData.paymentUrl, orderNum };
       }
     },

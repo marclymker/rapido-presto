@@ -4,16 +4,14 @@ import { Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
- * Bouton de partage qui génère un lien avec preview garantie pour WhatsApp/Facebook
- * Utilise la fonction backend ogMetaTags qui sert des meta tags statiques aux crawlers
+ * Bouton de partage avec lien public stable, compatible WhatsApp/Facebook.
  */
 export default function ShareProductButton({ product, shop, className = "" }) {
   const handleShare = async () => {
-    // Générer le lien optimisé pour les previews sociales
-    const shareUrl = product 
-      ? `${window.location.origin}/functions/ogMetaTags?slug=${shop.slug}&product=${product.slug || product.id}`
-      : `${window.location.origin}/functions/ogMetaTags?slug=${shop.slug}`;
-    
+    const shareUrl = product
+      ? `${window.location.origin}/product/${encodeURIComponent(product.slug || product.id)}`
+      : `${window.location.origin}/ShopView?slug=${encodeURIComponent(shop.slug || shop.id)}`;
+
     const shareText = product
       ? `${product.name} - ${shop.company_name}`
       : shop.company_name;

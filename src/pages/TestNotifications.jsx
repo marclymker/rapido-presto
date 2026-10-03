@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Bell, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,22 +24,22 @@ export default function TestNotifications() {
 
   const runDiagnostics = async () => {
     setLoading(true);
-    
+
     // Test 1: HTTPS
     const isHttps = window.location.protocol === 'https:';
-    
+
     // Test 2: Notification API
     const hasNotificationAPI = 'Notification' in window;
-    
+
     // Test 3: Permission
     const permission = hasNotificationAPI ? Notification.permission : 'unsupported';
-    
+
     // Test 4: OneSignal Script chargé
     const oneSignalScriptLoaded = !!document.getElementById('onesignal-script');
-    
+
     // Test 5: OneSignal initialisé
     const oneSignalInitialized = !!(window.OneSignal && window.OneSignal.initialized);
-    
+
     // Test 6: Service Worker
     let serviceWorkerRegistered = false;
     if ('serviceWorker' in navigator) {
@@ -51,15 +50,15 @@ export default function TestNotifications() {
         console.error(e);
       }
     }
-    
+
     // Test 7: User
     try {
-      const currentUser = await base44.auth.me();
+      const currentUser = await firebase.auth.me();
       setUser(currentUser);
     } catch (e) {
       console.error(e);
     }
-    
+
     setTests({
       https: isHttps,
       notificationAPI: hasNotificationAPI,
@@ -68,7 +67,7 @@ export default function TestNotifications() {
       oneSignalInit: oneSignalInitialized,
       serviceWorker: serviceWorkerRegistered,
     });
-    
+
     setLoading(false);
   };
 
@@ -77,11 +76,11 @@ export default function TestNotifications() {
       toast.error('Votre navigateur ne supporte pas les notifications');
       return;
     }
-    
+
     try {
       const permission = await Notification.requestPermission();
       setTests(prev => ({ ...prev, permission }));
-      
+
       if (permission === 'granted') {
         toast.success('Permission accordée !');
         // Test notification navigateur native
@@ -105,7 +104,7 @@ export default function TestNotifications() {
     }
 
     try {
-      const { data } = await base44.functions.invoke('sendOrderNotificationOneSignal', {
+      const { data } = await firebase.functions.invoke('sendOrderNotificationOneSignal', {
         userId: user.id,
         title: '🔔 Test OneSignal',
         message: 'Si vous voyez ceci, OneSignal fonctionne !',
@@ -130,7 +129,7 @@ export default function TestNotifications() {
     }
 
     try {
-      await base44.functions.invoke('sendPushNotification', {
+      await firebase.functions.invoke('sendPushNotification', {
         userId: user.id,
         title: '🔔 Test Pusher',
         message: 'Si vous voyez ceci dans l\'app, Pusher fonctionne !',
@@ -165,15 +164,15 @@ export default function TestNotifications() {
     );
   }
 
-  const allGood = tests.https && 
-                  tests.notificationAPI && 
-                  tests.permission === 'granted' && 
+  const allGood = tests.https &&
+                  tests.notificationAPI &&
+                  tests.permission === 'granted' &&
                   tests.serviceWorker;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto space-y-4">
-        
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -183,39 +182,39 @@ export default function TestNotifications() {
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
-              <TestRow 
-                label="HTTPS" 
-                value={tests.https ? 'Actif' : 'Inactif (requis)'} 
+              <TestRow
+                label="HTTPS"
+                value={tests.https ? 'Actif' : 'Inactif (requis)'}
                 status={tests.https ? 'success' : 'error'}
               />
-              
-              <TestRow 
-                label="API Notifications" 
-                value={tests.notificationAPI ? 'Supporté' : 'Non supporté'} 
+
+              <TestRow
+                label="API Notifications"
+                value={tests.notificationAPI ? 'Supporté' : 'Non supporté'}
                 status={tests.notificationAPI ? 'success' : 'error'}
               />
-              
-              <TestRow 
-                label="Permission" 
-                value={tests.permission} 
+
+              <TestRow
+                label="Permission"
+                value={tests.permission}
                 status={tests.permission === 'granted' ? 'success' : tests.permission === 'denied' ? 'error' : 'warning'}
               />
-              
-              <TestRow 
-                label="Service Worker" 
-                value={tests.serviceWorker ? 'Enregistré' : 'Non enregistré'} 
+
+              <TestRow
+                label="Service Worker"
+                value={tests.serviceWorker ? 'Enregistré' : 'Non enregistré'}
                 status={tests.serviceWorker ? 'success' : 'error'}
               />
-              
-              <TestRow 
-                label="OneSignal Script" 
-                value={tests.oneSignalScript ? 'Chargé' : 'Non chargé'} 
+
+              <TestRow
+                label="OneSignal Script"
+                value={tests.oneSignalScript ? 'Chargé' : 'Non chargé'}
                 status={tests.oneSignalScript ? 'success' : 'warning'}
               />
-              
-              <TestRow 
-                label="OneSignal Init" 
-                value={tests.oneSignalInit ? 'Initialisé' : 'Non initialisé'} 
+
+              <TestRow
+                label="OneSignal Init"
+                value={tests.oneSignalInit ? 'Initialisé' : 'Non initialisé'}
                 status={tests.oneSignalInit ? 'success' : 'warning'}
               />
             </div>
@@ -250,16 +249,16 @@ export default function TestNotifications() {
                 Connectez-vous pour tester les notifications
               </p>
             )}
-            
-            <Button 
-              onClick={requestPermission} 
+
+            <Button
+              onClick={requestPermission}
               className="w-full"
               disabled={!tests.notificationAPI}
             >
               1. Demander Permission Navigateur
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={() => {
                 new Notification('Test Natif', {
                   body: 'Notification navigateur native',
@@ -273,7 +272,7 @@ export default function TestNotifications() {
               2. Test Notification Native
             </Button>
 
-            <Button 
+            <Button
               onClick={testOneSignalNotification}
               className="w-full bg-purple-600 hover:bg-purple-700"
               disabled={!user}
@@ -281,7 +280,7 @@ export default function TestNotifications() {
               3. Test OneSignal (Push)
             </Button>
 
-            <Button 
+            <Button
               onClick={testPusherNotification}
               className="w-full bg-blue-600 hover:bg-blue-700"
               disabled={!user}
@@ -305,7 +304,7 @@ export default function TestNotifications() {
                 <li>Téléchargez OneSignalSDKWorker.js et placez-le à la racine de votre domaine</li>
                 <li>Vérifiez que votre App ID et API Key sont corrects</li>
               </ol>
-              
+
               <div className="mt-4 p-3 bg-gray-100 rounded">
                 <p className="font-mono text-xs">
                   ONESIGNAL_APP_ID: Configuré ✓<br/>

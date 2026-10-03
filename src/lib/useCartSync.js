@@ -6,7 +6,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useOnlineStatus } from '@/components/offline/useOnlineStatus';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 
 const QUEUE_KEY = 'rp_cart_queue';
 
@@ -45,9 +45,9 @@ export function useCartSync(userId) {
       for (const action of queue) {
         try {
           if (action.type === 'add' && userId) {
-            await base44.entities.CartItem.create(action.data);
+            await firebase.entities.CartItem.create(action.data);
           } else if (action.type === 'remove') {
-            await base44.entities.CartItem.delete(action.id);
+            await firebase.entities.CartItem.delete(action.id);
           }
         } catch {
           // If it fails again, leave in queue for next time

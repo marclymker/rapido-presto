@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useAuth } from '@/components/auth/useAuth';
 import { trackGA4ViewItem, trackGA4AddToCart, trackGA4BeginCheckout, trackGA4Purchase } from '@/components/tracking/GA4Tracker';
 
@@ -17,8 +17,8 @@ export function useActivityTracker() {
   const trackActivity = async (activityData) => {
     try {
       const userId = user?.id || getSessionId();
-      
-      await base44.entities.UserActivity.create({
+
+      await firebase.entities.UserActivity.create({
         user_id: userId,
         ...activityData
       });
@@ -30,7 +30,7 @@ export function useActivityTracker() {
   // 🎯 TRACKING PRODUIT VU (ViewContent)
   const trackProductView = (product, shop) => {
     const price = parseFloat(product.promo_price || product.price || 0);
-    
+
     if (window.fbq) {
       window.fbq('track', 'ViewContent', {
         content_ids: [product.id],

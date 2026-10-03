@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
@@ -21,7 +21,7 @@ export default function BlogArticle() {
 
   const { data: articles = [] } = useQuery({
     queryKey: ['blog-articles'],
-    queryFn: () => base44.entities.BlogArticle.filter({ is_published: true })
+    queryFn: () => firebase.entities.BlogArticle.filter({ is_published: true })
   });
 
   const article = useMemo(() => {
@@ -30,12 +30,12 @@ export default function BlogArticle() {
 
   const { data: allProducts = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 500)
+    queryFn: () => firebase.entities.Product.filter({ is_available: true }, '-created_date', 500)
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true })
+    queryFn: () => firebase.entities.Shop.filter({ is_active: true })
   });
 
   const relatedProducts = useMemo(() => {
@@ -49,7 +49,7 @@ export default function BlogArticle() {
   const handleShare = () => {
     const url = window.location.href;
     const title = article?.title || 'Article Rapido Presto';
-    
+
     if (navigator.share) {
       navigator.share({ title, url });
     } else {
@@ -181,7 +181,7 @@ export default function BlogArticle() {
               <h2 className="text-2xl font-bold text-slate-900 mb-6">
                 Produits mentionnés dans cet article
               </h2>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {relatedProducts.map(product => {
                   const shop = shops.find(s => s.id === product.shop_id);
@@ -192,7 +192,7 @@ export default function BlogArticle() {
                       shop={shop}
                       hideId={true}
                       onAdd={() => {
-                        base44.auth.redirectToLogin(window.location.pathname);
+                        firebase.auth.redirectToLogin(window.location.pathname);
                       }}
                       onClick={() => {
                         if (shop?.slug && product.slug) {

@@ -1,9 +1,9 @@
 import { Helmet } from 'react-helmet-async';
 
 export default function SEOArticle({ product, shop }) {
-  const siteUrl = "https://rapido-presto.base44.app";
+  const siteUrl = "https://rapidopresto.shop";
   const productUrl = `${siteUrl}/product?id=${product.id}`;
-  
+
   // Gestion des images
   const productImages = product.additional_images && product.additional_images.length > 0
     ? [product.image_url, ...product.additional_images].filter(Boolean)
@@ -15,7 +15,7 @@ export default function SEOArticle({ product, shop }) {
     : Math.round(product.price * 1.1);
 
   // Description optimisée pour SEO
-  const seoDescription = product.description 
+  const seoDescription = product.description
     ? `${product.description} - ${displayPrice} HTG sur Rapido Presto. Livraison rapide ${shop?.region ? `à ${shop.region}` : 'en Haïti'}.`
     : `${product.name} disponible à ${displayPrice} HTG sur Rapido Presto. Commandez en ligne et faites-vous livrer rapidement.`;
 
@@ -76,7 +76,7 @@ export default function SEOArticle({ product, shop }) {
       <meta property="og:image" content={product.image_url} />
       <meta property="og:url" content={productUrl} />
       <meta property="og:site_name" content="Rapido Presto" />
-      
+
       {/* Open Graph Product Meta */}
       <meta property="product:price:amount" content={displayPrice} />
       <meta property="product:price:currency" content="HTG" />

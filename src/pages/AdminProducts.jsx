@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState } from 'react';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,12 +13,12 @@ export default function AdminProducts() {
   const [selectedShop, setSelectedShop] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
-  
+
   const [editingProduct, setEditingProduct] = useState(null);
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
-    base44.auth.me().then(u => {
+    firebase.auth.me().then(u => {
       setUser(u);
       if (u.role !== 'admin') {
         window.location.href = '/';
@@ -31,7 +31,7 @@ export default function AdminProducts() {
   const { data: shops = [] } = useQuery({
     queryKey: ['admin-shops-list'],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('adminShops', { action: 'list' });
+      const { data } = await firebase.functions.invoke('adminShops', { action: 'list' });
       return data.shops;
     },
     enabled: !!user
@@ -40,9 +40,9 @@ export default function AdminProducts() {
   const { data: products = [] } = useQuery({
     queryKey: ['admin-products', selectedShop?.id],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('adminProducts', { 
-        action: 'list', 
-        shopId: selectedShop.id 
+      const { data } = await firebase.functions.invoke('adminProducts', {
+        action: 'list',
+        shopId: selectedShop.id
       });
       return data.products;
     },
@@ -51,7 +51,7 @@ export default function AdminProducts() {
 
   const deleteProductMutation = useMutation({
     mutationFn: async (id) => {
-      const res = await base44.functions.invoke('adminProducts', { action: 'delete', productId: id });
+      const res = await firebase.functions.invoke('adminProducts', { action: 'delete', productId: id });
       if (res.data?.error) throw new Error(res.data.error);
       return res.data;
     },
@@ -76,7 +76,7 @@ export default function AdminProducts() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-slate-800">Gestion des Articles</h1>
-          
+
         </div>
 
         {!selectedShop ? (
@@ -134,11 +134,11 @@ export default function AdminProducts() {
                   <UploadCloud className="w-4 h-4 mr-2" />
                   Ajout en masse
                 </Button>
-                <Button 
-                  onClick={() => { 
-                    setEditingProduct(null); 
+                <Button
+                  onClick={() => {
+                    setEditingProduct(null);
                     setShowForm(true);
-                  }} 
+                  }}
                   className="bg-orange-500 hover:bg-orange-600"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -223,7 +223,7 @@ export default function AdminProducts() {
         }}
       />
 
-      
+
 
       <ProductFormModal
         product={editingProduct}

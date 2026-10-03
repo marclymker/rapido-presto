@@ -68,7 +68,7 @@ const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, s
 
       {/* 2. ZONE CONTENU (Optimisée pour l'espace) */}
       <div className="p-2 flex flex-col gap-0">
-        
+
         {/* Badge de réassurance (Zap) */}
         <div className="flex items-center gap-0.5 text-amber-600 mb-0.5">
           <Zap size={8} fill="currentColor" />
@@ -111,7 +111,7 @@ const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, s
       </div>
 
       {/* 3. SECTION BOUTON CONTACT : MASQUÉE TEMPORAIREMENT */}
-      {/* Le bouton "Contacter Vendeur" / "WhatsApp" est retiré 
+      {/* Le bouton "Contacter Vendeur" / "WhatsApp" est retiré
           pour résoudre les problèmes de notifications et gagner de l'espace.
       */}
     </div>

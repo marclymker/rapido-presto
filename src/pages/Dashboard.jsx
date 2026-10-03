@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
-import { Package, Plus, Store } from 'lucide-react';
+import { Package, Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import OrdersSection from '@/components/enterprise/OrdersSection';
@@ -13,11 +13,16 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('commandes');
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebase.auth.me().then(u => {
       setUser(u);
       setLoading(false);
+      // Si l'utilisateur n'est pas connecté, on le redirige vers l'écran de connexion
+      if (!u) {
+        window.location.href = '/Account';
+      }
     }).catch(() => {
       setLoading(false);
+      window.location.href = '/Account';
     });
   }, []);
 
@@ -25,10 +30,10 @@ export default function Dashboard() {
   const { data: myShop } = useQuery({
     queryKey: ['my-shop', user?.id],
     queryFn: async () => {
-      const shops = await base44.entities.Shop.filter({ user_id: user.id });
+      const shops = await firebase.entities.Shop.filter({ user_id: user.id });
       if (shops.length > 0) return shops[0];
-      
-      return base44.entities.Shop.create({
+
+      return firebase.entities.Shop.create({
         user_id: user.id,
         company_name: `Boutique ${user.full_name}`,
         company_category: "Commerce",
@@ -44,44 +49,21 @@ export default function Dashboard() {
   // Commandes reçues pour la boutique
   const { data: receivedOrders = [] } = useQuery({
     queryKey: ['shop-orders', myShop?.id],
-    queryFn: () => base44.entities.Order.filter({ shop_id: myShop?.id }, '-created_date'),
+    queryFn: () => firebase.entities.Order.filter({ shop_id: myShop?.id }, '-created_date'),
     enabled: !!myShop?.id
   });
 
   // Achats passés en tant que client
   const { data: placedOrders = [] } = useQuery({
     queryKey: ['client-orders', user?.id],
-    queryFn: () => base44.entities.Order.filter({ client_id: user?.id }, '-created_date'),
+    queryFn: () => firebase.entities.Order.filter({ client_id: user?.id }, '-created_date'),
     enabled: !!user?.id
   });
 
-  if (loading) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  // Si l'utilisateur n'est pas encore connecté
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center max-w-sm w-full">
-          <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Store className="w-8 h-8" />
-          </div>
-          <h2 className="text-xl font-bold text-slate-800 mb-1">Espace Boutique</h2>
-          <p className="text-slate-500 text-sm mb-6">
-            Connectez-vous pour accéder à votre boutique, publier des articles et gérer vos commandes.
-          </p>
-          <Button 
-            onClick={() => base44.auth.redirectToLogin('/Dashboard')}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 rounded-xl shadow transition"
-          >
-            Se connecter avec Google
-          </Button>
-        </div>
       </div>
     );
   }
@@ -95,7 +77,7 @@ export default function Dashboard() {
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold">Tableau de bord — Ma Boutique</h1>
-            <Button 
+            <Button
               onClick={() => setActiveTab('produits')}
               className="bg-orange-500 hover:bg-orange-600 gap-2"
             >

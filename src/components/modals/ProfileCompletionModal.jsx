@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState } from 'react';
+import { firebase } from '@/api/firebaseClient';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { User, Building2, Bike, MapPin, Phone, Upload, ChevronRight } from 'lucide-react';
+import { User, Building2, Bike, Phone, ChevronRight } from 'lucide-react';
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -41,9 +41,9 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
   const handleFileUpload = async (e, field) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await firebase.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, [field]: file_url });
       toast.success('Fichier téléchargé');
     } catch (error) {
@@ -84,7 +84,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
         };
       }
 
-      await base44.auth.updateMe({
+      await firebase.auth.updateMe({
         current_profile: formData.user_type,
         phone: formData.phone,
         region: formData.region || undefined,
@@ -124,7 +124,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
           {/* Progress */}
           <div className="flex gap-2 mb-6">
             {[1, 2].map(s => (
-              <div 
+              <div
                 key={s}
                 className={`h-1.5 flex-1 rounded-full transition-colors ${
                   s <= step ? 'bg-orange-500' : 'bg-slate-200'
@@ -143,8 +143,8 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
               >
                 <h3 className="text-lg font-semibold mb-4">Comment souhaitez-vous utiliser Rapido Presto?</h3>
 
-                <RadioGroup 
-                  value={formData.user_type} 
+                <RadioGroup
+                  value={formData.user_type}
                   onValueChange={(val) => setFormData({ ...formData, user_type: val })}
                   className="space-y-3"
                 >
@@ -194,7 +194,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                   </label>
                 </RadioGroup>
 
-                <Button 
+                <Button
                   className="w-full mt-6 bg-orange-500 hover:bg-orange-600"
                   onClick={() => setStep(2)}
                   disabled={!canProceed()}
@@ -254,8 +254,8 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                       </div>
                       <div>
                         <Label className="text-sm">Région</Label>
-                        <Select 
-                          value={formData.region} 
+                        <Select
+                          value={formData.region}
                           onValueChange={(val) => setFormData({ ...formData, region: val })}
                         >
                           <SelectTrigger className="h-9">
@@ -288,14 +288,14 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                 </div>
 
                 <div className="flex gap-2 mt-6">
-                  <Button 
+                  <Button
                     variant="outline"
                     className="flex-1 h-9"
                     onClick={() => setStep(1)}
                   >
                     Retour
                   </Button>
-                  <Button 
+                  <Button
                     className="flex-1 bg-orange-500 hover:bg-orange-600 h-9"
                     onClick={handleSubmit}
                     disabled={!canProceed() || saving}

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 
 export default function SessionValidator({ user }) {
   useEffect(() => {
@@ -12,8 +12,8 @@ export default function SessionValidator({ user }) {
 
     const checkSession = async () => {
       try {
-        const currentUser = await base44.auth.me();
-        
+        const currentUser = await firebase.auth.me();
+
         if (!currentUser) return;
 
         const storedVersion = localStorage.getItem('user_session_version');
@@ -23,7 +23,7 @@ export default function SessionValidator({ user }) {
         if (storedVersion && currentVersion && currentVersion.toString() !== storedVersion) {
           localStorage.removeItem('user_session_version');
           window.location.href = '/';
-          base44.auth.logout();
+          firebase.auth.logout();
         }
       } catch (error) {
         console.error('Session validation error:', error);

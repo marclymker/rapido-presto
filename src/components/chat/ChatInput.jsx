@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, memo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Loader2, Send, ImageIcon, ShoppingBag } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { toast } from 'sonner';
 
 // Isolé : le state messageText ne re-render QUE ce composant
@@ -32,7 +32,7 @@ const ChatInput = memo(({ conversationId, isVendor, onMessageSent, onOpenProduct
     onMessageSent(optimisticMsg);
 
     try {
-      await base44.functions.invoke('chatService', {
+      await firebase.functions.invoke('chatService', {
         action: 'send', conversation_id: conversationId, content: text, type: 'text'
       });
     } catch {
@@ -57,8 +57,8 @@ const ChatInput = memo(({ conversationId, isVendor, onMessageSent, onOpenProduct
 
     setIsUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      await base44.functions.invoke('chatService', {
+      const { file_url } = await firebase.integrations.Core.UploadFile({ file });
+      await firebase.functions.invoke('chatService', {
         action: 'send', conversation_id: conversationId,
         content: 'Photo', type: 'image', metadata: { imageUrl: file_url }
       });

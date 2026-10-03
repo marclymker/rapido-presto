@@ -1,11 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
 import { Calendar, ArrowRight, Search } from 'lucide-react';
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Helmet } from 'react-helmet-async';
@@ -15,13 +13,13 @@ export default function Blog() {
 
   const { data: articles = [], isLoading } = useQuery({
     queryKey: ['blog-articles'],
-    queryFn: () => base44.entities.BlogArticle.filter({ is_published: true }, '-published_date', 50)
+    queryFn: () => firebase.entities.BlogArticle.filter({ is_published: true }, '-published_date', 50)
   });
 
   const filteredArticles = useMemo(() => {
     if (!searchQuery.trim()) return articles;
     const query = searchQuery.toLowerCase();
-    return articles.filter(a => 
+    return articles.filter(a =>
       a.title.toLowerCase().includes(query) ||
       a.excerpt?.toLowerCase().includes(query) ||
       a.seo_keywords?.some(k => k.toLowerCase().includes(query))
@@ -102,11 +100,11 @@ export default function Blog() {
                       <Calendar className="w-4 h-4" />
                       <time>{format(new Date(article.published_date), 'd MMM yyyy', { locale: fr })}</time>
                     </div>
-                    
+
                     <h2 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-orange-600">
                       {article.title}
                     </h2>
-                    
+
                     <p className="text-sm text-slate-600 line-clamp-2 mb-3">
                       {article.excerpt}
                     </p>

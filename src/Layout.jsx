@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebase } from '@/api/firebaseClient';
 import { Toaster } from "@/components/ui/sonner";
 import { useQuery } from '@tanstack/react-query';
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
@@ -39,7 +39,7 @@ export default function Layout({ children, currentPageName }) {
 
   useEffect(() => {
     if (user && !user.current_profile && currentPageName !== 'ProfileSetup') {
-      base44.auth.updateMe({
+      firebase.auth.updateMe({
         current_profile: 'client',
         profiles: {
           client: { is_active: true, created_at: new Date().toISOString() }
@@ -75,7 +75,7 @@ export default function Layout({ children, currentPageName }) {
 
   const { data: orders = [] } = useQuery({
     queryKey: ['orders', user?.id],
-    queryFn: () => base44.entities.Order.filter({ client_id: user?.id }),
+    queryFn: () => firebase.entities.Order.filter({ client_id: user?.id }),
     enabled: !!user?.id
   });
 
@@ -93,11 +93,11 @@ export default function Layout({ children, currentPageName }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Rapido" />
-        <link rel="alternate" hreflang="fr-HT" href="https://rapidopresto.shop" />
-        <link rel="alternate" hreflang="fr" href="https://rapidopresto.shop" />
-        <link rel="alternate" hreflang="x-default" href="https://rapidopresto.shop" />
-        <link rel="dns-prefetch" href="https://qtrypzzcjebvfcihiynt.supabase.co" />
-        <link rel="preconnect" href="https://qtrypzzcjebvfcihiynt.supabase.co" crossOrigin="anonymous" />
+        <link rel="alternate" hrefLang="fr-HT" href="https://rapidopresto.shop" />
+        <link rel="alternate" hrefLang="fr" href="https://rapidopresto.shop" />
+        <link rel="alternate" hrefLang="x-default" href="https://rapidopresto.shop" />
+        <link rel="dns-prefetch" href="https://rapidopresto.shop" />
+        <link rel="preconnect" href="https://rapidopresto.shop" crossOrigin="anonymous" />
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
         <meta name="google-site-verification" content="INa9gqcSulkml5JtloQvw_k9lVR-AKcxha0eRYbvqoI" />
         <meta name="google-site-verification" content="TGLvYzGeMnDhLk5dxXLxm-_9a3zAAgAt-BBTDzQehUM" />

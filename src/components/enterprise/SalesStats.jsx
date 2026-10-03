@@ -7,28 +7,28 @@ export default function SalesStats({ orders, products }) {
   const totalRevenue = orders
     .filter(o => o.status === 'delivered')
     .reduce((sum, o) => sum + (o.total || 0), 0);
-  
+
   const totalOrders = orders.length;
   const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
   const avgOrderValue = deliveredOrders > 0 ? totalRevenue / deliveredOrders : 0;
-  
+
   // Statistiques par période
   const today = new Date();
   const todayOrders = orders.filter(o => {
     const orderDate = new Date(o.created_date);
     return orderDate.toDateString() === today.toDateString();
   });
-  
+
   const thisWeekOrders = orders.filter(o => {
     const orderDate = new Date(o.created_date);
     const weekAgo = new Date(today);
     weekAgo.setDate(today.getDate() - 7);
     return orderDate >= weekAgo;
   });
-  
+
   const thisMonthOrders = orders.filter(o => {
     const orderDate = new Date(o.created_date);
-    return orderDate.getMonth() === today.getMonth() && 
+    return orderDate.getMonth() === today.getMonth() &&
            orderDate.getFullYear() === today.getFullYear();
   });
 
