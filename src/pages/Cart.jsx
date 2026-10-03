@@ -366,8 +366,8 @@ export default function Cart() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white sticky top-0 z-40 border-b" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <div className="rp-cart-page min-h-screen">
+      <header className="rp-cart-header sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Link to={createPageUrl('Home')}>
@@ -384,7 +384,7 @@ export default function Cart() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="rp-cart-shell max-w-2xl mx-auto px-4 py-6">
         <AnimatePresence mode="wait">
           {cartItems.length === 0 && step === 'cart' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
@@ -414,8 +414,8 @@ export default function Cart() {
 
               <div className="space-y-3">
                 {cartItems.map(item => (
-                  <div key={item.id} className="bg-white rounded-xl p-4 flex gap-4 shadow-sm border border-slate-100">
-                    <div className="w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                  <div key={item.id} className="rp-cart-item bg-white rounded-xl p-4 flex gap-4 shadow-sm border border-slate-100">
+                    <div className="rp-cart-thumb w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
                       {item.product_image ? (
                         <img src={item.product_image} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -514,7 +514,7 @@ export default function Cart() {
                 </div>
               )}
 
-              <div className="bg-white rounded-xl p-4 mt-6 space-y-2 shadow-sm border border-slate-100">
+              <div className="rp-cart-summary bg-white rounded-xl p-4 mt-6 space-y-2 shadow-sm border border-slate-100">
                 <div className="flex justify-between text-slate-600 text-sm">
                   <span>Sous-total</span>
                   <span className="font-medium">{subtotal} HTG</span>
@@ -551,7 +551,7 @@ export default function Cart() {
 
               <Button
                 type="button"
-                className="w-full mt-6 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
+                className="rp-primary-cta w-full mt-6 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
                 onClick={(e) => {
                   e.preventDefault();
                   try {
@@ -567,15 +567,15 @@ export default function Cart() {
             </motion.div>
           )}
 
-          {step === 'checkout' && (
+              {step === 'checkout' && (
             <motion.div
               key="checkout"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
+                className="rp-checkout space-y-6"
             >
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <div className="rp-checkout-card bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                 <h3 className="font-bold mb-4 text-slate-800">Mode de paiement</h3>
                 <RadioGroup value={paymentSplit} onValueChange={setPaymentSplit} className="space-y-3">
                   <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentSplit === 'full' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
@@ -595,7 +595,7 @@ export default function Cart() {
                 </RadioGroup>
               </div>
 
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <div className="rp-checkout-card bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                 <h3 className="font-bold mb-4 text-slate-800">Méthode de paiement</h3>
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
                   <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentMethod === 'moncash' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
@@ -615,7 +615,7 @@ export default function Cart() {
               </div>
 
               {deliveryOption !== 'pickup_delimart' && (
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                <div className="rp-checkout-card bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                   <h3 className="font-bold mb-1 text-slate-800">Adresse de livraison</h3>
                   <p className="text-slate-600 font-medium">{user.address || 'Non définie'}</p>
                   <p className="text-slate-400 text-sm">{user.region}</p>
@@ -623,7 +623,7 @@ export default function Cart() {
               )}
 
               {deliveryOption === 'pickup_delimart' && (
-                <div className="bg-green-50 rounded-xl p-4 shadow-sm border border-green-200">
+                <div className="rp-checkout-card bg-green-50 rounded-xl p-4 shadow-sm border border-green-200">
                   <h3 className="font-bold mb-1 text-green-800 flex items-center gap-2"><MapPin className="w-4 h-4"/> Point de retrait</h3>
                   <p className="text-green-700 font-medium">Delimart, Delmas 32</p>
                   <p className="text-green-600 text-sm mt-1">Vous recevrez un message quand votre commande sera prête.</p>
@@ -638,8 +638,8 @@ export default function Cart() {
                 />
               )}
 
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-                <h3 className="font-bold mb-3 text-slate-800">Instructions spéciales</h3>
+                <div className="rp-checkout-card bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                  <h3 className="font-bold mb-3 text-slate-800">Instructions spéciales</h3>
                 <Textarea
                   placeholder={deliveryOption === 'pickup_delimart' ? "Ex: C'est mon frère qui viendra récupérer le colis..." : "Ex: Sonnez à la porte, laissez à l'accueil..."}
                   value={specialInstructions}
@@ -649,7 +649,7 @@ export default function Cart() {
                 />
               </div>
 
-              <div className="bg-slate-800 rounded-xl p-5 text-white shadow-lg">
+              <div className="rp-checkout-total bg-slate-800 rounded-xl p-5 text-white shadow-lg">
                 <h3 className="font-bold text-slate-300 mb-4 uppercase tracking-wider text-sm">Facture finale</h3>
                 
                 <div className="space-y-2 mb-4 text-sm text-slate-300">
@@ -694,7 +694,7 @@ export default function Cart() {
                 </Button>
                 <Button
                   type="button"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
+                  className="rp-primary-cta flex-1 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
                   onClick={(e) => {
                     e.preventDefault();
                     createOrderMutation.mutate();
