@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import CompactProductCard from './CompactProductCard';
 
@@ -22,8 +22,6 @@ const CATEGORY_EMOJIS = {
 
 // Accepte shopsMap (pre-calculated) ou shops array (fallback)
 export default function CategoryRow({ title, emoji, products, shops, shopsMap: shopsMapProp, onProductClick, onSeeAll }) {
-  const scrollRef = useRef(null);
-
   // O(1) lookup au lieu de O(n) find dans chaque render
   const shopsMap = useMemo(() => {
     if (shopsMapProp) return shopsMapProp;
@@ -37,38 +35,29 @@ export default function CategoryRow({ title, emoji, products, shops, shopsMap: s
   const displayEmoji = emoji || CATEGORY_EMOJIS[title] || '📦';
 
   return (
-    <section className="rp-category-row mb-5">
+    <section className="rp-category-row mb-6">
       {/* Header section */}
       <div className="flex items-center justify-between px-4 mb-2">
-        <h3 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-          <span>{displayEmoji}</span>
+        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
           <span>{title}</span>
         </h3>
         {onSeeAll && (
           <button
             onClick={onSeeAll}
-            className="flex items-center gap-0.5 text-[11px] text-orange-500 font-semibold"
+            className="flex items-center gap-0.5 text-sm text-indigo-400 font-semibold"
           >
             Voir tout <ChevronRight className="w-3 h-3" />
           </button>
         )}
       </div>
 
-      {/* Horizontal scroll */}
-      <div
-        ref={scrollRef}
-        className="flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar"
-        style={{
-          scrollSnapType: 'x mandatory',
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
+      <div className="rp-category-grid px-4">
         {products.slice(0, 12).map(product => {
           const shop = shopsMap[product.shop_id];
           return (
             <div
               key={product.id}
-              style={{ scrollSnapAlign: 'start', minWidth: '170px', maxWidth: '170px' }}
+              className="min-w-0"
             >
               <CompactProductCard
                 product={product}
@@ -79,6 +68,6 @@ export default function CategoryRow({ title, emoji, products, shops, shopsMap: s
           );
         })}
       </div>
-      </section>
+    </section>
   );
 }

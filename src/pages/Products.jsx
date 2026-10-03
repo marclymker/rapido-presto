@@ -473,7 +473,7 @@ export default function Products() {
   }, [trackCategoryView]);
 
   return (
-    <div className="flex flex-col min-h-screen pb-20" style={{backgroundColor: '#f0f2f5'}}>
+    <div className="rp-products-page rp-dark-shop flex flex-col min-h-screen pb-20">
       {isAdmin && editingProduct && (
         <ProductFormModal
           product={editingProduct}
@@ -498,7 +498,7 @@ export default function Products() {
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 
-      <header className="sticky top-0 z-40 bg-white shadow-sm">
+      <header className="rp-products-header rp-shop-header sticky top-0 z-40">
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-black tracking-tight">Marketplace</h1>
           <div className="flex items-center">

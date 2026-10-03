@@ -254,7 +254,7 @@ export default function Home() {
   }, [allProducts, isFiltered]);
 
   return (
-    <div className="rp-marketplace flex flex-col min-h-screen pb-20">
+    <div className="rp-marketplace rp-dark-shop flex flex-col min-h-screen pb-20">
 
 
       <Helmet>
@@ -269,7 +269,7 @@ export default function Home() {
       />
 
       {/* Header */}
-      <header className="rp-marketplace-header bg-white sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <header className="rp-marketplace-header rp-shop-header sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div className="flex flex-col leading-tight cursor-pointer" onClick={() => window.location.reload()}>
             <h1 className="text-xl font-bold tracking-tight leading-none m-0 p-0 text-slate-900">Rapido</h1>
