@@ -20,7 +20,7 @@ export default function EnterpriseDashboard() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
-      if (u.current_profile !== 'entreprise') {
+      if (!['marketplace', 'entreprise'].includes(u.current_profile)) {
         const redirectPages = {
           client: 'Home',
           livreur: 'DriverDashboard'
@@ -64,7 +64,7 @@ export default function EnterpriseDashboard() {
     enabled: !!user?.id
   });
 
-  if (!user || user.current_profile !== 'entreprise') {
+  if (!user || !['marketplace', 'entreprise'].includes(user.current_profile)) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-slate-500">Chargement...</p>

@@ -59,3 +59,30 @@ Exemples :
 ## Périmètre de cette itération
 
 Refondre les tokens CSS, le shell marketplace, la carte produit et les primitives stories/catégories en conservant les contrats `base44`, les routes, les données et les paiements inchangés. Les parcours compte/panier seront ensuite adaptés sans migration backend simultanée.
+
+
+# Extension — profils métier multi-espaces
+
+## Décisions confirmées
+
+- Un compte peut posséder plusieurs profils métier et les basculer à volonté.
+- Marketplace conserve l’interface actuelle.
+- Nourriture fournit un POS avec acceptation/refus, préparation, retrait et livraison.
+- Hôtel/Piscine gère chambres, dates d’arrivée/départ, piscine par créneau, prix et confirmation automatique après paiement.
+- Ticket gère événements, ventes, participants et QR privé à usage unique après paiement.
+- Des collaborateurs peuvent être invités avec permissions limitées.
+
+## Architecture
+
+`User/{uid}` conserve `current_profile` et `profiles`. Les espaces opérationnels sont liés à un `Workspace/{id}` appartenant au propriétaire. `WorkspaceMember/{id}` porte le rôle et les permissions du collaborateur. Les transitions sensibles passent par fonctions serveur et transactions Firestore.
+
+## Dashboards
+
+- `EnterpriseDashboard` reste le dashboard Marketplace.
+- `FoodPOSDashboard` expose uniquement commandes, catalogue, préparation, retrait et livraison.
+- `HospitalityDashboard` expose inventaire, disponibilités, calendrier, piscines/créneaux et réservations.
+- `TicketDashboard` expose événements, ventes, participants et scanner QR.
+
+## Sécurité
+
+Les QR ne sont ni générés ni consommés côté client : le serveur signe, vérifie paiement/événement/expiration et consomme le billet une seule fois. Les réservations de chambres et de créneaux utilisent des transactions atomiques. Les collaborateurs ne voient que les espaces et actions autorisés.

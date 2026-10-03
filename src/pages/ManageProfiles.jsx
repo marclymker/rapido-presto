@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { motion } from 'framer-motion';
 
 const COMPANY_CATEGORIES = [
-  "Fastfood", 
+  "Fastfood", "Restaurant", "Nourriture",
   "Mode", 
   "Boutique Fleurs", 
   "Pharmacie", 
@@ -24,7 +24,7 @@ const COMPANY_CATEGORIES = [
   "Pour Femme", 
   "Electronics", 
   "Pour homme", 
-  "Maison", "Hotels/Piscine",
+  "Maison", "Hotels/Piscine", "Tickets",
   "Bébé", 
   "Outils"
 ];
@@ -55,13 +55,22 @@ export default function ManageProfiles() {
       color: 'blue',
       requiresValidation: false
     },
-    entreprise: {
-      icon: Building2,
-      label: 'Entreprise',
-      description: 'Vendre et gérer vos produits',
-      color: 'orange',
-      requiresValidation: false
-    },
+    ...Object.fromEntries(BUSINESS_PROFILE_IDS.map((id) => {
+      const profile = BUSINESS_PROFILES[id];
+      return [id, {
+        icon: profile.icon,
+        label: profile.label,
+        description: id === 'food'
+          ? 'POS : commandes, préparation, retrait et livraison'
+          : id === 'hospitality'
+            ? 'Chambres, piscines, disponibilités et réservations'
+            : id === 'tickets'
+              ? 'Événements, billets, participants et scanner QR'
+              : 'Vendre et gérer vos produits',
+        color: 'orange',
+        requiresValidation: false,
+      }];
+    })),
     livreur: {
       icon: Bike,
       label: 'Livreur',
@@ -78,9 +87,13 @@ export default function ManageProfiles() {
     }
   };
 
+  const displayCurrentProfile = user?.current_profile === 'entreprise' ? 'marketplace' : (user?.current_profile || 'client');
+
   const getProfileStatus = (profileType) => {
     const profiles = user?.profiles || {};
-    const profile = profiles[profileType];
+    const profile = profileType === 'marketplace'
+      ? (profiles.marketplace || profiles.entreprise)
+      : profiles[profileType];
     
     if (!profile || !profile.is_active) {
       return { status: 'inactive', label: 'Inactif', color: 'bg-slate-100 text-slate-600', icon: null };
@@ -122,14 +135,14 @@ export default function ManageProfiles() {
     try {
       const profiles = { ...(user.profiles || {}) };
       
-      if (selectedProfile === 'entreprise') {
+      if (selectedProfile === 'marketplace' || selectedProfile === 'entreprise' || BUSINESS_PROFILE_IDS.includes(selectedProfile)) {
         if (!formData.company_name || !formData.company_category) {
           toast.error('Veuillez remplir tous les champs');
           setSubmitting(false);
           return;
         }
         
-        profiles.entreprise = {
+        const profileData = {
           is_active: true,
           created_at: new Date().toISOString(),
           last_used: new Date().toISOString(),
@@ -142,6 +155,13 @@ export default function ManageProfiles() {
           rating: 5,
           delivery_time_minutes: 30
         };
+
+        if (selectedProfile === 'marketplace' || selectedProfile === 'entreprise') {
+          profiles.marketplace = profileData;
+          profiles.entreprise = profileData;
+        } else {
+          profiles[selectedProfile] = { ...profileData, business_profile: selectedProfile };
+        }
         
         await base44.auth.updateMe({ profiles });
         toast.success('Profil entreprise activé!');
@@ -237,12 +257,12 @@ export default function ManageProfiles() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  {React.createElement(profileConfig[user.current_profile].icon, {
+                  {React.createElement(profileConfig[displayCurrentProfile].icon, {
                     className: 'w-8 h-8 text-orange-500'
                   })}
                   <div>
-                    <p className="font-semibold">{profileConfig[user.current_profile].label}</p>
-                    <p className="text-sm text-slate-500">{profileConfig[user.current_profile].description}</p>
+                    <p className="font-semibold">{profileConfig[displayCurrentProfile].label}</p>
+                    <p className="text-sm text-slate-500">{profileConfig[displayCurrentProfile].description}</p>
                   </div>
                 </div>
                 <Check className="w-5 h-5 text-orange-500" />
@@ -284,9 +304,9 @@ export default function ManageProfiles() {
                             <p className="text-sm text-slate-500 mt-0.5">{config.description}</p>
                             
                             {/* Show details for active profiles */}
-                            {status.status === 'active' && key === 'entreprise' && (
+                            {status.status === 'active' && ['marketplace', 'food', 'hospitality', 'tickets'].includes(key) && (
                               <p className="text-xs text-slate-600 mt-1">
-                                {user.profiles?.entreprise?.company_name}
+                                {(user.profiles?.[key] || user.profiles?.entreprise)?.company_name}
                               </p>
                             )}
                             
@@ -341,7 +361,7 @@ export default function ManageProfiles() {
           </DialogHeader>
           
           <div className="space-y-4 pt-4">
-            {selectedProfile === 'entreprise' && (
+            {['marketplace', 'entreprise', 'food', 'hospitality', 'tickets'].includes(selectedProfile) && (
               <>
                 <div>
                   <Label>Nom de l'entreprise</Label>
@@ -496,3 +516,4 @@ export default function ManageProfiles() {
     </div>
   );
 }
+import { BUSINESS_PROFILES, BUSINESS_PROFILE_IDS } from '@/lib/businessProfiles';

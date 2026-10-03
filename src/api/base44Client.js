@@ -39,6 +39,23 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
+const hydrateAuthUser = async (firebaseUser) => {
+  if (!firebaseUser) return null;
+  const snapshot = await getDoc(doc(db, 'User', firebaseUser.uid));
+  const profileData = snapshot.exists() ? snapshot.data() : {};
+  return {
+    id: firebaseUser.uid,
+    email: firebaseUser.email,
+    full_name: firebaseUser.displayName || firebaseUser.email?.split('@')[0],
+    avatar_url: firebaseUser.photoURL,
+    ...profileData,
+    current_profile: profileData.current_profile || 'client',
+    profiles: profileData.profiles || {
+      client: { is_active: true },
+    },
+  };
+};
+
 const createEntityHandler = (entityName) => ({
   async list(sortField, maxLimit = 100) {
     try {
@@ -149,13 +166,7 @@ export const base44 = {
       }
       const user = auth.currentUser;
       if (!user) return null;
-      return {
-        id: user.uid,
-        email: user.email,
-        full_name: user.displayName || user.email?.split('@')[0],
-        avatar_url: user.photoURL,
-        current_profile: 'client'
-      };
+      return hydrateAuthUser(user);
     },
 
     // Ouvre la fenêtre Google en 1 clic et redirige vers la bonne page
@@ -224,17 +235,16 @@ export const base44 = {
     },
 
     onAuthStateChanged(callback) {
-      return onAuthStateChanged(auth, (user) => {
+      return onAuthStateChanged(auth, async (user) => {
         if (!user) {
           callback(null);
-        } else {
-          callback({
-            id: user.uid,
-            email: user.email,
-            full_name: user.displayName || user.email?.split('@')[0],
-            avatar_url: user.photoURL,
-            current_profile: 'client'
-          });
+          return;
+        }
+        try {
+          callback(await hydrateAuthUser(user));
+        } catch (error) {
+          console.warn('Hydratation du profil utilisateur:', error);
+          callback({ id: user.uid, email: user.email, full_name: user.displayName || user.email?.split('@')[0], current_profile: 'client', profiles: { client: { is_active: true } } });
         }
       });
     }
