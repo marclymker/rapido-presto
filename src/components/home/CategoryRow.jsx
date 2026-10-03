@@ -37,10 +37,10 @@ export default function CategoryRow({ title, emoji, products, shops, shopsMap: s
   const displayEmoji = emoji || CATEGORY_EMOJIS[title] || '📦';
 
   return (
-    <div className="mb-4">
+    <section className="rp-category-row mb-5">
       {/* Header section */}
       <div className="flex items-center justify-between px-4 mb-2">
-        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+        <h3 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
           <span>{displayEmoji}</span>
           <span>{title}</span>
         </h3>
@@ -57,7 +57,7 @@ export default function CategoryRow({ title, emoji, products, shops, shopsMap: s
       {/* Horizontal scroll */}
       <div
         ref={scrollRef}
-        className="flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar"
+        className="flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar"
         style={{
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',
@@ -68,7 +68,7 @@ export default function CategoryRow({ title, emoji, products, shops, shopsMap: s
           return (
             <div
               key={product.id}
-              style={{ scrollSnapAlign: 'start', minWidth: '120px', maxWidth: '120px' }}
+              style={{ scrollSnapAlign: 'start', minWidth: '170px', maxWidth: '170px' }}
             >
               <CompactProductCard
                 product={product}
@@ -79,6 +79,6 @@ export default function CategoryRow({ title, emoji, products, shops, shopsMap: s
           );
         })}
       </div>
-    </div>
+      </section>
   );
 }

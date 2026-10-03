@@ -17,6 +17,7 @@ import { useGuestCart } from '@/components/cart/useGuestCart';
 import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
 import CompactProductCard from '@/components/home/CompactProductCard';
 import CategoryRow from '@/components/home/CategoryRow';
+import SmallStories from '@/components/home/SmallStories';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
 import { Button } from "@/components/ui/button";
@@ -265,7 +266,7 @@ export default function Home() {
   }, [allProducts, isFiltered]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
+    <div className="rp-marketplace flex flex-col min-h-screen pb-20">
 
 
       <Helmet>
@@ -280,7 +281,7 @@ export default function Home() {
       />
 
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <header className="rp-marketplace-header bg-white sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div className="flex flex-col leading-tight cursor-pointer" onClick={() => window.location.reload()}>
             <h1 className="text-xl font-bold tracking-tight leading-none m-0 p-0 text-slate-900">Rapido</h1>
@@ -389,9 +390,11 @@ export default function Home() {
         <MerchantProfileAlert user={user} />
       </Suspense>
 
+      <SmallStories onCategorySelect={(category) => { setSelectedCategory(category); setSearchQuery(''); }} />
+
       {/* Main Content */}
       <PullToRefresh onRefresh={async () => { queryClient.invalidateQueries(['all-products']); queryClient.invalidateQueries(['shops']); }}>
-        <main className="flex-1 p-4">
+        <main className="rp-feed flex-1 p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-800">
               {selectedFbCatId ? findById(selectedFbCatId)?.name : 'Sélection du jour'}

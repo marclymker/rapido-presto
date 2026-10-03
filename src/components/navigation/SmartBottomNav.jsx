@@ -54,14 +54,13 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
 
   return (
     <nav 
-      className={`fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-gray-100 transition-transform duration-300 safe-bottom z-50 ${
+      className={`rp-bottom-nav fixed bottom-0 left-0 right-0 transition-transform duration-300 safe-bottom z-50 ${
         isVisible ? 'translate-y-0' : 'translate-y-full'
       }`}
-      style={{ boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.05)' }}
       aria-label="Navigation principale"
       role="navigation"
     >
-      <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
+      <div className="rp-bottom-nav-inner flex justify-around items-center h-16 max-w-lg mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActiveTab = item.id === activeTab;
@@ -70,13 +69,13 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
             <button
               key={item.id}
               onClick={() => switchToTab(item.id)}
-              className="flex flex-col items-center justify-center w-full h-full gap-1 group relative min-h-11 min-w-11 touch-manipulation"
+              className="rp-bottom-nav-item flex flex-col items-center justify-center w-full h-full gap-1 group relative min-h-11 min-w-11 touch-manipulation"
               aria-label={item.label}
               aria-current={isActiveTab ? 'page' : undefined}
             >
               <div className="relative">
                 <Icon 
-                  className={`w-6 h-6 transition-all ${
+                  className={`w-[21px] h-[21px] transition-all ${
                     isActiveTab 
                       ? 'text-orange-500 scale-110' 
                       : 'text-gray-400 group-active:scale-90'
@@ -91,14 +90,14 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
                 )}
               </div>
               <span 
-                className={`text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                  className={`text-[10px] font-semibold transition-colors ${
                   isActiveTab ? 'text-orange-500' : 'text-gray-400'
                 }`}
               >
                 {item.label}
               </span>
               {isActiveTab && (
-                <div className="absolute bottom-0 w-8 h-0.5 bg-orange-500 rounded-full" aria-hidden="true"></div>
+                <div className="absolute bottom-1 w-1 h-1 bg-orange-500 rounded-full" aria-hidden="true"></div>
               )}
             </button>
           );
