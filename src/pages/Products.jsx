@@ -34,6 +34,9 @@ const REGIONS = [
   "Cap-Haïtien", "Madeline", "Limonade", "Pignon", "Hinche"
 ];
 
+const SELLER_PROFILE_DISMISS_KEY = 'rapido_seller_profile_prompt_dismissed_until';
+const SELLER_PROFILE_REOPEN_DELAY = 60 * 60 * 1000;
+
 const normalizeForRegion = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
 const REGION_DATA = {
@@ -243,15 +246,35 @@ export default function Products() {
     }
 
     const missingContact = !user.phone || !user.address || !user.region;
-    if (missingContact) {
+    if (!missingContact) {
+      setShowSellerProfilePrompt(false);
+      return;
+    }
+
+    const dismissedUntil = Number(localStorage.getItem(SELLER_PROFILE_DISMISS_KEY) || 0);
+    const openPrompt = () => {
       setSellerProfile({
         phone: user.phone || '',
         address: user.address || '',
         region: user.region || ''
       });
       setShowSellerProfilePrompt(true);
+    };
+
+    if (dismissedUntil > Date.now()) {
+      setShowSellerProfilePrompt(false);
+      const timer = window.setTimeout(openPrompt, dismissedUntil - Date.now());
+      return () => window.clearTimeout(timer);
     }
+
+    openPrompt();
   }, [isSeller, user]);
+
+  const dismissSellerProfilePrompt = () => {
+    const dismissedUntil = Date.now() + SELLER_PROFILE_REOPEN_DELAY;
+    localStorage.setItem(SELLER_PROFILE_DISMISS_KEY, String(dismissedUntil));
+    setShowSellerProfilePrompt(false);
+  };
 
   const updateSellerProfileMutation = useMutation({
     mutationFn: (data) => base44.entities.User.update(user.id, data),
@@ -777,16 +800,27 @@ export default function Products() {
             role="presentation"
           >
             <div
-              className="my-3 w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl sm:my-6 sm:p-6"
+              className="my-3 w-full max-w-md rounded-2xl bg-white p-5 text-slate-900 shadow-2xl sm:my-6 sm:p-6"
               role="dialog"
               aria-modal="true"
               aria-labelledby="seller-profile-title"
             >
-              <div className="mb-4">
-                <h2 id="seller-profile-title" className="text-xl font-black text-slate-800">Finalisez votre profil vendeur</h2>
-                <p className="mt-2 text-sm text-slate-500">
-                  Ajoutez vos coordonnées pour recevoir les commandes et organiser la livraison.
-                </p>
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <h2 id="seller-profile-title" className="text-xl font-black text-slate-900">Finalisez votre profil vendeur</h2>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Ajoutez vos coordonnées pour recevoir les commandes et organiser la livraison.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={dismissSellerProfilePrompt}
+                  aria-label="Fermer et rappeler dans une heure"
+                  title="Fermer pour une heure"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
 
               <form onSubmit={handleSellerProfileSubmit} className="space-y-4">
@@ -800,7 +834,7 @@ export default function Products() {
                     placeholder="Ex: +509 3000 0000"
                     value={sellerProfile.phone}
                     onChange={(event) => setSellerProfile((current) => ({ ...current, phone: event.target.value }))}
-                    className="h-12 bg-slate-50 text-slate-900 font-bold text-lg"
+                    className="h-12 bg-white text-black caret-black font-bold text-lg placeholder:text-slate-500"
                     required
                   />
                 </div>
@@ -814,7 +848,7 @@ export default function Products() {
                     placeholder="Rue, zone, repère"
                     value={sellerProfile.address}
                     onChange={(event) => setSellerProfile((current) => ({ ...current, address: event.target.value }))}
-                    className="h-12 bg-slate-50 text-slate-900 font-bold"
+                    className="h-12 bg-white text-black caret-black font-bold placeholder:text-slate-500"
                     required
                   />
                 </div>
