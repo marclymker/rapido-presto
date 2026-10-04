@@ -281,7 +281,12 @@ export default function Products() {
   };
 
   const updateSellerProfileMutation = useMutation({
-    mutationFn: (data) => base44.entities.User.update(user.id, data),
+    mutationFn: async (data) => {
+      if (!user?.id) throw new Error('Session utilisateur expirée.');
+      const saved = await base44.auth.updateMe(data);
+      if (!saved) throw new Error('Impossible de sauvegarder le profil vendeur.');
+      return saved;
+    },
     onSuccess: () => {
       toast.success('Profil vendeur enregistré.');
       setShowSellerProfilePrompt(false);

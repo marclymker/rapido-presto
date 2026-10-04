@@ -618,9 +618,14 @@ const variants = generatedRows.map(row => ({
 }));
 
 const { variant_options: _variantOptions, ...persistedFormData } = formData;
+const currentUser = await base44.auth.me();
+if (!currentUser?.id) throw new Error('Session utilisateur expirée. Reconnectez-vous.');
 const dataWithSlug = {
   ...persistedFormData,
   variants,
+  owner_id: currentUser.id,
+  vendor_id: currentUser.id,
+  user_id: currentUser.id,
   slug: slug || undefined,
   image_alt: formData.image_alt || formData.name,
 };

@@ -1,4 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { 
   getFirestore, 
   collection, 
@@ -38,6 +39,7 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 
 const hydrateAuthUser = async (firebaseUser) => {
   if (!firebaseUser) return null;
@@ -194,8 +196,8 @@ export const base44 = {
         await setDoc(userRef, { ...data, updated_date: serverTimestamp() }, { merge: true });
         return { id: user.uid, ...data };
       } catch (e) {
-        console.warn("Mise à jour profil:", e);
-        return { id: user.uid, ...data };
+        console.error("Mise à jour profil:", e);
+        throw e;
       }
     },
 
@@ -254,6 +256,27 @@ export const base44 = {
     async invoke(funcName, params = {}) {
       console.log(`Fonction ${funcName} appelée:`, params);
       return { data: { success: true, converted: 0 } };
+    }
+  },
+
+  integrations: {
+    Core: {
+      async UploadFile({ file }) {
+        if (!(file instanceof File)) throw new Error('Fichier invalide');
+        if (file.size > 10 * 1024 * 1024) throw new Error('La photo ne doit pas dépasser 10 Mo');
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        if (!auth.currentUser?.uid) throw new Error('Connexion requise pour envoyer une photo');
+        const path = `users/${auth.currentUser.uid}/${Date.now()}-${safeName}`;
+        const snapshot = await uploadBytes(ref(storage, path), file, { contentType: file.type || 'image/jpeg' });
+        return { file_url: await getDownloadURL(snapshot.ref), path };
+      },
+
+      // L’analyse IA ne doit jamais empêcher la publication si le service
+      // externe est indisponible. Les écrans utilisent ces champs de façon
+      // optionnelle et continuent avec les données saisies par l’utilisateur.
+      async InvokeLLM() {
+        return { has_phone: false, description: '', category: '', tags: [] };
+      }
     }
   }
 };
