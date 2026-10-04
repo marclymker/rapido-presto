@@ -511,7 +511,7 @@ export default function Products() {
 
       <header className="rp-products-header rp-shop-header sticky top-0 z-40">
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-black tracking-tight">Marketplace</h1>
+          <h1 className="text-3xl font-bold text-black tracking-tight">Kairos</h1>
           <div className="flex items-center">
             <button
               onClick={() => user ? navigate('/Chat') : base44.auth.redirectToLogin('/Chat')}

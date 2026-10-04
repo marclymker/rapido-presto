@@ -273,8 +273,7 @@ export default function Home() {
       <header className="rp-marketplace-header rp-shop-header sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div className="flex flex-col leading-tight cursor-pointer" onClick={() => window.location.reload()}>
-            <h1 className="text-xl font-bold tracking-tight leading-none m-0 p-0 text-slate-900">Rapido</h1>
-            <span className="text-sm text-orange-400 -mt-1 ml-4">Presto</span>
+            <h1 className="text-xl font-bold tracking-tight leading-none m-0 p-0 text-slate-900">Kairos</h1>
           </div>
           <div
             className="relative flex items-center cursor-pointer"
