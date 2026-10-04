@@ -53,23 +53,43 @@ function isLegacyUser(user, canonicalIds) {
   );
 }
 
-export async function scanLegacyFirestore({ maxUsers = 1000, maxShops = 2000, maxProducts = 5000 } = {}) {
-  const [users, shops, products] = await Promise.all([
+export async function scanLegacyFirestore({ maxUsers = 1000, maxShops = 2000, maxProducts = 5000, maxActivity = 20000 } = {}) {
+  const [users, shops, products, activities] = await Promise.all([
     base44.entities.User.list('-created_date', maxUsers),
     base44.entities.Shop.list('-created_date', maxShops),
-    base44.entities.Product.list('-created_date', maxProducts)
+    base44.entities.Product.list('-created_date', maxProducts),
+    base44.entities.UserActivity.list('-created_date', maxActivity)
   ]);
   const canonicalIds = new Set(users.filter((user) => user.firebase_uid === user.id || user.auth_uid === user.id).map((user) => user.id));
   const indexes = indexUsers(users);
+  const activityEmailByUser = new Map();
+  activities.forEach((activity) => {
+    const legacyId = String(activity.user_id || '');
+    const email = normalize(activity.created_by);
+    if (legacyId && !legacyId.startsWith('guest_') && email.includes('@')) activityEmailByUser.set(legacyId, email);
+  });
   const userLinks = [];
   const byLegacyUserId = new Map();
-  users.filter((user) => isLegacyUser(user, canonicalIds)).forEach((legacyUser) => {
-    const canonical = findCanonicalUser(legacyUser, users, indexes);
+  const legacyOwnerIds = new Set(shops.map((shop) => String(shop.user_id || shop.owner_id || shop.vendor_id || '')).filter(Boolean));
+  const legacyUsers = users.filter((user) => isLegacyUser(user, canonicalIds) || legacyOwnerIds.has(user.id));
+  legacyUsers.forEach((legacyUser) => {
+    const activityEmail = activityEmailByUser.get(legacyUser.id);
+    const canonical = activityEmail
+      ? (indexes.byEmail.get(activityEmail) || []).find((candidate) => candidate.id !== legacyUser.id)
+      : findCanonicalUser(legacyUser, users, indexes);
     const legacyId = String(firstValue(legacyUser, LEGACY_ID_FIELDS) || legacyUser.id);
     if (canonical && canonical.id !== legacyUser.id) {
-      userLinks.push({ legacyId, legacyDocId: legacyUser.id, firebaseUid: canonical.id, email: canonical.email || legacyUser.email, match: 'email_or_phone' });
+      userLinks.push({ legacyId, legacyDocId: legacyUser.id, firebaseUid: canonical.id, email: canonical.email || legacyUser.email || activityEmail, match: activityEmail ? 'activity_email' : 'email_or_phone' });
       byLegacyUserId.set(legacyUser.id, canonical.id);
       byLegacyUserId.set(legacyId, canonical.id);
+    }
+  });
+  activityEmailByUser.forEach((email, legacyId) => {
+    if (byLegacyUserId.has(legacyId)) return;
+    const matches = (indexes.byEmail.get(email) || []).filter((candidate) => candidate.id !== legacyId);
+    if (matches.length === 1) {
+      userLinks.push({ legacyId, legacyDocId: null, firebaseUid: matches[0].id, email, match: 'activity_email' });
+      byLegacyUserId.set(legacyId, matches[0].id);
     }
   });
 
@@ -86,9 +106,9 @@ export async function scanLegacyFirestore({ maxUsers = 1000, maxShops = 2000, ma
   });
 
   return {
-    scanned: { users: users.length, shops: shops.length, products: products.length },
+    scanned: { users: users.length, shops: shops.length, products: products.length, userActivity: activities.length },
     links: { users: userLinks, shops: shopLinks, products: productLinks },
-    ambiguousUsers: users.filter((user) => isLegacyUser(user, canonicalIds) && !userLinks.some((link) => link.legacyDocId === user.id)).map((user) => ({ id: user.id, email: user.email || null, phone: user.phone || user.whatsapp_number || null }))
+    ambiguousUsers: users.filter((user) => (isLegacyUser(user, canonicalIds) || legacyOwnerIds.has(user.id)) && !userLinks.some((link) => link.legacyDocId === user.id)).map((user) => ({ id: user.id, email: user.email || null, phone: user.phone || user.whatsapp_number || null }))
   };
 }
 
@@ -96,12 +116,12 @@ export async function executeLegacyFirestoreMigration(report) {
   const now = new Date().toISOString();
   let writes = 0;
   for (const link of report.links.users) {
-    await base44.entities.User.update(link.legacyDocId, { linked_firebase_uid: link.firebaseUid, migration_status: 'linked', migration_source: 'base44', migrated_at: now });
+    if (link.legacyDocId) await base44.entities.User.update(link.legacyDocId, { linked_firebase_uid: link.firebaseUid, migration_status: 'linked', migration_source: 'base44', migrated_at: now });
     const canonical = await base44.entities.User.get(link.firebaseUid);
     const legacy = await base44.entities.User.get(link.legacyDocId);
     await base44.entities.User.update(link.firebaseUid, { legacy_user_ids: [...new Set([...(canonical?.legacy_user_ids || []), link.legacyId])], migration_status: 'linked', migrated_at: now, ...(legacy?.profiles ? { legacy_profiles: legacy.profiles } : {}) });
     await base44.entities.MigrationLink.update(`${link.legacyId}_user`, { type: 'user', legacy_id: link.legacyId, firebase_uid: link.firebaseUid, status: 'linked', migrated_at: now });
-    writes += 3;
+    writes += link.legacyDocId ? 3 : 2;
   }
   for (const link of report.links.shops) {
     await base44.entities.Shop.update(link.shopId, { user_id: link.firebaseUid, legacy_user_id: link.legacyOwner, migration_source: 'base44', migrated_at: now });
