@@ -45,26 +45,20 @@ export function trackMetaPixelEvent(eventName, data = {}, eventId) {
  */
 export async function trackMetaConversionEvent(eventName, customData = {}, userData = {}, eventId) {
   try {
-    const { base44 } = await import('@/api/base44Client');
-
     const metaCookies = getMetaCookies();
     const clientInfo = getClientInfo();
-
-    const response = await base44.functions.invoke('metaConversionsAPI', {
-      event_name: eventName,
-      event_id: eventId,
-      custom_data: {
-        ...customData,
-        ...clientInfo,
-      },
-      user_data: {
-        ...userData,
-        ...metaCookies,
-        ...clientInfo,
-      },
+    const response = await fetch('/functions/metaConversionsAPI', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_name: eventName,
+        event_id: eventId,
+        custom_data: { ...customData, ...clientInfo },
+        user_data: { ...userData, ...metaCookies, ...clientInfo },
+      }),
     });
-
-    return response.data;
+    if (!response.ok) return null;
+    return response.json();
   } catch (error) {
     console.error('Meta CAPI Error:', error);
   }

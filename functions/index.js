@@ -128,6 +128,52 @@ exports.generateSitemapXML = onRequest(async (_req, res) => {
 
 exports.generateSitemap = exports.generateSitemapXML;
 
+exports.facebookCatalogFeed = onRequest(async (_req, res) => {
+  try {
+    const products = await getPublicProducts();
+    const items = products.map((product) => {
+      const price = Number(product.promo_price || product.price || 0).toFixed(2);
+      const availability = product.stock_quantity === 0 || product.is_available === false ? 'out of stock' : 'in stock';
+      const category = product.fb_category_id || product.category || 'Marketplace';
+      return `<item><g:id>${escapeXml(product.id)}</g:id><g:title>${escapeXml(product.name || 'Produit Kairos')}</g:title><g:description>${escapeXml(productDescription(product))}</g:description><g:link>${escapeXml(productUrl(product))}</g:link><g:image_link>${escapeXml(productImage(product))}</g:image_link><g:availability>${availability}</g:availability><g:condition>new</g:condition><g:price>${price} HTG</g:price><g:brand>Kairos</g:brand><g:google_product_category>${escapeXml(category)}</g:google_product_category><g:fb_product_category>${escapeXml(category)}</g:fb_product_category></item>`;
+    }).join('');
+    setXmlHeaders(res, 900);
+    return res.send(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>Kairos — Catalogue Facebook Haïti</title><link>${SITE_ORIGIN}</link><description>Catalogue dynamique Kairos — powered by makariosbridal.shop</description>${items}</channel></rss>`);
+  } catch (error) {
+    console.error('facebookCatalogFeed', error);
+    return res.status(500).type('text').send('Facebook catalog feed generation failed');
+  }
+});
+
+exports.metaConversionsAPI = onRequest({ cors: false }, async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST required' });
+  const pixelId = process.env.META_PIXEL_ID;
+  const accessToken = process.env.META_ACCESS_TOKEN;
+  if (!pixelId || !accessToken) return res.status(503).json({ error: 'Meta Conversions API is not configured' });
+  try {
+    const payload = req.body || {};
+    const userData = payload.user_data || {};
+    const customData = payload.custom_data || {};
+    const event = {
+      event_name: String(payload.event_name || 'PageView'),
+      event_time: Math.floor(Date.now() / 1000),
+      event_id: String(payload.event_id || `${Date.now()}_${Math.random().toString(36).slice(2)}`),
+      action_source: 'website',
+      event_source_url: String(customData.event_source_url || req.get('referer') || SITE_ORIGIN),
+      user_data: Object.fromEntries(Object.entries(userData).filter(([, value]) => value !== null && value !== undefined && value !== '')),
+      custom_data: Object.fromEntries(Object.entries(customData).filter(([key]) => !['client_user_agent', 'event_source_url'].includes(key))),
+    };
+    const response = await fetch(`https://graph.facebook.com/v20.0/${encodeURIComponent(pixelId)}/events?access_token=${encodeURIComponent(accessToken)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [event] }),
+    });
+    const result = await response.json();
+    return res.status(response.ok ? 200 : 502).json(result);
+  } catch (error) {
+    console.error('metaConversionsAPI', error);
+    return res.status(502).json({ error: 'Meta Conversions API request failed' });
+  }
+});
+
 exports.googleMerchantFeed = onRequest(async (_req, res) => {
   try {
     const products = await getPublicProducts();
