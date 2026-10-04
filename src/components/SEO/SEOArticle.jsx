@@ -16,7 +16,7 @@ export default function SEOArticle({ product, shop }) {
 
   // Description optimisée pour SEO
   const seoDescription = product.description
-    ? `${product.description} - ${displayPrice} HTG sur Kairos. Livraison rapide ${shop?.region ? `à ${shop.region}` : 'en Haïti'}.`
+    ? `${product.description} - ${displayPrice} HTG sur Kairos. Marketplace, réservations et billetterie ${shop?.region ? `à ${shop.region}` : 'en Haïti'}.`
     : `${product.name} disponible à ${displayPrice} HTG sur Kairos. Commandez en ligne et faites-vous livrer rapidement.`;
 
   // Données structurées Schema.org

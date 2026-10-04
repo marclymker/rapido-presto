@@ -77,12 +77,12 @@ export const getCategoryMeta = (category, subcategory = null) => {
   const meta = {
     'Mariage': {
       title: 'Articles de Mariage en Haïti | Robes, Décoration, Bijoux',
-      description: 'Trouvez tout pour votre mariage en Haïti : robes de mariée, bagues, accessoires, décoration. Livraison rapide.',
+      description: 'Trouvez tout pour votre mariage en Haïti : robes de mariée, bagues, accessoires, décoration. Marketplace, réservations et billetterie.',
       keywords: 'mariage haiti, robe mariée, bague mariage, decoration mariage'
     },
     'Pour Femme': {
       title: 'Mode Femme en Haïti | Vêtements et Accessoires',
-      description: 'Découvrez notre collection de vêtements pour femme en Haïti. Livraison rapide partout.',
+      description: 'Découvrez notre collection de vêtements pour femme en Haïti. Marketplace, réservations et billetterie partout.',
       keywords: 'vetement femme haiti, mode femme, robe femme'
     },
     'Boutique Fleurs': {
@@ -102,7 +102,7 @@ export const getCategoryMeta = (category, subcategory = null) => {
     },
     'Bijoux': {
       title: 'Bijoux en Haïti | Bagues, Colliers, Bracelets',
-      description: 'Collection de bijoux de qualité en Haïti. Livraison rapide.',
+      description: 'Collection de bijoux de qualité en Haïti. Marketplace, réservations et billetterie.',
       keywords: 'bijoux haiti, bague, collier'
     },
     'Maison': {
@@ -124,7 +124,7 @@ export const getCategoryMeta = (category, subcategory = null) => {
 
   const baseMeta = meta[category] || {
     title: `${category} en Haïti | Kairos`,
-    description: `Achetez ${category} en Haïti avec livraison rapide.`,
+    description: `Achetez ${category} en Haïti avec marketplace, réservations et billetterie.`,
     keywords: `${category.toLowerCase()} haiti`
   };
 

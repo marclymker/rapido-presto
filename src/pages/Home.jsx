@@ -264,8 +264,8 @@ export default function Home() {
 
       <SEO
         title={selectedFbCatId ? `${findById(selectedFbCatId)?.name} - Marketplace Kairos` : 'Marketplace - Tous les produits | Kairos'}
-        description={selectedFbCatId ? `Découvrez tous nos produits ${findById(selectedFbCatId)?.name} disponibles en Haïti - Livraison rapide avec Kairos` : 'Découvrez tous les produits disponibles sur Kairos - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
-        keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedFbCatId ? findById(selectedFbCatId)?.name : 'produits'].filter(Boolean)}
+        description={selectedFbCatId ? `Découvrez tous nos produits ${findById(selectedFbCatId)?.name} disponibles en Haïti - Marketplace, réservations et billetterie avec Kairos` : 'Découvrez tous les produits disponibles sur Kairos - Mode, Mariage, Fleurs, Electronics et plus. Marketplace, réservations et billetterie en Haïti.'}
+        keywords={['marketplace haïti', 'boutique en ligne haïti', 'marketplace, réservations et billetterie', selectedFbCatId ? findById(selectedFbCatId)?.name : 'produits'].filter(Boolean)}
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 

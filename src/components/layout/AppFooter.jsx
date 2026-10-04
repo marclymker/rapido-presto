@@ -9,7 +9,7 @@ export default function AppFooter() {
         <Link to="/About" className="hover:text-blue-600 transition font-medium min-h-11 inline-flex items-center" aria-label="À propos de Kairos">À propos</Link>
         <Link to="/Contact" className="hover:text-blue-600 transition font-medium min-h-11 inline-flex items-center" aria-label="Contacter Kairos">Contact</Link>
       </div>
-      <p>© {new Date().getFullYear()} Kairos — Livraison rapide en Haïti</p>
+      <p>© {new Date().getFullYear()} Kairos — Marketplace, réservations et billetterie en Haïti</p>
     </footer>
   );
 }

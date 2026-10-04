@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 const SEO = ({ title, description, image, url, keywords, type = "website" }) => {
   const siteName = "Kairos — powered by makariosbridal.shop";
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
-  const defaultDescription = "Livraison rapide en Haïti - Commandez vos produits préférés et recevez-les en 30 minutes";
+  const defaultDescription = "Achetez. Réservez. Participez. Marketplace · Hôtels & Piscines · Billetterie · Chat en Haïti — powered by makariosbridal.shop";
   const finalDescription = description || defaultDescription;
 
   return (

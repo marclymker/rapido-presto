@@ -504,8 +504,8 @@ export default function Products() {
       </Helmet>
       <SEO
         title={selectedCategory ? `${selectedCategory} - Marketplace Kairos` : 'Marketplace - Tous les produits | Kairos'}
-        description={selectedCategory ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Livraison rapide avec Kairos` : 'Découvrez tous les produits disponibles sur Kairos - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
-        keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedCategory || 'produits'].filter(Boolean)}
+        description={selectedCategory ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Marketplace, réservations et billetterie avec Kairos` : 'Découvrez tous les produits disponibles sur Kairos - Mode, Mariage, Fleurs, Electronics et plus. Marketplace, réservations et billetterie en Haïti.'}
+        keywords={['marketplace haïti', 'boutique en ligne haïti', 'marketplace, réservations et billetterie', selectedCategory || 'produits'].filter(Boolean)}
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 

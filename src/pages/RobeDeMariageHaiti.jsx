@@ -141,7 +141,7 @@ export default function RobeDeMariageHaiti() {
         <title>Robe de Mariage en Haïti - Location et Vente | Port-au-Prince, Pétion-Ville</title>
         <meta
           name="description"
-          content="Trouvez la robe de mariage parfaite en Haïti. Location et vente de robes de mariée sirène, princesse, bustier à Port-au-Prince, Pétion-Ville, Cap-Haïtien. Livraison rapide."
+          content="Trouvez la robe de mariage parfaite en Haïti. Location et vente de robes de mariée sirène, princesse, bustier à Port-au-Prince, Pétion-Ville, Cap-Haïtien. Marketplace, réservations et billetterie."
         />
         <meta
           name="keywords"
@@ -169,7 +169,7 @@ export default function RobeDeMariageHaiti() {
             </h1>
             <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
               Découvrez les plus belles robes de mariée en Haïti. Location et vente à Port-au-Prince, Pétion-Ville, Cap-Haïtien et Gonaïves.
-              Livraison rapide partout en Haïti.
+              Marketplace, réservations et billetterie partout en Haïti.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button size="lg" className="bg-pink-600 hover:bg-pink-700">
@@ -221,7 +221,7 @@ export default function RobeDeMariageHaiti() {
             </p>
             <p className="text-gray-700 leading-relaxed">
               <strong>Kairos</strong> facilite votre recherche en vous connectant aux meilleures boutiques de robes de mariée
-              en Haïti, avec possibilité de <strong>location</strong> ou d'<strong>achat</strong>, et une <strong>livraison rapide</strong>
+              en Haïti, avec possibilité de <strong>location</strong> ou d'<strong>achat</strong>, et une <strong>marketplace, réservations et billetterie</strong>
               dans toute l'île.
             </p>
           </section>
@@ -433,7 +433,7 @@ export default function RobeDeMariageHaiti() {
                   Gonaïves
                 </h3>
                 <p className="text-gray-700">
-                  Accès aux collections via livraison rapide. Commandez en ligne et recevez votre robe en 2-3 jours ouvrables.
+                  Accès aux collections via marketplace, réservations et billetterie. Commandez en ligne et recevez votre robe en 2-3 jours ouvrables.
                   Service de retouches local disponible.
                 </p>
               </div>
@@ -515,7 +515,7 @@ export default function RobeDeMariageHaiti() {
               Prête à Trouver Votre Robe de Rêve ?
             </h2>
             <p className="text-lg mb-6 max-w-2xl mx-auto">
-              Explorez notre sélection de robes de mariage en Haïti. Location et achat avec livraison rapide à Port-au-Prince,
+              Explorez notre sélection de robes de mariage en Haïti. Location et achat avec marketplace, réservations et billetterie à Port-au-Prince,
               Pétion-Ville, Cap-Haïtien et partout en Haïti.
             </p>
             <div className="flex flex-wrap justify-center gap-4">

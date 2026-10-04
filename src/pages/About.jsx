@@ -6,15 +6,15 @@ export default function About() {
   return (
     <div className="min-h-screen bg-white pb-24">
       <Helmet>
-        <title>À propos de Kairos | Livraison rapide en Haïti</title>
-        <meta name="description" content="Découvrez Kairos, la plateforme de livraison rapide et de marketplace en ligne dédiée à Haïti. Qui nous sommes, ce que nous faisons et pourquoi nous le faisons." />
+        <title>À propos de Kairos | Marketplace, réservations et billetterie en Haïti</title>
+        <meta name="description" content="Découvrez Kairos, la plateforme de marketplace, réservations et billetterie et de marketplace en ligne dédiée à Haïti. Qui nous sommes, ce que nous faisons et pourquoi nous le faisons." />
       </Helmet>
 
       <div className="max-w-2xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">À propos de Kairos</h1>
 
         <p className="text-gray-700 leading-relaxed mb-4">
-          <strong>Kairos</strong> est la première plateforme de marketplace et de livraison rapide conçue spécifiquement pour Haïti. Notre mission est simple : connecter les consommateurs haïtiens avec les meilleures boutiques locales, partout dans le pays, et leur permettre de recevoir leurs commandes rapidement et en toute sécurité.
+          <strong>Kairos</strong> est la première plateforme de marketplace et de marketplace, réservations et billetterie conçue spécifiquement pour Haïti. Notre mission est simple : connecter les consommateurs haïtiens avec les meilleures boutiques locales, partout dans le pays, et leur permettre de recevoir leurs commandes rapidement et en toute sécurité.
         </p>
 
         <p className="text-gray-700 leading-relaxed mb-4">

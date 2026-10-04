@@ -85,7 +85,7 @@ export default function CategoryPage() {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     "name": `${category} - Kairos`,
-    "description": `Découvrez notre sélection ${category.toLowerCase()} en Haïti. Livraison rapide.`,
+    "description": `Découvrez notre sélection ${category.toLowerCase()} en Haïti. Marketplace, réservations et billetterie.`,
     "url": typeof window !== 'undefined' ? window.location.href : '',
     "numberOfItems": products.length
   };
@@ -93,10 +93,10 @@ export default function CategoryPage() {
   return (
     <>
       <Helmet>
-        <title>{category} - Livraison rapide en Haïti | Kairos</title>
+        <title>{category} - Marketplace, réservations et billetterie en Haïti | Kairos</title>
         <meta
           name="description"
-          content={`Découvrez ${products.length} produits dans la catégorie ${category}. Livraison rapide partout en Haïti.`}
+          content={`Découvrez ${products.length} produits dans la catégorie ${category}. Marketplace, réservations et billetterie partout en Haïti.`}
         />
         <meta name="keywords" content={`${category}, Haïti, livraison, e-commerce, shopping`} />
 

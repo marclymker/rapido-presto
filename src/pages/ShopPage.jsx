@@ -99,7 +99,7 @@ export default function ShopPage() {
         <title>{shop.company_name} - {shop.region} | Kairos</title>
         <meta
           name="description"
-          content={`${shop.company_name} - ${shop.company_category} à ${shop.region}. ${products.length} produits disponibles. Livraison rapide en Haïti.`}
+          content={`${shop.company_name} - ${shop.company_category} à ${shop.region}. ${products.length} produits disponibles. Marketplace, réservations et billetterie en Haïti.`}
         />
         <meta name="keywords" content={`${shop.company_name}, ${shop.company_category}, ${shop.region}, Haïti`} />
 
