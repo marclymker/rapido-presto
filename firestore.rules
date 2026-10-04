@@ -4,7 +4,9 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
     function isAdmin() { return signedIn() && get(/databases/$(database)/documents/User/$(request.auth.uid)).data.role in ['admin', 'owner']; }
-    function isSiteOwner() { return signedIn() && (get(/databases/$(database)/documents/User/$(request.auth.uid)).data.role == 'owner' || get(/databases/$(database)/documents/User/$(request.auth.uid)).data.is_owner == true); }
+    // UID Firebase vérifié du propriétaire Kairos. Ce repère ne dépend pas
+    // d'un champ modifiable dans le profil utilisateur.
+    function isSiteOwner() { return signedIn() && request.auth.uid == 'YG8mu1n9yEX0QxhCBLoSH6ao3Ol2'; }
     function publicCollection() { return resource.data.is_published == true || resource.data.is_active == true || resource.data.is_available == true; }
 
     match /User/{uid} {

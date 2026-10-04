@@ -18,6 +18,7 @@ const CHANNELS = [
 ];
 
 const REGIONS = ['Delmas', 'Cap-Haïtien', 'Port-au-Prince', 'Pétion-Ville', 'Gonaïves', 'Haïti'];
+const SITE_OWNER_UID = 'YG8mu1n9yEX0QxhCBLoSH6ao3Ol2';
 
 function clean(value = '') {
   return String(value).replace(/\s+/g, ' ').trim();
@@ -74,7 +75,7 @@ export default function MarketingStudio() {
 
   const selectedProduct = useMemo(() => products.find((product) => product.id === selectedProductId), [products, selectedProductId]);
   const effectiveRegion = region || shop?.region || user?.region || 'Haïti';
-  const isSiteOwner = user?.role === 'owner' || user?.is_owner === true;
+  const isSiteOwner = user?.id === SITE_OWNER_UID;
 
   const saveMutation = useMutation({
     mutationFn: (payload) => base44.entities.MarketingDraft.create(payload),

@@ -35,6 +35,8 @@ const WORKSPACES = {
   }
 };
 
+const SITE_OWNER_UID = 'YG8mu1n9yEX0QxhCBLoSH6ao3Ol2';
+
 function normalizeProfile(profile) {
   if (profile === 'marketplace' || profile === 'entreprise' || profile === 'client') return 'marketplace';
   return WORKSPACES[profile] ? profile : 'marketplace';
@@ -125,7 +127,7 @@ export default function Dashboard() {
   if (!user) return <div className="flex min-h-screen items-center justify-center bg-slate-950 p-5"><div className="max-w-sm rounded-3xl bg-white p-8 text-center"><Store className="mx-auto mb-4 h-10 w-10 text-orange-500" /><h1 className="text-xl font-black">Workspace Kairos</h1><p className="my-3 text-sm text-slate-500">Connectez-vous pour gérer votre activité.</p><Button onClick={() => base44.auth.redirectToLogin('/Dashboard')} className="w-full rounded-xl bg-slate-950">Se connecter</Button></div></div>;
 
   const profileId = normalizeProfile(user.current_profile === 'entreprise' ? 'marketplace' : user.current_profile);
-  const isSiteOwner = user.role === 'owner' || user.is_owner === true;
+  const isSiteOwner = user.id === SITE_OWNER_UID;
   const workspace = WORKSPACES[profileId];
   const Icon = workspace.icon;
   const Workspace = profileId === 'food' ? FoodWorkspace : profileId === 'hospitality' ? HospitalityWorkspace : profileId === 'tickets' ? TicketsWorkspace : profileId === 'livreur' ? CourierWorkspace : MarketplaceWorkspace;
