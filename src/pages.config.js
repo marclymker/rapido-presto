@@ -25,6 +25,7 @@ const EnterpriseAccount = lazy(() => import('./pages/EnterpriseAccount'));
 const EnterpriseDashboard = lazy(() => import('./pages/EnterpriseDashboard'));
 const EventPlannerHaiti = lazy(() => import('./pages/EventPlannerHaiti'));
 const Home = lazy(() => import('./pages/Home'));
+const Legal = lazy(() => import('./pages/Legal'));
 const ManageProfiles = lazy(() => import('./pages/ManageProfiles'));
 const LegacyMigration = lazy(() => import('./pages/LegacyMigration'));
 const Orders = lazy(() => import('./pages/Orders'));
@@ -65,6 +66,7 @@ export const PAGES = {
     "EnterpriseDashboard": EnterpriseDashboard,
     "EventPlannerHaiti": EventPlannerHaiti,
     "Home": Home,
+    "Legal": Legal,
     "ManageProfiles": ManageProfiles,
     "LegacyMigration": LegacyMigration,
     "Orders": Orders,

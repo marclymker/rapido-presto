@@ -40,7 +40,7 @@ export default function WeddingPlannerHaiti() {
   return (
     <>
       <Helmet>
-        <title>Wedding Planner Haïti - Organisation Mariage Port-au-Prince | Pétion-Ville</title>
+        <title>Wedding Planner Haïti | Kairos — Organisation Mariage Port-au-Prince | Pétion-Ville</title>
         <meta
           name="description"
           content="Wedding planner professionnel en Haïti. Organisation complète de mariage à Port-au-Prince, Pétion-Ville, Cap-Haïtien. Planification, coordination, décoration. Devis gratuit."

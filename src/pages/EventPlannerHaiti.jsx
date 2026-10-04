@@ -7,7 +7,7 @@ export default function EventPlannerHaiti() {
   return (
     <>
       <Helmet>
-        <title>Event Planner Haïti - Organisation Événements Corporatifs & Privés | Port-au-Prince</title>
+        <title>Event Planner Haïti | Kairos — Organisation Événements | Port-au-Prince</title>
         <meta
           name="description"
           content="Event planner professionnel en Haïti. Organisation événements corporatifs, conférences, anniversaires, baby showers à Port-au-Prince, Pétion-Ville. Planification complète."

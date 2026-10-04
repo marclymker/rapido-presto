@@ -138,7 +138,7 @@ export default function RobeDeMariageHaiti() {
   return (
     <>
       <Helmet>
-        <title>Robe de Mariage en Haïti - Location et Vente | Port-au-Prince, Pétion-Ville</title>
+        <title>Robe de Mariage en Haïti | Kairos — Location et Vente | Port-au-Prince, Pétion-Ville</title>
         <meta
           name="description"
           content="Trouvez la robe de mariage parfaite en Haïti. Location et vente de robes de mariée sirène, princesse, bustier à Port-au-Prince, Pétion-Ville, Cap-Haïtien. Marketplace, réservations et billetterie."
