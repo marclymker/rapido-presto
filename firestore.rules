@@ -11,10 +11,12 @@ service cloud.firestore {
       allow read: if isOwner(uid) || isAdmin();
       allow create: if isOwner(uid)
         && request.resource.data.email == request.auth.token.email
-        && (!request.resource.data.keys().hasAny(['role', 'is_admin']) || request.resource.data.role == 'client');
+        && (!request.resource.data.keys().hasAny(['role', 'is_admin', 'is_owner'])
+          || (request.resource.data.role == 'client' && request.resource.data.is_owner != true));
       allow update: if isAdmin() || (isOwner(uid)
         && (!resource.data.keys().hasAny(['role', 'is_admin']) || request.resource.data.role == resource.data.role)
-        && (!resource.data.keys().hasAny(['is_admin']) || request.resource.data.is_admin == resource.data.is_admin));
+        && (!resource.data.keys().hasAny(['is_admin']) || request.resource.data.is_admin == resource.data.is_admin)
+        && (!resource.data.keys().hasAny(['is_owner']) || request.resource.data.is_owner == resource.data.is_owner));
       allow delete: if isAdmin();
     }
     match /MigrationLink/{id} { allow read, write: if isAdmin(); }
