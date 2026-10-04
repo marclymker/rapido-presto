@@ -20,6 +20,14 @@
     ],
     "rewrites": [
       { "source": "/functions/ogMetaTags", "function": { "functionId": "ogMetaTags", "region": "us-central1" } },
+      { "source": "/sitemap.xml", "function": { "functionId": "generateSitemapXML", "region": "us-central1" } },
+      { "source": "/functions/generateSitemap", "function": { "functionId": "generateSitemap", "region": "us-central1" } },
+      { "source": "/functions/generateSitemapXML", "function": { "functionId": "generateSitemapXML", "region": "us-central1" } },
+      { "source": "/feeds/google-merchant.xml", "function": { "functionId": "googleMerchantFeed", "region": "us-central1" } },
+      { "source": "/feeds/openai-products.json", "function": { "functionId": "openaiProductFeed", "region": "us-central1" } },
+      { "source": "/functions/getSimilarProducts", "function": { "functionId": "getSimilarProducts", "region": "us-central1" } },
+      { "source": "/functions/googleVerification", "function": { "functionId": "googleVerification", "region": "us-central1" } },
+      { "source": "/functions/googleAnalyticsFeed", "function": { "functionId": "googleAnalyticsFeed", "region": "us-central1" } },
       { "source": "**", "destination": "/index.html" }
     ]
   },
