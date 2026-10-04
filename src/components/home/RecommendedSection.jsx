@@ -84,8 +84,8 @@ export default function RecommendedSection({ allProducts, shops, user, setSelect
                     if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
                     const targetProduct = getSafeProducts().find(p => p.id === product.id);
                     if (!targetProduct || !shop) { toast.error('Boutique non disponible'); return; }
-                    if (shop.slug && targetProduct.slug) {
-                      window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.slug}`;
+                    if (shop.slug && targetProduct.id) {
+                      window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${targetProduct.id}`;
                     } else {
                       setSelectedShop(shop);
                       setSelectedProduct(targetProduct);

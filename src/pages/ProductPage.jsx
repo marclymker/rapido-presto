@@ -34,14 +34,20 @@ export default function ProductPage() {
     return () => window.removeEventListener('popstate', handlePop);
   }, [navigate]);
 
-  const cached = getCachedProduct(slug);
+  const rawCached = getCachedProduct(slug);
+  const cached = rawCached?.product?.id === slug ? rawCached : null;
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['product', slug],
     queryFn: async () => {
-      const bySlug = await base44.entities.Product.filter({ slug });
-      if (bySlug.length > 0) return bySlug;
-      return base44.entities.Product.filter({ id: slug });
+      // Les nouveaux liens utilisent l'ID Firestore, qui est toujours unique.
+      const byId = await base44.entities.Product.get(slug);
+      if (byId) return [byId];
+      // Compatibilité avec les anciens liens en slug : ne résoudre que si le
+      // slug est réellement unique, sinon afficher une erreur plutôt que le
+      // premier produit arbitraire.
+      const bySlug = await base44.entities.Product.filter({ slug }, undefined, 10);
+      return bySlug.length === 1 ? bySlug : [];
     },
     enabled: !!slug,
     initialData: cached?.product ? [cached.product] : undefined,
@@ -271,7 +277,7 @@ export default function ProductPage() {
           <h2 className="text-sm font-bold mb-4 text-gray-900">Articles similaires</h2>
           <div className="grid grid-cols-2 gap-3">
             {relatedProducts.slice(0, relatedVisible).map(p => (
-              <CompactProductCard key={p.id} product={p} shop={shops.find(sh => sh.id === p.shop_id)} onClick={() => navigate(`/product/${p.slug || p.id}`)} />
+                <CompactProductCard key={p.id} product={p} shop={shops.find(sh => sh.id === p.shop_id)} onClick={() => navigate(`/product/${p.id}`)} />
             ))}
           </div>
           {relatedVisible < relatedProducts.length && (

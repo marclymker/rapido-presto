@@ -195,8 +195,8 @@ export default function BlogArticle() {
                         base44.auth.redirectToLogin(window.location.pathname);
                       }}
                       onClick={() => {
-                        if (shop?.slug && product.slug) {
-                          window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.slug}`;
+                        if (shop?.slug && product.id) {
+                          window.location.href = createPageUrl('ShopView') + `?slug=${shop.slug}&product=${product.id}`;
                         } else {
                           window.location.href = createPageUrl('ShopView') + `?slug=${shop?.slug}`;
                         }

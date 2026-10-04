@@ -23,8 +23,8 @@ async function findProduct(productKey) {
   if (!productKey) return null;
   const byId = await db.collection('Product').doc(productKey).get();
   if (byId.exists) return { id: byId.id, ...byId.data() };
-  const bySlug = await db.collection('Product').where('slug', '==', productKey).limit(1).get();
-  if (bySlug.empty) return null;
+  const bySlug = await db.collection('Product').where('slug', '==', productKey).limit(2).get();
+  if (bySlug.size !== 1) return null;
   const item = bySlug.docs[0];
   return { id: item.id, ...item.data() };
 }
@@ -59,7 +59,7 @@ function renderMetadata({ product, shop, canonicalUrl }) {
 exports.ogMetaTags = onRequest({ cors: false }, async (req, res) => {
   res.set('X-Content-Type-Options', 'nosniff');
   res.set('Cache-Control', 'public, max-age=300, s-maxage=900');
-  const productKey = String(req.query.product || req.query.productSlug || req.query.id || req.query.slug || '').trim();
+  const productKey = String(req.query.product || req.query.productId || req.query.productSlug || req.query.id || req.query.slug || '').trim();
   const shopKey = String(req.query.shop || req.query.shopSlug || (req.query.product ? req.query.slug : '')).trim();
   try {
     const product = await findProduct(productKey);
@@ -68,7 +68,7 @@ exports.ogMetaTags = onRequest({ cors: false }, async (req, res) => {
       return;
     }
     const shop = await findShop(product, shopKey);
-    const canonicalUrl = `${SITE_ORIGIN}/product/${encodeURIComponent(product.slug || product.id)}`;
+    const canonicalUrl = `${SITE_ORIGIN}/product/${encodeURIComponent(product.id)}`;
     if (!CRAWLER_RE.test(req.get('user-agent') || '')) {
       res.redirect(302, canonicalUrl);
       return;

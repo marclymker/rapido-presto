@@ -551,7 +551,7 @@ try {
 
 // Generate slug from product name
 
-const slug = formData.name
+const slugBase = formData.name
 
 .toLowerCase()
 
@@ -564,6 +564,8 @@ const slug = formData.name
 .replace(/^-+|-+$/g, '')
 
 .substring(0, 60);
+
+const slug = `${slugBase || 'produit'}-${product?.id || Date.now().toString(36)}`;
 
 
 

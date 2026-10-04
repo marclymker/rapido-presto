@@ -88,8 +88,8 @@ export default function ShopView() {
   // Navigate to product page if product slug in URL
   useEffect(() => {
     if (productSlug && allProducts.length > 0) {
-      const product = allProducts.find(p => p.slug === productSlug || p.id === productSlug);
-      if (product) navigate(`/product/${product.slug || product.id}`, { replace: true });
+      const product = allProducts.find(p => p.id === productSlug) || allProducts.find(p => p.slug === productSlug);
+      if (product) navigate(`/product/${product.id}`, { replace: true });
     }
   }, [productSlug, allProducts]);
 
@@ -196,7 +196,7 @@ export default function ShopView() {
       value: getClientPrice(product),
       currency: 'HTG'
     });
-    navigate(`/product/${product.slug || product.id}`);
+    navigate(`/product/${product.id}`);
   };
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);

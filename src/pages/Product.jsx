@@ -158,18 +158,22 @@ export default function Product() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Lire le slug depuis l'URL
+        // Lire la clé produit depuis l'URL. Les nouveaux liens utilisent l'ID.
         const urlParams = new URLSearchParams(window.location.search);
-        const slug = urlParams.get('slug');
+        const productKey = urlParams.get('id') || urlParams.get('product_id') || urlParams.get('slug');
 
-        if (!slug) {
+        if (!productKey) {
           window.location.href = '/';
           return;
         }
 
         // Charger le produit depuis la base de données
         const allProducts = await base44.entities.Product.list();
-        const foundProduct = allProducts.find(p => p.slug === slug);
+        const foundProduct = allProducts.find(p => p.id === productKey)
+          || (() => {
+            const matches = allProducts.filter(p => p.slug === productKey);
+            return matches.length === 1 ? matches[0] : null;
+          })();
 
         if (!foundProduct) {
           // Produit introuvable, rediriger vers l'accueil après 2 secondes
@@ -464,8 +468,8 @@ export default function Product() {
                     key={simProduct.id} 
                     className="flex-shrink-0 w-36 group cursor-pointer"
                     onClick={() => {
-                      if (simProduct.slug) {
-                        window.location.href = `/product?slug=${simProduct.slug}`;
+                      if (simProduct.id) {
+                        window.location.href = `/product?id=${encodeURIComponent(simProduct.id)}`;
                       }
                     }}
                   >
