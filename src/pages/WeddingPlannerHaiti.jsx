@@ -49,7 +49,7 @@ export default function WeddingPlannerHaiti() {
           name="keywords" 
           content="wedding planner haiti, organisation mariage haiti, wedding planner port-au-prince, coordinateur mariage pétion-ville, planificateur mariage haiti, event planner mariage" 
         />
-        <link rel="canonical" href="https://rapidopresto.shop/wedding-planner-haiti" />
+        <link rel="canonical" href="https://makariosbridal.shop/wedding-planner-haiti" />
         
         <script type="application/ld+json">
           {JSON.stringify(serviceSchema)}

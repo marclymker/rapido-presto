@@ -26,7 +26,7 @@ La priorité actuelle reste la **performance mobile** : le bundle principal rest
 - Suppression des préconnexions Supabase du layout.
 - Remplacement des deux références d’image Supabase dans `ProductDetailModal` par `/assets/product-placeholder.svg`.
 - Remplacement de l’image de `WeddingCreditBanner` par `/assets/wedding-credit.svg`.
-- Remplacement des canonicals `rapidopresto.base44.app` par `rapidopresto.shop`.
+- Remplacement des canonicals `rapidopresto.base44.app` par `makariosbridal.shop`.
 - Suppression de l’écran OAuth hérité non routé et de son parseur de paramètres inutilisé.
 - Suppression des trois injections GTM dupliquées, de l’iframe noscript GTM et du Pixel inline dans le layout. Cela réduit les requêtes, évite les erreurs 403/503 observées et supprime le double comptage marketing.
 
@@ -42,7 +42,7 @@ La priorité actuelle reste la **performance mobile** : le bundle principal rest
 - `lang="fr-HT"`.
 - Métadonnées `geo.region=HT`, `geo.placename=Haïti`, coordonnées par défaut du pays et thème mobile cohérent.
 - Données structurées `OnlineStore` avec zone desservie Haïti, devise HTG et adresse pays HT.
-- Canonicals et données structurées des pages SEO orientés vers `https://rapidopresto.shop`.
+- Canonicals et données structurées des pages SEO orientés vers `https://makariosbridal.shop`.
 
 ## Risques encore présents à traiter avant une vraie mise en production
 

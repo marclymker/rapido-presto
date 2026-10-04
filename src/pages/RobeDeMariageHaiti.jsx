@@ -35,7 +35,7 @@ export default function RobeDeMariageHaiti() {
     "@type": "BridalShop",
     "name": "Rapido Presto - Robes de Mariage Haïti",
     "description": "Trouvez la robe de mariage parfaite en Haïti. Location et vente de robes de mariée à Port-au-Prince, Pétion-Ville, Cap-Haïtien et Gonaïves.",
-    "image": "https://rapidopresto.shop/icons/rapido-presto.svg",
+    "image": "https://makariosbridal.shop/icons/rapido-presto.svg",
     "address": {
       "@type": "PostalAddress",
       "addressLocality": "Port-au-Prince",
@@ -125,7 +125,7 @@ export default function RobeDeMariageHaiti() {
         "@type": "ListItem",
         "position": 1,
         "name": "Accueil",
-        "item": "https://rapidopresto.shop"
+        "item": "https://makariosbridal.shop"
       },
       {
         "@type": "ListItem",
@@ -147,7 +147,7 @@ export default function RobeDeMariageHaiti() {
           name="keywords" 
           content="robe de mariage haiti, robe de mariée port-au-prince, location robe mariée haiti, robe sirène haiti, robe princesse haiti, wedding dress haiti, pétion-ville, cap-haitien, gonaïves" 
         />
-        <link rel="canonical" href="https://rapidopresto.shop/robe-de-mariage-haiti" />
+        <link rel="canonical" href="https://makariosbridal.shop/robe-de-mariage-haiti" />
         
         <script type="application/ld+json">
           {JSON.stringify(localBusinessSchema)}

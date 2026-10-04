@@ -1,4 +1,4 @@
-const SITE_ORIGIN = 'https://rapidopresto.shop';
+const SITE_ORIGIN = 'https://makariosbridal.shop';
 
 // L'ID Firestore est la clé primaire immuable. Le slug reste accepté uniquement
 // pour les anciens liens qui existaient avant cette correction.

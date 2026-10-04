@@ -74,9 +74,9 @@ export default function Layout({ children, currentPageName }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Rapido" />
-        <link rel="alternate" hrefLang="fr-HT" href="https://rapidopresto.shop" />
-        <link rel="alternate" hrefLang="fr" href="https://rapidopresto.shop" />
-        <link rel="alternate" hrefLang="x-default" href="https://rapidopresto.shop" />
+        <link rel="alternate" hrefLang="fr-HT" href="https://makariosbridal.shop" />
+        <link rel="alternate" hrefLang="fr" href="https://makariosbridal.shop" />
+        <link rel="alternate" hrefLang="x-default" href="https://makariosbridal.shop" />
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
         <meta name="google-site-verification" content="INa9gqcSulkml5JtloQvw_k9lVR-AKcxha0eRYbvqoI" />
         <meta name="google-site-verification" content="TGLvYzGeMnDhLk5dxXLxm-_9a3zAAgAt-BBTDzQehUM" />

@@ -5,4 +5,4 @@ Disallow: /Dashboard
 Disallow: /Account
 Disallow: /Chat
 Disallow: /api/
-Sitemap: https://rapidopresto.shop/sitemap.xml
+Sitemap: https://makariosbridal.shop/sitemap.xml

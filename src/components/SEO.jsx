@@ -62,11 +62,11 @@ const SEO = ({ title, description, image, url, keywords, type = "website" }) => 
                 "@context": "https://schema.org",
                 "@type": "WebSite",
                 "name": siteName,
-                "url": "https://rapidopresto.shop",
+                "url": "https://makariosbridal.shop",
                 "description": finalDescription,
                 "potentialAction": {
                   "@type": "SearchAction",
-                  "target": "https://rapidopresto.shop/?q={search_term_string}",
+                  "target": "https://makariosbridal.shop/?q={search_term_string}",
                   "query-input": "required name=search_term_string"
                 }
               }

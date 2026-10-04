@@ -5,7 +5,7 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 setGlobalOptions({ region: 'us-central1', maxInstances: 10, invoker: 'public' });
 const db = admin.firestore();
-const SITE_ORIGIN = 'https://rapidopresto.shop';
+const SITE_ORIGIN = 'https://makariosbridal.shop';
 const DEFAULT_IMAGE = `${SITE_ORIGIN}/icons/rapido-presto.svg`;
 const PUBLIC_LIMIT = 1000;
 
