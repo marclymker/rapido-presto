@@ -20,11 +20,7 @@ SelectItem,
 
 SelectTrigger,
 
-SelectValue,
-
-SelectGroup, // Ajouté pour le correctif
-
-SelectLabel // Ajouté pour le correctif
+SelectValue // Ajouté pour le correctif
 
 } from "@/components/ui/select";
 
@@ -66,8 +62,6 @@ ShoppingBag,
 
 Type,
 
-CheckCircle2,
-
 ShieldCheck
 
 } from 'lucide-react';
@@ -78,7 +72,7 @@ import { base44 } from '@/api/base44Client';
 
 import FbCategorySelector from '@/components/product/FbCategorySelector';
 
-import { getTaxonomyMappingPrompt, getCategoryPath } from '@/lib/fbTaxonomy';
+import { getTaxonomyMappingPrompt } from '@/lib/fbTaxonomy';
 
 const parseVariantList = (value = '') => value.split(',').map(item => item.trim()).filter(Boolean);
 

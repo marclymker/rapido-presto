@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Loader2 } from 'lucide-react';
 import { toast } from "sonner";

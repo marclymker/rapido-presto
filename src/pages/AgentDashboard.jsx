@@ -6,7 +6,6 @@ import { Users, DollarSign, Package, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import ProductCard from '@/components/ui/ProductCard';
-import { getClientPrice } from '@/components/utils/priceCalculation';
 import { toast } from 'sonner';
 
 export default function AgentDashboard() {

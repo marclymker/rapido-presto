@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Clock, CreditCard, Check, X, Navigation, Phone, Package, Volume2, VolumeX } from 'lucide-react';
+import { MapPin, Clock, CreditCard, Check, Navigation, Phone, Package, Volume2, VolumeX } from 'lucide-react';
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { formatHaitiDate } from '@/components/utils/dateFormat';
 import { motion, AnimatePresence } from 'framer-motion';

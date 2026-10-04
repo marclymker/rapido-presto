@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Users, PartyPopper, GraduationCap, Baby, Cake, Calendar } from 'lucide-react';
+import { Briefcase, PartyPopper, GraduationCap, Baby } from 'lucide-react';
 
 export default function EventPlannerHaiti() {
   return (
@@ -13,7 +13,7 @@ export default function EventPlannerHaiti() {
           content="Event planner professionnel en Haïti. Organisation événements corporatifs, conférences, anniversaires, baby showers à Port-au-Prince, Pétion-Ville. Planification complète." 
         />
         <meta name="keywords" content="event planner haiti, organisation événement haiti, event planner port-au-prince, événement corporatif haiti, anniversaire, baby shower, graduation" />
-        <link rel="canonical" href="https://rapidopresto.base44.app/event-planner-haiti" />
+        <link rel="canonical" href="https://rapidopresto.shop/event-planner-haiti" />
       </Helmet>
 
       <article className="min-h-screen bg-gradient-to-b from-blue-50 to-white">

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Minus, Trash2, Link, Copy, Check, X, ShoppingBag, Send } from 'lucide-react';
+import { Plus, Minus, Trash2, Link, Copy, Check, ShoppingBag, Send } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";

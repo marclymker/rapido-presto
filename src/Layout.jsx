@@ -69,65 +69,19 @@ export default function Layout({ children, currentPageName }) {
       <Helmet>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#1877F2" />
+        <meta name="theme-color" content="#0f1115" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Rapido" />
-        <link rel="alternate" hreflang="fr-HT" href="https://rapidopresto.shop" />
-        <link rel="alternate" hreflang="fr" href="https://rapidopresto.shop" />
-        <link rel="alternate" hreflang="x-default" href="https://rapidopresto.shop" />
-        <link rel="dns-prefetch" href="https://qtrypzzcjebvfcihiynt.supabase.co" />
-        <link rel="preconnect" href="https://qtrypzzcjebvfcihiynt.supabase.co" crossOrigin="anonymous" />
+        <link rel="alternate" hrefLang="fr-HT" href="https://rapidopresto.shop" />
+        <link rel="alternate" hrefLang="fr" href="https://rapidopresto.shop" />
+        <link rel="alternate" hrefLang="x-default" href="https://rapidopresto.shop" />
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
         <meta name="google-site-verification" content="INa9gqcSulkml5JtloQvw_k9lVR-AKcxha0eRYbvqoI" />
         <meta name="google-site-verification" content="TGLvYzGeMnDhLk5dxXLxm-_9a3zAAgAt-BBTDzQehUM" />
         <meta name="google-site-verification" content="google2665276976d944ab" />
-        <script defer src="https://www.googletagmanager.com/gtag/js?id=G-JHEWLB2WTT"></script>
-        <script defer>{`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-JHEWLB2WTT');
-        `}</script>
-        <script defer>{`
-          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.defer=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-TGFJJPR4');
-        `}</script>
-        <script defer>{`
-          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.defer=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-TR6B9PMQ');
-        `}</script>
-        <script defer>{`
-          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.defer=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-P7C42MMP');
-        `}</script>
-        <script defer>{`
-          !function(f,b,e,v,n,t,s)
-          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-          n.queue=[];t=b.createElement(e);t.async=!0;t.defer=true;
-          t.src=v;s=b.getElementsByTagName(e)[0];
-          s.parentNode.insertBefore(t,s)}(window, document,'script',
-          'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '1346505637253912');
-          fbq('track', 'PageView');
-        `}</script>
       </Helmet>
-
-      <noscript>
-        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TGFJJPR4" height="0" width="0" style={{display: 'none', visibility: 'hidden'}} />
-      </noscript>
 
       <div className="flex flex-col w-full min-h-screen bg-slate-50">
         <Toaster position="top-center" />

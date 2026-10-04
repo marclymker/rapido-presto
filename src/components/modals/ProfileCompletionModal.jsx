@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { User, Building2, Bike, MapPin, Phone, Upload, ChevronRight } from 'lucide-react';
+import { User, Building2, Bike, Phone, ChevronRight } from 'lucide-react';
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
 

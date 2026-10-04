@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, lazy, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Tag, Store, ShoppingCart, X, ChevronRight } from 'lucide-react';
+import { Search, ShoppingCart, X } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -13,7 +13,7 @@ import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { createPageUrl } from '@/utils';
 import { useGuestCart } from '@/components/cart/useGuestCart';
-import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
+import { FB_TAXONOMY, findById } from '@/lib/fbTaxonomy';
 import CompactProductCard from '@/components/home/CompactProductCard';
 import CategoryRow from '@/components/home/CategoryRow';
 import { getClientPrice } from '@/components/utils/priceCalculation';
@@ -47,14 +47,14 @@ export default function Home() {
 
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 1000),
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 60),
     staleTime: 10 * 60 * 1000,
     refetchInterval: false,
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => base44.entities.Shop.filter({ is_active: true }, '-created_date', 60),
     staleTime: 10 * 60 * 1000,
     refetchInterval: false,
   });

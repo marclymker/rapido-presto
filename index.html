@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr-HT">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -12,6 +12,11 @@
     <meta name="keywords" content="livraison rapide haiti, commande en ligne haiti, marketplace haiti, mariage haiti, port-au-prince, cap haitien" />
     <meta name="robots" content="index, follow" />
     <meta name="author" content="Rapido Presto" />
+    <meta name="geo.region" content="HT" />
+    <meta name="geo.placename" content="Haïti" />
+    <meta name="geo.position" content="18.9712;-72.2852" />
+    <meta name="ICBM" content="18.9712, -72.2852" />
+    <meta name="theme-color" content="#0f1115" />
     <link rel="canonical" href="https://rapidopresto.shop" />
 
     <!-- Open Graph -->
@@ -36,16 +41,11 @@
     <meta name="p:domain_verify" content="72515473be5a55e67192c5d9803508bf" />
 
     <!-- PWA -->
-    <meta name="theme-color" content="#1877F2" />
-    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin="anonymous" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Rapido Presto" />
-
-    <!-- DNS prefetch -->
-    <link rel="dns-prefetch" href="https://qtrypzzcjebvfcihiynt.supabase.co" />
-    <link rel="preconnect" href="https://qtrypzzcjebvfcihiynt.supabase.co" crossorigin="anonymous" />
 
     <!-- Google Ads -->
     <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
@@ -65,11 +65,21 @@
       }
     }
     </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "OnlineStore",
+      "name": "Rapido Presto",
+      "url": "https://rapidopresto.shop",
+      "areaServed": { "@type": "Country", "name": "Haïti" },
+      "currenciesAccepted": "HTG",
+      "priceRange": "HTG",
+      "address": { "@type": "PostalAddress", "addressCountry": "HT" },
+      "telephone": "+50948690366"
+    }
+    </script>
   </head>
   <body>
-    <noscript>
-      <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TGFJJPR4" height="0" width="0" style="display:none;visibility:hidden"></iframe>
-    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

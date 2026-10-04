@@ -8,24 +8,32 @@ service cloud.firestore {
 
     match /User/{uid} {
       allow read: if isOwner(uid) || isAdmin();
-      allow create: if isOwner(uid) && request.resource.data.email == request.auth.token.email;
-      allow update: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid)
+        && request.resource.data.email == request.auth.token.email
+        && (!request.resource.data.keys().hasAny(['role', 'is_admin']) || request.resource.data.role == 'client');
+      allow update: if isAdmin() || (isOwner(uid)
+        && (!resource.data.keys().hasAny(['role', 'is_admin']) || request.resource.data.role == resource.data.role)
+        && (!resource.data.keys().hasAny(['is_admin']) || request.resource.data.is_admin == resource.data.is_admin));
       allow delete: if isAdmin();
     }
-    match /MigrationLink/{id} {
-      allow read, write: if isAdmin();
-    }
+    match /MigrationLink/{id} { allow read, write: if isAdmin(); }
     match /UserActivity/{id} {
       allow read: if isAdmin();
-      allow create: if signedIn();
+      allow create: if signedIn() && request.resource.data.user_id == request.auth.uid;
     }
     match /Product/{id} {
       allow read: if publicCollection() || signedIn();
-      allow create, update, delete: if isAdmin() || (signedIn() && request.resource.data.owner_id == request.auth.uid);
+      allow create: if isAdmin() || (signedIn() && request.resource.data.owner_id == request.auth.uid);
+      allow update: if isAdmin() || (signedIn()
+        && (resource.data.owner_id == request.auth.uid || resource.data.vendor_id == request.auth.uid)
+        && request.resource.data.owner_id == resource.data.owner_id);
+      allow delete: if isAdmin() || (signedIn() && (resource.data.owner_id == request.auth.uid || resource.data.vendor_id == request.auth.uid));
     }
     match /Shop/{id} {
       allow read: if publicCollection() || signedIn();
-      allow create, update, delete: if isAdmin() || (signedIn() && request.resource.data.user_id == request.auth.uid);
+      allow create: if isAdmin() || (signedIn() && request.resource.data.user_id == request.auth.uid);
+      allow update: if isAdmin() || (signedIn() && resource.data.user_id == request.auth.uid && request.resource.data.user_id == resource.data.user_id);
+      allow delete: if isAdmin() || (signedIn() && resource.data.user_id == request.auth.uid);
     }
     match /BlogArticle/{id} { allow read: if resource.data.is_published == true || isAdmin(); allow write: if isAdmin(); }
     match /CartItem/{id} {
@@ -36,7 +44,7 @@ service cloud.firestore {
     match /Order/{id} {
       allow read: if signedIn() && (resource.data.client_id == request.auth.uid || resource.data.driver_id == request.auth.uid || resource.data.shop_owner_id == request.auth.uid || isAdmin());
       allow create: if signedIn() && request.resource.data.client_id == request.auth.uid;
-      allow update: if signedIn() && (resource.data.client_id == request.auth.uid || resource.data.driver_id == request.auth.uid || resource.data.shop_owner_id == request.auth.uid || isAdmin());
+      allow update: if isAdmin() || (signedIn() && (resource.data.client_id == request.auth.uid || resource.data.driver_id == request.auth.uid || resource.data.shop_owner_id == request.auth.uid));
       allow delete: if isAdmin();
     }
     match /{document=**} { allow read, write: if false; }

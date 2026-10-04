@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
@@ -30,12 +30,12 @@ export default function BlogArticle() {
 
   const { data: allProducts = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 500)
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 100)
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true })
+    queryFn: () => base44.entities.Shop.filter({ is_active: true }, '-created_date', 60)
   });
 
   const relatedProducts = useMemo(() => {

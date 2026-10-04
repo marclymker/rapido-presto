@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Send, Store, MapPin, Share2, MessageCircle, Loader2, CreditCard } from 'lucide-react';
+import { ArrowLeft, Send, Store, MapPin, Share2, MessageCircle, CreditCard } from 'lucide-react';
 import { cacheProduct, getCachedProduct } from '@/lib/useProductCache';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';

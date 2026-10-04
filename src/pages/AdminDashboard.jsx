@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Package, Store, Users, DollarSign, ShoppingCart, 
-  TrendingUp, ArrowLeft, Eye, CheckCircle, XCircle
+  Package, Store, DollarSign, ShoppingCart, ArrowLeft, CheckCircle, XCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';

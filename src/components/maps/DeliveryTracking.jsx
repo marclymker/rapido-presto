@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 import { Phone, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';

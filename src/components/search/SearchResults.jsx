@@ -1,8 +1,7 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import ProductCard from '@/components/ui/ProductCard';
-import { Filter, SortAsc, SortDesc, Star } from 'lucide-react';
+import { Filter, Star } from 'lucide-react';
 
 export default function SearchResults({ 
   results, 

@@ -9,14 +9,14 @@ export default function ProductRecommendations({ user, onProductClick, onAddToCa
   // Fetch all products and shops
   const { data: allProducts = [] } = useQuery({
     queryKey: ['all-products-recommendations'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }),
+    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 60),
     refetchInterval: 300000,
     staleTime: 240000
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops-recommendations'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => base44.entities.Shop.filter({ is_active: true }, '-created_date', 60),
     refetchInterval: 300000,
     staleTime: 240000
   });

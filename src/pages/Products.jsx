@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Tag, Store, ChevronRight, X, MapPin, MessageCircle, Ticket } from 'lucide-react';
+import { Search, X, MapPin, MessageCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +18,7 @@ import TrendingSection from '@/components/home/TrendingSection';
 import SEO from '@/components/SEO';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
-import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
+import { FB_TAXONOMY, findById } from '@/lib/fbTaxonomy';
 import { MARKETPLACE_SPACES, getMarketplaceSpace } from '@/lib/marketplaceSpaces';
 
 const CATEGORIES = [
@@ -136,6 +136,8 @@ export default function Products() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const mountTimeRef = useRef(Date.now());
+  const connection = typeof navigator !== 'undefined' ? navigator.connection : undefined;
+  const constrainedNetwork = Boolean(connection?.saveData || ['slow-2g', '2g'].includes(connection?.effectiveType));
 
   const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
 
@@ -196,17 +198,17 @@ export default function Products() {
   useEffect(() => {
     if (firstProducts.length > 0 && !loadAll) {
       // Délai plus long sur connexion lente (détection via navigator.connection)
-      const slow = navigator.connection && (navigator.connection.saveData || ['slow-2g','2g'].includes(navigator.connection.effectiveType));
-      const delay = slow ? 5000 : 2000;
+      if (constrainedNetwork) return;
+      const delay = 2000;
       const t = setTimeout(() => setLoadAll(true), delay);
       return () => clearTimeout(t);
     }
-  }, [firstProducts.length, loadAll]);
+  }, [firstProducts.length, loadAll, constrainedNetwork]);
 
   const { data: fullProducts = [] } = useQuery({
     queryKey: ['products-all'],
     queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200),
-    enabled: loadAll,
+    enabled: loadAll && !constrainedNetwork,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
@@ -215,7 +217,7 @@ export default function Products() {
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => base44.entities.Shop.filter({ is_active: true }, '-created_date', 60),
   });
 
   const { data: conversations = [] } = useQuery({
@@ -225,7 +227,7 @@ export default function Products() {
       return Array.isArray(r.data) ? r.data : (r.data?.data || []);
     },
     // Ne charger les conversations qu'après les produits initiaux, et seulement si pas en économie de données
-    enabled: !!user?.id && firstProducts.length > 0 && !(navigator.connection?.saveData),
+    enabled: !!user?.id && firstProducts.length > 0 && !constrainedNetwork,
     refetchInterval: 60000, // Réduit à 60s pour économiser la data
     staleTime: 40 * 1000,
   });

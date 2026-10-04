@@ -2,18 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { 
-  Minus, Plus, Store, MessageSquare, Loader2, MapPin, X, 
-  ChevronRight, ZoomIn, ZoomOut, Download, RotateCcw, 
-  Share2, Plus as PlusIcon, Truck, ChevronLeft
+  Minus, Plus, Store, Loader2, MapPin, X,
+  ChevronRight, ZoomIn, ZoomOut, Download, Plus as PlusIcon, Truck, ChevronLeft
 } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { useBackButton } from '@/components/navigation/useBackButton';
-import ChatButton from '@/components/chat/ChatButton';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
-import { createPageUrl } from '@/utils';
 import ShareProductButton from '@/components/share/ShareProductButton';
 import { getProductShareUrl } from '@/lib/productShareUrl';
 import SimilarProducts from '@/components/product/SimilarProducts';
@@ -245,7 +242,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             {/* Logo MonCash en bas à gauche */}
             {imageLoaded && (
               <img
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
+                src="/assets/product-placeholder.svg"
                 alt="MonCash"
                 className="absolute bottom-4 left-4 h-4 opacity-80 z-10"
               />
@@ -447,7 +444,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
           <div className="flex items-center justify-center gap-2 py-2 border-t border-slate-50">
             <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Paiement sécurisé</span>
             <img
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
+              src="/assets/product-placeholder.svg"
               alt="MonCash"
               className="h-4 opacity-80"
             />

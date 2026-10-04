@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { ShoppingBag, AlertCircle, CheckCircle, Wallet, CreditCard, Loader2 } from 'lucide-react';
+import { ShoppingBag, AlertCircle, CheckCircle, Wallet, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 export default function PayLink() {

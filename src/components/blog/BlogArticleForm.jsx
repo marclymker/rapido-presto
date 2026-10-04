@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from "sonner";
-import { Loader2, X, Upload, Check } from 'lucide-react';
+import { Loader2, X, Upload } from 'lucide-react';
 
 export default function BlogArticleForm({ article, onClose, onSuccess }) {
   const [formData, setFormData] = useState({

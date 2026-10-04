@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Phone, Mail, Calendar, ShoppingBag, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Plus, Phone, Mail, Calendar, ShoppingBag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ProductCard from '@/components/ui/ProductCard';
 import { getClientPrice } from '@/components/utils/priceCalculation';

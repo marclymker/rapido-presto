@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { getAccessSource, logAccessSource } from '@/components/utils/detectFacebookInApp';
-import { useEffect } from 'react';
 
 export function useAuth() {
   const { data: user, isLoading, error } = useQuery({

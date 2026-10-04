@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { BUSINESS_PROFILES, BUSINESS_PROFILE_IDS, OPERATIONAL_PROFILE_IDS, deactivateOtherOperationalProfiles, getBusinessProfile } from '@/lib/businessProfiles';
+import { BUSINESS_PROFILE_IDS, deactivateOtherOperationalProfiles, getBusinessProfile } from '@/lib/businessProfiles';
 import { base44 } from '@/api/base44Client';
 
 const LEGACY_PROFILES = {

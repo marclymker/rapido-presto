@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, Loader2, AlertCircle, User, Calendar, FileText, ClipboardList, Image } from 'lucide-react';
+import { Search, Loader2, AlertCircle, FileText, ClipboardList } from 'lucide-react';
 const FIELD_LABELS = {
   'INVOICE NUMBER': 'N° Facture',
   'ID': 'Référence',

@@ -5,8 +5,6 @@ import {
   ShoppingCart, 
   Minus, 
   Plus, 
-  Store, 
-  MapPin, 
   Check, 
   MessageCircle,
   Maximize2,

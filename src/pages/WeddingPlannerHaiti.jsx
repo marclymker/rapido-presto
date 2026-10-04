@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
-import { Check, Star, Calendar, Users, Heart, Phone, Mail, MapPin } from 'lucide-react';
+import { Check, Calendar, Users, Heart, Phone, Mail, MapPin } from 'lucide-react';
 
 export default function WeddingPlannerHaiti() {
   const serviceSchema = {
@@ -49,7 +49,7 @@ export default function WeddingPlannerHaiti() {
           name="keywords" 
           content="wedding planner haiti, organisation mariage haiti, wedding planner port-au-prince, coordinateur mariage pétion-ville, planificateur mariage haiti, event planner mariage" 
         />
-        <link rel="canonical" href="https://rapidopresto.base44.app/wedding-planner-haiti" />
+        <link rel="canonical" href="https://rapidopresto.shop/wedding-planner-haiti" />
         
         <script type="application/ld+json">
           {JSON.stringify(serviceSchema)}

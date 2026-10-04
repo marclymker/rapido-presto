@@ -1,33 +1,22 @@
 
 
-# Révision — Workspace opérationnel unique
+# Audit sécurité, performance 2G et localisation Haïti
 
-## Décision UX
+## Objectif
 
-Le profil actif ne doit pas seulement changer une étiquette ou une route : il doit changer la plateforme métier visible. Tous les profils opérationnels utilisent une seule route `Dashboard`, avec un shell minimaliste et des modules adaptés au profil actif.
+Rendre Rapido Presto plus difficile à compromettre, plus rapide sur réseau 2G/3G en Haïti et explicitement localisé en Haïti sans casser Firebase/Auth ni les données existantes.
 
-- `Marketplace` : catalogue, commandes, comptes, performance et boutique.
-- `Nourriture` : POS plein écran, commandes entrantes et catalogue rapide ; aucune navigation commerciale inutile.
-- `Hôtel / Piscine` : disponibilités, réservations, chambres/piscines et commandes.
-- `Tickets` : événements, ventes, participants et contrôle QR.
+## Axes d’implémentation
 
-## Shell
+- Sécurité : contrôler les règles Firestore/Storage, les écritures propriétaires, les endpoints exposés, les secrets, les dépendances et les URLs legacy.
+- Performance : réduire les requêtes initiales, limiter les téléchargements, améliorer le lazy-loading, le cache et les images, conserver une expérience utilisable en basse donnée.
+- Réseau lent : éviter les fallbacks qui chargent tout le catalogue, désactiver les appels non essentiels, fournir des états de chargement compacts et ne jamais bloquer la création d’un article sur une analyse externe.
+- Haïti : définir `ht-HT`, HTG, fuseau `America/Port-au-Prince`, téléphones +509, régions haïtiennes, SEO/canonical/local business et textes de découverte locale.
 
-Un en-tête compact affiche le nom de la plateforme active, le statut opérationnel, le profil actif et un seul bouton de changement d’espace. Le contenu principal est organisé en panneaux et cartes d’action ; il n’y a plus de sidebar, de barre de navigation basse ou de menu de pages concurrent pour les espaces métier.
+## Structure concernée
 
-## Direction visuelle
-
-**Operational calm** : interface claire, dense et rassurante inspirée des POS et consoles de réservation professionnelles, distincte du feed client.
-
-- Fond graphite doux pour les espaces opérationnels, cartes blanches et accent propre à chaque activité.
-- Typographie sans-serif native, chiffres et statuts très lisibles.
-- Une action principale par écran, états d’urgence visibles, aucun décor superflu.
-- Responsive mobile-first : actions prioritaires accessibles au pouce, panneaux empilés sur mobile et deux colonnes maximum sur desktop.
-
-## Transition
-
-`ProfileSwitcher` conserve le changement de profil mais redirige tous les profils métier vers `Dashboard`. `Dashboard` choisit le workspace à partir de `current_profile`. Les anciens dashboards restent temporairement accessibles pour compatibilité, mais ne sont plus les destinations principales.
-
-## Contraintes métier
-
-Le changement d’espace doit conserver les permissions du profil, l’état actif dans Firestore, les commandes existantes et les données de catalogue. L’interface ne doit jamais afficher les actions d’un autre profil actif.
+- `src/api` : accès Firebase, uploads et écritures propriétaires.
+- `src/pages` : Home/Products, formulaires et données chargées.
+- `src/components` : cartes, images, trackers et appels non essentiels.
+- `public` : manifest, robots, sitemap et service worker.
+- `firestore.rules`, `storage.rules`, `firebase.json` : frontières de sécurité et cache/déploiement.

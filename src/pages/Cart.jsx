@@ -7,7 +7,6 @@ import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Clock, AlertTriangl
 import { useAuth } from '@/components/auth/useAuth';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
