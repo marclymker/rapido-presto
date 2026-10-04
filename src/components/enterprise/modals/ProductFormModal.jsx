@@ -266,6 +266,8 @@ image_alt: '',
 
 additional_images: [],
 
+variant_options: { colors: '', sizes: '' },
+
 taille_emballage: 'Moyen',
 
 delivery_time: '30-45 minutes',
@@ -362,6 +364,8 @@ image_alt: '',
 
 additional_images: [],
 
+variant_options: { colors: '', sizes: '' },
+
 taille_emballage: 'Moyen',
 
 delivery_time: '30-45 minutes',
@@ -432,9 +436,13 @@ image_url: product.image_url || '',
 
 image_alt: product.image_alt || '',
 
-additional_images: product.additional_images || [],
+  additional_images: product.additional_images || [],
+  variant_options: {
+    colors: (product.variants || []).map(v => v.color).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', '),
+    sizes: (product.variants || []).map(v => v.size).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', '),
+  },
 
-taille_emballage: product.taille_emballage || 'Moyen',
+  taille_emballage: product.taille_emballage || 'Moyen',
 
 delivery_time: product.delivery_time || '30-45 minutes',
 
@@ -569,7 +577,31 @@ const slug = `${slugBase || 'produit'}-${product?.id || Date.now().toString(36)}
 
 
 
-const dataWithSlug = { ...formData, slug: slug || undefined, image_alt: formData.image_alt || formData.name };
+const colors = (formData.variant_options?.colors || '').split(',').map(v => v.trim()).filter(Boolean);
+const sizes = (formData.variant_options?.sizes || '').split(',').map(v => v.trim()).filter(Boolean);
+const variantColors = colors.length ? colors : [''];
+const variantSizes = sizes.length ? sizes : [''];
+const variants = (colors.length || sizes.length)
+  ? variantColors.flatMap(color => variantSizes.map(size => ({
+      id: `${color || 'default'}-${size || 'default'}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      color,
+      size,
+      price: Number(formData.price) || 0,
+      promo_price: Number(formData.promo_price) || 0,
+      stock_quantity: Number(formData.stock_quantity) || 0,
+      image_url: formData.image_url || '',
+      additional_images: formData.additional_images || [],
+      is_available: formData.is_available !== false,
+    })))
+  : [];
+
+const { variant_options: _variantOptions, ...persistedFormData } = formData;
+const dataWithSlug = {
+  ...persistedFormData,
+  variants,
+  slug: slug || undefined,
+  image_alt: formData.image_alt || formData.name,
+};
 
 
 
@@ -1404,6 +1436,24 @@ Ajouter
 </div>
 
 
+
+{/* Variantes Amazon-style */}
+<div className="border border-orange-200 bg-orange-50/50 rounded-xl overflow-hidden">
+  <div className="p-4 border-b border-orange-200">
+    <h3 className="font-semibold text-sm text-slate-800 flex items-center gap-2"><Palette className="w-4 h-4 text-orange-600" /> Variantes de l’article</h3>
+    <p className="text-xs text-slate-500 mt-1">Ajoutez plusieurs couleurs et tailles séparées par des virgules. Le système crée chaque combinaison avec son propre identifiant.</p>
+  </div>
+  <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <Label className="text-xs text-slate-900 mb-1">Couleurs disponibles</Label>
+      <Input className="bg-white h-9 text-slate-900" value={formData.variant_options?.colors || ''} onChange={e => setFormData(prev => ({ ...prev, variant_options: { ...prev.variant_options, colors: e.target.value } }))} placeholder="Noir, Blanc, Rouge" />
+    </div>
+    <div>
+      <Label className="text-xs text-slate-900 mb-1">Tailles disponibles</Label>
+      <Input className="bg-white h-9 text-slate-900" value={formData.variant_options?.sizes || ''} onChange={e => setFormData(prev => ({ ...prev, variant_options: { ...prev.variant_options, sizes: e.target.value } }))} placeholder="S, M, L, XL" />
+    </div>
+  </div>
+</div>
 
 {/* Section 7: Attributs Avancés */}
 

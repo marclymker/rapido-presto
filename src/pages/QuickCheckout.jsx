@@ -21,6 +21,7 @@ export default function QuickCheckout() {
   const [searchParams] = useSearchParams();
 
   const productId = searchParams.get('product_id');
+  const variantId = searchParams.get('variant_id');
   const qty = parseInt(searchParams.get('quantity') || '1', 10);
 
   const [paymentMethod, setPaymentMethod] = useState('moncash');
@@ -32,11 +33,12 @@ export default function QuickCheckout() {
 
   const { data: products = [], isLoading: productLoading } = useQuery({
     queryKey: ['quick-product', productId],
-    queryFn: () => base44.entities.Product.filter({ id: productId }),
+    queryFn: () => base44.entities.Product.get(productId).then(p => p ? [p] : []),
     enabled: !!productId,
   });
 
   const product = products[0];
+  const selectedVariant = product?.variants?.find(v => v.id === variantId) || null;
 
   const { data: shops = [] } = useQuery({
     queryKey: ['quick-shop', product?.shop_id],
@@ -45,7 +47,7 @@ export default function QuickCheckout() {
   });
 
   const shop = shops[0];
-  const price = product ? applyClientMargin(product.promo_price || product.price, shop?.company_name || product.shop_name) : 0;
+  const price = product ? applyClientMargin(selectedVariant?.promo_price || selectedVariant?.price || product.promo_price || product.price, shop?.company_name || product.shop_name) : 0;
   const total = price * qty;
 
   const createOrderMutation = useMutation({
@@ -68,6 +70,9 @@ export default function QuickCheckout() {
         items: [{
           product_id: product.id,
           name: product.name,
+          variant_id: selectedVariant?.id || null,
+          variant_color: selectedVariant?.color || null,
+          variant_size: selectedVariant?.size || null,
           quantity: qty,
           unit_price: price,
           total: total,

@@ -17,6 +17,7 @@ import { createPageUrl } from '@/utils';
 import ShareProductButton from '@/components/share/ShareProductButton';
 import { getProductShareUrl } from '@/lib/productShareUrl';
 import SimilarProducts from '@/components/product/SimilarProducts';
+import { getProductVariants, getVariantImages, getVariantPrice, normalizeVariant } from '@/lib/productVariants';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, allProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
@@ -32,6 +33,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   const [showCreateProductModal, setShowCreateProductModal] = useState(false);
   const [userShop, setUserShop] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
 
   // Gérer le bouton retour natif pour fermer la modale
   useBackButton(() => {
@@ -72,6 +74,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
       setPosition({ x: 0, y: 0 });
       setImageLoaded(false);
       setCurrentImageIndex(0);
+      setSelectedVariantId(null);
     }
   }, [product?.id, open]);
 
@@ -157,13 +160,12 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
   if (!product) return null;
   
-  const price = applyClientMargin(product.promo_price || product.price);
+  const variants = getProductVariants(product);
+  const selectedVariant = variants.find(v => v.id === selectedVariantId) || variants[0] || null;
+  const price = applyClientMargin(getVariantPrice(product, selectedVariant));
   
   // Construire la liste complète des images
-  const allImages = [
-    product.image_url,
-    ...(product.additional_images || [])
-  ].filter(Boolean);
+  const allImages = getVariantImages(product, selectedVariant);
   
   const currentImage = allImages[currentImageIndex] || product.image_url;
   const hasMultipleImages = allImages.length > 1;
@@ -178,6 +180,18 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
     setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
     setZoom(1);
     setPosition({ x: 0, y: 0 });
+  };
+
+  const colors = [...new Set(variants.map(v => v.color).filter(Boolean))];
+  const sizes = [...new Set(variants.map(v => v.size).filter(Boolean))];
+  const selectVariant = (value, field) => {
+    const next = variants.find(v => v[field] === value && v.is_available) || variants.find(v => v[field] === value);
+    if (!next) return;
+    setSelectedVariantId(next.id);
+    setCurrentImageIndex(0);
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
+    setImageLoaded(false);
   };
 
   const handleContactVendor = async () => {
@@ -357,6 +371,33 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               )}
             </div>
 
+            {variants.length > 0 && (
+              <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-slate-900">Options</h3>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500">Choisissez votre modèle</span>
+                </div>
+                {colors.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-bold text-slate-700">Couleur</p>
+                    <div className="flex flex-wrap gap-2">
+                      {colors.map(color => <button key={color} type="button" onClick={() => selectVariant(color, 'color')} className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedVariant?.color === color ? 'border-orange-500 bg-orange-50 text-orange-700 ring-2 ring-orange-200' : 'border-slate-300 bg-white text-slate-700 hover:border-orange-300'}`}>{color}</button>)}
+                    </div>
+                  </div>
+                )}
+                {sizes.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-bold text-slate-700">Taille</p>
+                    <div className="flex flex-wrap gap-2">
+                      {sizes.map(size => <button key={size} type="button" onClick={() => selectVariant(size, 'size')} className={`min-w-12 rounded-lg border px-3 py-2 text-xs font-bold transition ${selectedVariant?.size === size ? 'border-orange-500 bg-orange-500 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-orange-300'}`}>{size}</button>)}
+                    </div>
+                  </div>
+                )}
+                {selectedVariant?.sku && <p className="text-[11px] text-slate-500">Référence : {selectedVariant.sku}</p>}
+                {selectedVariant?.stock_quantity !== null && <p className={`text-xs font-semibold ${selectedVariant.stock_quantity > 0 ? 'text-green-700' : 'text-red-600'}`}>{selectedVariant.stock_quantity > 0 ? `${selectedVariant.stock_quantity} disponibles` : 'Rupture de stock'}</p>}
+              </div>
+            )}
+
             {product.description && (
               <div className="py-2 border-t border-slate-50">
                 <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Description</h4>
@@ -427,7 +468,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                 currency: 'HTG',
               });
               onClose();
-              window.location.href = `/QuickCheckout?product_id=${product.id}&quantity=${quantity}`;
+              window.location.href = `/QuickCheckout?product_id=${product.id}&variant_id=${encodeURIComponent(selectedVariant?.id || '')}&quantity=${quantity}`;
             }}
           >
             Commander Maintenant
@@ -465,7 +506,15 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                   currency: 'HTG',
                 });
 
-                onAddToCart(product, quantity); 
+                const cartProduct = selectedVariant ? {
+                  ...product,
+                  price: selectedVariant.price || product.price,
+                  promo_price: selectedVariant.promo_price || product.promo_price,
+                  image_url: selectedVariant.image_url || product.image_url,
+                  selected_variant: normalizeVariant(selectedVariant),
+                  variant_id: selectedVariant.id,
+                } : product;
+                onAddToCart(cartProduct, quantity);
                 onClose(); 
               }}
             >
