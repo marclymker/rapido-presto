@@ -67,7 +67,7 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
       onProfileChange?.(targetProfile);
       toast.success(`Profil changé vers ${getConfig(targetProfile).label}`);
       const targetRoute = getConfig(targetProfile).route || 'Home';
-      window.location.href = createPageUrl(targetRoute);
+      navigate(createPageUrl(targetRoute), { replace: true });
     } catch (error) {
       toast.error('Impossible de changer de profil pour le moment.');
     } finally {
