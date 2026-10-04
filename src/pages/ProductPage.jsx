@@ -9,6 +9,7 @@ import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { useAuth } from '@/components/auth/useAuth';
 import { toast } from 'sonner';
+import { getProductShareUrl, getProductCanonicalUrl } from '@/lib/productShareUrl';
 import CompactProductCard from '@/components/home/CompactProductCard';
 import ProductReviews from '@/components/product/ProductReviews';
 import ProductFAQ from '@/components/product/ProductFAQ';
@@ -72,11 +73,7 @@ export default function ProductPage() {
   // LOGIQUE DE PARTAGE (PREVIEW WHATSAPP)
   const getShareUrl = useCallback(() => {
     if (!product) return window.location.href;
-    const base = 'https://rapido-presto.base44.app/functions/ogMetaTags';
-    const params = new URLSearchParams();
-    if (shop?.slug) params.set('slug', shop.slug);
-    if (product.slug || product.id) params.set('product', product.slug || product.id);
-    return `${base}?${params.toString()}`;
+    return getProductShareUrl({ ...product, shop_slug: shop?.slug }, window.location.origin);
   }, [product, shop]);
 
   const handleShare = useCallback(() => {
@@ -135,12 +132,25 @@ export default function ProductPage() {
   const allImages = [product.image_url, ...(product.additional_images || [])].filter(Boolean);
   const currentImg = allImages[imgIndex] || product.image_url;
   const imgSrc = currentImg ? `${currentImg}${currentImg.includes('?') ? '&' : '?'}width=800&quality=80` : null;
+  const canonicalUrl = getProductCanonicalUrl(product);
+  const shareDescription = (product.description || `Découvrez ${product.name} sur Rapido Presto.`).slice(0, 300);
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#f0f2f5' }}>
       <Helmet>
         <title>{product.name} | Rapido Presto</title>
+        <meta name="description" content={shareDescription} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={`${product.name} | Rapido Presto`} />
+        <meta property="og:description" content={shareDescription} />
+        <meta property="og:url" content={canonicalUrl} />
         <meta property="og:image" content={imgSrc} />
+        <meta property="og:image:alt" content={product.name} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${product.name} | Rapido Presto`} />
+        <meta name="twitter:description" content={shareDescription} />
+        <meta name="twitter:image" content={imgSrc} />
       </Helmet>
       {/* Schema.org Product + AggregateRating (injecté côté client pour crawlers) */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({

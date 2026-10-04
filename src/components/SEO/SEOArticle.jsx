@@ -1,8 +1,8 @@
 import { Helmet } from 'react-helmet-async';
+import { getProductCanonicalUrl } from '@/lib/productShareUrl';
 
 export default function SEOArticle({ product, shop }) {
-  const siteUrl = "https://rapido-presto.base44.app";
-  const productUrl = `${siteUrl}/product?id=${product.id}`;
+  const productUrl = getProductCanonicalUrl(product);
   
   // Gestion des images
   const productImages = product.additional_images && product.additional_images.length > 0

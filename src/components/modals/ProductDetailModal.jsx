@@ -15,6 +15,7 @@ import ChatButton from '@/components/chat/ChatButton';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { createPageUrl } from '@/utils';
 import ShareProductButton from '@/components/share/ShareProductButton';
+import { getProductShareUrl } from '@/lib/productShareUrl';
 import SimilarProducts from '@/components/product/SimilarProducts';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, allProducts = [], onProductChange }) {
@@ -434,10 +435,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
           <Button 
             onClick={() => {
-              // Lien optimisé pour preview WhatsApp via fonction backend
-              const productUrl = shop?.slug && product.slug 
-                ? `${window.location.origin}/functions/ogMetaTags?slug=${shop.slug}&product=${product.slug}`
-                : `${window.location.origin}/functions/ogMetaTags?product=${product.id}`;
+              const productUrl = getProductShareUrl({ ...product, shop_slug: shop?.slug }, window.location.origin);
 
               const message = `Je suis intéressé par cet article\n${productUrl}`;
               const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;

@@ -1,4 +1,8 @@
 {
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
+  },
   "hosting": {
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
@@ -14,7 +18,10 @@
       { "source": "**/*.@(js|css|svg|png|jpg|jpeg|webp|woff2)", "headers": [{ "key": "Cache-Control", "value": "public,max-age=31536000,immutable" }] },
       { "source": "service-worker.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
     ],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    "rewrites": [
+      { "source": "/functions/ogMetaTags", "function": { "functionId": "ogMetaTags", "region": "us-central1" } },
+      { "source": "**", "destination": "/index.html" }
+    ]
   },
   "firestore": { "rules": "firestore.rules" },
   "storage": { "rules": "storage.rules" }
