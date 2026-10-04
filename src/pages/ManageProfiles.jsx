@@ -88,7 +88,9 @@ export default function ManageProfiles() {
     }
   };
 
-  const displayCurrentProfile = user?.current_profile === 'entreprise' ? 'marketplace' : (user?.current_profile || 'client');
+  const displayCurrentProfile = user?.current_profile === 'entreprise' || user?.current_profile === 'marketplace'
+    ? 'client'
+    : (user?.current_profile || 'client');
 
   const getProfileStatus = (profileType) => {
     const profiles = user?.profiles || {};

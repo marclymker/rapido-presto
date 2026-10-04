@@ -36,6 +36,7 @@ const WORKSPACES = {
 };
 
 function normalizeProfile(profile) {
+  if (profile === 'marketplace' || profile === 'entreprise' || profile === 'client') return 'marketplace';
   return WORKSPACES[profile] ? profile : 'marketplace';
 }
 

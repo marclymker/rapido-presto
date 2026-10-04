@@ -36,12 +36,13 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
   const [switching, setSwitching] = useState(false);
   const navigate = useNavigate();
   const profiles = user?.profiles || { client: { is_active: true } };
-  const currentProfile = user?.current_profile || 'client';
+  const currentProfile = user?.current_profile === 'marketplace' || user?.current_profile === 'entreprise' ? 'client' : (user?.current_profile || 'client');
   const availableProfileIds = ['client', ...BUSINESS_PROFILE_IDS, 'agent', 'livreur'];
   const CurrentConfig = getConfig(currentProfile);
   const CurrentIcon = CurrentConfig.icon;
 
   const getProfileStatus = (profileId) => {
+    if (profileId === 'client') return { status: 'active', label: 'Disponible', color: 'bg-blue-100 text-blue-700' };
     const profile = getStoredProfile(profiles, profileId);
     if (!profile?.is_active) return { status: 'inactive', label: 'À activer', color: 'bg-slate-100 text-slate-600' };
     if (profile.status === 'pending') return { status: 'pending', label: 'En attente', color: 'bg-yellow-100 text-yellow-700' };
@@ -52,7 +53,7 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
   const handleSwitch = async (targetProfile) => {
     if (targetProfile === currentProfile) return;
     const status = getProfileStatus(targetProfile);
-    if (status.status !== 'active') {
+    if (targetProfile !== 'client' && status.status !== 'active') {
       navigate(createPageUrl('ManageProfiles'));
       toast.info(`Activez d'abord le profil ${getConfig(targetProfile).label}`);
       return;
@@ -60,12 +61,8 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
 
     setSwitching(true);
     try {
-      const preservedOperationalProfile = OPERATIONAL_PROFILE_IDS.includes(currentProfile)
-        ? currentProfile
-        : OPERATIONAL_PROFILE_IDS.find((profileId) => profiles?.[profileId]?.is_active);
-      const nextProfiles = targetProfile === 'client'
-        ? deactivateOtherOperationalProfiles(profiles, preservedOperationalProfile)
-        : deactivateOtherOperationalProfiles(profiles, targetProfile);
+      const nextProfiles = deactivateOtherOperationalProfiles(profiles, targetProfile);
+      nextProfiles.client = { ...(nextProfiles.client || {}), is_active: targetProfile === 'client' };
       if (nextProfiles[targetProfile]) {
         nextProfiles[targetProfile] = { ...nextProfiles[targetProfile], is_active: true, last_used: new Date().toISOString() };
       }

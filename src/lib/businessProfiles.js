@@ -1,14 +1,6 @@
-import { Utensils, Hotel, Ticket, Store } from 'lucide-react';
+import { Utensils, Hotel, Ticket } from 'lucide-react';
 
 export const BUSINESS_PROFILES = {
-  marketplace: {
-    id: 'marketplace',
-    label: 'Marketplace',
-    shortLabel: 'Marchand',
-    icon: Store,
-    route: 'Dashboard',
-    permissions: ['catalog.read', 'catalog.write', 'orders.read', 'orders.manage', 'stats.read'],
-  },
   food: {
     id: 'food',
     label: 'Nourriture / POS',
@@ -44,14 +36,14 @@ export function deactivateOtherOperationalProfiles(profiles = {}, activeProfileI
     if (profileId === activeProfileId) return;
     if (nextProfiles[profileId]) nextProfiles[profileId] = { ...nextProfiles[profileId], is_active: false };
   });
-  if (activeProfileId !== 'marketplace' && nextProfiles.entreprise) {
-    nextProfiles.entreprise = { ...nextProfiles.entreprise, is_active: false };
-  }
+  if (nextProfiles.entreprise) nextProfiles.entreprise = { ...nextProfiles.entreprise, is_active: false };
+  if (nextProfiles.marketplace) nextProfiles.marketplace = { ...nextProfiles.marketplace, is_active: false };
+  if (nextProfiles.client) nextProfiles.client = { ...nextProfiles.client, is_active: activeProfileId === 'client' };
   return nextProfiles;
 }
 
 export function getBusinessProfile(id) {
-  return BUSINESS_PROFILES[id] || BUSINESS_PROFILES.marketplace;
+  return BUSINESS_PROFILES[id] || BUSINESS_PROFILES.food;
 }
 
 export function hasBusinessPermission(user, permission, profileId = user?.current_profile) {
