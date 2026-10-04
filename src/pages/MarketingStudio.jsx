@@ -74,6 +74,7 @@ export default function MarketingStudio() {
 
   const selectedProduct = useMemo(() => products.find((product) => product.id === selectedProductId), [products, selectedProductId]);
   const effectiveRegion = region || shop?.region || user?.region || 'Haïti';
+  const isSiteOwner = user?.role === 'owner' || user?.is_owner === true;
 
   const saveMutation = useMutation({
     mutationFn: (payload) => base44.entities.MarketingDraft.create(payload),
@@ -94,7 +95,8 @@ export default function MarketingStudio() {
 
   const copy = async (value) => { try { await navigator.clipboard.writeText(value); toast.success('Contenu copié.'); } catch (_) { toast.error('Copie non disponible sur cet appareil.'); } };
 
-  if (!user) return <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6"><div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-sm"><Sparkles className="mx-auto mb-4 h-10 w-10 text-orange-500" /><h1 className="text-xl font-black text-slate-950">Kairos Marketing Studio</h1><p className="my-3 text-sm text-slate-500">Connectez-vous pour préparer vos contenus marketing.</p><Button onClick={() => base44.auth.redirectToLogin('/MarketingStudio')} className="rounded-xl bg-slate-950">Se connecter</Button></div></div>;
+  if (!user) return <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6"><div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-sm"><Sparkles className="mx-auto mb-4 h-10 w-10 text-orange-500" /><h1 className="text-xl font-black text-slate-950">Kairos Marketing Studio</h1><p className="my-3 text-sm text-slate-500">Connectez-vous avec le compte propriétaire pour accéder à cette console.</p><Button onClick={() => base44.auth.redirectToLogin('/MarketingStudio')} className="rounded-xl bg-slate-950">Se connecter</Button></div></div>;
+  if (!isSiteOwner) return <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6"><div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-sm"><Sparkles className="mx-auto mb-4 h-10 w-10 text-slate-400" /><h1 className="text-xl font-black text-slate-950">Accès propriétaire uniquement</h1><p className="my-3 text-sm text-slate-500">Cette console marketing est réservée au propriétaire de Kairos.</p><Button onClick={() => { window.location.href = '/Dashboard'; }} variant="outline" className="rounded-xl">Retour au dashboard</Button></div></div>;
 
   return <main className="min-h-screen bg-[#f4f6f8] pb-20 text-slate-950">
     <Helmet><title>Marketing Studio | Kairos</title><meta name="description" content="Générez des contenus SEO, Facebook, Instagram, TikTok et WhatsApp pour votre activité sur Kairos." /></Helmet>

@@ -125,6 +125,7 @@ export default function Dashboard() {
   if (!user) return <div className="flex min-h-screen items-center justify-center bg-slate-950 p-5"><div className="max-w-sm rounded-3xl bg-white p-8 text-center"><Store className="mx-auto mb-4 h-10 w-10 text-orange-500" /><h1 className="text-xl font-black">Workspace Kairos</h1><p className="my-3 text-sm text-slate-500">Connectez-vous pour gérer votre activité.</p><Button onClick={() => base44.auth.redirectToLogin('/Dashboard')} className="w-full rounded-xl bg-slate-950">Se connecter</Button></div></div>;
 
   const profileId = normalizeProfile(user.current_profile === 'entreprise' ? 'marketplace' : user.current_profile);
+  const isSiteOwner = user.role === 'owner' || user.is_owner === true;
   const workspace = WORKSPACES[profileId];
   const Icon = workspace.icon;
   const Workspace = profileId === 'food' ? FoodWorkspace : profileId === 'hospitality' ? HospitalityWorkspace : profileId === 'tickets' ? TicketsWorkspace : profileId === 'livreur' ? CourierWorkspace : MarketplaceWorkspace;
@@ -139,10 +140,10 @@ export default function Dashboard() {
     <main className="mx-auto max-w-[1500px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold text-slate-500">Bonjour {user.full_name?.split(' ')[0] || 'marchand'}</p><h2 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">Pilotez votre activité.</h2><p className="mt-1 max-w-2xl text-sm text-slate-500">{workspace.description}</p></div><div className="flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-bold text-emerald-700 shadow-sm"><span className="h-2 w-2 rounded-full bg-emerald-500" />Espace opérationnel actif</div></div>
       <Workspace orders={orders} products={products} shop={shop} />
-      <section className="flex flex-col justify-between gap-4 rounded-3xl border border-orange-200 bg-orange-50 p-5 shadow-sm sm:flex-row sm:items-center sm:p-6">
+      {isSiteOwner && <section className="flex flex-col justify-between gap-4 rounded-3xl border border-orange-200 bg-orange-50 p-5 shadow-sm sm:flex-row sm:items-center sm:p-6">
         <div><p className="text-xs font-black uppercase tracking-[.16em] text-orange-600">Kairos Growth Engine</p><h2 className="mt-1 font-black text-slate-950">Transformez vos produits en contenus qui attirent des prospects.</h2><p className="mt-1 text-sm text-slate-600">Générez des brouillons SEO, Facebook, Instagram, TikTok et WhatsApp avant publication.</p></div>
         <Button onClick={() => { window.location.href = createPageUrl('MarketingStudio'); }} className="rounded-xl bg-orange-500 font-bold hover:bg-orange-600"><Sparkles className="mr-2 h-4 w-4" />Ouvrir Marketing Studio</Button>
-      </section>
+      </section>}
       <section className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:p-6">
         <div><p className="text-xs font-black uppercase tracking-[.16em] text-slate-400">Compte et accès</p><h2 className="mt-1 font-black text-slate-950">{user.full_name || 'Votre compte'}</h2><p className="mt-1 text-sm text-slate-500">Gérez vos profils métier et les accès collaborateurs depuis cet espace unique.</p></div>
         <Button onClick={() => window.location.href = createPageUrl('ManageProfiles')} variant="outline" className="rounded-xl border-slate-300">Gérer les profils<ChevronRight className="ml-2 h-4 w-4" /></Button>

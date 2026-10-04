@@ -4,6 +4,7 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
     function isAdmin() { return signedIn() && get(/databases/$(database)/documents/User/$(request.auth.uid)).data.role in ['admin', 'owner']; }
+    function isSiteOwner() { return signedIn() && (get(/databases/$(database)/documents/User/$(request.auth.uid)).data.role == 'owner' || get(/databases/$(database)/documents/User/$(request.auth.uid)).data.is_owner == true); }
     function publicCollection() { return resource.data.is_published == true || resource.data.is_active == true || resource.data.is_available == true; }
 
     match /User/{uid} {
@@ -37,8 +38,8 @@ service cloud.firestore {
     }
     match /BlogArticle/{id} { allow read: if resource.data.is_published == true || isAdmin(); allow write: if isAdmin(); }
     match /MarketingDraft/{id} {
-      allow read, update, delete: if signedIn() && resource.data.user_id == request.auth.uid;
-      allow create: if signedIn() && request.resource.data.user_id == request.auth.uid;
+      allow read, update, delete: if isSiteOwner() && resource.data.user_id == request.auth.uid;
+      allow create: if isSiteOwner() && request.resource.data.user_id == request.auth.uid;
     }
     match /CartItem/{id} {
       allow read, delete: if signedIn() && resource.data.user_id == request.auth.uid;
