@@ -133,7 +133,7 @@ export default function Dashboard() {
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white" style={{ backgroundColor: workspace.accent }}><Icon className="h-5 w-5" /></div><div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-[.18em] text-slate-400">{workspace.eyebrow}</p><h1 className="truncate text-lg font-black">{workspace.label}</h1></div></div>
-        <div className="flex items-center gap-2"><ProfileSwitcher user={user} onProfileChange={(nextProfile) => setUser((current) => ({ ...current, current_profile: nextProfile }))} /><span className="hidden text-xs font-bold text-slate-500 sm:inline">{user.email || 'Compte actif'}</span></div>
+        <div className="flex items-center gap-2"><ProfileSwitcher user={user} onProfileChange={(nextProfile, nextProfiles) => setUser((current) => ({ ...current, current_profile: nextProfile, profiles: nextProfiles || current.profiles }))} /><span className="hidden text-xs font-bold text-slate-500 sm:inline">{user.email || 'Compte actif'}</span></div>
       </div>
     </header>
     <main className="mx-auto max-w-[1500px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">

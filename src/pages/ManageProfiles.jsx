@@ -113,7 +113,23 @@ export default function ManageProfiles() {
     return { status: 'active', label: 'Actif', color: 'bg-green-100 text-green-700', icon: Check };
   };
 
-  const handleActivateProfile = (profileType) => {
+  const handleActivateProfile = async (profileType) => {
+    const storedProfile = profileType === 'marketplace' ? (user?.profiles?.marketplace || user?.profiles?.entreprise) : user?.profiles?.[profileType];
+    const alreadyConfigured = profileType === 'client' || Boolean(
+      profileType === 'livreur'
+        ? storedProfile?.vehicle_type && storedProfile?.id_document_url && storedProfile?.status !== 'pending'
+        : storedProfile?.company_name && storedProfile?.company_category
+    );
+    if (alreadyConfigured) {
+      const profiles = deactivateOtherOperationalProfiles(user?.profiles || {}, profileType === 'marketplace' ? 'client' : profileType);
+      profiles[profileType] = { ...(profiles[profileType] || {}), is_active: true, last_used: new Date().toISOString() };
+      if (profileType === 'client') profiles.client = { ...(profiles.client || {}), is_active: true };
+      await base44.auth.updateMe({ profiles, current_profile: profileType === 'marketplace' ? 'client' : profileType });
+      setUser({ ...user, profiles, current_profile: profileType === 'marketplace' ? 'client' : profileType });
+      toast.success(`Profil ${profileConfig[profileType]?.label || 'actif'} sélectionné`);
+      navigate(createPageUrl(profileType === 'livreur' ? 'Dashboard' : profileType === 'client' ? 'Home' : 'Dashboard'));
+      return;
+    }
     setSelectedProfile(profileType);
     setFormData({});
     setActivationDialog(true);

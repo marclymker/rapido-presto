@@ -44,16 +44,21 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
   const getProfileStatus = (profileId) => {
     if (profileId === 'client') return { status: 'active', label: 'Disponible', color: 'bg-blue-100 text-blue-700' };
     const profile = getStoredProfile(profiles, profileId);
-    if (!profile?.is_active) return { status: 'inactive', label: 'À activer', color: 'bg-slate-100 text-slate-600' };
+    if (!profile) return { status: 'inactive', label: 'À activer', color: 'bg-slate-100 text-slate-600' };
     if (profile.status === 'pending') return { status: 'pending', label: 'En attente', color: 'bg-yellow-100 text-yellow-700' };
     if (profile.status === 'rejected') return { status: 'rejected', label: 'Rejeté', color: 'bg-red-100 text-red-700' };
+    const configured = profileId === 'livreur'
+      ? Boolean(profile.vehicle_type && profile.id_document_url)
+      : Boolean(profile.company_name && profile.company_category);
+    if (!profile.is_active && configured) return { status: 'ready', label: 'Disponible', color: 'bg-blue-100 text-blue-700' };
+    if (!profile.is_active) return { status: 'inactive', label: 'À activer', color: 'bg-slate-100 text-slate-600' };
     return { status: 'active', label: 'Actif', color: 'bg-green-100 text-green-700' };
   };
 
   const handleSwitch = async (targetProfile) => {
     if (targetProfile === currentProfile) return;
     const status = getProfileStatus(targetProfile);
-    if (targetProfile !== 'client' && status.status !== 'active') {
+    if (targetProfile !== 'client' && !['active', 'ready'].includes(status.status)) {
       navigate(createPageUrl('ManageProfiles'));
       toast.info(`Activez d'abord le profil ${getConfig(targetProfile).label}`);
       return;
@@ -67,7 +72,7 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
         nextProfiles[targetProfile] = { ...nextProfiles[targetProfile], is_active: true, last_used: new Date().toISOString() };
       }
       await base44.auth.updateMe({ current_profile: targetProfile, profiles: nextProfiles });
-      onProfileChange?.(targetProfile);
+      onProfileChange?.(targetProfile, nextProfiles);
       toast.success(`Profil changé vers ${getConfig(targetProfile).label}`);
       const targetRoute = getConfig(targetProfile).route || 'Home';
       navigate(createPageUrl(targetRoute), { replace: true });

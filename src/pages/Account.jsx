@@ -34,6 +34,8 @@ export default function Account() {
   const [convertingWhatsApp, setConvertingWhatsApp] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [userShop, setUserShop] = useState(null);
+  const [profileEditMode, setProfileEditMode] = useState(false);
+  const [profileFormData, setProfileFormData] = useState({ company_name: '', company_category: '', whatsapp_number: '' });
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -42,6 +44,13 @@ export default function Account() {
         phone: u.phone || '',
         address: u.address || '',
         region: u.region || ''
+      });
+      const profileKey = ['food', 'hospitality', 'tickets', 'livreur', 'agent'].includes(u.current_profile) ? u.current_profile : 'client';
+      const activeProfile = u.profiles?.[profileKey] || {};
+      setProfileFormData({
+        company_name: activeProfile.company_name || '',
+        company_category: activeProfile.company_category || '',
+        whatsapp_number: activeProfile.whatsapp_number || ''
       });
       setLoading(false);
       
@@ -77,6 +86,22 @@ export default function Account() {
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
     }
+  };
+
+  const handleSaveEstablishmentProfile = async () => {
+    const profileKey = ['food', 'hospitality', 'tickets', 'livreur', 'agent'].includes(user.current_profile) ? user.current_profile : 'client';
+    const profiles = { ...(user.profiles || {}) };
+    profiles[profileKey] = {
+      ...(profiles[profileKey] || {}),
+      company_name: profileFormData.company_name.trim(),
+      company_category: profileFormData.company_category.trim(),
+      whatsapp_number: profileFormData.whatsapp_number.trim(),
+      profile_updated_at: new Date().toISOString()
+    };
+    await base44.auth.updateMe({ profiles });
+    setUser({ ...user, profiles });
+    setProfileEditMode(false);
+    toast.success('Profil de l’établissement mis à jour');
   };
 
   const handleAddPayment = async () => {
@@ -276,6 +301,19 @@ export default function Account() {
                 <p className="text-slate-700 mt-1">{user.region || 'Non définie'}</p>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Establishment profile: editable only from Account settings */}
+        <div className="bg-white rounded-xl p-4 border border-orange-100">
+          <div className="flex items-center justify-between mb-4">
+            <div><h3 className="font-semibold">Profil de l’établissement</h3><p className="text-xs text-slate-500 mt-1">Ces informations restent attachées à votre profil actif lors des changements d’espace.</p></div>
+            {!profileEditMode ? <Button variant="ghost" size="sm" onClick={() => setProfileEditMode(true)}>Modifier</Button> : <div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => setProfileEditMode(false)}>Annuler</Button><Button size="sm" className="bg-orange-500 hover:bg-orange-600" onClick={handleSaveEstablishmentProfile}>Enregistrer</Button></div>}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div><Label className="text-slate-500 text-sm">Nom de l’établissement</Label>{profileEditMode ? <Input value={profileFormData.company_name} onChange={(e) => setProfileFormData({ ...profileFormData, company_name: e.target.value })} placeholder="Nom de votre établissement" /> : <p className="mt-1 text-slate-800">{profileFormData.company_name || 'Non défini'}</p>}</div>
+            <div><Label className="text-slate-500 text-sm">Type / catégorie</Label>{profileEditMode ? <Input value={profileFormData.company_category} onChange={(e) => setProfileFormData({ ...profileFormData, company_category: e.target.value })} placeholder="Restaurant, hôtel, tickets..." /> : <p className="mt-1 text-slate-800">{profileFormData.company_category || 'Non défini'}</p>}</div>
+            <div><Label className="text-slate-500 text-sm">WhatsApp professionnel</Label>{profileEditMode ? <Input value={profileFormData.whatsapp_number} onChange={(e) => setProfileFormData({ ...profileFormData, whatsapp_number: e.target.value })} placeholder="+509..." /> : <p className="mt-1 text-slate-800">{profileFormData.whatsapp_number || 'Non défini'}</p>}</div>
           </div>
         </div>
 
