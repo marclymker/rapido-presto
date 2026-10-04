@@ -23,7 +23,7 @@ export default function DriverAccount() {
       setUser(u);
       setFormData({ phone: u.phone || '' });
       setLoading(false);
-      
+
       // Redirect if wrong profile
       if (u.current_profile !== 'livreur') {
         window.location.href = createPageUrl(
@@ -51,7 +51,7 @@ export default function DriverAccount() {
       details: newPayment.details,
       last_digits: newPayment.details.slice(-4)
     };
-    
+
     try {
       await base44.auth.updateMe({
         payment_methods: [...payments, newPaymentMethod]
@@ -68,7 +68,7 @@ export default function DriverAccount() {
   const handleDeletePayment = async (index) => {
     const payments = [...(user.payment_methods || [])];
     payments.splice(index, 1);
-    
+
     try {
       await base44.auth.updateMe({ payment_methods: payments });
       setUser({ ...user, payment_methods: payments });
@@ -194,8 +194,8 @@ export default function DriverAccount() {
                 <div className="space-y-4 pt-4">
                   <div>
                     <Label>Type</Label>
-                    <Select 
-                      value={newPayment.type} 
+                    <Select
+                      value={newPayment.type}
                       onValueChange={(val) => setNewPayment({ ...newPayment, type: val })}
                     >
                       <SelectTrigger>
@@ -242,9 +242,9 @@ export default function DriverAccount() {
                       <p className="text-sm text-slate-500">•••• {pm.last_digits}</p>
                     </div>
                   </div>
-                  <Button 
-                    size="icon" 
-                    variant="ghost" 
+                  <Button
+                    size="icon"
+                    variant="ghost"
                     className="text-red-500"
                     onClick={() => handleDeletePayment(idx)}
                   >
@@ -257,8 +257,8 @@ export default function DriverAccount() {
         </div>
 
         {/* Logout */}
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="w-full border-red-200 text-red-600 hover:bg-red-50"
           onClick={handleLogout}
         >

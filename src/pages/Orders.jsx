@@ -28,14 +28,14 @@ export default function Orders() {
   const [reviewOrder, setReviewOrder] = useState(null);
   const [cancellingOrder, setCancellingOrder] = useState(null);
   const queryClient = useQueryClient();
-  
+
   // Auto-refresh toutes les 60 secondes
-  useAutoRefresh({ 
-    queryKey: ['my-orders'], 
+  useAutoRefresh({
+    queryKey: ['my-orders'],
     refetchInterval: 60000,
-    enabled: !!user?.id 
+    enabled: !!user?.id
   });
-  
+
   // Background sync intelligent
   const { syncStatus, lastSync, connectionType } = useBackgroundSync({
     userType: 'client',
@@ -129,10 +129,10 @@ export default function Orders() {
     });
   };
 
-  const activeOrders = orders.filter(o => 
+  const activeOrders = orders.filter(o =>
     !['delivered', 'cancelled'].includes(o.status)
   );
-  const historyOrders = orders.filter(o => 
+  const historyOrders = orders.filter(o =>
     ['delivered', 'cancelled'].includes(o.status)
   );
 
@@ -165,7 +165,7 @@ export default function Orders() {
           <DeliveryMap order={order} />
         </div>
       )}
-      
+
       <div className="mt-4 pt-4 border-t">
         <p className="text-sm font-medium text-slate-700">{order.shop_name}</p>
         <p className="text-xs text-slate-500">
@@ -337,9 +337,9 @@ export default function Orders() {
         loading={cancelOrderMutation.isPending}
       />
 
-      <BackgroundSyncIndicator 
-        syncStatus={syncStatus} 
-        lastSync={lastSync} 
+      <BackgroundSyncIndicator
+        syncStatus={syncStatus}
+        lastSync={lastSync}
         connectionType={connectionType}
       />
     </div>

@@ -8,7 +8,7 @@ export default function Contact() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const subject = encodeURIComponent(`Message de ${form.name} via Rapido Presto`);
+    const subject = encodeURIComponent(`Message de ${form.name} via Kairos`);
     const body = encodeURIComponent(`Nom: ${form.name}\nEmail: ${form.email}\n\nMessage:\n${form.message}`);
     window.location.href = `mailto:support@makariosbridal.shop?subject=${subject}&body=${body}`;
     setSent(true);
@@ -17,8 +17,8 @@ export default function Contact() {
   return (
     <div className="min-h-screen bg-white pb-24">
       <Helmet>
-        <title>Contactez Rapido Presto | Support & Questions</title>
-        <meta name="description" content="Contactez l'équipe Rapido Presto pour toute question, assistance ou partenariat. Disponibles par email, WhatsApp et sur les réseaux sociaux." />
+        <title>Contactez Kairos | Support & Questions</title>
+        <meta name="description" content="Contactez l'équipe Kairos pour toute question, assistance ou partenariat. Disponibles par email, WhatsApp et sur les réseaux sociaux." />
       </Helmet>
 
       <div className="max-w-2xl mx-auto px-6 py-12">

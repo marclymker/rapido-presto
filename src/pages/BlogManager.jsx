@@ -51,7 +51,7 @@ export default function BlogManager() {
   });
 
   const togglePublishMutation = useMutation({
-    mutationFn: ({ id, isPublished }) => 
+    mutationFn: ({ id, isPublished }) =>
       base44.entities.BlogArticle.update(id, { is_published: !isPublished }),
     onSuccess: () => {
       queryClient.invalidateQueries(['blog-articles-all']);
@@ -82,7 +82,7 @@ export default function BlogManager() {
             </Link>
             <h1 className="text-2xl font-bold text-slate-900">Gestion du Blog</h1>
           </div>
-          <Button 
+          <Button
             onClick={() => setShowForm(true)}
             className="bg-orange-600 hover:bg-orange-700"
           >

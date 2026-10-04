@@ -32,7 +32,7 @@ export default function BusinessSmartNav({ activeTab, setActiveTab, userRole, pe
   };
 
   return (
-    <nav 
+    <nav
       className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-100 z-50 safe-bottom"
       style={{ boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.05)' }}
     >
@@ -40,7 +40,7 @@ export default function BusinessSmartNav({ activeTab, setActiveTab, userRole, pe
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = activeTab === item.id;
-          
+
           if (item.external) {
             return (
               <Link
@@ -61,7 +61,7 @@ export default function BusinessSmartNav({ activeTab, setActiveTab, userRole, pe
               </Link>
             );
           }
-          
+
           return (
             <button
               key={item.id}

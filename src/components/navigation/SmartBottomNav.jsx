@@ -26,34 +26,34 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
   }, []);
 
   const navItems = [
-    { 
-      id: 'products', 
-      label: 'Accueil', 
-      icon: Home, 
+    {
+      id: 'products',
+      label: 'Accueil',
+      icon: Home,
       badge: null
     },
-    { 
-      id: 'tracking', 
-      label: 'Suivi', 
-      icon: Truck, 
+    {
+      id: 'tracking',
+      label: 'Suivi',
+      icon: Truck,
       badge: null
     },
-    { 
-      id: 'dashboard', 
-      label: 'Boutique', 
-      icon: Package, 
+    {
+      id: 'dashboard',
+      label: 'Boutique',
+      icon: Package,
       badge: activeOrdersCount
     },
-    { 
-      id: 'account', 
-      label: 'Compte', 
-      icon: User, 
+    {
+      id: 'account',
+      label: 'Compte',
+      icon: User,
       badge: null
     }
   ];
 
   return (
-    <nav 
+    <nav
       className={`rp-bottom-nav fixed bottom-0 left-0 right-0 transition-transform duration-300 safe-bottom z-50 ${
         isVisible ? 'translate-y-0' : 'translate-y-full'
       }`}
@@ -64,7 +64,7 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActiveTab = item.id === activeTab;
-          
+
           return (
             <button
               key={item.id}
@@ -74,10 +74,10 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
               aria-current={isActiveTab ? 'page' : undefined}
             >
               <div className="relative">
-                <Icon 
+                <Icon
                   className={`w-[21px] h-[21px] transition-all ${
-                    isActiveTab 
-                      ? 'text-orange-500 scale-110' 
+                    isActiveTab
+                      ? 'text-orange-500 scale-110'
                       : 'text-gray-400 group-active:scale-90'
                   }`}
                   strokeWidth={isActiveTab ? 2.5 : 2}
@@ -89,7 +89,7 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
                   </Badge>
                 )}
               </div>
-              <span 
+              <span
                   className={`text-[10px] font-semibold transition-colors ${
                   isActiveTab ? 'text-orange-500' : 'text-gray-400'
                 }`}

@@ -29,27 +29,27 @@ export default function DriverDashboard() {
   const queryClient = useQueryClient();
   const { requestPermission } = useBrowserNotifications(user);
   const { initialize: initializeSound, isInitialized: soundInitialized } = useNotificationSound(user);
-  
+
   // WebSocket temps réel
   const { isConnected, broadcast } = useWebSocket({
     channel: 'orders',
     userId: user?.id,
     enabled: !!user && isAvailable
   });
-  
+
   // Auto-refresh
-  useAutoRefresh({ 
-    queryKey: ['available-orders'], 
+  useAutoRefresh({
+    queryKey: ['available-orders'],
     refetchInterval: 60000,
-    enabled: isAvailable 
+    enabled: isAvailable
   });
-  
-  useAutoRefresh({ 
-    queryKey: ['driver-orders'], 
+
+  useAutoRefresh({
+    queryKey: ['driver-orders'],
     refetchInterval: 60000,
-    enabled: !!user?.id 
+    enabled: !!user?.id
   });
-  
+
   // Background sync intelligent
   const { syncStatus, lastSync, connectionType } = useBackgroundSync({
     userType: 'livreur',
@@ -60,7 +60,7 @@ export default function DriverDashboard() {
     base44.auth.me().then(u => {
       setUser(u);
       setIsAvailable(u.profiles?.livreur?.is_available || false);
-      
+
       // Redirect if wrong profile
       if (u.current_profile !== 'livreur') {
         const redirectPages = {
@@ -83,12 +83,12 @@ export default function DriverDashboard() {
   const { data: availableOrders = [] } = useQuery({
     queryKey: ['available-orders', user?.profiles?.livreur?.commune],
     queryFn: async () => {
-      const orders = await base44.entities.Order.filter({ 
+      const orders = await base44.entities.Order.filter({
         status: 'searching_driver'
       }, '-created_date');
       // Filter by commune match + Anti-auto-acceptation (ne pas voir ses propres commandes)
       const driverCommune = user?.profiles?.livreur?.commune;
-      return orders.filter(o => 
+      return orders.filter(o =>
         (o.shop_commune === driverCommune || o.client_commune === driverCommune) &&
         o.client_id !== user.id // Restriction: impossible de livrer sa propre commande
       );
@@ -134,14 +134,14 @@ export default function DriverDashboard() {
       if (order.client_id === user.id) {
         throw new Error('Vous ne pouvez pas livrer votre propre commande');
       }
-      
+
       const updatedOrder = await base44.entities.Order.update(order.id, {
         status: 'driver_assigned',
         driver_id: user.id,
         driver_name: user.full_name,
         driver_phone: user.phone
       });
-      
+
       // Notification push au client
       await base44.functions.invoke('sendPushNotification', {
         userId: updatedOrder.client_id,
@@ -149,7 +149,7 @@ export default function DriverDashboard() {
         message: `${user.full_name} a accepté votre commande et est en route vers la boutique`,
         data: { orderId: order.id, status: 'driver_assigned' }
       }).catch(err => console.error('Push notification error:', err));
-      
+
       return order;
     },
     onSuccess: () => {
@@ -165,7 +165,7 @@ export default function DriverDashboard() {
   const updateOrderMutation = useMutation({
     mutationFn: async ({ id, status }) => {
       const updatedOrder = await base44.entities.Order.update(id, { status });
-      
+
       // Notification push pour "en livraison"
       if (status === 'in_delivery') {
         await base44.functions.invoke('sendPushNotification', {
@@ -175,7 +175,7 @@ export default function DriverDashboard() {
           data: { orderId: id, status }
         }).catch(err => console.error('Push notification error:', err));
       }
-      
+
       return { id, status };
     },
     onSuccess: () => {
@@ -188,7 +188,7 @@ export default function DriverDashboard() {
   const confirmDeliveryMutation = useMutation({
     mutationFn: async (id) => {
       const updatedOrder = await base44.entities.Order.update(id, { status: 'delivered' });
-      
+
       // Notification push de livraison réussie
       await base44.functions.invoke('sendPushNotification', {
         userId: updatedOrder.client_id,
@@ -196,7 +196,7 @@ export default function DriverDashboard() {
         message: 'Votre commande a été livrée avec succès. Bon appétit!',
         data: { orderId: id, status: 'delivered' }
       }).catch(err => console.error('Push notification error:', err));
-      
+
       return id;
     },
     onSuccess: () => {
@@ -234,7 +234,7 @@ export default function DriverDashboard() {
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-orange-500">Rapido Presto</h1>
+              <h1 className="text-xl font-bold text-orange-500">Kairos</h1>
               <p className="text-sm text-slate-500">Livreur • {livreurData.vehicle_type}</p>
             </div>
             <div className="flex items-center gap-3">
@@ -333,7 +333,7 @@ export default function DriverDashboard() {
                     </div>
 
                     <div className="flex gap-2 mt-4">
-                      <Button 
+                      <Button
                         className="flex-1 bg-green-600 hover:bg-green-700"
                         onClick={() => acceptOrderMutation.mutate(order)}
                         disabled={acceptOrderMutation.isPending}
@@ -393,7 +393,7 @@ export default function DriverDashboard() {
                   </div>
                   <span className="font-bold text-orange-500">{order.total} HTG</span>
                 </div>
-                
+
                 <div className="mt-3 pt-3 border-t">
                   <p className="text-sm text-slate-600">
                     {formatHaitiDate(order.created_date, "d MMM yyyy 'à' HH:mm")}
@@ -434,13 +434,13 @@ export default function DriverDashboard() {
                   </div>
                   <span className="font-bold text-orange-500">{order.total} HTG</span>
                 </div>
-                
+
                 <div className="mt-3 pt-3 border-t flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-slate-600">
                     <Navigation className="w-4 h-4" />
                     <span>{order.client_commune}</span>
                   </div>
-                  <a 
+                  <a
                     href={`tel:${order.client_phone}`}
                     onClick={(e) => e.stopPropagation()}
                     className="flex items-center gap-1 text-blue-600"
@@ -505,15 +505,15 @@ export default function DriverDashboard() {
         onUpdateStatus={(id, status) => updateOrderMutation.mutate({ id, status })}
         onConfirmDelivery={(id) => confirmDeliveryMutation.mutate(id)}
       />
-      
-      <BackgroundSyncIndicator 
-        syncStatus={syncStatus} 
-        lastSync={lastSync} 
+
+      <BackgroundSyncIndicator
+        syncStatus={syncStatus}
+        lastSync={lastSync}
         connectionType={connectionType}
       />
 
       {/* Business Smart Navigation */}
-      <BusinessSmartNav 
+      <BusinessSmartNav
         activeTab={navTab}
         setActiveTab={setNavTab}
         userRole="livreur"

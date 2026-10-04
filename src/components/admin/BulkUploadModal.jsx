@@ -153,7 +153,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
     try {
       const taxonomyList = getTaxonomyMappingPrompt();
       const result = await base44.integrations.Core.InvokeLLM({
-       prompt: `Tu es un expert en vision par ordinateur ET en e-commerce haïtien (RapidoPresto).
+       prompt: `Tu es un expert en vision par ordinateur ET en e-commerce haïtien (Kairos).
 
        ÉTAPE 1 — ANALYSE VISUELLE DE LA PHOTO :
        Examine attentivement l'image fournie. Identifie précisément :

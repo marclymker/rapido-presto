@@ -1,5 +1,5 @@
 // ============================================================
-// Rapido Presto — Service Worker v3 (Stale-While-Revalidate)
+// Kairos — Service Worker v3 (Stale-While-Revalidate)
 // Optimisé pour connexions lentes (Haïti)
 // ============================================================
 

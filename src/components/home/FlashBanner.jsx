@@ -9,7 +9,7 @@ export default function FlashBanner() {
   useEffect(() => {
     const checkTime = () => {
       const now = new Date();
-      const minutes = now.getMinutes(); 
+      const minutes = now.getMinutes();
       const seconds = now.getSeconds();
 
       // Cycle de 45 minutes : on vérifie le reste de la division (modulo)

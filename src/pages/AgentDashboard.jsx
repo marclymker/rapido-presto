@@ -34,15 +34,15 @@ export default function AgentDashboard() {
     queryFn: () => base44.entities.Shop.filter({ is_active: true })
   });
 
-  const makariosShop = shops.find(s => 
+  const makariosShop = shops.find(s =>
     s.company_name?.toLowerCase().includes('makarios')
   );
 
   const { data: products = [] } = useQuery({
     queryKey: ['makarios-products', makariosShop?.id],
-    queryFn: () => base44.entities.Product.filter({ 
+    queryFn: () => base44.entities.Product.filter({
       shop_id: makariosShop?.id,
-      is_available: true 
+      is_available: true
     }),
     enabled: !!makariosShop?.id
   });

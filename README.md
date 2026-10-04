@@ -1,4 +1,4 @@
-# Rapido Presto
+# Kairos
 
 ## Prévisualisation produit WhatsApp
 

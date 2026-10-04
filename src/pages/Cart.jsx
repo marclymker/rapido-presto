@@ -28,7 +28,7 @@ const REGION_DATA = {
   'cite soleil': { index: 5, section: 1 },
   'croix des bouquets': { index: 6, section: 1 },
   'lilavois': { index: 7, section: 1 },
-  'fontamara': { index: 8, section: 1 }, 
+  'fontamara': { index: 8, section: 1 },
   'carrefour': { index: 9, section: 2 },
   'gressier': { index: 10, section: 2 },
   'leogane': { index: 11, section: 2 },
@@ -38,7 +38,7 @@ const REGION_DATA = {
   'les gonaives': { index: 14, section: 3 },
   'plaine du nord': { index: 15, section: 3 },
   'vaudreuil': { index: 16, section: 3 },
-  'cap-haitien': { index: 17, section: 3 }, 
+  'cap-haitien': { index: 17, section: 3 },
   'madeline': { index: 18, section: 3 },
   'limonade': { index: 19, section: 3 },
   'pignon': { index: 20, section: 3 },
@@ -69,7 +69,7 @@ function calculateSpecificShopFee(clientRegionName, shopRegionName, shopItems) {
     rawFee = isSameRegion ? 245 : (245 + score) * 1.5;
   }
 
-  return Math.ceil(rawFee); 
+  return Math.ceil(rawFee);
 }
 
 function generateConfirmationCode() {
@@ -95,7 +95,7 @@ export default function Cart() {
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [redirectingToMoncash, setRedirectingToMoncash] = useState(false);
   const [squareToken, setSquareToken] = useState(null);
-  
+
   const queryClient = useQueryClient();
 
   const { data: cartItems = [], isLoading: cartLoading } = useQuery({
@@ -160,7 +160,7 @@ export default function Cart() {
   }, 0);
 
   const shopCount = Object.keys(itemsByShop).length;
-  
+
   const hasDelmasShop = Object.keys(itemsByShop).some(shopId => {
     const shopRegion = itemsByShop[shopId][0].shop_region;
     return normalizeForRegion(shopRegion) === 'delmas';
@@ -168,7 +168,7 @@ export default function Cart() {
 
   let expressFee = 0;
   let standardFee = 0;
-  const shopFees = {}; 
+  const shopFees = {};
 
   Object.keys(itemsByShop).forEach(shopId => {
     const shopRegion = itemsByShop[shopId][0].shop_region;
@@ -225,8 +225,8 @@ export default function Cart() {
 
           let specificShopFee = 0;
           if (deliveryOption !== 'pickup_delimart') {
-            specificShopFee = (shopCount > 1 && deliveryOption === 'standard') 
-              ? (standardFee / shopCount) 
+            specificShopFee = (shopCount > 1 && deliveryOption === 'standard')
+              ? (standardFee / shopCount)
               : shopFees[shopId];
           }
 
@@ -270,7 +270,7 @@ export default function Cart() {
         if (!squareToken) throw new Error('Token de paiement manquant');
         try {
           const { createdOrders, orderNumBase } = await processOrders('card');
-          
+
           const paymentResponse = await base44.functions.invoke('squarePayment', {
             sourceId: squareToken,
             amount: totalAmount,
@@ -322,13 +322,13 @@ export default function Cart() {
         window.location.href = data.paymentUrl;
         return;
       }
-      
+
       queryClient.invalidateQueries(['cart']);
       setOrderNumber(data.orderNum);
       setConfirmCode(data.code);
       setStep('confirmed');
       toast.success('Commande confirmée!');
-      
+
       trackPurchase({
         order_number: data.orderNum,
         total: baseTotal,
@@ -339,7 +339,7 @@ export default function Cart() {
           unit_price: item.unit_price
         }))
       });
-      
+
       if (window.fbq) {
         window.fbq('track', 'Purchase', {
           content_ids: cartItems.map(i => i.product_id),
@@ -398,7 +398,7 @@ export default function Cart() {
 
           {step === 'cart' && cartItems.length > 0 && (
             <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              
+
               {shopCount > 1 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800">
                   <p className="font-bold flex items-center gap-2">
@@ -426,7 +426,7 @@ export default function Cart() {
                       <p className="text-xs text-slate-500 font-medium">
                         {item.shop_name} <span className="text-slate-400 font-normal">({item.shop_region})</span>
                       </p>
-                      
+
                       <div className="flex items-center justify-between mt-3">
                         <div>
                           <span className="font-bold text-slate-800">
@@ -650,7 +650,7 @@ export default function Cart() {
 
               <div className="rp-checkout-total bg-slate-800 rounded-xl p-5 text-white shadow-lg">
                 <h3 className="font-bold text-slate-300 mb-4 uppercase tracking-wider text-sm">Facture finale</h3>
-                
+
                 <div className="space-y-2 mb-4 text-sm text-slate-300">
                   <div className="flex justify-between">
                     <span>Sous-total articles</span>
@@ -683,10 +683,10 @@ export default function Cart() {
               </div>
 
               <div className="flex gap-3">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="h-14 px-6 bg-white border-slate-300 text-slate-700 font-bold" 
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-14 px-6 bg-white border-slate-300 text-slate-700 font-bold"
                   onClick={(e) => { e.preventDefault(); setStep('cart'); }}
                 >
                   Retour

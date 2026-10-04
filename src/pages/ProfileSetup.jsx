@@ -79,7 +79,7 @@ export default function ProfileSetup() {
   const handleFileUpload = async (e, field) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, [field]: file_url });
@@ -130,7 +130,7 @@ export default function ProfileSetup() {
           is_active: true
         };
         const shop = await base44.entities.Shop.create(shopData);
-        
+
         profiles.entreprise = {
           is_active: true,
           created_at: now,
@@ -142,7 +142,7 @@ export default function ProfileSetup() {
           rating: 5,
           delivery_time_minutes: 30
         };
-        
+
         // Keep client profile inactive
         profiles.client = {
           is_active: false,
@@ -201,14 +201,14 @@ export default function ProfileSetup() {
       <div className="max-w-md mx-auto">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-orange-500">Rapido Presto</h1>
+          <h1 className="text-3xl font-bold text-orange-500">Kairos</h1>
           <p className="text-slate-600 mt-2">Bienvenue, {user?.full_name}!</p>
         </div>
 
         {/* Progress */}
         <div className="flex gap-2 mb-8">
           {[1, 2].map(s => (
-            <div 
+            <div
               key={s}
               className={`h-1.5 flex-1 rounded-full transition-colors ${
                 s <= step ? 'bg-orange-500' : 'bg-white'
@@ -227,17 +227,17 @@ export default function ProfileSetup() {
               exit={{ opacity: 0, x: -20 }}
               className="bg-white rounded-2xl p-6 shadow-lg"
             >
-              <h2 className="text-xl font-semibold mb-6">Comment souhaitez-vous utiliser Rapido Presto?</h2>
+              <h2 className="text-xl font-semibold mb-6">Comment souhaitez-vous utiliser Kairos?</h2>
 
-              <RadioGroup 
-                value={formData.user_type} 
+              <RadioGroup
+                value={formData.user_type}
                 onValueChange={(val) => setFormData({ ...formData, user_type: val })}
                 className="space-y-3"
               >
-                <label 
+                <label
                   className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    formData.user_type === 'client' 
-                      ? 'border-orange-500 bg-orange-50' 
+                    formData.user_type === 'client'
+                      ? 'border-orange-500 bg-orange-50'
                       : 'border-slate-200 hover:border-orange-200'
                   }`}
                 >
@@ -253,10 +253,10 @@ export default function ProfileSetup() {
                   </div>
                 </label>
 
-                <label 
+                <label
                   className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    formData.user_type === 'entreprise' 
-                      ? 'border-orange-500 bg-orange-50' 
+                    formData.user_type === 'entreprise'
+                      ? 'border-orange-500 bg-orange-50'
                       : 'border-slate-200 hover:border-orange-200'
                   }`}
                 >
@@ -272,10 +272,10 @@ export default function ProfileSetup() {
                   </div>
                 </label>
 
-                <label 
+                <label
                   className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    formData.user_type === 'livreur' 
-                      ? 'border-orange-500 bg-orange-50' 
+                    formData.user_type === 'livreur'
+                      ? 'border-orange-500 bg-orange-50'
                       : 'border-slate-200 hover:border-orange-200'
                   }`}
                 >
@@ -291,10 +291,10 @@ export default function ProfileSetup() {
                   </div>
                 </label>
 
-                <label 
+                <label
                   className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    formData.user_type === 'agent' 
-                      ? 'border-orange-500 bg-orange-50' 
+                    formData.user_type === 'agent'
+                      ? 'border-orange-500 bg-orange-50'
                       : 'border-slate-200 hover:border-orange-200'
                   }`}
                 >
@@ -311,7 +311,7 @@ export default function ProfileSetup() {
                 </label>
               </RadioGroup>
 
-              <Button 
+              <Button
                 className="w-full mt-6 bg-orange-500 hover:bg-orange-600 h-12"
                 onClick={() => setStep(2)}
                 disabled={!canProceed()}
@@ -337,8 +337,8 @@ export default function ProfileSetup() {
                 {/* Common fields */}
                 <div>
                   <Label>Région</Label>
-                  <Select 
-                    value={formData.region} 
+                  <Select
+                    value={formData.region}
                     onValueChange={(val) => setFormData({ ...formData, region: val })}
                   >
                     <SelectTrigger>
@@ -393,8 +393,8 @@ export default function ProfileSetup() {
                     </div>
                     <div>
                       <Label>Catégorie</Label>
-                      <Select 
-                        value={formData.company_category} 
+                      <Select
+                        value={formData.company_category}
                         onValueChange={(val) => setFormData({ ...formData, company_category: val })}
                       >
                         <SelectTrigger>
@@ -416,9 +416,9 @@ export default function ProfileSetup() {
                           <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-xl cursor-pointer hover:border-orange-300">
                             <Upload className="w-6 h-6 text-slate-400" />
                             <span className="text-sm text-slate-500 mt-1">Télécharger</span>
-                            <input 
-                              type="file" 
-                              accept="image/*" 
+                            <input
+                              type="file"
+                              accept="image/*"
                               className="hidden"
                               onChange={(e) => handleFileUpload(e, 'company_logo_url')}
                             />
@@ -434,8 +434,8 @@ export default function ProfileSetup() {
                   <>
                     <div>
                       <Label>Type de véhicule</Label>
-                      <Select 
-                        value={formData.vehicle_type} 
+                      <Select
+                        value={formData.vehicle_type}
                         onValueChange={(val) => setFormData({ ...formData, vehicle_type: val })}
                       >
                         <SelectTrigger>
@@ -464,9 +464,9 @@ export default function ProfileSetup() {
                           <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-xl cursor-pointer hover:border-orange-300">
                             <Upload className="w-6 h-6 text-slate-400" />
                             <span className="text-sm text-slate-500 mt-1">Télécharger votre document</span>
-                            <input 
-                              type="file" 
-                              accept="image/*,.pdf" 
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
                               className="hidden"
                               onChange={(e) => handleFileUpload(e, 'id_document_url')}
                             />
@@ -479,14 +479,14 @@ export default function ProfileSetup() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <Button 
+                <Button
                   variant="outline"
                   className="flex-1"
                   onClick={() => setStep(1)}
                 >
                   Retour
                 </Button>
-                <Button 
+                <Button
                   className="flex-1 bg-orange-500 hover:bg-orange-600"
                   onClick={handleSubmit}
                   disabled={!canProceed() || saving}

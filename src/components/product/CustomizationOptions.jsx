@@ -9,9 +9,9 @@ export default function CustomizationOptions({ product, onChange }) {
   const [customization, setCustomization] = useState({});
   const options = product.customization_options || {};
 
-  const hasOptions = options.colors?.length > 0 || 
-                     options.sizes?.length > 0 || 
-                     options.text_customization?.enabled || 
+  const hasOptions = options.colors?.length > 0 ||
+                     options.sizes?.length > 0 ||
+                     options.text_customization?.enabled ||
                      options.arrangements?.length > 0;
 
   useEffect(() => {

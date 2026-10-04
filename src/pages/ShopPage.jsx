@@ -25,9 +25,9 @@ export default function ShopPage() {
 
   const { data: products = [] } = useQuery({
     queryKey: ['shop-products', shop?.id],
-    queryFn: () => base44.entities.Product.filter({ 
+    queryFn: () => base44.entities.Product.filter({
       shop_id: shop.id,
-      is_available: true 
+      is_available: true
     }),
     enabled: !!shop?.id
   });
@@ -96,19 +96,19 @@ export default function ShopPage() {
   return (
     <>
       <Helmet>
-        <title>{shop.company_name} - {shop.region} | Rapido Presto</title>
-        <meta 
-          name="description" 
+        <title>{shop.company_name} - {shop.region} | Kairos</title>
+        <meta
+          name="description"
           content={`${shop.company_name} - ${shop.company_category} à ${shop.region}. ${products.length} produits disponibles. Livraison rapide en Haïti.`}
         />
         <meta name="keywords" content={`${shop.company_name}, ${shop.company_category}, ${shop.region}, Haïti`} />
-        
+
         <meta property="og:title" content={shop.company_name} />
         <meta property="og:description" content={`${shop.company_category} à ${shop.region}`} />
         <meta property="og:image" content={shop.company_logo_url} />
-        
+
         <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
-        
+
         <script type="application/ld+json">
           {JSON.stringify(organizationSchema)}
         </script>
@@ -137,8 +137,8 @@ export default function ShopPage() {
           <header className="bg-white rounded-lg shadow-sm p-6 mb-8">
             <div className="flex items-center gap-6">
               {shop.company_logo_url && (
-                <img 
-                  src={shop.company_logo_url} 
+                <img
+                  src={shop.company_logo_url}
                   alt={shop.company_name}
                   className="w-24 h-24 rounded-full object-cover border-2 border-orange-100"
                 />

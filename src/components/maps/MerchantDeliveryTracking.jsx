@@ -14,7 +14,7 @@ export default function MerchantDeliveryTracking({ order, onClose }) {
       toast.error('Entrez le code de confirmation');
       return;
     }
-    
+
     if (confirmationCode !== order.confirmation_code) {
       toast.error('Code incorrect');
       return;
@@ -22,7 +22,7 @@ export default function MerchantDeliveryTracking({ order, onClose }) {
 
     setLoading(true);
     try {
-      await base44.entities.Order.update(order.id, { 
+      await base44.entities.Order.update(order.id, {
         status: 'delivered'
       });
       toast.success('✅ Livraison terminée !');

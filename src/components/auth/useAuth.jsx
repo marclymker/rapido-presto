@@ -26,7 +26,7 @@ export function useAuth() {
 
   // Ajouter la source d'accès aux données utilisateur
   const accessSource = getAccessSource();
-  
+
   return {
     user: user ? { ...user, access_source: accessSource } : null,
     isLoading,

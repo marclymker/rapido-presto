@@ -17,7 +17,7 @@ import ProductFAQ from '@/components/product/ProductFAQ';
 function saveScroll() {
   try { sessionStorage.setItem('marketplace_scroll', String(window.scrollY)); } catch (_) {}
 }
- 
+
 export default function ProductPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -139,22 +139,22 @@ export default function ProductPage() {
   const currentImg = allImages[imgIndex] || product.image_url;
   const imgSrc = currentImg ? `${currentImg}${currentImg.includes('?') ? '&' : '?'}width=800&quality=80` : null;
   const canonicalUrl = getProductCanonicalUrl(product);
-  const shareDescription = (product.description || `Découvrez ${product.name} sur Rapido Presto.`).slice(0, 300);
+  const shareDescription = (product.description || `Découvrez ${product.name} sur Kairos.`).slice(0, 300);
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#f0f2f5' }}>
       <Helmet>
-        <title>{product.name} | Rapido Presto</title>
+        <title>{product.name} | Kairos</title>
         <meta name="description" content={shareDescription} />
         <link rel="canonical" href={canonicalUrl} />
         <meta property="og:type" content="product" />
-        <meta property="og:title" content={`${product.name} | Rapido Presto`} />
+        <meta property="og:title" content={`${product.name} | Kairos`} />
         <meta property="og:description" content={shareDescription} />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:image" content={imgSrc} />
         <meta property="og:image:alt" content={product.name} />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${product.name} | Rapido Presto`} />
+        <meta name="twitter:title" content={`${product.name} | Kairos`} />
         <meta name="twitter:description" content={shareDescription} />
         <meta name="twitter:image" content={imgSrc} />
       </Helmet>
@@ -165,7 +165,7 @@ export default function ProductPage() {
         "name": product.name,
         "description": product.description || product.name,
         "image": imgSrc,
-        "brand": { "@type": "Brand", "name": shop?.company_name || "RAPIDOPRESTO" },
+        "brand": { "@type": "Brand", "name": shop?.company_name || "KAIROS" },
         "offers": {
           "@type": "Offer",
           "priceCurrency": "HTG",
@@ -181,7 +181,7 @@ export default function ProductPage() {
           <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
         <span className="text-sm font-semibold text-gray-900 truncate flex-1">{product.name}</span>
-        
+
         <button onClick={handleShare} className="p-1.5 rounded-full hover:bg-gray-100">
           <Share2 className="w-5 h-5 text-gray-700" />
         </button>
@@ -193,7 +193,7 @@ export default function ProductPage() {
           <img src={imgSrc} alt={product.name} className="w-full h-full object-contain" />
         </div>
         {hasPromo && <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">-{Math.round((1 - product.promo_price / product.price) * 100)}%</div>}
-        
+
         <button onClick={handleShare} className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur shadow-md rounded-full">
           <Share2 className="w-4 h-4 text-gray-700" />
         </button>

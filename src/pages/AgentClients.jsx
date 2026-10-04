@@ -44,9 +44,9 @@ export default function AgentClients() {
 
   const { data: products = [] } = useQuery({
     queryKey: ['makarios-products'],
-    queryFn: () => base44.entities.Product.filter({ 
+    queryFn: () => base44.entities.Product.filter({
       shop_id: makariosShop?.id,
-      is_available: true 
+      is_available: true
     }),
     enabled: !!makariosShop?.id
   });
@@ -67,8 +67,8 @@ export default function AgentClients() {
   const handleAddProduct = (product) => {
     const existing = selectedProducts.find(p => p.product_id === product.id);
     if (existing) {
-      setSelectedProducts(prev => 
-        prev.map(p => p.product_id === product.id 
+      setSelectedProducts(prev =>
+        prev.map(p => p.product_id === product.id
           ? { ...p, quantity: p.quantity + 1, total: (p.quantity + 1) * p.unit_price }
           : p
         )
@@ -157,7 +157,7 @@ export default function AgentClients() {
                       {client.event_type} {client.event_date && `- ${new Date(client.event_date).toLocaleDateString()}`}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4 mt-3">
                     <div>
                       <p className="text-xs text-slate-500">Montant</p>
@@ -220,7 +220,7 @@ export default function AgentClients() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Nom complet *</Label>
-                <Input 
+                <Input
                   value={formData.full_name}
                   onChange={(e) => setFormData({...formData, full_name: e.target.value})}
                   placeholder="Jean Dupont"
@@ -228,7 +228,7 @@ export default function AgentClients() {
               </div>
               <div>
                 <Label>Téléphone *</Label>
-                <Input 
+                <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   placeholder="+509 1234 5678"
@@ -236,7 +236,7 @@ export default function AgentClients() {
               </div>
               <div>
                 <Label>Email</Label>
-                <Input 
+                <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -261,7 +261,7 @@ export default function AgentClients() {
               </div>
               <div className="col-span-2">
                 <Label>Date de l'événement</Label>
-                <Input 
+                <Input
                   type="date"
                   value={formData.event_date}
                   onChange={(e) => setFormData({...formData, event_date: e.target.value})}
@@ -281,8 +281,8 @@ export default function AgentClients() {
                         <p className="text-sm font-medium">{item.product_name}</p>
                         <p className="text-xs text-slate-600">x{item.quantity} - {item.total.toLocaleString()} HTG</p>
                       </div>
-                      <Button 
-                        size="icon" 
+                      <Button
+                        size="icon"
                         variant="ghost"
                         onClick={() => handleRemoveProduct(item.product_id)}
                       >
@@ -325,8 +325,8 @@ export default function AgentClients() {
               <Button variant="outline" onClick={() => setShowAddModal(false)} className="flex-1">
                 Annuler
               </Button>
-              <Button 
-                onClick={handleSubmit} 
+              <Button
+                onClick={handleSubmit}
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
                 disabled={createClientMutation.isPending}
               >

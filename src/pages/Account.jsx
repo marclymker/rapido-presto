@@ -53,7 +53,7 @@ export default function Account() {
         whatsapp_number: activeProfile.whatsapp_number || ''
       });
       setLoading(false);
-      
+
 
     }).catch(() => setLoading(false));
   }, []);
@@ -78,7 +78,7 @@ export default function Account() {
         address: formData.address,
         region: formData.region
       };
-      
+
       await base44.auth.updateMe(allowedFields);
       setUser({ ...user, ...allowedFields });
       setEditMode(false);
@@ -111,7 +111,7 @@ export default function Account() {
       details: newPayment.details,
       last_digits: newPayment.details.slice(-4)
     };
-    
+
     try {
       await base44.auth.updateMe({
         payment_methods: [...payments, newPaymentMethod]
@@ -128,7 +128,7 @@ export default function Account() {
   const handleDeletePayment = async (index) => {
     const payments = [...(user.payment_methods || [])];
     payments.splice(index, 1);
-    
+
     try {
       await base44.auth.updateMe({ payment_methods: payments });
       setUser({ ...user, payment_methods: payments });
@@ -199,7 +199,7 @@ export default function Account() {
           <p className="text-sm text-slate-600 mb-3">
             Publiez vos produits en quelques secondes et vendez à des milliers de clients
           </p>
-          <Button 
+          <Button
             onClick={() => setShowProductForm(true)}
             className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg"
           >
@@ -284,8 +284,8 @@ export default function Account() {
             <div>
               <Label className="text-slate-500 text-sm">Région</Label>
               {editMode ? (
-                <Select 
-                  value={formData.region} 
+                <Select
+                  value={formData.region}
                   onValueChange={(val) => setFormData({ ...formData, region: val })}
                 >
                   <SelectTrigger>
@@ -323,7 +323,7 @@ export default function Account() {
             <Lock className="w-5 h-5 text-slate-600" />
             Sécurité
           </h3>
-          
+
           <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="w-full justify-start">
@@ -360,7 +360,7 @@ export default function Account() {
                     onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
                   />
                 </div>
-                <Button 
+                <Button
                   className="w-full bg-orange-500 hover:bg-orange-600"
                   onClick={() => {
                     if (passwordData.new !== passwordData.confirm) {
@@ -386,14 +386,14 @@ export default function Account() {
               <Shield className="w-5 h-5 text-purple-600" />
               <span>Outils Admin</span>
             </h3>
-            
+
             <div className="space-y-3">
               <div className="bg-white rounded-lg p-3">
                 <h4 className="text-sm font-medium mb-2">Conversion WhatsApp Marchands</h4>
                 <p className="text-xs text-slate-600 mb-3">
                   Convertit tous les numéros de téléphone des marchands au format WhatsApp (509XXXXXXXX)
                 </p>
-                <Button 
+                <Button
                   onClick={handleConvertWhatsApp}
                   disabled={convertingWhatsApp}
                   className="w-full bg-purple-600 hover:bg-purple-700"
@@ -401,13 +401,13 @@ export default function Account() {
                   {convertingWhatsApp ? 'Conversion en cours...' : 'Convertir numéros marchands'}
                 </Button>
               </div>
-              
+
               <div className="bg-white rounded-lg p-3">
                 <h4 className="text-sm font-medium mb-2">Conversion WhatsApp Clients</h4>
                 <p className="text-xs text-slate-600 mb-3">
                   Convertit tous les numéros de téléphone des clients au format WhatsApp (509XXXXXXXX)
                 </p>
-                <Button 
+                <Button
                   onClick={async () => {
                     setConvertingWhatsApp(true);
                     try {
@@ -425,13 +425,13 @@ export default function Account() {
                   {convertingWhatsApp ? 'Conversion en cours...' : 'Convertir numéros clients'}
                 </Button>
               </div>
-              
+
               <div className="bg-white rounded-lg p-3">
                 <h4 className="text-sm font-medium mb-2">Générer Liens Boutiques</h4>
                 <p className="text-xs text-slate-600 mb-3">
                   Génère des liens uniques (slug) pour toutes les boutiques
                 </p>
-                <Button 
+                <Button
                   onClick={async () => {
                     setConvertingWhatsApp(true);
                     try {
@@ -449,13 +449,13 @@ export default function Account() {
                   {convertingWhatsApp ? 'Génération en cours...' : 'Générer liens boutiques'}
                 </Button>
               </div>
-              
+
               <div className="bg-white rounded-lg p-3">
                 <h4 className="text-sm font-medium mb-2">Générer Liens Produits</h4>
                 <p className="text-xs text-slate-600 mb-3">
                   Génère des liens uniques (slug) pour tous les produits
                 </p>
-                <Button 
+                <Button
                   onClick={async () => {
                     setConvertingWhatsApp(true);
                     try {
@@ -473,7 +473,7 @@ export default function Account() {
                   {convertingWhatsApp ? 'Génération en cours...' : 'Générer liens produits'}
                 </Button>
               </div>
-              
+
               <div className="bg-white rounded-lg p-3 border-2 border-blue-200">
                 <h4 className="text-sm font-medium mb-2 text-blue-700">🖼️ Compresser les images (Bulk)</h4>
                 <p className="text-xs text-slate-600 mb-3">
@@ -542,7 +542,7 @@ export default function Account() {
                 </p>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button 
+                    <Button
                       disabled={convertingWhatsApp}
                       className="w-full bg-red-600 hover:bg-red-700"
                     >
@@ -559,7 +559,7 @@ export default function Account() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Annuler</AlertDialogCancel>
-                      <AlertDialogAction 
+                      <AlertDialogAction
                         className="bg-red-600 hover:bg-red-700"
                         onClick={async () => {
                           setConvertingWhatsApp(true);
@@ -589,7 +589,7 @@ export default function Account() {
         {/* Payment Methods */}
         <div className="bg-white rounded-xl p-4">
           <h3 className="font-semibold mb-4">Moyens de paiement</h3>
-          
+
           {/* Available Payment Methods */}
           <div className="mb-4 p-3 bg-slate-50 rounded-lg">
             <p className="text-xs text-slate-600 mb-2 font-medium">Méthodes acceptées:</p>
@@ -628,8 +628,8 @@ export default function Account() {
                 <div className="space-y-4 pt-4">
                   <div>
                     <Label>Type</Label>
-                    <Select 
-                      value={newPayment.type} 
+                    <Select
+                      value={newPayment.type}
                       onValueChange={(val) => setNewPayment({ ...newPayment, type: val })}
                     >
                       <SelectTrigger>
@@ -675,9 +675,9 @@ export default function Account() {
                       <p className="text-sm text-slate-500">•••• {pm.last_digits}</p>
                     </div>
                   </div>
-                  <Button 
-                    size="icon" 
-                    variant="ghost" 
+                  <Button
+                    size="icon"
+                    variant="ghost"
                     className="text-red-500"
                     onClick={() => handleDeletePayment(idx)}
                   >
@@ -691,8 +691,8 @@ export default function Account() {
 
         {/* Logout */}
         <div className="pt-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full"
             onClick={handleLogout}
           >

@@ -8,11 +8,11 @@ export default function ShareProductButton({ product, shop, className = '' }) {
   const handleShare = async () => {
     const shareProduct = product ? { ...product, shop_slug: shop?.slug } : null;
     const shareUrl = getProductShareUrl(shareProduct, window.location.origin);
-    const shareText = product ? `${product.name} - ${shop?.company_name || 'Rapido Presto'}` : shop?.company_name || 'Rapido Presto';
+    const shareText = product ? `${product.name} - ${shop?.company_name || 'Kairos'}` : shop?.company_name || 'Kairos';
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: shareText, text: 'Découvre ce produit sur Rapido Presto', url: shareUrl });
+        await navigator.share({ title: shareText, text: 'Découvre ce produit sur Kairos', url: shareUrl });
         return;
       } catch (error) {
         if (error.name === 'AbortError') return;

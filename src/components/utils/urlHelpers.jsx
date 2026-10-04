@@ -60,7 +60,7 @@ export const subcategoryToSlug = (subcategory) => {
 // Conversion des slugs en sous-catégories
 export const slugToSubcategory = (slug, weddingStructure) => {
   if (!slug) return null;
-  
+
   for (const group of weddingStructure) {
     if (group.subtypes) {
       for (const subtype of group.subtypes) {
@@ -123,7 +123,7 @@ export const getCategoryMeta = (category, subcategory = null) => {
   };
 
   const baseMeta = meta[category] || {
-    title: `${category} en Haïti | Rapido Presto`,
+    title: `${category} en Haïti | Kairos`,
     description: `Achetez ${category} en Haïti avec livraison rapide.`,
     keywords: `${category.toLowerCase()} haiti`
   };

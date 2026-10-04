@@ -44,7 +44,7 @@ export default function AdminValidation() {
     queryFn: async () => {
       const approved = await base44.entities.ProfileSwitch.filter({ status: 'approved' }, '-created_date', 20);
       const rejected = await base44.entities.ProfileSwitch.filter({ status: 'rejected' }, '-created_date', 20);
-      return [...approved, ...rejected].sort((a, b) => 
+      return [...approved, ...rejected].sort((a, b) =>
         new Date(b.updated_date) - new Date(a.updated_date)
       );
     },
@@ -58,13 +58,13 @@ export default function AdminValidation() {
         status: 'approved',
         approved_by: user.id
       });
-      
+
       // Fetch the user and update their profile
       const targetUser = await base44.entities.User.filter({ id: request.user_id });
       if (targetUser.length > 0) {
         const userData = targetUser[0];
         const profiles = userData.profiles || {};
-        
+
         profiles.livreur = {
           ...profiles.livreur,
           is_active: true,
@@ -73,7 +73,7 @@ export default function AdminValidation() {
           id_document_url: request.data.id_document_url,
           is_available: false
         };
-        
+
         // Note: We can't directly update other users with auth.updateMe
         // In a real app, this would need a backend function with admin privileges
         // For now, we'll just update the switch status
@@ -134,12 +134,12 @@ export default function AdminValidation() {
                 </p>
               </div>
             </div>
-            
+
             {!isPending && (
-              <Badge 
-                variant="secondary" 
-                className={request.status === 'approved' 
-                  ? 'bg-green-100 text-green-700' 
+              <Badge
+                variant="secondary"
+                className={request.status === 'approved'
+                  ? 'bg-green-100 text-green-700'
                   : 'bg-red-100 text-red-700'
                 }
               >
@@ -153,14 +153,14 @@ export default function AdminValidation() {
               <Bike className="w-4 h-4" />
               <span>Véhicule: <strong>{request.data?.vehicle_type}</strong></span>
             </div>
-            
+
             {request.data?.phone && (
               <div className="flex items-center gap-2 text-slate-600">
                 <Phone className="w-4 h-4" />
                 <span>{request.data.phone}</span>
               </div>
             )}
-            
+
             {request.data?.commune && (
               <div className="flex items-center gap-2 text-slate-600">
                 <MapPin className="w-4 h-4" />
@@ -169,7 +169,7 @@ export default function AdminValidation() {
             )}
 
             {request.data?.id_document_url && (
-              <a 
+              <a
                 href={request.data.id_document_url}
                 target="_blank"
                 rel="noopener noreferrer"

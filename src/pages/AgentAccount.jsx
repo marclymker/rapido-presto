@@ -114,7 +114,7 @@ export default function AgentAccount() {
                   <User className="w-4 h-4" />
                   Nom complet
                 </Label>
-                <Input 
+                <Input
                   value={formData.full_name}
                   onChange={(e) => setFormData({...formData, full_name: e.target.value})}
                   disabled={!isEditing}
@@ -127,7 +127,7 @@ export default function AgentAccount() {
                   <Mail className="w-4 h-4" />
                   Email
                 </Label>
-                <Input 
+                <Input
                   value={formData.email}
                   disabled
                   className="bg-slate-50"
@@ -140,7 +140,7 @@ export default function AgentAccount() {
                   <Phone className="w-4 h-4" />
                   Téléphone
                 </Label>
-                <Input 
+                <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   disabled={!isEditing}
@@ -154,7 +154,7 @@ export default function AgentAccount() {
                   <MapPin className="w-4 h-4" />
                   Adresse
                 </Label>
-                <Input 
+                <Input
                   value={formData.address}
                   onChange={(e) => setFormData({...formData, address: e.target.value})}
                   disabled={!isEditing}
@@ -169,11 +169,11 @@ export default function AgentAccount() {
                 <CreditCard className="w-5 h-5" />
                 Informations de paiement
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <Label className="text-slate-700 mb-1">Numéro MonCash</Label>
-                  <Input 
+                  <Input
                     value={formData.moncash_number}
                     onChange={(e) => setFormData({...formData, moncash_number: e.target.value})}
                     disabled={!isEditing}
@@ -184,7 +184,7 @@ export default function AgentAccount() {
 
                 <div>
                   <Label className="text-slate-700 mb-1">Numéro NatCash</Label>
-                  <Input 
+                  <Input
                     value={formData.natcash_number}
                     onChange={(e) => setFormData({...formData, natcash_number: e.target.value})}
                     disabled={!isEditing}
@@ -195,7 +195,7 @@ export default function AgentAccount() {
 
                 <div>
                   <Label className="text-slate-700 mb-1">Compte Bancaire (SOGEBANK)</Label>
-                  <Input 
+                  <Input
                     value={formData.bank_account}
                     onChange={(e) => setFormData({...formData, bank_account: e.target.value})}
                     disabled={!isEditing}
@@ -208,14 +208,14 @@ export default function AgentAccount() {
 
             {isEditing && (
               <div className="flex gap-3 mt-6 pt-4 border-t">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setIsEditing(false)}
                   className="flex-1"
                 >
                   Annuler
                 </Button>
-                <Button 
+                <Button
                   onClick={handleSubmit}
                   disabled={updateMutation.isPending}
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
@@ -229,8 +229,8 @@ export default function AgentAccount() {
         </div>
 
         {/* Logout */}
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="w-full mt-4 text-red-600 hover:bg-red-50"
           onClick={() => base44.auth.logout()}
         >

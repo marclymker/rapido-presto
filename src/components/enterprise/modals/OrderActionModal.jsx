@@ -15,7 +15,7 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
     setLoading(true);
     try {
       await base44.entities.Order.update(order.id, { status: newStatus });
-      
+
       // Send email notification to client
       try {
         const { data: shops } = await base44.entities.Shop.filter({ id: order.shop_id });
@@ -39,7 +39,7 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
       } catch (emailError) {
         console.log('Email notification failed:', emailError);
       }
-      
+
       toast.success('Commande mise à jour');
       onSuccess?.();
       if (newStatus !== 'ready') {
@@ -56,8 +56,8 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
     setLoading(true);
     try {
       const newStatus = deliveryType === 'merchant_delivery' ? 'in_delivery' : 'searching_driver';
-      
-      await base44.entities.Order.update(order.id, { 
+
+      await base44.entities.Order.update(order.id, {
         delivery_type: deliveryType,
         status: newStatus
       });
@@ -85,7 +85,7 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
       } catch (emailError) {
         console.log('Email notification failed:', emailError);
       }
-      
+
       toast.success(deliveryType === 'merchant_delivery' ? 'Vous êtes en charge de la livraison' : 'Recherche d\'un livreur en cours...');
       onSuccess?.();
       onClose();
@@ -101,7 +101,7 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
       toast.error('Entrez le code de confirmation');
       return;
     }
-    
+
     if (confirmationCode !== order.confirmation_code) {
       toast.error('Code incorrect');
       return;
@@ -109,7 +109,7 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
 
     setLoading(true);
     try {
-      await base44.entities.Order.update(order.id, { 
+      await base44.entities.Order.update(order.id, {
         status: 'delivered'
       });
 
@@ -136,7 +136,7 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
       } catch (emailError) {
         console.log('Email notification failed:', emailError);
       }
-      
+
       toast.success('✅ Livraison terminée !');
       onSuccess?.();
       onClose();
@@ -148,31 +148,31 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
   };
 
   const actions = [
-    { 
-      status: 'accepted', 
-      label: 'Accepter', 
-      icon: Check, 
+    {
+      status: 'accepted',
+      label: 'Accepter',
+      icon: Check,
       color: 'bg-green-600 hover:bg-green-700',
       show: order?.status === 'pending'
     },
-    { 
-      status: 'preparing', 
-      label: 'En préparation', 
-      icon: Clock, 
+    {
+      status: 'preparing',
+      label: 'En préparation',
+      icon: Clock,
       color: 'bg-orange-600 hover:bg-orange-700',
       show: order?.status === 'accepted'
     },
-    { 
-      status: 'ready', 
-      label: 'Prêt pour livraison', 
-      icon: Truck, 
+    {
+      status: 'ready',
+      label: 'Prêt pour livraison',
+      icon: Truck,
       color: 'bg-blue-600 hover:bg-blue-700',
       show: order?.status === 'preparing'
     },
-    { 
-      status: 'cancelled', 
-      label: 'Refuser', 
-      icon: X, 
+    {
+      status: 'cancelled',
+      label: 'Refuser',
+      icon: X,
       color: 'bg-red-600 hover:bg-red-700',
       show: order?.status === 'pending'
     }
@@ -184,7 +184,7 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
         <DialogHeader>
           <DialogTitle>Commande #{order?.order_number || order?.id?.slice(0, 8)}</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-3">
           <div className="bg-gray-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600">Client</p>
@@ -238,7 +238,7 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
                   Choisissez comment la commande sera livrée au client
                 </p>
               </div>
-              
+
               <Button
                 onClick={() => handleDeliveryChoice('merchant_delivery')}
                 disabled={loading}

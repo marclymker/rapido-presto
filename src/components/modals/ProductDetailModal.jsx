@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Minus, Plus, Store, Loader2, MapPin, X,
   ChevronRight, ZoomIn, ZoomOut, Download, Plus as PlusIcon, Truck, ChevronLeft
 } from 'lucide-react';
@@ -131,7 +131,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
     const newY = e.clientY - startPos.y;
     const containerRect = containerRef.current?.getBoundingClientRect();
     const imageRect = imageRef.current?.getBoundingClientRect();
-    
+
     if (containerRect && imageRect) {
       const maxX = (imageRect.width - containerRect.width) / 2;
       const maxY = (imageRect.height - containerRect.height) / 2;
@@ -156,23 +156,23 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   }, [isDragging, zoom]);
 
   if (!product) return null;
-  
+
   const variants = getProductVariants(product);
   const selectedVariant = variants.find(v => v.id === selectedVariantId) || variants[0] || null;
   const price = applyClientMargin(getVariantPrice(product, selectedVariant));
-  
+
   // Construire la liste complète des images
   const allImages = getVariantImages(product, selectedVariant);
-  
+
   const currentImage = allImages[currentImageIndex] || product.image_url;
   const hasMultipleImages = allImages.length > 1;
-  
+
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
     setZoom(1);
     setPosition({ x: 0, y: 0 });
   };
-  
+
   const handleNextImage = () => {
     setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
     setZoom(1);
@@ -234,7 +234,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <DialogContent className="max-w-md p-0 overflow-hidden bg-white flex flex-col max-h-[92vh] sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl border-none">
         <div className="overflow-y-auto flex-1 custom-scrollbar">
-          <div 
+          <div
             ref={containerRef}
             className="relative aspect-[4/3] sm:aspect-square w-full bg-slate-100 overflow-hidden cursor-move"
             onMouseDown={handleMouseDown}
@@ -248,16 +248,16 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               />
             )}
 
-            <div 
+            <div
               className="w-full h-full flex items-center justify-center transition-transform duration-200"
               style={{
                 transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
               }}
             >
-              <img 
+              <img
                 ref={imageRef}
-                src={`${currentImage}${currentImage?.includes('?') ? '&' : '?'}w=800&q=85`} 
-                alt={product.name} 
+                src={`${currentImage}${currentImage?.includes('?') ? '&' : '?'}w=800&q=85`}
+                alt={product.name}
                 className="max-w-full max-h-full object-contain transition-opacity duration-300"
                 style={{ opacity: imageLoaded ? 1 : 0 }}
                 onLoad={() => setImageLoaded(true)}
@@ -302,7 +302,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
              {/* BOUTON CRÉER ARTICLE - pour vendeurs/clients */}
              {user && (
-               <button 
+               <button
                  onClick={() => setShowCreateProductModal(true)}
                  title="Créer un article similaire"
                  className="absolute top-4 left-32 p-2 bg-blue-500/70 backdrop-blur-md rounded-full text-white hover:bg-blue-600 transition-colors z-10"
@@ -358,7 +358,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                   </span>
                 )}
               </div>
-              
+
               {/* Badge Livraison Gratuite si prix >= 3000 */}
               {price >= 3000 && (
                 <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg w-fit border border-green-200">
@@ -403,7 +403,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             )}
 
             {shop && (
-              <div 
+              <div
                 onClick={() => {
                   if (shop.slug) {
                     window.location.href = `/shop-view?slug=${shop.slug}`;
@@ -471,7 +471,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             Commander Maintenant
           </Button>
 
-          <Button 
+          <Button
             onClick={() => {
               const productUrl = getProductShareUrl({ ...product, shop_slug: shop?.slug }, window.location.origin);
 
@@ -479,12 +479,12 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
 
               window.open(whatsappUrl, '_blank');
-            }} 
+            }}
             className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl"
           >
             WhatsApp
           </Button>
-          
+
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-slate-100 rounded-xl p-1">
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus size={14} /></Button>
@@ -493,7 +493,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             </div>
             <Button
               className="flex-1 py-6 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-200"
-              onClick={() => { 
+              onClick={() => {
                 // Track AddToCart
                 trackMetaEvent('AddToCart', {
                   content_ids: [product.id],
@@ -512,7 +512,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                   variant_id: selectedVariant.id,
                 } : product;
                 onAddToCart(cartProduct, quantity);
-                onClose(); 
+                onClose();
               }}
             >
               Ajouter au panier

@@ -21,7 +21,7 @@ const REGIONS = [
 ];
 
 const categories = [
-  "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Vêtements", 
+  "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Vêtements",
   "Epicerie", "Café", "Boulangerie", "Pour Femme", "Electronics", "Pour homme", "Maison", "Hotels/Piscine"
 ];
 
@@ -134,7 +134,7 @@ export default function AdminShops() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.company_name || !formData.company_category || !formData.region) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
@@ -154,7 +154,7 @@ export default function AdminShops() {
     if (formData.account_number) shopData.account_number = formData.account_number;
     if (formData.bank_name) shopData.bank_name = formData.bank_name;
     if (formData.account_holder_name) shopData.account_holder_name = formData.account_holder_name;
-    
+
     if (editingShop) {
       updateShopMutation.mutate({ id: editingShop.id, data: shopData });
     } else {
@@ -260,7 +260,7 @@ export default function AdminShops() {
           <DialogHeader>
             <DialogTitle>{editingShop ? 'Modifier' : 'Ajouter'} une boutique</DialogTitle>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">

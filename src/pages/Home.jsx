@@ -39,7 +39,7 @@ export default function Home() {
     trackMetaEvent('PageView');
     if (window.gtag) {
       window.gtag('event', 'page_view', {
-        page_title: 'Marketplace - Rapido Presto',
+        page_title: 'Marketplace - Kairos',
         page_location: window.location.href,
       });
     }
@@ -263,8 +263,8 @@ export default function Home() {
       </Helmet>
 
       <SEO
-        title={selectedFbCatId ? `${findById(selectedFbCatId)?.name} - Marketplace Rapido Presto` : 'Marketplace - Tous les produits | Rapido Presto'}
-        description={selectedFbCatId ? `Découvrez tous nos produits ${findById(selectedFbCatId)?.name} disponibles en Haïti - Livraison rapide avec Rapido Presto` : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
+        title={selectedFbCatId ? `${findById(selectedFbCatId)?.name} - Marketplace Kairos` : 'Marketplace - Tous les produits | Kairos'}
+        description={selectedFbCatId ? `Découvrez tous nos produits ${findById(selectedFbCatId)?.name} disponibles en Haïti - Livraison rapide avec Kairos` : 'Découvrez tous les produits disponibles sur Kairos - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
         keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedFbCatId ? findById(selectedFbCatId)?.name : 'produits'].filter(Boolean)}
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
@@ -308,7 +308,7 @@ export default function Home() {
           </div>
         </div>
 
-        <nav className="rp-space-tabs px-4 pb-3" aria-label="Grands espaces Rapido Presto">
+        <nav className="rp-space-tabs px-4 pb-3" aria-label="Grands espaces Kairos">
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
             {MARKETPLACE_SPACES.map((space) => (
               <button

@@ -33,11 +33,11 @@ export default function ProductsSection({ shopId }) {
     enabled: !!shopId
   });
 
-  const filteredProducts = products.filter(p => 
+  const filteredProducts = products.filter(p =>
     p.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const allFilteredSelected = filteredProducts.length > 0 && 
+  const allFilteredSelected = filteredProducts.length > 0 &&
     filteredProducts.every(p => selectedIds.includes(p.id));
 
   const toggleSelectAll = () => {
@@ -50,8 +50,8 @@ export default function ProductsSection({ shopId }) {
   };
 
   const toggleSelect = (productId) => {
-    setSelectedIds(prev => 
-      prev.includes(productId) 
+    setSelectedIds(prev =>
+      prev.includes(productId)
         ? prev.filter(id => id !== productId)
         : [...prev, productId]
     );
@@ -83,12 +83,12 @@ export default function ProductsSection({ shopId }) {
         <div className="flex gap-3 flex-wrap">
           <div className="flex-1 min-w-[200px] relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input 
-              type="text" 
-              placeholder="Rechercher un article..." 
+            <input
+              type="text"
+              placeholder="Rechercher un article..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-100 rounded-full pl-12 pr-6 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
+              className="w-full bg-gray-100 rounded-full pl-12 pr-6 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
           </div>
 
@@ -121,7 +121,7 @@ export default function ProductsSection({ shopId }) {
             <Layers className="w-5 h-5 mr-2" />
             Bulk
           </Button>
-          <Button 
+          <Button
             onClick={() => {
               setSelectedProduct(null);
               setShowModal(true);
@@ -165,7 +165,7 @@ export default function ProductsSection({ shopId }) {
             {filteredProducts.map(product => {
               const isSelected = selectedIds.includes(product.id);
               return (
-                <div 
+                <div
                   key={product.id}
                   className="bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-all group relative"
                 >
@@ -176,8 +176,8 @@ export default function ProductsSection({ shopId }) {
                       toggleSelect(product.id);
                     }}
                     className={`absolute top-2 right-2 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all ${
-                      isSelected 
-                        ? 'bg-blue-600 text-white shadow-md' 
+                      isSelected
+                        ? 'bg-blue-600 text-white shadow-md'
                         : 'bg-white/80 text-gray-400 hover:bg-white hover:text-blue-600 opacity-0 group-hover:opacity-100'
                     }`}
                   >
@@ -189,7 +189,7 @@ export default function ProductsSection({ shopId }) {
                   </button>
 
                   {/* Carte cliquable pour édition */}
-                  <div 
+                  <div
                     onClick={() => {
                       setSelectedProduct(product);
                       setShowModal(true);
@@ -198,8 +198,8 @@ export default function ProductsSection({ shopId }) {
                   >
                     <div className="relative h-40 bg-gray-100 overflow-hidden">
                       {product.image_url ? (
-                        <img 
-                          src={product.image_url} 
+                        <img
+                          src={product.image_url}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />

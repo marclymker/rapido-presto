@@ -78,7 +78,7 @@ export default function CookieConsent({ onAccept, onReject }) {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex gap-2 w-full md:w-auto">
               <Button
                 variant="outline"

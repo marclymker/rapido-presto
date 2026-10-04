@@ -10,7 +10,7 @@ export default function WeddingPlannerHaiti() {
     "serviceType": "Wedding Planning",
     "provider": {
       "@type": "Organization",
-      "name": "Rapido Presto Wedding Services",
+      "name": "Kairos Wedding Services",
       "address": {
         "@type": "PostalAddress",
         "addressLocality": "Port-au-Prince",
@@ -41,16 +41,16 @@ export default function WeddingPlannerHaiti() {
     <>
       <Helmet>
         <title>Wedding Planner Haïti - Organisation Mariage Port-au-Prince | Pétion-Ville</title>
-        <meta 
-          name="description" 
-          content="Wedding planner professionnel en Haïti. Organisation complète de mariage à Port-au-Prince, Pétion-Ville, Cap-Haïtien. Planification, coordination, décoration. Devis gratuit." 
+        <meta
+          name="description"
+          content="Wedding planner professionnel en Haïti. Organisation complète de mariage à Port-au-Prince, Pétion-Ville, Cap-Haïtien. Planification, coordination, décoration. Devis gratuit."
         />
-        <meta 
-          name="keywords" 
-          content="wedding planner haiti, organisation mariage haiti, wedding planner port-au-prince, coordinateur mariage pétion-ville, planificateur mariage haiti, event planner mariage" 
+        <meta
+          name="keywords"
+          content="wedding planner haiti, organisation mariage haiti, wedding planner port-au-prince, coordinateur mariage pétion-ville, planificateur mariage haiti, event planner mariage"
         />
         <link rel="canonical" href="https://makariosbridal.shop/wedding-planner-haiti" />
-        
+
         <script type="application/ld+json">
           {JSON.stringify(serviceSchema)}
         </script>
@@ -63,7 +63,7 @@ export default function WeddingPlannerHaiti() {
               Wedding Planner en Haïti 💍
             </h1>
             <p className="text-xl mb-8 max-w-3xl mx-auto">
-              Organisez le mariage de vos rêves avec les meilleurs wedding planners d'Haïti. 
+              Organisez le mariage de vos rêves avec les meilleurs wedding planners d'Haïti.
               Planification complète, coordination jour J, décoration à Port-au-Prince, Pétion-Ville et partout en Haïti.
             </p>
             <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100">
@@ -79,14 +79,14 @@ export default function WeddingPlannerHaiti() {
               Qu'est-ce qu'un Wedding Planner ?
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Un <strong>wedding planner</strong> (ou organisateur de mariage) est un professionnel qui coordonne tous les aspects 
-              de votre mariage, de la planification initiale jusqu'au jour J. En Haïti, particulièrement à <strong>Port-au-Prince</strong> 
-              et <strong>Pétion-Ville</strong>, les wedding planners sont de plus en plus sollicités pour créer des célébrations 
+              Un <strong>wedding planner</strong> (ou organisateur de mariage) est un professionnel qui coordonne tous les aspects
+              de votre mariage, de la planification initiale jusqu'au jour J. En Haïti, particulièrement à <strong>Port-au-Prince</strong>
+              et <strong>Pétion-Ville</strong>, les wedding planners sont de plus en plus sollicités pour créer des célébrations
               mémorables et sans stress.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Le wedding planner haïtien connaît parfaitement les traditions locales, les meilleurs fournisseurs, les salles de réception, 
-              les traiteurs, les décorateurs, les photographes, et peut négocier les meilleurs tarifs pour vous. C'est votre allié principal 
+              Le wedding planner haïtien connaît parfaitement les traditions locales, les meilleurs fournisseurs, les salles de réception,
+              les traiteurs, les décorateurs, les photographes, et peut négocier les meilleurs tarifs pour vous. C'est votre allié principal
               pour transformer votre vision en réalité.
             </p>
           </section>
@@ -188,7 +188,7 @@ export default function WeddingPlannerHaiti() {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-xl font-bold text-purple-600 mb-3">💰 Économie de Temps & Argent</h3>
                 <p className="text-gray-700">
-                  Un wedding planner négocie les meilleurs tarifs grâce à son réseau de partenaires. Il évite les erreurs coûteuses 
+                  Un wedding planner négocie les meilleurs tarifs grâce à son réseau de partenaires. Il évite les erreurs coûteuses
                   et optimise votre budget. Gain de temps : vous déléguez la logistique complexe.
                 </p>
               </div>
@@ -196,7 +196,7 @@ export default function WeddingPlannerHaiti() {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-xl font-bold text-purple-600 mb-3">🎯 Expertise Locale</h3>
                 <p className="text-gray-700">
-                  Connaissance approfondie du marché haïtien : meilleurs lieux (Pétion-Ville, Boutilliers), prestataires fiables, 
+                  Connaissance approfondie du marché haïtien : meilleurs lieux (Pétion-Ville, Boutilliers), prestataires fiables,
                   respect traditions, gestion logistique spécifique à Haïti (électricité, transport, etc.).
                 </p>
               </div>
@@ -204,7 +204,7 @@ export default function WeddingPlannerHaiti() {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-xl font-bold text-purple-600 mb-3">😌 Réduction du Stress</h3>
                 <p className="text-gray-700">
-                  Planifier un mariage est stressant. Le wedding planner gère tout : contrats, suivis, imprévus. Vous profitez 
+                  Planifier un mariage est stressant. Le wedding planner gère tout : contrats, suivis, imprévus. Vous profitez
                   pleinement de vos fiançailles et de votre jour J sans soucis.
                 </p>
               </div>
@@ -212,7 +212,7 @@ export default function WeddingPlannerHaiti() {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-xl font-bold text-purple-600 mb-3">✨ Créativité & Vision</h3>
                 <p className="text-gray-700">
-                  Transformation de vos idées en concept cohérent. Design décoration, ambiance, thème : le planner crée une expérience 
+                  Transformation de vos idées en concept cohérent. Design décoration, ambiance, thème : le planner crée une expérience
                   unique qui vous ressemble et marque les esprits.
                 </p>
               </div>
@@ -237,7 +237,7 @@ export default function WeddingPlannerHaiti() {
 
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
               <p className="text-gray-800">
-                <strong>💡 Conseil :</strong> Le coût d'un wedding planner représente généralement 10-15% du budget total mariage, 
+                <strong>💡 Conseil :</strong> Le coût d'un wedding planner représente généralement 10-15% du budget total mariage,
                 mais permet d'économiser 15-20% grâce aux négociations et évite les erreurs coûteuses.
               </p>
             </div>
@@ -255,7 +255,7 @@ export default function WeddingPlannerHaiti() {
                 <div>
                   <h3 className="text-xl font-bold mb-2">Port-au-Prince</h3>
                   <p className="text-gray-700">
-                    Concentration de wedding planners professionnels. Accès à tous types de prestations. Salles prestigieuses : 
+                    Concentration de wedding planners professionnels. Accès à tous types de prestations. Salles prestigieuses :
                     Hôtel Montana, El Rancho, Karibe Convention Center. Expertise événements grande envergure (200+ invités).
                   </p>
                 </div>
@@ -266,7 +266,7 @@ export default function WeddingPlannerHaiti() {
                 <div>
                   <h3 className="text-xl font-bold mb-2">Pétion-Ville</h3>
                   <p className="text-gray-700">
-                    Zone premium avec planners haut de gamme. Mariages luxury dans villas privées, jardins Boutilliers. 
+                    Zone premium avec planners haut de gamme. Mariages luxury dans villas privées, jardins Boutilliers.
                     Spécialistes décoration raffinée, mariages intimes (50-150 invités). Service ultra-personnalisé.
                   </p>
                 </div>
@@ -277,7 +277,7 @@ export default function WeddingPlannerHaiti() {
                 <div>
                   <h3 className="text-xl font-bold mb-2">Cap-Haïtien</h3>
                   <p className="text-gray-700">
-                    Planners locaux spécialisés mariages traditionnels du Nord. Collaboration possible avec planners de Port-au-Prince 
+                    Planners locaux spécialisés mariages traditionnels du Nord. Collaboration possible avec planners de Port-au-Prince
                     pour événements hybrides. Expertise logistique spécifique région Nord.
                   </p>
                 </div>

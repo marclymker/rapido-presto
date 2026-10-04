@@ -30,13 +30,13 @@ export default function AllOrdersAdmin() {
 
   // Filter orders
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       order.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.shop_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.client_name?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 

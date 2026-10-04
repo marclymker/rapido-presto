@@ -2,7 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 const SEO = ({ title, description, image, url, keywords, type = "website" }) => {
-  const siteName = "Rapido Presto";
+  const siteName = "Kairos — powered by makariosbridal.shop";
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
   const defaultDescription = "Livraison rapide en Haïti - Commandez vos produits préférés et recevez-les en 30 minutes";
   const finalDescription = description || defaultDescription;
@@ -11,10 +11,11 @@ const SEO = ({ title, description, image, url, keywords, type = "website" }) => 
     <Helmet>
       {/* Vérification Google Search Console */}
       <meta name="google-site-verification" content="mte9s9KgpFxd96KZsGD9Amos2lp-2dmG9k7OIIBWY3Y" />
-      
+
       {/* Balises standard */}
       <title>{fullTitle}</title>
       <meta name="description" content={finalDescription} />
+      <meta name="publisher" content="Kairos — powered by makariosbridal.shop" />
       {keywords && <meta name="keywords" content={keywords} />}
       <link rel="canonical" href={url || (typeof window !== 'undefined' ? window.location.href : '')} />
 
@@ -38,7 +39,7 @@ const SEO = ({ title, description, image, url, keywords, type = "website" }) => 
       <meta name="twitter:description" content={finalDescription} />
       {image && <meta name="twitter:image" content={image} />}
       {image && <meta name="twitter:image:alt" content={fullTitle} />}
-      
+
       {/* Rich Snippets JSON-LD */}
       <script type="application/ld+json">
         {JSON.stringify(

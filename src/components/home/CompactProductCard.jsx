@@ -3,7 +3,7 @@ import { Heart, Plus, ShoppingBag } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 
 const CompactProductCard = React.memo(({ product, shop, onClick, onAdd }) => {
-  const shopName = shop?.company_name || product.shop_name || 'Rapido Presto';
+  const shopName = shop?.company_name || product.shop_name || 'Kairos';
   const price = applyClientMargin(product.promo_price || product.price, shopName);
   const originalPrice = product.promo_price ? applyClientMargin(product.price, shopName) : null;
   const hasPromo = Number(product.promo_price) > 0 && Number(product.promo_price) < Number(product.price);

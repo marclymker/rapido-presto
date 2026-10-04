@@ -36,6 +36,6 @@ export function getClientPrice(product) {
   const basePrice = product.promo_price && product.promo_price < product.price
     ? product.promo_price
     : product.price;
-  
+
   return applyClientMargin(basePrice, product.shop_name);
 }

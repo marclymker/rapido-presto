@@ -19,7 +19,7 @@ export default function QuickSellButton({ user }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -104,9 +104,9 @@ export default function QuickSellButton({ user }) {
             <Label>Photo du produit *</Label>
             {formData.image_url ? (
               <div className="relative mt-2">
-                <img 
-                  src={formData.image_url} 
-                  alt="Preview" 
+                <img
+                  src={formData.image_url}
+                  alt="Preview"
                   className="w-full h-48 object-cover rounded-lg"
                 />
                 <button
@@ -161,8 +161,8 @@ export default function QuickSellButton({ user }) {
           {/* Category */}
           <div>
             <Label>Catégorie</Label>
-            <Select 
-              value={formData.category} 
+            <Select
+              value={formData.category}
               onValueChange={(val) => setFormData({ ...formData, category: val })}
             >
               <SelectTrigger>
@@ -198,7 +198,7 @@ export default function QuickSellButton({ user }) {
           </div>
 
           {/* Submit */}
-          <Button 
+          <Button
             onClick={handleSubmit}
             disabled={loading}
             className="w-full bg-orange-500 hover:bg-orange-600"

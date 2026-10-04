@@ -8,7 +8,7 @@ const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, s
   const displayPrice = applyClientMargin(hasPromo ? product.promo_price : product.price, shopName);
   const originalDisplayPrice = applyClientMargin(product.price, shopName);
   const image = product.image_url;
-  const seller = shopName || 'Vendeur Rapido Presto';
+  const seller = shopName || 'Vendeur Kairos';
   const isHotel = product.category === 'Hotels/Piscine';
 
   return (

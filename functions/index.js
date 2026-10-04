@@ -48,7 +48,7 @@ function productUrl(product) {
 }
 
 function productDescription(product) {
-  return String(product.seo_description || product.description || product.name || 'Produit disponible sur Rapido Presto')
+  return String(product.seo_description || product.description || product.name || 'Produit disponible sur Kairos')
     .replace(/\s+/g, ' ').trim().slice(0, 5000);
 }
 
@@ -86,14 +86,14 @@ async function findShop(product, shopKey) {
 }
 
 function renderMetadata({ product, shop, canonicalUrl }) {
-  const name = product?.name || 'Produit sur Rapido Presto';
-  const shopName = shop?.company_name || product?.shop_name || 'Rapido Presto';
+  const name = product?.name || 'Produit sur Kairos';
+  const shopName = shop?.company_name || product?.shop_name || 'Kairos';
   const price = product?.promo_price || product?.price || '';
   const description = productDescription(product);
   const image = productImage(product);
-  const title = `${name}${price ? ` — ${price} HTG` : ''} | ${shopName} | Rapido Presto`;
+  const title = `${name}${price ? ` — ${price} HTG` : ''} | ${shopName} | Kairos — powered by makariosbridal.shop`;
   const safe = { title: escapeHtml(title), description: escapeHtml(description), image: escapeHtml(image), url: escapeHtml(canonicalUrl), name: escapeHtml(name) };
-  return `<!doctype html><html lang="fr-HT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${safe.title}</title><meta name="description" content="${safe.description}"><link rel="canonical" href="${safe.url}"><meta property="og:type" content="product"><meta property="og:site_name" content="Rapido Presto"><meta property="og:locale" content="fr_HT"><meta property="og:title" content="${safe.title}"><meta property="og:description" content="${safe.description}"><meta property="og:url" content="${safe.url}"><meta property="og:image" content="${safe.image}"><meta property="og:image:secure_url" content="${safe.image}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${safe.name}"><meta property="product:price:amount" content="${escapeHtml(price)}"><meta property="product:price:currency" content="HTG"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${safe.title}"><meta name="twitter:description" content="${safe.description}"><meta name="twitter:image" content="${safe.image}"></head><body><h1>${safe.name}</h1><p>${safe.description}</p><p><a href="${safe.url}">Voir le produit sur Rapido Presto</a></p><script>window.location.replace(${JSON.stringify(canonicalUrl)});</script></body></html>`;
+  return `<!doctype html><html lang="fr-HT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${safe.title}</title><meta name="description" content="${safe.description}"><meta name="publisher" content="Kairos — powered by makariosbridal.shop"><link rel="canonical" href="${safe.url}"><meta property="og:type" content="product"><meta property="og:site_name" content="Kairos — powered by makariosbridal.shop"><meta property="og:locale" content="fr_HT"><meta property="og:title" content="${safe.title}"><meta property="og:description" content="${safe.description}"><meta property="og:url" content="${safe.url}"><meta property="og:image" content="${safe.image}"><meta property="og:image:secure_url" content="${safe.image}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${safe.name}"><meta property="product:price:amount" content="${escapeHtml(price)}"><meta property="product:price:currency" content="HTG"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${safe.title}"><meta name="twitter:description" content="${safe.description}"><meta name="twitter:image" content="${safe.image}"></head><body><h1>${safe.name}</h1><p>${safe.description}</p><p>Powered by makariosbridal.shop</p><p><a href="${safe.url}">Voir le produit sur Kairos</a></p><script>window.location.replace(${JSON.stringify(canonicalUrl)});</script></body></html>`;
 }
 
 exports.ogMetaTags = onRequest({ cors: false }, async (req, res) => {
@@ -134,10 +134,10 @@ exports.googleMerchantFeed = onRequest(async (_req, res) => {
     const items = products.map((product) => {
       const price = Number(product.promo_price || product.price || 0).toFixed(2);
       const availability = product.stock_quantity === 0 || product.is_available === false ? 'out of stock' : 'in stock';
-      return `<item><g:id>${escapeXml(product.id)}</g:id><g:title>${escapeXml(product.name || 'Produit')}</g:title><g:description>${escapeXml(productDescription(product))}</g:description><g:link>${escapeXml(productUrl(product))}</g:link><g:image_link>${escapeXml(productImage(product))}</g:image_link><g:availability>${availability}</g:availability><g:price>${price} HTG</g:price><g:condition>new</g:condition><g:brand>Rapido Presto</g:brand><g:identifier_exists>no</g:identifier_exists></item>`;
+      return `<item><g:id>${escapeXml(product.id)}</g:id><g:title>${escapeXml(product.name || 'Produit')}</g:title><g:description>${escapeXml(productDescription(product))}</g:description><g:link>${escapeXml(productUrl(product))}</g:link><g:image_link>${escapeXml(productImage(product))}</g:image_link><g:availability>${availability}</g:availability><g:price>${price} HTG</g:price><g:condition>new</g:condition><g:brand>Kairos</g:brand><g:identifier_exists>no</g:identifier_exists></item>`;
     }).join('');
     setXmlHeaders(res, 900);
-    return res.send(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>Rapido Presto Haïti</title><link>${SITE_ORIGIN}</link><description>Catalogue produits Rapido Presto en HTG</description>${items}</channel></rss>`);
+    return res.send(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>Kairos Haïti</title><link>${SITE_ORIGIN}</link><description>Catalogue produits Kairos en HTG</description>${items}</channel></rss>`);
   } catch (error) {
     console.error('googleMerchantFeed', error);
     return res.status(500).type('text').send('Merchant feed generation failed');
@@ -148,7 +148,7 @@ exports.openaiProductFeed = onRequest(async (_req, res) => {
   try {
     const products = await getPublicProducts();
     setJsonHeaders(res, 900);
-    return res.send(JSON.stringify({ name: 'Rapido Presto', locale: 'fr-HT', currency: 'HTG', products: products.map((product) => ({ id: product.id, title: product.name, description: productDescription(product), url: productUrl(product), image_url: productImage(product), price: Number(product.promo_price || product.price || 0), availability: product.stock_quantity === 0 ? 'out_of_stock' : 'in_stock', category: product.category || 'Marketplace' })) }));
+    return res.send(JSON.stringify({ name: 'Kairos', locale: 'fr-HT', currency: 'HTG', products: products.map((product) => ({ id: product.id, title: product.name, description: productDescription(product), url: productUrl(product), image_url: productImage(product), price: Number(product.promo_price || product.price || 0), availability: product.stock_quantity === 0 ? 'out_of_stock' : 'in_stock', category: product.category || 'Marketplace' })) }));
   } catch (error) {
     console.error('openaiProductFeed', error);
     return res.status(500).json({ error: 'Product feed generation failed' });

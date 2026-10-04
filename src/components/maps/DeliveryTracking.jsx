@@ -75,7 +75,7 @@ export default function DeliveryTracking({ order }) {
         >
           {/* Marqueur Client (Destination) */}
           {order.client_location && (
-            <Marker 
+            <Marker
               position={order.client_location}
               icon={{
                 path: window.google.maps.SymbolPath.CIRCLE,
@@ -91,7 +91,7 @@ export default function DeliveryTracking({ order }) {
 
           {/* Marqueur Boutique */}
           {order.shop_location && (
-            <Marker 
+            <Marker
               position={order.shop_location}
               icon={{
                 url: 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png',
@@ -103,7 +103,7 @@ export default function DeliveryTracking({ order }) {
 
           {/* Marqueur Livreur (Moto en mouvement) */}
           {driverLocation && (
-            <Marker 
+            <Marker
               position={driverLocation}
               icon={{
                 url: 'https://cdn-icons-png.flaticon.com/512/713/713311.png',
@@ -116,7 +116,7 @@ export default function DeliveryTracking({ order }) {
 
           {/* Ligne tracée entre livreur et client */}
           {path.length > 0 && (
-            <Polyline 
+            <Polyline
               path={path}
               options={{
                 strokeColor: '#2563eb',
@@ -140,7 +140,7 @@ export default function DeliveryTracking({ order }) {
       {/* Infos livreur en bas */}
       <div className="flex-1 bg-white rounded-t-3xl -mt-6 z-10 p-6 shadow-2xl overflow-y-auto">
         <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-4" />
-        
+
         {/* Indicateur de connexion Firebase */}
         <div className={`flex items-center gap-2 mb-4 px-3 py-2 rounded-lg ${
           isConnected ? 'bg-green-50' : 'bg-slate-50'
@@ -157,7 +157,7 @@ export default function DeliveryTracking({ order }) {
             </>
           )}
         </div>
-        
+
         {/* Carte du livreur */}
         <div className="flex items-center gap-4 mb-6 p-4 bg-slate-50 rounded-2xl">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white text-2xl font-bold">
@@ -189,14 +189,14 @@ export default function DeliveryTracking({ order }) {
         <div className="space-y-4">
           <div className="flex items-start gap-3">
             <div className={`w-3 h-3 rounded-full mt-1 ${
-              order.status === 'delivered' ? 'bg-green-500' : 
-              ['in_delivery', 'driver_assigned'].includes(order.status) ? 'bg-green-500' : 
+              order.status === 'delivered' ? 'bg-green-500' :
+              ['in_delivery', 'driver_assigned'].includes(order.status) ? 'bg-green-500' :
               'bg-slate-300'
             }`} />
             <div className="flex-1">
               <p className={`text-sm ${
-                ['in_delivery', 'driver_assigned', 'delivered'].includes(order.status) 
-                  ? 'text-slate-900 font-semibold' 
+                ['in_delivery', 'driver_assigned', 'delivered'].includes(order.status)
+                  ? 'text-slate-900 font-semibold'
                   : 'text-slate-400'
               }`}>
                 Commande récupérée à la boutique
@@ -207,14 +207,14 @@ export default function DeliveryTracking({ order }) {
 
           <div className="flex items-start gap-3">
             <div className={`w-3 h-3 rounded-full mt-1 ${
-              order.status === 'in_delivery' ? 'bg-blue-500 animate-pulse' : 
-              order.status === 'delivered' ? 'bg-green-500' : 
+              order.status === 'in_delivery' ? 'bg-blue-500 animate-pulse' :
+              order.status === 'delivered' ? 'bg-green-500' :
               'bg-slate-300'
             }`} />
             <div className="flex-1">
               <p className={`text-sm ${
-                order.status === 'in_delivery' ? 'text-slate-900 font-bold' : 
-                order.status === 'delivered' ? 'text-slate-900 font-semibold' : 
+                order.status === 'in_delivery' ? 'text-slate-900 font-bold' :
+                order.status === 'delivered' ? 'text-slate-900 font-semibold' :
                 'text-slate-400'
               }`}>
                 Livreur en route vers vous

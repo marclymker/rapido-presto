@@ -48,8 +48,8 @@ export default function BlogArticle() {
 
   const handleShare = () => {
     const url = window.location.href;
-    const title = article?.title || 'Article Rapido Presto';
-    
+    const title = article?.title || 'Article Kairos';
+
     if (navigator.share) {
       navigator.share({ title, url });
     } else {
@@ -70,7 +70,7 @@ export default function BlogArticle() {
   return (
     <>
       <Helmet>
-        <title>{article.title} - Blog Rapido Presto</title>
+        <title>{article.title} - Blog Kairos</title>
         <meta name="description" content={article.seo_description || article.excerpt} />
         <meta property="og:type" content="article" />
         <meta property="og:title" content={article.title} />
@@ -79,7 +79,7 @@ export default function BlogArticle() {
         <meta property="og:image:alt" content={article.cover_image_alt || article.title} />
         <meta property="og:url" content={window.location.href} />
         <meta property="article:published_time" content={article.published_date} />
-        <meta property="article:author" content={article.author || 'Rapido Presto'} />
+        <meta property="article:author" content={article.author || 'Kairos'} />
         {article.seo_keywords?.map(keyword => (
           <meta key={keyword} name="keywords" content={keyword} />
         ))}
@@ -122,7 +122,7 @@ export default function BlogArticle() {
               <Calendar className="w-4 h-4" />
               <time>{format(new Date(article.published_date), 'd MMMM yyyy', { locale: fr })}</time>
             </div>
-            <span>Par {article.author || 'Rapido Presto'}</span>
+            <span>Par {article.author || 'Kairos'}</span>
           </div>
 
           {/* Cover Image */}
@@ -181,7 +181,7 @@ export default function BlogArticle() {
               <h2 className="text-2xl font-bold text-slate-900 mb-6">
                 Produits mentionnés dans cet article
               </h2>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {relatedProducts.map(product => {
                   const shop = shops.find(s => s.id === product.shop_id);

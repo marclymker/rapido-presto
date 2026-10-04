@@ -240,19 +240,19 @@ export default function ShopView() {
     return `${window.location.origin}${url}`;
   };
   const pageTitle = shop.company_name;
-  const pageDescription = `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`;
+  const pageDescription = `Découvrez ${shop.company_name} sur Kairos. ${shop.company_category} à ${shop.region}.`;
   const pageImage = ensureAbsoluteUrl(shop.company_logo_url);
   const pageUrl = window.location.href;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <Helmet>
-        <title>{pageTitle} - Rapido Presto</title>
+        <title>{pageTitle} - Kairos</title>
         <meta name="description" content={pageDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
-        <meta property="og:site_name" content="Rapido Presto" />
+        <meta property="og:site_name" content="Kairos" />
         {pageImage && <meta property="og:image" content={pageImage} />}
         <meta property="og:url" content={pageUrl} />
         <meta property="og:locale" content="fr_HT" />

@@ -41,7 +41,7 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       if (type === 'hours') {
         await base44.entities.Shop.update(shop.id, { opening_hours: hours });
@@ -66,7 +66,7 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
             {type === 'location' ? 'Modifier l\'adresse' : type === 'hours' ? 'Horaires d\'ouverture' : 'Informations bancaires'}
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {type === 'hours' ? (
             <div className="space-y-3 max-h-[60vh] overflow-y-auto">
@@ -120,7 +120,7 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
             <>
               <div>
                 <Label>Région/Commune *</Label>
-                <Select 
+                <Select
                   required
                   value={formData.region}
                   onValueChange={(val) => setFormData({ ...formData, region: val })}

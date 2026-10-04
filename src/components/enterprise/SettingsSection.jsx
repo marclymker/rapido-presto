@@ -23,7 +23,7 @@ export default function SettingsSection({ shop }) {
   return (
     <div className="p-8 max-w-3xl mx-auto">
       <h2 className="text-2xl font-black mb-6 text-gray-900">Réglages</h2>
-      
+
       <div className="space-y-4">
         {/* Disponibilité */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border">
@@ -37,8 +37,8 @@ export default function SettingsSection({ shop }) {
                 <p className="text-sm text-gray-500">Accepter les nouvelles commandes</p>
               </div>
             </div>
-            <Switch 
-              checked={shop?.is_active !== false} 
+            <Switch
+              checked={shop?.is_active !== false}
               onCheckedChange={handleToggleActive}
             />
           </div>
@@ -55,8 +55,8 @@ export default function SettingsSection({ shop }) {
               <p className="text-sm text-gray-500">Définir vos heures de service</p>
             </div>
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setModalType('hours')}
             className="w-full rounded-xl"
           >
@@ -73,13 +73,13 @@ export default function SettingsSection({ shop }) {
             <div>
               <p className="font-bold text-gray-900">Coordonnées de livraison</p>
               <p className="text-sm text-gray-500">
-                {shop?.region || 'Non définie'} 
+                {shop?.region || 'Non définie'}
                 {shop?.phone && ` • ${shop.phone}`}
               </p>
             </div>
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setModalType('location')}
             className="w-full rounded-xl"
           >
@@ -100,8 +100,8 @@ export default function SettingsSection({ shop }) {
               </p>
             </div>
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setModalType('payment')}
             className="w-full rounded-xl"
           >

@@ -52,7 +52,7 @@ export default function StoreMapView({ stores, userLocation, onStoreSelect }) {
       }}
     >
       {/* Marqueur de l'utilisateur (Point bleu) */}
-      <Marker 
+      <Marker
         position={userLocation}
         icon={{
           path: window.google.maps.SymbolPath.CIRCLE,
@@ -77,7 +77,7 @@ export default function StoreMapView({ stores, userLocation, onStoreSelect }) {
             title={store.company_name}
             onClick={() => onStoreSelect && onStoreSelect(store)}
             icon={{
-              url: store.is_google_place 
+              url: store.is_google_place
                 ? 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
                 : 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png',
               scaledSize: new window.google.maps.Size(32, 32)

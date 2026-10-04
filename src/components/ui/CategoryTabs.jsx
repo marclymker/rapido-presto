@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { cn } from "@/lib/utils";
-import { 
-  UtensilsCrossed, Pill, Heart, ShoppingBasket, Coffee, Pizza, 
-  Flower, User, Smartphone, UserCircle, Home, Baby, Wrench, 
-  ChevronLeft, Ticket 
+import {
+  UtensilsCrossed, Pill, Heart, ShoppingBasket, Coffee, Pizza,
+  Flower, User, Smartphone, UserCircle, Home, Baby, Wrench,
+  ChevronLeft, Ticket
 } from 'lucide-react';
 
 const categories = [
@@ -12,9 +12,9 @@ const categories = [
   { id: 'Mode', label: 'Mode', icon: UtensilsCrossed },
   { id: 'Boutique Fleurs', label: 'Fleurs', icon: Flower },
   { id: 'Pharmacie', label: 'Pharmacie', icon: Pill },
-  { 
-    id: 'Mariage', 
-    label: 'Mariage', 
+  {
+    id: 'Mariage',
+    label: 'Mariage',
     icon: Heart,
     subcategories: [
       { id: 'Mariage_Demoiselle', label: 'Demoiselle', icon: Heart },
@@ -40,7 +40,7 @@ const categories = [
 ];
 
 export default function CategoryTabs({ selected, onSelect }) {
-  const [viewMode, setViewMode] = useState('main'); 
+  const [viewMode, setViewMode] = useState('main');
   const [selectedMainCategory, setSelectedMainCategory] = useState(null);
 
   const handleCategoryClick = (cat) => {
@@ -74,7 +74,7 @@ export default function CategoryTabs({ selected, onSelect }) {
             Retour
           </button>
         </div>
-        
+
         <div className="grid grid-cols-4 gap-1.5">
           {selectedMainCategory.subcategories.map((subcat) => {
             const SubIcon = subcat.icon;
@@ -85,8 +85,8 @@ export default function CategoryTabs({ selected, onSelect }) {
                 onClick={() => handleSubcategoryClick(subcat.id)}
                 className={cn(
                   "flex flex-col items-center gap-1 px-1.5 py-2 rounded-lg transition-all",
-                  isActive 
-                    ? "bg-orange-500 text-white shadow-md scale-95" 
+                  isActive
+                    ? "bg-orange-500 text-white shadow-md scale-95"
                     : "bg-white text-slate-600 border border-slate-200"
                 )}
               >
@@ -96,7 +96,7 @@ export default function CategoryTabs({ selected, onSelect }) {
             );
           })}
         </div>
-        
+
         <div className="mt-2">
           <button
             onClick={() => {
@@ -124,21 +124,21 @@ export default function CategoryTabs({ selected, onSelect }) {
         const Icon = cat.icon;
         const isActive = selected === cat.id;
         const hasSubcategories = cat.subcategories && cat.subcategories.length > 0;
-        
+
         return (
           <button
             key={cat.id}
             onClick={() => handleCategoryClick(cat)}
             className={cn(
               "flex flex-col items-center gap-1 px-1.5 py-2 rounded-lg transition-all relative",
-              isActive 
-                ? "bg-orange-500 text-white shadow-md" 
+              isActive
+                ? "bg-orange-500 text-white shadow-md"
                 : "bg-white text-slate-600 border border-slate-200 hover:border-orange-200"
             )}
           >
             <Icon className="w-4 h-4" />
             <span className="text-[9px] font-medium text-center leading-tight">{cat.label}</span>
-            
+
             {hasSubcategories && (
               <span className="absolute top-1 right-1 flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>

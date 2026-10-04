@@ -4,7 +4,7 @@
 
 ## Objectif
 
-Rendre Rapido Presto plus difficile à compromettre, plus rapide sur réseau 2G/3G en Haïti et explicitement localisé en Haïti sans casser Firebase/Auth ni les données existantes.
+Rendre Kairos plus difficile à compromettre, plus rapide sur réseau 2G/3G en Haïti et explicitement localisé en Haïti sans casser Firebase/Auth ni les données existantes.
 
 ## Axes d’implémentation
 

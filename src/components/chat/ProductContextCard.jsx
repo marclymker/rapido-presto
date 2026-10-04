@@ -33,8 +33,8 @@ export default function ProductContextCard({ productId }) {
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm max-w-sm mx-auto">
         <div className="flex gap-3 p-3">
           {product.image_url && (
-            <img 
-              src={product.image_url} 
+            <img
+              src={product.image_url}
               alt={product.name}
               className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
             />

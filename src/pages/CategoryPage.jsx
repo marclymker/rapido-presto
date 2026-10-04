@@ -10,7 +10,7 @@ import ProductCard from '@/components/ui/ProductCard';
 /**
  * PAGE CATÉGORIE - SEO OPTIMISÉE
  * URL: /categories/{slug-categorie}
- * 
+ *
  * Exemples:
  * - /categories/mariage
  * - /categories/robes-de-mariee
@@ -42,9 +42,9 @@ export default function CategoryPage() {
   // Produits de la catégorie
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['category-products', category],
-    queryFn: () => base44.entities.Product.filter({ 
+    queryFn: () => base44.entities.Product.filter({
       category,
-      is_available: true 
+      is_available: true
     }),
     enabled: category !== 'Tout'
   });
@@ -84,7 +84,7 @@ export default function CategoryPage() {
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "name": `${category} - Rapido Presto`,
+    "name": `${category} - Kairos`,
     "description": `Découvrez notre sélection ${category.toLowerCase()} en Haïti. Livraison rapide.`,
     "url": typeof window !== 'undefined' ? window.location.href : '',
     "numberOfItems": products.length
@@ -93,15 +93,15 @@ export default function CategoryPage() {
   return (
     <>
       <Helmet>
-        <title>{category} - Livraison rapide en Haïti | Rapido Presto</title>
-        <meta 
-          name="description" 
+        <title>{category} - Livraison rapide en Haïti | Kairos</title>
+        <meta
+          name="description"
           content={`Découvrez ${products.length} produits dans la catégorie ${category}. Livraison rapide partout en Haïti.`}
         />
         <meta name="keywords" content={`${category}, Haïti, livraison, e-commerce, shopping`} />
-        
+
         <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
-        
+
         <script type="application/ld+json">
           {JSON.stringify(breadcrumbSchema)}
         </script>

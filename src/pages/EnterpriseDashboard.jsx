@@ -35,7 +35,7 @@ export default function EnterpriseDashboard() {
     queryFn: async () => {
       const shops = await base44.entities.Shop.filter({ user_id: user.id });
       if (shops.length > 0) return shops[0];
-      
+
       // Create shop automatically with default values
       return base44.entities.Shop.create({
         user_id: user.id,
@@ -93,7 +93,7 @@ export default function EnterpriseDashboard() {
         <div className="px-4 mb-8">
           <div className="text-2xl text-center">🚀</div>
         </div>
-        
+
         <nav className="flex-1 space-y-2 px-2">
           {menuItems.map((item) => (
             <button
@@ -106,8 +106,8 @@ export default function EnterpriseDashboard() {
                 }
               }}
               className={`w-full flex flex-col items-center justify-center py-4 rounded-xl transition-all relative group ${
-                activeTab === item.id 
-                ? 'bg-blue-600 text-white shadow-lg' 
+                activeTab === item.id
+                ? 'bg-blue-600 text-white shadow-lg'
                 : 'text-gray-500 hover:bg-gray-100'
               }`}
               title={item.label}
@@ -136,9 +136,9 @@ export default function EnterpriseDashboard() {
               )}
             </div>
             <div className="text-center">
-              <Switch 
-                checked={myShop?.is_active !== false} 
-                disabled 
+              <Switch
+                checked={myShop?.is_active !== false}
+                disabled
                 className="scale-75"
               />
             </div>
@@ -164,7 +164,7 @@ export default function EnterpriseDashboard() {
       </main>
 
       {/* Business Smart Navigation */}
-      <BusinessSmartNav 
+      <BusinessSmartNav
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         userRole="entreprise"

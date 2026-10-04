@@ -179,7 +179,7 @@ export default function Products() {
     trackMetaEvent('PageView');
     if (window.gtag) {
       window.gtag('event', 'page_view', {
-        page_title: 'Marketplace - Rapido Presto',
+        page_title: 'Marketplace - Kairos',
         page_location: window.location.href,
       });
     }
@@ -503,8 +503,8 @@ export default function Products() {
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
       </Helmet>
       <SEO
-        title={selectedCategory ? `${selectedCategory} - Marketplace Rapido Presto` : 'Marketplace - Tous les produits | Rapido Presto'}
-        description={selectedCategory ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Livraison rapide avec Rapido Presto` : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
+        title={selectedCategory ? `${selectedCategory} - Marketplace Kairos` : 'Marketplace - Tous les produits | Kairos'}
+        description={selectedCategory ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Livraison rapide avec Kairos` : 'Découvrez tous les produits disponibles sur Kairos - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
         keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedCategory || 'produits'].filter(Boolean)}
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
@@ -547,7 +547,7 @@ export default function Products() {
           </div>
         </div>
 
-        <nav className="rp-space-tabs px-4 pb-3" aria-label="Grands espaces Rapido Presto">
+        <nav className="rp-space-tabs px-4 pb-3" aria-label="Grands espaces Kairos">
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
             {MARKETPLACE_SPACES.map((space) => (
               <button

@@ -3,10 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import ProductCard from '@/components/ui/ProductCard';
 import { Filter, Star } from 'lucide-react';
 
-export default function SearchResults({ 
-  results, 
-  query, 
-  filters, 
+export default function SearchResults({
+  results,
+  query,
+  filters,
   shops,
   onProductClick,
   onAddToCart,
@@ -36,11 +36,11 @@ export default function SearchResults({
     return sorted;
   }, [results, sortBy]);
 
-  const activeFilterCount = 
-    filters.categories?.length + 
-    filters.colors?.length + 
-    filters.sizes?.length + 
-    filters.materials?.length + 
+  const activeFilterCount =
+    filters.categories?.length +
+    filters.colors?.length +
+    filters.sizes?.length +
+    filters.materials?.length +
     filters.shops?.length +
     ((filters.priceRange?.[0] > 0 || filters.priceRange?.[1] < 100000) ? 1 : 0);
 
@@ -51,7 +51,7 @@ export default function SearchResults({
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
-              {results.length} résultat{results.length > 1 ? 's' : ''} 
+              {results.length} résultat{results.length > 1 ? 's' : ''}
               {query && <span className="text-orange-600"> pour "{query}"</span>}
             </h2>
             {activeFilterCount > 0 && (

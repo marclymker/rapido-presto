@@ -83,7 +83,7 @@ export default function BlogArticleForm({ article, onClose, onSuccess }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.title || !formData.slug || !formData.content || !formData.cover_image_url) {
       toast.error('Remplissez tous les champs obligatoires');
       return;
@@ -91,7 +91,7 @@ export default function BlogArticleForm({ article, onClose, onSuccess }) {
 
     saveMutation.mutate({
       ...formData,
-      published_date: formData.is_published 
+      published_date: formData.is_published
         ? new Date(formData.published_date).toISOString()
         : new Date().toISOString()
     });
@@ -318,7 +318,7 @@ export default function BlogArticleForm({ article, onClose, onSuccess }) {
               />
               <span className="text-sm font-medium">Publier l'article</span>
             </label>
-            
+
             {formData.is_published && (
               <Input
                 type="date"
@@ -334,8 +334,8 @@ export default function BlogArticleForm({ article, onClose, onSuccess }) {
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="bg-orange-600 hover:bg-orange-700"
               disabled={saveMutation.isPending}
             >

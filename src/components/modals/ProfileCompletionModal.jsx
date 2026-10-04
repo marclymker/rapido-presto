@@ -41,7 +41,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
   const handleFileUpload = async (e, field) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, [field]: file_url });
@@ -117,14 +117,14 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
         <div className="py-2">
           {/* Header */}
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-orange-500">Rapido Presto</h2>
+            <h2 className="text-2xl font-bold text-orange-500">Kairos</h2>
             <p className="text-slate-600 mt-1">Bienvenue, {user?.full_name}!</p>
           </div>
 
           {/* Progress */}
           <div className="flex gap-2 mb-6">
             {[1, 2].map(s => (
-              <div 
+              <div
                 key={s}
                 className={`h-1.5 flex-1 rounded-full transition-colors ${
                   s <= step ? 'bg-orange-500' : 'bg-slate-200'
@@ -141,10 +141,10 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <h3 className="text-lg font-semibold mb-4">Comment souhaitez-vous utiliser Rapido Presto?</h3>
+                <h3 className="text-lg font-semibold mb-4">Comment souhaitez-vous utiliser Kairos?</h3>
 
-                <RadioGroup 
-                  value={formData.user_type} 
+                <RadioGroup
+                  value={formData.user_type}
                   onValueChange={(val) => setFormData({ ...formData, user_type: val })}
                   className="space-y-3"
                 >
@@ -194,7 +194,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                   </label>
                 </RadioGroup>
 
-                <Button 
+                <Button
                   className="w-full mt-6 bg-orange-500 hover:bg-orange-600"
                   onClick={() => setStep(2)}
                   disabled={!canProceed()}
@@ -254,8 +254,8 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                       </div>
                       <div>
                         <Label className="text-sm">Région</Label>
-                        <Select 
-                          value={formData.region} 
+                        <Select
+                          value={formData.region}
                           onValueChange={(val) => setFormData({ ...formData, region: val })}
                         >
                           <SelectTrigger className="h-9">
@@ -288,14 +288,14 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
                 </div>
 
                 <div className="flex gap-2 mt-6">
-                  <Button 
+                  <Button
                     variant="outline"
                     className="flex-1 h-9"
                     onClick={() => setStep(1)}
                   >
                     Retour
                   </Button>
-                  <Button 
+                  <Button
                     className="flex-1 bg-orange-500 hover:bg-orange-600 h-9"
                     onClick={handleSubmit}
                     disabled={!canProceed() || saving}

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import {
   Package, Store, DollarSign, ShoppingCart, ArrowLeft, CheckCircle, XCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -183,7 +183,7 @@ export default function AdminDashboard() {
                   const agentSales = agentClients.filter(c => c.agent_id === agent.id);
                   const totalSales = agentSales.reduce((sum, c) => sum + c.order_total, 0);
                   const totalCommission = agentSales.reduce((sum, c) => sum + c.commission_amount, 0);
-                  
+
                   return (
                     <div key={agent.id} className="border-b pb-3">
                       <div className="flex items-start justify-between">
@@ -262,7 +262,7 @@ export default function AdminDashboard() {
                   const shopProducts = products.filter(p => p.shop_id === shop.id);
                   const shopOrders = orders.filter(o => o.shop_id === shop.id);
                   const shopRevenue = shopOrders.reduce((sum, o) => sum + o.total, 0);
-                  
+
                   return (
                     <div key={shop.id} className="border-b pb-3 flex items-start gap-3">
                       <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
@@ -320,11 +320,11 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 {agentClients.map(client => {
                   const agent = allUsers.find(u => u.id === client.agent_id);
-                  
+
                   return (
                     <div key={client.id} className="border-b pb-3">
                       <div className="flex items-start justify-between">

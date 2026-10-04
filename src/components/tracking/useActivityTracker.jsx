@@ -17,7 +17,7 @@ export function useActivityTracker() {
   const trackActivity = async (activityData) => {
     try {
       const userId = user?.id || getSessionId();
-      
+
       await base44.entities.UserActivity.create({
         user_id: userId,
         ...activityData
@@ -30,7 +30,7 @@ export function useActivityTracker() {
   // 🎯 TRACKING PRODUIT VU (ViewContent)
   const trackProductView = (product, shop) => {
     const price = parseFloat(product.promo_price || product.price || 0);
-    
+
     if (window.fbq) {
       window.fbq('track', 'ViewContent', {
         content_ids: [product.id],

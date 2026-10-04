@@ -60,8 +60,8 @@ export default function Pricing() {
       {/* Header */}
       <header className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => navigate(createPageUrl('EnterpriseDashboard'))}
           >

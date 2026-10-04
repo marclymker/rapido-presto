@@ -1,11 +1,11 @@
-# Audit sécurité, performance 2G et localisation — Rapido Presto
+# Audit sécurité, performance 2G et localisation — Kairos
 
-**Date :** 4 octobre 2026  
+**Date :** 4 octobre 2026
 **Projet audité :** `marclymker/rapido-presto` — branche de travail redesign
 
 ## Résumé exécutif
 
-Le projet compile après les corrections. Les dépendances directes Base44 ont été retirées du `package.json`, les artefacts historiques `base44/` ont été supprimés et les URLs Supabase/Base44 découvertes dans les écrans publics ont été remplacées par le domaine Rapido Presto ou des assets locaux.
+Le projet compile après les corrections. Les dépendances directes Base44 ont été retirées du `package.json`, les artefacts historiques `base44/` ont été supprimés et les URLs Supabase/Base44 découvertes dans les écrans publics ont été remplacées par le domaine Kairos ou des assets locaux.
 
 La priorité actuelle reste la **performance mobile** : le bundle principal reste lourd, environ **1,26 Mo minifié / 351 Ko gzip**, et le chunk `Orders` dépasse 500 Ko. L’application est utilisable, mais elle n’est pas encore optimale pour la 2G. La prochaine étape à fort rendement est de réduire les imports globaux et de découper les écrans lourds.
 
@@ -26,7 +26,7 @@ La priorité actuelle reste la **performance mobile** : le bundle principal rest
 - Suppression des préconnexions Supabase du layout.
 - Remplacement des deux références d’image Supabase dans `ProductDetailModal` par `/assets/product-placeholder.svg`.
 - Remplacement de l’image de `WeddingCreditBanner` par `/assets/wedding-credit.svg`.
-- Remplacement des canonicals `rapidopresto.base44.app` par `makariosbridal.shop`.
+- Remplacement des canonicals l’ancien domaine Base44 par `makariosbridal.shop`.
 - Suppression de l’écran OAuth hérité non routé et de son parseur de paramètres inutilisé.
 - Suppression des trois injections GTM dupliquées, de l’iframe noscript GTM et du Pixel inline dans le layout. Cela réduit les requêtes, évite les erreurs 403/503 observées et supprime le double comptage marketing.
 

@@ -48,7 +48,7 @@ export default function OneSignalInit({ user }) {
             if (!permission) {
               await OneSignal.Notifications.requestPermission();
             }
-            
+
             await OneSignal.Notifications.setDefaultNotificationUrl(window.location.origin);
 
             // Identification

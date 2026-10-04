@@ -13,7 +13,7 @@ export default function SessionValidator({ user }) {
     const checkSession = async () => {
       try {
         const currentUser = await base44.auth.me();
-        
+
         if (!currentUser) return;
 
         const storedVersion = localStorage.getItem('user_session_version');
