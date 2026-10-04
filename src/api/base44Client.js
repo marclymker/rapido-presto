@@ -1,5 +1,4 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { 
   getFirestore, 
   collection, 
@@ -39,7 +38,6 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const storage = getStorage(app);
 
 const hydrateAuthUser = async (firebaseUser) => {
   if (!firebaseUser) return null;
@@ -267,6 +265,8 @@ export const base44 = {
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
         if (!auth.currentUser?.uid) throw new Error('Connexion requise pour envoyer une photo');
         const path = `users/${auth.currentUser.uid}/${Date.now()}-${safeName}`;
+        const { getStorage, ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+        const storage = getStorage(app);
         const snapshot = await uploadBytes(ref(storage, path), file, { contentType: file.type || 'image/jpeg' });
         return { file_url: await getDownloadURL(snapshot.ref), path };
       },

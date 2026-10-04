@@ -74,3 +74,14 @@ Le build a réussi après les corrections. `npm audit` reste volontairement docu
 5. Ajouter une politique CSP testée en `Report-Only`, puis la passer en enforcement.
 6. Activer Firebase Storage uniquement après validation du budget et des règles.
 7. Tester les parcours critiques sur Android bas de gamme : connexion Google, création article, upload, variantes, panier, commande et changement de profil.
+
+## Résultat du test `npm audit fix --force`
+
+Le test a été exécuté sur une branche isolée puis abandonné, sans publication sur la branche stable. npm proposait notamment des changements incompatibles ou des rétrogradations inattendues : Firebase 9, `react-quill` 0.0.2 et React Router 7, tout en laissant encore 14 vulnérabilités signalées. Le build et le lint passaient, mais ce résultat ne justifie pas une mise à jour forcée : la compatibilité fonctionnelle des routes, de l’éditeur et de Firebase n’est pas garantie. La branche stable a été restaurée exactement avant la publication suivante.
+
+## Seconde passe performance appliquée
+
+- Firebase Storage n’est plus chargé au démarrage : il est importé dynamiquement uniquement lors d’un upload.
+- Rollup sépare maintenant Firebase Core, Auth, Firestore et Storage.
+- Le chemin initial conserve le bundle principal autour de 102 Ko gzip et évite de télécharger les 8 Ko gzip de Storage tant qu’aucun upload n’est demandé.
+- Build et lint repassent avec succès après cette modification.
