@@ -26,6 +26,7 @@ const EnterpriseDashboard = lazy(() => import('./pages/EnterpriseDashboard'));
 const EventPlannerHaiti = lazy(() => import('./pages/EventPlannerHaiti'));
 const Home = lazy(() => import('./pages/Home'));
 const ManageProfiles = lazy(() => import('./pages/ManageProfiles'));
+const LegacyMigration = lazy(() => import('./pages/LegacyMigration'));
 const Orders = lazy(() => import('./pages/Orders'));
 const PaymentCallback = lazy(() => import('./pages/PaymentCallback'));
 const Pricing = lazy(() => import('./pages/Pricing'));
@@ -65,6 +66,7 @@ export const PAGES = {
     "EventPlannerHaiti": EventPlannerHaiti,
     "Home": Home,
     "ManageProfiles": ManageProfiles,
+    "LegacyMigration": LegacyMigration,
     "Orders": Orders,
     "PaymentCallback": PaymentCallback,
     "Pricing": Pricing,

@@ -12,6 +12,9 @@ service cloud.firestore {
       allow update: if isOwner(uid) || isAdmin();
       allow delete: if isAdmin();
     }
+    match /MigrationLink/{id} {
+      allow read, write: if isAdmin();
+    }
     match /Product/{id} {
       allow read: if publicCollection() || signedIn();
       allow create, update, delete: if isAdmin() || (signedIn() && request.resource.data.owner_id == request.auth.uid);
