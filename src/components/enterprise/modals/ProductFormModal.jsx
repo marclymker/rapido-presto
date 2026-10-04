@@ -80,6 +80,32 @@ import FbCategorySelector from '@/components/product/FbCategorySelector';
 
 import { getTaxonomyMappingPrompt, getCategoryPath } from '@/lib/fbTaxonomy';
 
+const parseVariantList = (value = '') => value.split(',').map(item => item.trim()).filter(Boolean);
+
+const makeVariantRows = (colorsText = '', sizesText = '', existing = []) => {
+  const colors = parseVariantList(colorsText);
+  const sizes = parseVariantList(sizesText);
+  if (!colors.length && !sizes.length) return [];
+  const colorList = colors.length ? colors : [''];
+  const sizeList = sizes.length ? sizes : [''];
+  return colorList.flatMap(color => sizeList.map(size => {
+    const previous = existing.find(row => row.color === color && row.size === size);
+    const key = `${color || 'default'}-${size || 'default'}`.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return {
+      id: previous?.id || key,
+      sku: previous?.sku || '',
+      color,
+      size,
+      price: previous?.price ?? '',
+      promo_price: previous?.promo_price ?? '',
+      stock_quantity: previous?.stock_quantity ?? 0,
+      image_url: previous?.image_url || '',
+      additional_images: previous?.additional_images || [],
+      is_available: previous?.is_available !== false,
+    };
+  }));
+};
+
 
 
 const ProductGuidelinesModal = ({ open, onConfirm, onCancel }) => {
@@ -243,6 +269,7 @@ const [showGuidelines, setShowGuidelines] = useState(false);
 const [showForm, setShowForm] = useState(false);
 
 const [aiGenerated, setAiGenerated] = useState(false);
+const [variantRows, setVariantRows] = useState([]);
 
 const [formData, setFormData] = useState({
 
@@ -342,6 +369,7 @@ setAiGenerated(false);
 
 // Reset form for new product
 
+setVariantRows([]);
 setFormData({
 
 name: '',
@@ -416,6 +444,8 @@ setShowForm(true);
 
 setAiGenerated(true); // Don't auto-generate for existing products
 
+const existingVariants = Array.isArray(product.variants) ? product.variants : [];
+setVariantRows(existingVariants);
 setFormData({
 
 name: product.name || '',
@@ -577,23 +607,15 @@ const slug = `${slugBase || 'produit'}-${product?.id || Date.now().toString(36)}
 
 
 
-const colors = (formData.variant_options?.colors || '').split(',').map(v => v.trim()).filter(Boolean);
-const sizes = (formData.variant_options?.sizes || '').split(',').map(v => v.trim()).filter(Boolean);
-const variantColors = colors.length ? colors : [''];
-const variantSizes = sizes.length ? sizes : [''];
-const variants = (colors.length || sizes.length)
-  ? variantColors.flatMap(color => variantSizes.map(size => ({
-      id: `${color || 'default'}-${size || 'default'}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      color,
-      size,
-      price: Number(formData.price) || 0,
-      promo_price: Number(formData.promo_price) || 0,
-      stock_quantity: Number(formData.stock_quantity) || 0,
-      image_url: formData.image_url || '',
-      additional_images: formData.additional_images || [],
-      is_available: formData.is_available !== false,
-    })))
-  : [];
+const generatedRows = makeVariantRows(formData.variant_options?.colors, formData.variant_options?.sizes, variantRows);
+const variants = generatedRows.map(row => ({
+  ...row,
+  price: Number(row.price || formData.price) || 0,
+  promo_price: Number(row.promo_price || formData.promo_price) || 0,
+  stock_quantity: Number(row.stock_quantity) || 0,
+  image_url: row.image_url || formData.image_url || '',
+  additional_images: row.additional_images?.length ? row.additional_images : (formData.additional_images || []),
+}));
 
 const { variant_options: _variantOptions, ...persistedFormData } = formData;
 const dataWithSlug = {
@@ -1446,13 +1468,28 @@ Ajouter
   <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div>
       <Label className="text-xs text-slate-900 mb-1">Couleurs disponibles</Label>
-      <Input className="bg-white h-9 text-slate-900" value={formData.variant_options?.colors || ''} onChange={e => setFormData(prev => ({ ...prev, variant_options: { ...prev.variant_options, colors: e.target.value } }))} placeholder="Noir, Blanc, Rouge" />
+      <Input className="bg-white h-9 text-slate-900" value={formData.variant_options?.colors || ''} onChange={e => { const colors = e.target.value; setFormData(prev => ({ ...prev, variant_options: { ...prev.variant_options, colors } })); setVariantRows(prev => makeVariantRows(colors, formData.variant_options?.sizes, prev)); }} placeholder="Noir, Blanc, Rouge" />
     </div>
     <div>
       <Label className="text-xs text-slate-900 mb-1">Tailles disponibles</Label>
-      <Input className="bg-white h-9 text-slate-900" value={formData.variant_options?.sizes || ''} onChange={e => setFormData(prev => ({ ...prev, variant_options: { ...prev.variant_options, sizes: e.target.value } }))} placeholder="S, M, L, XL" />
+      <Input className="bg-white h-9 text-slate-900" value={formData.variant_options?.sizes || ''} onChange={e => { const sizes = e.target.value; setFormData(prev => ({ ...prev, variant_options: { ...prev.variant_options, sizes } })); setVariantRows(prev => makeVariantRows(formData.variant_options?.colors, sizes, prev)); }} placeholder="S, M, L, XL" />
     </div>
   </div>
+  {variantRows.length > 0 && (
+    <div className="border-t border-orange-200 bg-white p-4 space-y-3">
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Détails par combinaison</p>
+      {variantRows.map((row, index) => (
+        <div key={row.id} className="grid grid-cols-2 gap-2 rounded-lg border border-slate-200 p-3 sm:grid-cols-6">
+          <div className="col-span-2 flex items-center gap-2 text-sm font-bold text-slate-800 sm:col-span-2"><span>{row.color || 'Standard'}</span>{row.size && <span className="text-slate-400">/ {row.size}</span>}</div>
+          <Input className="h-8 text-xs text-slate-900" placeholder="Prix HTG" type="number" value={row.price} onChange={e => setVariantRows(prev => prev.map((item, i) => i === index ? { ...item, price: e.target.value } : item))} />
+          <Input className="h-8 text-xs text-slate-900" placeholder="Promo" type="number" value={row.promo_price} onChange={e => setVariantRows(prev => prev.map((item, i) => i === index ? { ...item, promo_price: e.target.value } : item))} />
+          <Input className="h-8 text-xs text-slate-900" placeholder="Stock" type="number" value={row.stock_quantity} onChange={e => setVariantRows(prev => prev.map((item, i) => i === index ? { ...item, stock_quantity: e.target.value } : item))} />
+          <Input className="col-span-2 h-8 text-xs text-slate-900 sm:col-span-1" placeholder="SKU" value={row.sku} onChange={e => setVariantRows(prev => prev.map((item, i) => i === index ? { ...item, sku: e.target.value } : item))} />
+          <Input className="col-span-2 h-8 text-xs text-slate-900 sm:col-span-6" placeholder="URL photo spécifique (optionnel)" value={row.image_url} onChange={e => setVariantRows(prev => prev.map((item, i) => i === index ? { ...item, image_url: e.target.value } : item))} />
+        </div>
+      ))}
+    </div>
+  )}
 </div>
 
 {/* Section 7: Attributs Avancés */}
