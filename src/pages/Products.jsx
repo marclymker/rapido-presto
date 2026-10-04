@@ -555,7 +555,7 @@ export default function Products() {
                 type="button"
                 onClick={() => handleCategorySelect(selectedCategory === space.id ? null : space.id)}
                 aria-pressed={selectedCategory === space.id}
-                className={`shrink-0 rounded-xl px-4 py-3 text-sm font-bold transition ${selectedCategory === space.id ? 'bg-white text-slate-950' : 'bg-[#20242b] text-white hover:bg-[#2a3038]'}`}
+                className={`shrink-0 rounded-xl px-4 py-3 text-sm font-bold transition ${selectedCategory === space.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
               >
                 <span className="mr-1.5">{space.icon}</span>{space.label}
               </button>
@@ -569,7 +569,7 @@ export default function Products() {
             value={selectedRegion}
             onValueChange={(v) => { setSelectedRegion(v === '__all__' ? '' : v); setVisibleCount(60); }}
           >
-            <SelectTrigger className="h-9 w-auto min-w-[150px] border-0 bg-[#20242b] px-3 text-xs text-white shadow-none focus:ring-0">
+            <SelectTrigger className="h-9 w-auto min-w-[150px] border-0 bg-slate-100 px-3 text-xs text-slate-700 shadow-none focus:ring-0">
               <MapPin className="mr-1.5 h-4 w-4" fill="currentColor" stroke="none" />
               <SelectValue placeholder="Toutes les zones" />
             </SelectTrigger>

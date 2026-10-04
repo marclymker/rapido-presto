@@ -315,7 +315,7 @@ export default function Home() {
                 type="button"
                 onClick={() => { setSelectedCategory(selectedCategory === space.id ? null : space.id); setSearchQuery(''); setShowCategories(false); }}
                 aria-pressed={selectedCategory === space.id}
-                className={`shrink-0 rounded-xl px-4 py-3 text-sm font-bold transition ${selectedCategory === space.id ? 'bg-white text-slate-950' : 'bg-[#20242b] text-white hover:bg-[#2a3038]'}`}
+                className={`shrink-0 rounded-xl px-4 py-3 text-sm font-bold transition ${selectedCategory === space.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
               >
                 <span className="mr-1.5">{space.icon}</span>{space.label}
               </button>
