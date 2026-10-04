@@ -164,11 +164,11 @@ export default function ShopPage() {
             <h2 className="text-2xl font-bold mb-6">Nos produits ({products.length})</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {products.map(product => (
-                <a key={product.id} href={`/products/${product.slug}`}>
+                <a key={product.id} href={`/product/${product.id}`}>
                   <ProductCard
                     product={product}
                     shop={shop}
-                    onClick={() => window.location.href = `/products/${product.slug}`}
+                    onClick={() => window.location.href = `/product/${product.id}`}
                   />
                 </a>
               ))}

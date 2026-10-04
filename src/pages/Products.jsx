@@ -458,7 +458,7 @@ export default function Products() {
         seo_tags: product.seo_tags, category: product.category,
       }));
     } catch (_) {}
-    navigate(`/product/${product.slug || product.id}`);
+    navigate(`/product/${product.id}`);
   }, [isAdmin, shopsMap, trackProductView, navigate]);
 
   const handleSearchChange = useCallback((value) => {

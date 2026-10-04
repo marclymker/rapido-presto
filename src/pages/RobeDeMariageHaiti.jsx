@@ -373,7 +373,7 @@ export default function RobeDeMariageHaiti() {
                 {products.map(product => {
                   const shop = shops.find(s => s.id === product.shop_id);
                   return (
-                    <a key={product.id} href={`/products/${product.slug}`}>
+                    <a key={product.id} href={`/product/${product.id}`}>
                       <ProductCard product={product} shop={shop} />
                     </a>
                   );

@@ -134,11 +134,11 @@ export default function CategoryPage() {
             {products.map(product => {
               const shop = shops.find(s => s.id === product.shop_id);
               return (
-                <a key={product.id} href={`/products/${product.slug}`}>
+                <a key={product.id} href={`/product/${product.id}`}>
                   <ProductCard
                     product={product}
                     shop={shop}
-                    onClick={() => window.location.href = `/products/${product.slug}`}
+                    onClick={() => window.location.href = `/product/${product.id}`}
                   />
                 </a>
               );

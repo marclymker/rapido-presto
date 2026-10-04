@@ -219,7 +219,7 @@ export default function Home() {
     const shop = shops.find(s => s.id === product.shop_id);
     trackProductView(product, shop);
     try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
-    navigate(`/product/${product.slug || product.id}`);
+    navigate(`/product/${product.id}`);
   }, [shops, trackProductView, navigate]);
 
   const handleSearchChange = (value) => {
