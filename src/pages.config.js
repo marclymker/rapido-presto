@@ -28,6 +28,7 @@ const Home = lazy(() => import('./pages/Home'));
 const Legal = lazy(() => import('./pages/Legal'));
 const ManageProfiles = lazy(() => import('./pages/ManageProfiles'));
 const LegacyMigration = lazy(() => import('./pages/LegacyMigration'));
+const MarketingStudio = lazy(() => import('./pages/MarketingStudio'));
 const Orders = lazy(() => import('./pages/Orders'));
 const PaymentCallback = lazy(() => import('./pages/PaymentCallback'));
 const Pricing = lazy(() => import('./pages/Pricing'));
@@ -69,6 +70,7 @@ export const PAGES = {
     "Legal": Legal,
     "ManageProfiles": ManageProfiles,
     "LegacyMigration": LegacyMigration,
+    "MarketingStudio": MarketingStudio,
     "Orders": Orders,
     "PaymentCallback": PaymentCallback,
     "Pricing": Pricing,

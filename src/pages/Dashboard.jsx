@@ -7,7 +7,7 @@ import ProductsSection from '@/components/enterprise/ProductsSection';
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 import { createPageUrl } from '@/utils';
 import {
-  Activity, CalendarDays, CheckCircle2, ChevronRight, Clock3,
+  Activity, CalendarDays, CheckCircle2, ChevronRight, Clock3, Sparkles,
   Bike, Hotel, Package, Plus, ScanLine, Store,
   Ticket, Truck, Utensils, Users, WalletCards
 } from 'lucide-react';
@@ -139,6 +139,10 @@ export default function Dashboard() {
     <main className="mx-auto max-w-[1500px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold text-slate-500">Bonjour {user.full_name?.split(' ')[0] || 'marchand'}</p><h2 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">Pilotez votre activité.</h2><p className="mt-1 max-w-2xl text-sm text-slate-500">{workspace.description}</p></div><div className="flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-bold text-emerald-700 shadow-sm"><span className="h-2 w-2 rounded-full bg-emerald-500" />Espace opérationnel actif</div></div>
       <Workspace orders={orders} products={products} shop={shop} />
+      <section className="flex flex-col justify-between gap-4 rounded-3xl border border-orange-200 bg-orange-50 p-5 shadow-sm sm:flex-row sm:items-center sm:p-6">
+        <div><p className="text-xs font-black uppercase tracking-[.16em] text-orange-600">Kairos Growth Engine</p><h2 className="mt-1 font-black text-slate-950">Transformez vos produits en contenus qui attirent des prospects.</h2><p className="mt-1 text-sm text-slate-600">Générez des brouillons SEO, Facebook, Instagram, TikTok et WhatsApp avant publication.</p></div>
+        <Button onClick={() => { window.location.href = createPageUrl('MarketingStudio'); }} className="rounded-xl bg-orange-500 font-bold hover:bg-orange-600"><Sparkles className="mr-2 h-4 w-4" />Ouvrir Marketing Studio</Button>
+      </section>
       <section className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:p-6">
         <div><p className="text-xs font-black uppercase tracking-[.16em] text-slate-400">Compte et accès</p><h2 className="mt-1 font-black text-slate-950">{user.full_name || 'Votre compte'}</h2><p className="mt-1 text-sm text-slate-500">Gérez vos profils métier et les accès collaborateurs depuis cet espace unique.</p></div>
         <Button onClick={() => window.location.href = createPageUrl('ManageProfiles')} variant="outline" className="rounded-xl border-slate-300">Gérer les profils<ChevronRight className="ml-2 h-4 w-4" /></Button>
