@@ -6,7 +6,7 @@ export const BUSINESS_PROFILES = {
     label: 'Marketplace',
     shortLabel: 'Marchand',
     icon: Store,
-    route: 'EnterpriseDashboard',
+    route: 'Dashboard',
     permissions: ['catalog.read', 'catalog.write', 'orders.read', 'orders.manage', 'stats.read'],
   },
   food: {
@@ -14,7 +14,7 @@ export const BUSINESS_PROFILES = {
     label: 'Nourriture / POS',
     shortLabel: 'POS Nourriture',
     icon: Utensils,
-    route: 'FoodPOSDashboard',
+    route: 'Dashboard',
     permissions: ['catalog.read', 'catalog.write', 'orders.read', 'orders.accept', 'orders.reject', 'orders.prepare'],
   },
   hospitality: {
@@ -22,7 +22,7 @@ export const BUSINESS_PROFILES = {
     label: 'Hôtel / Piscine',
     shortLabel: 'Hôtel / Piscine',
     icon: Hotel,
-    route: 'HospitalityDashboard',
+    route: 'Dashboard',
     permissions: ['inventory.read', 'inventory.write', 'availability.write', 'reservations.read', 'reservations.manage'],
   },
   tickets: {
@@ -30,7 +30,7 @@ export const BUSINESS_PROFILES = {
     label: 'Tickets / Événements',
     shortLabel: 'Tickets',
     icon: Ticket,
-    route: 'TicketDashboard',
+    route: 'Dashboard',
     permissions: ['events.read', 'events.write', 'tickets.read', 'tickets.scan'],
   },
 };
