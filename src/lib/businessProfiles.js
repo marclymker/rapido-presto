@@ -36,6 +36,19 @@ export const BUSINESS_PROFILES = {
 };
 
 export const BUSINESS_PROFILE_IDS = Object.keys(BUSINESS_PROFILES);
+export const OPERATIONAL_PROFILE_IDS = [...BUSINESS_PROFILE_IDS, 'livreur', 'agent'];
+
+export function deactivateOtherOperationalProfiles(profiles = {}, activeProfileId) {
+  const nextProfiles = { ...profiles };
+  OPERATIONAL_PROFILE_IDS.forEach((profileId) => {
+    if (profileId === activeProfileId) return;
+    if (nextProfiles[profileId]) nextProfiles[profileId] = { ...nextProfiles[profileId], is_active: false };
+  });
+  if (activeProfileId !== 'marketplace' && nextProfiles.entreprise) {
+    nextProfiles.entreprise = { ...nextProfiles.entreprise, is_active: false };
+  }
+  return nextProfiles;
+}
 
 export function getBusinessProfile(id) {
   return BUSINESS_PROFILES[id] || BUSINESS_PROFILES.marketplace;

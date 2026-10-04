@@ -12,13 +12,13 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { BUSINESS_PROFILES, BUSINESS_PROFILE_IDS, getBusinessProfile } from '@/lib/businessProfiles';
+import { BUSINESS_PROFILES, BUSINESS_PROFILE_IDS, OPERATIONAL_PROFILE_IDS, deactivateOtherOperationalProfiles, getBusinessProfile } from '@/lib/businessProfiles';
 import { base44 } from '@/api/base44Client';
 
 const LEGACY_PROFILES = {
   client: { id: 'client', label: 'Client', icon: User, color: 'text-blue-600', bgColor: 'bg-blue-100', route: 'Home' },
   agent: { id: 'agent', label: 'Agent de Vente', icon: User, color: 'text-purple-600', bgColor: 'bg-purple-100', route: 'AgentDashboard' },
-  livreur: { id: 'livreur', label: 'Livreur', icon: Bike, color: 'text-green-600', bgColor: 'bg-green-100', route: 'DriverDashboard' },
+  livreur: { id: 'livreur', label: 'Livreur', icon: Bike, color: 'text-green-600', bgColor: 'bg-green-100', route: 'Dashboard' },
 };
 
 const getConfig = (id) => {
@@ -60,10 +60,16 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
 
     setSwitching(true);
     try {
-      await base44.auth.updateMe({
-        current_profile: targetProfile,
-        [`profiles.${targetProfile}.last_used`]: new Date().toISOString(),
-      });
+      const preservedOperationalProfile = OPERATIONAL_PROFILE_IDS.includes(currentProfile)
+        ? currentProfile
+        : OPERATIONAL_PROFILE_IDS.find((profileId) => profiles?.[profileId]?.is_active);
+      const nextProfiles = targetProfile === 'client'
+        ? deactivateOtherOperationalProfiles(profiles, preservedOperationalProfile)
+        : deactivateOtherOperationalProfiles(profiles, targetProfile);
+      if (nextProfiles[targetProfile]) {
+        nextProfiles[targetProfile] = { ...nextProfiles[targetProfile], is_active: true, last_used: new Date().toISOString() };
+      }
+      await base44.auth.updateMe({ current_profile: targetProfile, profiles: nextProfiles });
       onProfileChange?.(targetProfile);
       toast.success(`Profil changé vers ${getConfig(targetProfile).label}`);
       const targetRoute = getConfig(targetProfile).route || 'Home';

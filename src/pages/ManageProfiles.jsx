@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from 'framer-motion';
+import { BUSINESS_PROFILES, BUSINESS_PROFILE_IDS, deactivateOtherOperationalProfiles } from '@/lib/businessProfiles';
 
 const COMPANY_CATEGORIES = [
   "Fastfood", "Restaurant", "Nourriture",
@@ -133,7 +134,7 @@ export default function ManageProfiles() {
     setSubmitting(true);
     
     try {
-      const profiles = { ...(user.profiles || {}) };
+      let profiles = { ...(user.profiles || {}) };
       
       if (selectedProfile === 'marketplace' || selectedProfile === 'entreprise' || BUSINESS_PROFILE_IDS.includes(selectedProfile)) {
         if (!formData.company_name || !formData.company_category) {
@@ -156,6 +157,7 @@ export default function ManageProfiles() {
           delivery_time_minutes: 30
         };
 
+        profiles = deactivateOtherOperationalProfiles(profiles, selectedProfile === 'entreprise' ? 'marketplace' : selectedProfile);
         if (selectedProfile === 'marketplace' || selectedProfile === 'entreprise') {
           profiles.marketplace = profileData;
           profiles.entreprise = profileData;
@@ -163,11 +165,12 @@ export default function ManageProfiles() {
           profiles[selectedProfile] = { ...profileData, business_profile: selectedProfile };
         }
         
-        await base44.auth.updateMe({ profiles });
-        toast.success('Profil entreprise activé!');
+        await base44.auth.updateMe({ profiles, current_profile: selectedProfile === 'entreprise' ? 'marketplace' : selectedProfile });
+        toast.success('Profil entreprise activé! Les autres profils opérationnels sont désactivés.');
         window.location.reload();
         
       } else if (selectedProfile === 'agent') {
+        profiles = deactivateOtherOperationalProfiles(profiles, 'agent');
         profiles.agent = {
           is_active: true,
           validation_status: 'approved',
@@ -177,8 +180,8 @@ export default function ManageProfiles() {
           address: user.address || ''
         };
         
-        await base44.auth.updateMe({ profiles });
-        toast.success('Profil Agent de Vente activé!');
+        await base44.auth.updateMe({ profiles, current_profile: 'agent' });
+        toast.success('Profil Agent de Vente activé! Les autres profils opérationnels sont désactivés.');
         window.location.reload();
         
       } else if (selectedProfile === 'livreur') {
@@ -516,4 +519,3 @@ export default function ManageProfiles() {
     </div>
   );
 }
-import { BUSINESS_PROFILES, BUSINESS_PROFILE_IDS } from '@/lib/businessProfiles';

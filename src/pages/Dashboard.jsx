@@ -8,7 +8,7 @@ import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
 import { createPageUrl } from '@/utils';
 import {
   Activity, CalendarDays, CheckCircle2, ChevronRight, Clock3,
-  Hotel, Package, Plus, ScanLine, Store,
+  Bike, Hotel, Package, Plus, ScanLine, Store,
   Ticket, Truck, Utensils, Users, WalletCards
 } from 'lucide-react';
 
@@ -28,6 +28,10 @@ const WORKSPACES = {
   tickets: {
     label: 'Tickets', eyebrow: 'Billetterie événementielle', icon: Ticket,
     accent: '#7c3aed', description: 'Pilotez vos événements, ventes, participants et contrôles d’accès.'
+  },
+  livreur: {
+    label: 'Livreur', eyebrow: 'Opérations livraison', icon: Bike,
+    accent: '#16a34a', description: 'Acceptez les livraisons et suivez les courses qui vous sont attribuées.'
   }
 };
 
@@ -98,6 +102,14 @@ function TicketsWorkspace({ orders, products }) {
   </>;
 }
 
+function CourierWorkspace({ orders }) {
+  const active = orders.filter(o => ['accepted', 'in_delivery'].includes(o.status));
+  return <>
+    <div className="grid gap-3 sm:grid-cols-3"><Metric icon={Truck} label="Livraisons à traiter" value={orders.filter(o => o.status === 'pending').length} tone="amber" /><Metric icon={Activity} label="Courses actives" value={active.length} tone="emerald" /><Metric icon={CheckCircle2} label="Disponibilité" value="En ligne" tone="blue" /></div>
+    <OperationalCard icon={Truck} title="Mes livraisons" detail="Acceptez et suivez vos courses" accent="#16a34a"><OrdersSection orders={orders} userType="livreur" /></OperationalCard>
+  </>;
+}
+
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -113,7 +125,7 @@ export default function Dashboard() {
   const profileId = normalizeProfile(user.current_profile === 'entreprise' ? 'marketplace' : user.current_profile);
   const workspace = WORKSPACES[profileId];
   const Icon = workspace.icon;
-  const Workspace = profileId === 'food' ? FoodWorkspace : profileId === 'hospitality' ? HospitalityWorkspace : profileId === 'tickets' ? TicketsWorkspace : MarketplaceWorkspace;
+  const Workspace = profileId === 'food' ? FoodWorkspace : profileId === 'hospitality' ? HospitalityWorkspace : profileId === 'tickets' ? TicketsWorkspace : profileId === 'livreur' ? CourierWorkspace : MarketplaceWorkspace;
 
   return <div className="min-h-screen bg-[#f4f6f8] text-slate-950">
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
