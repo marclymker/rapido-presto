@@ -29,7 +29,7 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDzUCvw-ZsA7Q8WsYcOE0ImInNmfAcuFCg",
+  apiKey: "AIzaSyC33gtUjuwvkgoEynx4HxoYpKEgPw2EK5k",
   authDomain: "rapido-presto-f072a.firebaseapp.com",
   projectId: "rapido-presto-f072a",
   storageBucket: "rapido-presto-f072a.firebasestorage.app",
