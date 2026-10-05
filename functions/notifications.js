@@ -5,15 +5,16 @@ const db = admin.firestore();
 const messaging = admin.messaging();
 
 const STATUS_COPY = {
+  pending: ['Nouvelle commande', 'Une nouvelle commande attend votre traitement.'],
   accepted: ['Commande acceptée', 'Le vendeur a accepté votre commande.'],
   confirmed: ['Commande confirmée', 'Votre commande est confirmée.'],
   rejected: ['Commande refusée', 'Le vendeur ne peut pas traiter votre commande.'],
   refused: ['Commande refusée', 'Le vendeur ne peut pas traiter votre commande.'],
-  cancelled: ['Commande refusée', 'La commande a été annulée.'],
   preparing: ['Commande en préparation', 'Votre commande est en cours de préparation.'],
   ready: ['Commande prête', 'Votre commande est prête.'],
   in_delivery: ['Commande en livraison', 'Votre commande est en cours de livraison.'],
   delivered: ['Commande livrée', 'Votre commande a été livrée.'],
+  cancelled: ['Commande annulée', 'La commande a été annulée.'],
 };
 
 function asString(value) {
@@ -39,12 +40,31 @@ async function claimEvent(eventId) {
 }
 
 async function shopOwnerIds(order) {
-  const ids = uniqueIds([order.shop_owner_id, order.shop_owner_uid, order.vendor_id, order.seller_id, order.owner_id]);
+  const ids = uniqueIds([
+    order.shop_owner_id,
+    order.shop_owner_uid,
+    order.vendor_id,
+    order.seller_id,
+    order.owner_id,
+    order.merchant_id,
+    order.restaurant_owner_id,
+    order.hotel_owner_id,
+    order.organizer_id,
+  ]);
   if (order.shop_id) {
     const shop = await db.collection('Shop').doc(asString(order.shop_id)).get();
     if (shop.exists) {
       const data = shop.data() || {};
-      ids.push(...uniqueIds([data.user_id, data.owner_id, data.owner_uid, data.vendor_id]));
+      ids.push(...uniqueIds([
+        data.user_id,
+        data.owner_id,
+        data.owner_uid,
+        data.vendor_id,
+        data.merchant_id,
+        data.restaurant_owner_id,
+        data.hotel_owner_id,
+        data.organizer_id,
+      ]));
     }
   }
   return uniqueIds(ids);
@@ -88,27 +108,51 @@ async function sendToUsers(userIds, { title, body, url = '/Dashboard', tag, pref
 
 async function notifyNewOrder(order, eventId) {
   if (!(await claimEvent(eventId))) return null;
-  const ids = await shopOwnerIds(order);
-  return sendToUsers(ids, {
+  const merchantIds = await shopOwnerIds(order);
+  const driverIds = uniqueIds([order.driver_id, order.assigned_driver_id, order.livreur_id]);
+  const result = await sendToUsers(merchantIds, {
     title: 'Nouvelle commande',
-    body: `Commande #${order.order_number || order.id || 'à traiter'} reçue sur Kairos.`,
+    body: `Commande #${order.order_number || order.id || 'à traiter'} reçue dans votre espace professionnel Kairos.`,
     url: '/Dashboard',
     tag: `order-new-${order.id || eventId}`,
   });
+  const driverResult = await sendToUsers(driverIds, {
+    title: 'Nouvelle livraison',
+    body: `Une commande #${order.order_number || order.id || 'à traiter'} vous est assignée.`,
+    url: '/DriverDashboard',
+    tag: `delivery-new-${order.id || eventId}`,
+  });
+  return { merchant: result, driver: driverResult };
 }
 
 async function notifyOrderStatus(before, after, eventId) {
-  const beforeStatus = statusKey(before.status);
-  const afterStatus = statusKey(after.status);
-  if (!afterStatus || beforeStatus === afterStatus || !STATUS_COPY[afterStatus]) return null;
+  const beforeStatus = statusKey(before.status || before.order_status || before.state);
+  const afterStatus = statusKey(after.status || after.order_status || after.state);
+  const previousDrivers = uniqueIds([before.driver_id, before.assigned_driver_id, before.livreur_id]);
+  const currentDrivers = uniqueIds([after.driver_id, after.assigned_driver_id, after.livreur_id]);
+  const newlyAssignedDrivers = currentDrivers.filter((id) => !previousDrivers.includes(id));
+  if ((!afterStatus || beforeStatus === afterStatus) && !newlyAssignedDrivers.length) return null;
   if (!(await claimEvent(eventId))) return null;
+  if (beforeStatus === afterStatus && newlyAssignedDrivers.length) {
+    return sendToUsers(newlyAssignedDrivers, {
+      title: 'Nouvelle livraison',
+      body: `La commande #${after.order_number || after.id || ''} vous a été assignée.`.trim(),
+      url: '/DriverDashboard',
+      tag: `delivery-assigned-${after.id || eventId}`,
+    });
+  }
   const [title, body] = STATUS_COPY[afterStatus];
-  return sendToUsers(uniqueIds([after.client_id, after.customer_id, after.user_id]), {
+  const clientIds = uniqueIds([after.client_id, after.customer_id, after.user_id]);
+  const merchantIds = await shopOwnerIds(after);
+  const driverIds = uniqueIds([after.driver_id, after.assigned_driver_id, after.livreur_id]);
+  const recipients = uniqueIds([...clientIds, ...merchantIds, ...driverIds]);
+  const result = await sendToUsers(recipients, {
     title,
     body: `${body} Commande #${after.order_number || after.id || ''}`.trim(),
-    url: '/Orders',
+    url: clientIds.length ? '/Orders' : '/Dashboard',
     tag: `order-status-${after.id || eventId}-${afterStatus}`,
   });
+  return { recipients: recipients.length, result };
 }
 
 async function notifyMessage(message, eventId) {
@@ -148,7 +192,8 @@ exports.onOrderCreated = onDocumentCreated('Order/{orderId}', async (event) => {
 exports.onOrderStatusChanged = onDocumentUpdated('Order/{orderId}', async (event) => {
   const before = event.data?.before.data() || {};
   const after = { ...event.data?.after.data(), id: event.params.orderId };
-  return notifyOrderStatus(before, after, `order-status-${event.params.orderId}-${statusKey(after.status)}`);
+  const updateKey = event.data?.after.updateTime?.toMillis?.() || Date.now();
+  return notifyOrderStatus(before, after, `order-status-${event.params.orderId}-${updateKey}`);
 });
 
 exports.onMessageCreated = onDocumentCreated('Message/{messageId}', async (event) => {
