@@ -29,13 +29,13 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC33gtUjuwvkgoEynx4HxoYpKEgPw2EK5k",
+  apiKey: "AIzaSyCUyAlOkYW-ytQ0YbLI477dIttYnI5Kz3Y",
   authDomain: "rapido-presto-f072a.firebaseapp.com",
   projectId: "rapido-presto-f072a",
   storageBucket: "rapido-presto-f072a.firebasestorage.app",
   messagingSenderId: "553324736782",
-  appId: "1:553324736782:web:920540c4a9cc4aee7a675f",
-  measurementId: "G-MSRQPDQJ5S"
+  appId: "1:553324736782:web:16327826263743a77a675f",
+  measurementId: "G-NK2TS9SYQ8"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
