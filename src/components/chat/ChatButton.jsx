@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Loader2 } from 'lucide-react';
@@ -10,18 +10,18 @@ export default function ChatButton({ product, shop }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => setUser(null));
+    firebaseApi.auth.me().then(setUser).catch(() => setUser(null));
   }, []);
 
   const createConvMutation = useMutation({
     mutationFn: async () => {
       if (!user) {
-        base44.auth.redirectToLogin(window.location.pathname);
+        firebaseApi.auth.redirectToLogin(window.location.pathname);
         return;
       }
 
       // Vérifier si une conversation existe déjà
-      const existing = await base44.entities.Conversation.filter({
+      const existing = await firebaseApi.entities.Conversation.filter({
         customer_id: user.id,
         shop_id: shop.id
       });
@@ -31,7 +31,7 @@ export default function ChatButton({ product, shop }) {
       }
 
       // Créer nouvelle conversation
-      return await base44.entities.Conversation.create({
+      return await firebaseApi.entities.Conversation.create({
         customer_id: user.id,
         customer_name: user.full_name,
         vendor_id: shop.user_id,

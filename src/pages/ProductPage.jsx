@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Send, Store, MapPin, Share2, MessageCircle, CreditCard } from 'lucide-react';
 import { cacheProduct, getCachedProduct } from '@/lib/useProductCache';
@@ -41,12 +41,12 @@ export default function ProductPage() {
     queryKey: ['product', slug],
     queryFn: async () => {
       // Les nouveaux liens utilisent l'ID Firestore, qui est toujours unique.
-      const byId = await base44.entities.Product.get(slug);
+      const byId = await firebaseApi.entities.Product.get(slug);
       if (byId) return [byId];
       // Compatibilité avec les anciens liens en slug : ne résoudre que si le
       // slug est réellement unique, sinon afficher une erreur plutôt que le
       // premier produit arbitraire.
-      const bySlug = await base44.entities.Product.filter({ slug }, undefined, 10);
+      const bySlug = await firebaseApi.entities.Product.filter({ slug }, undefined, 10);
       return bySlug.length === 1 ? bySlug : [];
     },
     enabled: !!slug,
@@ -58,7 +58,7 @@ export default function ProductPage() {
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true }),
     staleTime: 10 * 60 * 1000,
   });
 
@@ -66,13 +66,13 @@ export default function ProductPage() {
 
   const { data: sameShopProducts = [] } = useQuery({
     queryKey: ['sameShop', product?.shop_id],
-    queryFn: () => base44.entities.Product.filter({ shop_id: product.shop_id, is_available: true }, '-created_date', 20),
+    queryFn: () => firebaseApi.entities.Product.filter({ shop_id: product.shop_id, is_available: true }, '-created_date', 20),
     enabled: !!product?.shop_id,
   });
 
   const { data: similarProducts = [] } = useQuery({
     queryKey: ['similar', product?.category],
-    queryFn: () => base44.entities.Product.filter({ category: product.category, is_available: true }, '-created_date', 30),
+    queryFn: () => firebaseApi.entities.Product.filter({ category: product.category, is_available: true }, '-created_date', 30),
     enabled: !!product?.category,
   });
 
@@ -218,7 +218,7 @@ export default function ProductPage() {
         {/* Bouton Commander maintenant */}
         <button
           onClick={() => {
-            if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+            if (!user) { firebaseApi.auth.redirectToLogin(window.location.pathname); return; }
             trackMetaEvent('InitiateCheckout', { content_ids: [product.id], content_type: 'product', content_name: product.name, value: price, currency: 'HTG' });
             window.location.href = `/QuickCheckout?product_id=${product.id}&quantity=1`;
           }}
@@ -296,7 +296,7 @@ export default function ProductPage() {
           <button
             onClick={() => {
               if (!user) {
-                base44.auth.redirectToLogin(window.location.pathname);
+                firebaseApi.auth.redirectToLogin(window.location.pathname);
                 return;
               }
               trackMetaEvent('InitiateCheckout', {

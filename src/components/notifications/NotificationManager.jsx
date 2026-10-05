@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import Pusher from 'pusher-js';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 
 export function useBrowserNotifications(user) {
   const audioRef = useRef(null);
@@ -108,7 +108,7 @@ export function useBrowserNotifications(user) {
 
   // 3. Récupérer la config Pusher
   useEffect(() => {
-    base44.functions.invoke('getPusherConfig')
+    firebaseApi.functions.invoke('getPusherConfig')
       .then(res => setPusherConfig(res.data))
       .catch(err => console.error('Erreur config Pusher:', err));
   }, []);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,34 +14,34 @@ export default function AdminDashboard() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    firebaseApi.auth.me().then(setUser).catch(() => {});
   }, []);
 
   // Fetch all data
   const { data: orders = [] } = useQuery({
     queryKey: ['admin-all-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 100)
+    queryFn: () => firebaseApi.entities.Order.list('-created_date', 100)
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['admin-all-shops'],
-    queryFn: () => base44.entities.Shop.list('-created_date')
+    queryFn: () => firebaseApi.entities.Shop.list('-created_date')
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['admin-all-products'],
-    queryFn: () => base44.entities.Product.list('-created_date')
+    queryFn: () => firebaseApi.entities.Product.list('-created_date')
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['admin-all-users'],
-    queryFn: () => base44.entities.User.list('-created_date'),
+    queryFn: () => firebaseApi.entities.User.list('-created_date'),
     enabled: user?.role === 'admin'
   });
 
   const { data: agentClients = [] } = useQuery({
     queryKey: ['admin-agent-clients'],
-    queryFn: () => base44.entities.AgentClient.list('-created_date')
+    queryFn: () => firebaseApi.entities.AgentClient.list('-created_date')
   });
 
   // Filter agents

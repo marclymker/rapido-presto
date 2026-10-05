@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { User, Building2, Bike, MapPin, Phone, Upload, ChevronRight, Briefcase } from 'lucide-react';
@@ -47,7 +47,7 @@ export default function ProfileSetup() {
   });
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       // If user already has a profile, redirect to appropriate page
       if (u.current_profile) {
@@ -81,7 +81,7 @@ export default function ProfileSetup() {
     if (!file) return;
 
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await firebaseApi.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, [field]: file_url });
       toast.success('Fichier téléchargé');
     } catch (error) {
@@ -129,7 +129,7 @@ export default function ProfileSetup() {
           delivery_time_minutes: 30,
           is_active: true
         };
-        const shop = await base44.entities.Shop.create(shopData);
+        const shop = await firebaseApi.entities.Shop.create(shopData);
 
         profiles.entreprise = {
           is_active: true,
@@ -160,7 +160,7 @@ export default function ProfileSetup() {
         };
       }
 
-      await base44.auth.updateMe({
+      await firebaseApi.auth.updateMe({
         current_profile: formData.user_type,
         region: formData.region,
         phone: formData.phone,

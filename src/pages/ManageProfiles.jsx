@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, User, Bike, Plus, Check, Clock, AlertCircle, Upload, Briefcase } from 'lucide-react';
@@ -42,7 +42,7 @@ export default function ManageProfiles() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       setLoading(false);
     }).catch(() => navigate(createPageUrl('Home')));
@@ -124,7 +124,7 @@ export default function ManageProfiles() {
       const profiles = deactivateOtherOperationalProfiles(user?.profiles || {}, profileType === 'marketplace' ? 'client' : profileType);
       profiles[profileType] = { ...(profiles[profileType] || {}), is_active: true, last_used: new Date().toISOString() };
       if (profileType === 'client') profiles.client = { ...(profiles.client || {}), is_active: true };
-      await base44.auth.updateMe({ profiles, current_profile: profileType === 'marketplace' ? 'client' : profileType });
+      await firebaseApi.auth.updateMe({ profiles, current_profile: profileType === 'marketplace' ? 'client' : profileType });
       setUser({ ...user, profiles, current_profile: profileType === 'marketplace' ? 'client' : profileType });
       toast.success(`Profil ${profileConfig[profileType]?.label || 'actif'} sélectionné`);
       navigate(createPageUrl(profileType === 'livreur' ? 'Dashboard' : profileType === 'client' ? 'Home' : 'Dashboard'));
@@ -140,7 +140,7 @@ export default function ManageProfiles() {
     if (!file) return;
 
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await firebaseApi.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, [field]: file_url });
       toast.success('Fichier téléchargé');
     } catch (error) {
@@ -183,7 +183,7 @@ export default function ManageProfiles() {
           profiles[selectedProfile] = { ...profileData, business_profile: selectedProfile };
         }
 
-        await base44.auth.updateMe({ profiles, current_profile: selectedProfile === 'entreprise' ? 'marketplace' : selectedProfile });
+        await firebaseApi.auth.updateMe({ profiles, current_profile: selectedProfile === 'entreprise' ? 'marketplace' : selectedProfile });
         toast.success('Profil entreprise activé! Les autres profils opérationnels sont désactivés.');
         window.location.reload();
 
@@ -198,7 +198,7 @@ export default function ManageProfiles() {
           address: user.address || ''
         };
 
-        await base44.auth.updateMe({ profiles, current_profile: 'agent' });
+        await firebaseApi.auth.updateMe({ profiles, current_profile: 'agent' });
         toast.success('Profil Agent de Vente activé! Les autres profils opérationnels sont désactivés.');
         window.location.reload();
 
@@ -210,7 +210,7 @@ export default function ManageProfiles() {
         }
 
         // Create profile switch request for admin validation
-        await base44.entities.ProfileSwitch.create({
+        await firebaseApi.entities.ProfileSwitch.create({
           user_id: user.id,
           user_name: user.full_name,
           from_profile: user.current_profile,
@@ -234,7 +234,7 @@ export default function ManageProfiles() {
           is_available: false
         };
 
-        await base44.auth.updateMe({ profiles });
+        await firebaseApi.auth.updateMe({ profiles });
         toast.success('Demande soumise! En attente de validation admin.');
         window.location.reload();
       }

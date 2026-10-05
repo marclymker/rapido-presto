@@ -1,12 +1,12 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { ShoppingBag, Loader2 } from 'lucide-react';
 
 export default function ProductContextCard({ productId }) {
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', productId],
-    queryFn: () => base44.entities.Product.get(productId),
+    queryFn: () => firebaseApi.entities.Product.get(productId),
     enabled: !!productId
   });
 

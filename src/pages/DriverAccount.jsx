@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, User, Mail, Phone, Wallet, Plus, Trash2, LogOut, Landmark, Bike } from 'lucide-react';
@@ -19,7 +19,7 @@ export default function DriverAccount() {
   const [newPayment, setNewPayment] = useState({ type: 'bank', details: '' });
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       setFormData({ phone: u.phone || '' });
       setLoading(false);
@@ -35,7 +35,7 @@ export default function DriverAccount() {
 
   const handleSave = async () => {
     try {
-      await base44.auth.updateMe(formData);
+      await firebaseApi.auth.updateMe(formData);
       setUser({ ...user, ...formData });
       setEditMode(false);
       toast.success('Informations mises à jour');
@@ -53,7 +53,7 @@ export default function DriverAccount() {
     };
 
     try {
-      await base44.auth.updateMe({
+      await firebaseApi.auth.updateMe({
         payment_methods: [...payments, newPaymentMethod]
       });
       setUser({ ...user, payment_methods: [...payments, newPaymentMethod] });
@@ -70,7 +70,7 @@ export default function DriverAccount() {
     payments.splice(index, 1);
 
     try {
-      await base44.auth.updateMe({ payment_methods: payments });
+      await firebaseApi.auth.updateMe({ payment_methods: payments });
       setUser({ ...user, payment_methods: payments });
       toast.success('Moyen de paiement supprimé');
     } catch (error) {
@@ -79,7 +79,7 @@ export default function DriverAccount() {
   };
 
   const handleLogout = () => {
-    base44.auth.logout();
+    firebaseApi.auth.logout();
   };
 
   if (loading) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, User, Mail, MapPin, Phone, CreditCard, Plus, Trash2, LogOut, Wallet, Lock, AlertCircle, Banknote, Shield } from 'lucide-react';
@@ -38,7 +38,7 @@ export default function Account() {
   const [profileFormData, setProfileFormData] = useState({ company_name: '', company_category: '', whatsapp_number: '' });
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       setFormData({
         phone: u.phone || '',
@@ -60,7 +60,7 @@ export default function Account() {
 
   useEffect(() => {
     if (user?.id) {
-      base44.entities.Shop.filter({ user_id: user.id })
+      firebaseApi.entities.Shop.filter({ user_id: user.id })
         .then(shops => {
           if (shops.length > 0) {
             setUserShop(shops[0]);
@@ -79,7 +79,7 @@ export default function Account() {
         region: formData.region
       };
 
-      await base44.auth.updateMe(allowedFields);
+      await firebaseApi.auth.updateMe(allowedFields);
       setUser({ ...user, ...allowedFields });
       setEditMode(false);
       toast.success('Informations mises à jour');
@@ -98,7 +98,7 @@ export default function Account() {
       whatsapp_number: profileFormData.whatsapp_number.trim(),
       profile_updated_at: new Date().toISOString()
     };
-    await base44.auth.updateMe({ profiles });
+    await firebaseApi.auth.updateMe({ profiles });
     setUser({ ...user, profiles });
     setProfileEditMode(false);
     toast.success('Profil de l’établissement mis à jour');
@@ -113,7 +113,7 @@ export default function Account() {
     };
 
     try {
-      await base44.auth.updateMe({
+      await firebaseApi.auth.updateMe({
         payment_methods: [...payments, newPaymentMethod]
       });
       setUser({ ...user, payment_methods: [...payments, newPaymentMethod] });
@@ -130,7 +130,7 @@ export default function Account() {
     payments.splice(index, 1);
 
     try {
-      await base44.auth.updateMe({ payment_methods: payments });
+      await firebaseApi.auth.updateMe({ payment_methods: payments });
       setUser({ ...user, payment_methods: payments });
       toast.success('Moyen de paiement supprimé');
     } catch (error) {
@@ -139,13 +139,13 @@ export default function Account() {
   };
 
   const handleLogout = () => {
-    base44.auth.logout();
+    firebaseApi.auth.logout();
   };
 
   const handleConvertWhatsApp = async () => {
     setConvertingWhatsApp(true);
     try {
-      const response = await base44.functions.invoke('convertMerchantsToWhatsApp');
+      const response = await firebaseApi.functions.invoke('convertMerchantsToWhatsApp');
       toast.success(`${response.data.converted} numéros convertis avec succès`);
     } catch (error) {
       toast.error('Erreur lors de la conversion');
@@ -167,7 +167,7 @@ export default function Account() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-500 mb-4">Veuillez vous connecter</p>
-          <Button onClick={() => base44.auth.redirectToLogin()}>
+          <Button onClick={() => firebaseApi.auth.redirectToLogin()}>
             Se connecter
           </Button>
         </div>
@@ -411,7 +411,7 @@ export default function Account() {
                   onClick={async () => {
                     setConvertingWhatsApp(true);
                     try {
-                      const response = await base44.functions.invoke('convertClientsToWhatsApp');
+                      const response = await firebaseApi.functions.invoke('convertClientsToWhatsApp');
                       toast.success(`${response.data.converted} numéros clients convertis`);
                     } catch (error) {
                       toast.error('Erreur lors de la conversion');
@@ -435,7 +435,7 @@ export default function Account() {
                   onClick={async () => {
                     setConvertingWhatsApp(true);
                     try {
-                      const response = await base44.functions.invoke('generateShopSlug');
+                      const response = await firebaseApi.functions.invoke('generateShopSlug');
                       toast.success(`${response.data.updated} liens générés`);
                     } catch (error) {
                       toast.error('Erreur lors de la génération');
@@ -459,7 +459,7 @@ export default function Account() {
                   onClick={async () => {
                     setConvertingWhatsApp(true);
                     try {
-                      const response = await base44.functions.invoke('generateProductSlugs');
+                      const response = await firebaseApi.functions.invoke('generateProductSlugs');
                       toast.success(`${response.data.updated} liens produits générés`);
                     } catch (error) {
                       toast.error('Erreur lors de la génération');
@@ -484,7 +484,7 @@ export default function Account() {
                     onClick={async () => {
                       setConvertingWhatsApp(true);
                       try {
-                        const response = await base44.functions.invoke('compressImages', { dry_run: true });
+                        const response = await firebaseApi.functions.invoke('compressImages', { dry_run: true });
                         toast.info(response.data.message);
                       } catch (error) {
                         toast.error('Erreur: ' + error.message);
@@ -518,7 +518,7 @@ export default function Account() {
                           onClick={async () => {
                             setConvertingWhatsApp(true);
                             try {
-                              const response = await base44.functions.invoke('compressImages', { dry_run: false });
+                              const response = await firebaseApi.functions.invoke('compressImages', { dry_run: false });
                               toast.success(response.data.message);
                             } catch (error) {
                               toast.error('Erreur: ' + error.message);
@@ -564,7 +564,7 @@ export default function Account() {
                         onClick={async () => {
                           setConvertingWhatsApp(true);
                           try {
-                            const response = await base44.functions.invoke('logoutAllUsers');
+                            const response = await firebaseApi.functions.invoke('logoutAllUsers');
                             toast.success(response.data.message);
                           } catch (error) {
                             toast.error('Erreur lors de la déconnexion');

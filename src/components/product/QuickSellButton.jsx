@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Upload, X, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { toast } from "sonner";
 
 const CATEGORIES = [
@@ -35,7 +35,7 @@ export default function QuickSellButton({ user }) {
 
     setUploadingImage(true);
     try {
-      const result = await base44.integrations.Core.UploadFile({ file });
+      const result = await firebaseApi.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, image_url: result.file_url });
       toast.success('Image téléchargée');
     } catch (error) {
@@ -53,7 +53,7 @@ export default function QuickSellButton({ user }) {
 
     setLoading(true);
     try {
-      await base44.entities.Product.create({
+      await firebaseApi.entities.Product.create({
         name: formData.name,
         price: parseFloat(formData.price),
         description: formData.description,

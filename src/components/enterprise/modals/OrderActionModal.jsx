@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { toast } from "sonner";
 import { Check, X, Clock, Truck, Search, CheckCircle } from 'lucide-react';
 
@@ -14,13 +14,13 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
   const handleStatusChange = async (newStatus) => {
     setLoading(true);
     try {
-      await base44.entities.Order.update(order.id, { status: newStatus });
+      await firebaseApi.entities.Order.update(order.id, { status: newStatus });
 
       // Send email notification to client
       try {
-        const { data: shops } = await base44.entities.Shop.filter({ id: order.shop_id });
+        const { data: shops } = await firebaseApi.entities.Shop.filter({ id: order.shop_id });
         const shop = shops?.[0];
-        await base44.functions.invoke('sendOrderEmail', {
+        await firebaseApi.functions.invoke('sendOrderEmail', {
           type: 'status_update',
           orderData: {
             order_number: order.order_number,
@@ -57,16 +57,16 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
     try {
       const newStatus = deliveryType === 'merchant_delivery' ? 'in_delivery' : 'searching_driver';
 
-      await base44.entities.Order.update(order.id, {
+      await firebaseApi.entities.Order.update(order.id, {
         delivery_type: deliveryType,
         status: newStatus
       });
 
       // Send email notification to client
       try {
-        const { data: shops } = await base44.entities.Shop.filter({ id: order.shop_id });
+        const { data: shops } = await firebaseApi.entities.Shop.filter({ id: order.shop_id });
         const shop = shops?.[0];
-        await base44.functions.invoke('sendOrderEmail', {
+        await firebaseApi.functions.invoke('sendOrderEmail', {
           type: 'status_update',
           orderData: {
             order_number: order.order_number,
@@ -109,15 +109,15 @@ export default function OrderActionModal({ order, open, onClose, onSuccess }) {
 
     setLoading(true);
     try {
-      await base44.entities.Order.update(order.id, {
+      await firebaseApi.entities.Order.update(order.id, {
         status: 'delivered'
       });
 
       // Send email notification to client
       try {
-        const { data: shops } = await base44.entities.Shop.filter({ id: order.shop_id });
+        const { data: shops } = await firebaseApi.entities.Shop.filter({ id: order.shop_id });
         const shop = shops?.[0];
-        await base44.functions.invoke('sendOrderEmail', {
+        await firebaseApi.functions.invoke('sendOrderEmail', {
           type: 'status_update',
           orderData: {
             order_number: order.order_number,

@@ -9,6 +9,88 @@ const SITE_ORIGIN = 'https://makariosbridal.shop';
 const DEFAULT_IMAGE = `${SITE_ORIGIN}/icons/rapido-presto.svg`;
 const PUBLIC_LIMIT = 1000;
 
+async function requireUser(req) {
+  const header = req.get('authorization') || '';
+  if (!header.startsWith('Bearer ')) {
+    const error = new Error('Connexion requise');
+    error.status = 401;
+    throw error;
+  }
+  try {
+    return await admin.auth().verifyIdToken(header.slice(7));
+  } catch (error) {
+    const authError = new Error('Session Firebase invalide');
+    authError.status = 401;
+    throw authError;
+  }
+}
+
+function numeric(value, fallback = 0) {
+  const result = Number(value);
+  return Number.isFinite(result) ? result : fallback;
+}
+
+function productUnitPrice(product, customization = {}) {
+  const base = numeric(product.promo_price ?? product.price);
+  const selectedVariant = Array.isArray(product.variants)
+    ? product.variants.find((variant) => variant.id === customization.variant_id || variant.name === customization.variant)
+    : null;
+  return base + numeric(selectedVariant?.price_adjustment);
+}
+
+exports.validateOrderPrice = onRequest({ cors: false }, async (req, res) => {
+  try {
+    const decoded = await requireUser(req);
+    const cartItemIds = Array.isArray(req.body?.cartItemIds) ? req.body.cartItemIds : [];
+    if (!cartItemIds.length || cartItemIds.length > 100) {
+      return res.status(400).json({ success: false, error: 'Panier invalide' });
+    }
+    const refs = cartItemIds.map((id) => db.collection('CartItem').doc(String(id)));
+    const snapshots = await db.getAll(...refs);
+    const items = [];
+    for (const snapshot of snapshots) {
+      if (!snapshot.exists || snapshot.data().user_id !== decoded.uid) {
+        return res.status(403).json({ success: false, error: 'Article de panier non autorisé' });
+      }
+      const item = { id: snapshot.id, ...snapshot.data() };
+      const productSnapshot = await db.collection('Product').doc(String(item.product_id)).get();
+      if (!productSnapshot.exists) {
+        return res.status(409).json({ success: false, error: `Produit introuvable: ${item.product_id}` });
+      }
+      const product = productSnapshot.data();
+      if (product.is_available === false || product.is_active === false) {
+        return res.status(409).json({ success: false, error: `Produit indisponible: ${product.name || item.product_id}` });
+      }
+      const quantity = Math.max(1, Math.min(99, Math.floor(numeric(item.quantity, 1))));
+      const verifiedPrice = productUnitPrice(product, item.customization || {});
+      items.push({
+        ...item,
+        quantity,
+        product_name: product.name || item.product_name || 'Produit',
+        category: product.category || item.category || 'Non classé',
+        shop_id: product.shop_id || item.shop_id,
+        shop_name: product.shop_name || item.shop_name || 'Boutique Kairos',
+        shop_region: product.shop_region || item.shop_region || '',
+        verified_price: verifiedPrice,
+        verified_customization_price: 0,
+        verified_total: verifiedPrice * quantity
+      });
+    }
+    const itemsByShop = items.reduce((groups, item) => {
+      const shopId = item.shop_id || 'unknown';
+      if (!groups[shopId]) groups[shopId] = { items: [], subtotal: 0 };
+      groups[shopId].items.push(item);
+      groups[shopId].subtotal += item.verified_total;
+      return groups;
+    }, {});
+    const finalTotal = Object.values(itemsByShop).reduce((sum, group) => sum + group.subtotal, 0);
+    return res.status(200).json({ success: true, validation: { items, itemsByShop, finalTotal } });
+  } catch (error) {
+    console.error('validateOrderPrice', error);
+    return res.status(error.status || 500).json({ success: false, error: error.message || 'Validation impossible' });
+  }
+});
+
 function escapeXml(value = '') {
   return String(value)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft } from 'lucide-react';
@@ -42,7 +42,7 @@ export default function CategoryPage() {
   // Produits de la catégorie
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['category-products', category],
-    queryFn: () => base44.entities.Product.filter({
+    queryFn: () => firebaseApi.entities.Product.filter({
       category,
       is_available: true
     }),
@@ -52,7 +52,7 @@ export default function CategoryPage() {
   // Boutiques actives
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true })
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true })
   });
 
   if (isLoading) {

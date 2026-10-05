@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,14 +18,14 @@ export default function AllOrdersAdmin() {
   // Fetch all orders
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['admin-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 500),
+    queryFn: () => firebaseApi.entities.Order.list('-created_date', 500),
     refetchInterval: 10000
   });
 
   // Fetch all shops for reference
   const { data: shops = [] } = useQuery({
     queryKey: ['admin-shops'],
-    queryFn: () => base44.entities.Shop.list()
+    queryFn: () => firebaseApi.entities.Shop.list()
   });
 
   // Filter orders

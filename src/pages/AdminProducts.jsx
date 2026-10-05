@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +18,7 @@ export default function AdminProducts() {
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       if (u.role !== 'admin') {
         window.location.href = '/';
@@ -31,7 +31,7 @@ export default function AdminProducts() {
   const { data: shops = [] } = useQuery({
     queryKey: ['admin-shops-list'],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('adminShops', { action: 'list' });
+      const { data } = await firebaseApi.functions.invoke('adminShops', { action: 'list' });
       return data.shops;
     },
     enabled: !!user
@@ -40,7 +40,7 @@ export default function AdminProducts() {
   const { data: products = [] } = useQuery({
     queryKey: ['admin-products', selectedShop?.id],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('adminProducts', {
+      const { data } = await firebaseApi.functions.invoke('adminProducts', {
         action: 'list',
         shopId: selectedShop.id
       });
@@ -51,7 +51,7 @@ export default function AdminProducts() {
 
   const deleteProductMutation = useMutation({
     mutationFn: async (id) => {
-      const res = await base44.functions.invoke('adminProducts', { action: 'delete', productId: id });
+      const res = await firebaseApi.functions.invoke('adminProducts', { action: 'delete', productId: id });
       if (res.data?.error) throw new Error(res.data.error);
       return res.data;
     },

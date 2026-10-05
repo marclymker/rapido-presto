@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, X, ExternalLink, Clock, FileText, User, Phone, MapPin, Bike } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ export default function AdminValidation() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       if (u.role !== 'admin') {
         window.location.href = '/';
@@ -33,7 +33,7 @@ export default function AdminValidation() {
   // Fetch pending requests
   const { data: pendingRequests = [] } = useQuery({
     queryKey: ['profile-switches-pending'],
-    queryFn: () => base44.entities.ProfileSwitch.filter({ status: 'pending' }, '-created_date'),
+    queryFn: () => firebaseApi.entities.ProfileSwitch.filter({ status: 'pending' }, '-created_date'),
     enabled: !!user,
     refetchInterval: 10000
   });
@@ -42,8 +42,8 @@ export default function AdminValidation() {
   const { data: processedRequests = [] } = useQuery({
     queryKey: ['profile-switches-processed'],
     queryFn: async () => {
-      const approved = await base44.entities.ProfileSwitch.filter({ status: 'approved' }, '-created_date', 20);
-      const rejected = await base44.entities.ProfileSwitch.filter({ status: 'rejected' }, '-created_date', 20);
+      const approved = await firebaseApi.entities.ProfileSwitch.filter({ status: 'approved' }, '-created_date', 20);
+      const rejected = await firebaseApi.entities.ProfileSwitch.filter({ status: 'rejected' }, '-created_date', 20);
       return [...approved, ...rejected].sort((a, b) =>
         new Date(b.updated_date) - new Date(a.updated_date)
       );
@@ -54,13 +54,13 @@ export default function AdminValidation() {
   const approveMutation = useMutation({
     mutationFn: async (request) => {
       // Update the switch request
-      await base44.entities.ProfileSwitch.update(request.id, {
+      await firebaseApi.entities.ProfileSwitch.update(request.id, {
         status: 'approved',
         approved_by: user.id
       });
 
       // Fetch the user and update their profile
-      const targetUser = await base44.entities.User.filter({ id: request.user_id });
+      const targetUser = await firebaseApi.entities.User.filter({ id: request.user_id });
       if (targetUser.length > 0) {
         const userData = targetUser[0];
         const profiles = userData.profiles || {};
@@ -88,7 +88,7 @@ export default function AdminValidation() {
 
   const rejectMutation = useMutation({
     mutationFn: (request) => {
-      return base44.entities.ProfileSwitch.update(request.id, {
+      return firebaseApi.entities.ProfileSwitch.update(request.id, {
         status: 'rejected',
         approved_by: user.id,
         rejection_reason: rejectionReason

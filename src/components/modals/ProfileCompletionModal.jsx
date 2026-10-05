@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
     if (!file) return;
 
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await firebaseApi.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, [field]: file_url });
       toast.success('Fichier téléchargé');
     } catch (error) {
@@ -84,7 +84,7 @@ export default function ProfileCompletionModal({ user, open, onComplete }) {
         };
       }
 
-      await base44.auth.updateMe({
+      await firebaseApi.auth.updateMe({
         current_profile: formData.user_type,
         phone: formData.phone,
         region: formData.region || undefined,

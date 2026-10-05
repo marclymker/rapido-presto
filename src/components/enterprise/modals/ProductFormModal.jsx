@@ -68,7 +68,7 @@ ShieldCheck
 
 
 
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 
 import FbCategorySelector from '@/components/product/FbCategorySelector';
 
@@ -341,7 +341,7 @@ if (open && !product) {
 
 // Check if user has phone number
 
-base44.auth.me().then(u => {
+firebaseApi.auth.me().then(u => {
 
 if (!u?.phone) {
 
@@ -612,7 +612,7 @@ const variants = generatedRows.map(row => ({
 }));
 
 const { variant_options: _variantOptions, ...persistedFormData } = formData;
-const currentUser = await base44.auth.me();
+const currentUser = await firebaseApi.auth.me();
 if (!currentUser?.id) throw new Error('Session utilisateur expirée. Reconnectez-vous.');
 const dataWithSlug = {
   ...persistedFormData,
@@ -628,13 +628,13 @@ const dataWithSlug = {
 
 if (product) {
 
-await base44.entities.Product.update(product.id, dataWithSlug);
+await firebaseApi.entities.Product.update(product.id, dataWithSlug);
 
 toast.success('Article mis à jour');
 
 } else {
 
-await base44.entities.Product.create({ ...dataWithSlug, shop_id: shopId });
+await firebaseApi.entities.Product.create({ ...dataWithSlug, shop_id: shopId });
 
 toast.success('Article créé');
 
@@ -674,13 +674,13 @@ toast.info('📸 Téléchargement et vérification en cours...');
 
 try {
 
-const { file_url } = await base44.integrations.Core.UploadFile({ file });
+const { file_url } = await firebaseApi.integrations.Core.UploadFile({ file });
 
 
 
 // Scan for phone numbers in the image
 
-const scanResult = await base44.integrations.Core.InvokeLLM({
+const scanResult = await firebaseApi.integrations.Core.InvokeLLM({
 
 prompt: `Analyse cette image. Y a-t-il un numéro de téléphone visible (ex: +509, 509, 3xxxxxxx, 4xxxxxxx, numéro haïtien ou autre) écrit ou imprimé sur l'image ? Réponds UNIQUEMENT par JSON : {"has_phone": true/false, "reason": "..."}`,
 
@@ -750,7 +750,7 @@ try {
 
 const taxonomyList = getTaxonomyMappingPrompt();
 
-const result = await base44.integrations.Core.InvokeLLM({
+const result = await firebaseApi.integrations.Core.InvokeLLM({
 
 prompt: `Tu es un expert en vision par ordinateur ET en e-commerce haïtien (Kairos).
 
@@ -891,7 +891,7 @@ open={showContactModal}
 
 onConfirm={async ({ phone, region }) => {
 
-await base44.auth.updateMe({ phone, region });
+await firebaseApi.auth.updateMe({ phone, region });
 
 setShowContactModal(false);
 

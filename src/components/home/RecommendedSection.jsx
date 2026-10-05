@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useMemo } from 'react';
 import { ArrowLeft, Zap } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { createPageUrl } from '@/utils';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import { toast } from 'sonner';
@@ -81,7 +81,7 @@ export default function RecommendedSection({ allProducts, shops, user, setSelect
                   key={`${product.id}-${idx}`}
                   className="flex-shrink-0 w-[130px] md:w-[150px] bg-white p-1 cursor-pointer transition-all hover:bg-gray-50 relative group"
                   onClick={() => {
-                    if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+                    if (!user) { firebaseApi.auth.redirectToLogin(window.location.pathname); return; }
                     const targetProduct = getSafeProducts().find(p => p.id === product.id);
                     if (!targetProduct || !shop) { toast.error('Boutique non disponible'); return; }
                     if (shop.slug && targetProduct.id) {

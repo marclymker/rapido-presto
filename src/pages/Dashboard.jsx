@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Button } from '@/components/ui/button';
 import OrdersSection from '@/components/enterprise/OrdersSection';
 import ProductsSection from '@/components/enterprise/ProductsSection';
@@ -116,15 +116,15 @@ function CourierWorkspace({ orders }) {
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { base44.auth.me().then(setUser).catch(() => setUser(null)).finally(() => setLoading(false)); }, []);
+  useEffect(() => { firebaseApi.auth.me().then(setUser).catch(() => setUser(null)).finally(() => setLoading(false)); }, []);
 
   const isCourier = user?.current_profile === 'livreur';
-  const { data: shop } = useQuery({ queryKey: ['workspace-shop', user?.id], queryFn: async () => { const shops = await base44.entities.Shop.filter({ user_id: user.id }); return shops[0] || base44.entities.Shop.create({ user_id: user.id, company_name: `Boutique ${user.full_name}`, company_category: 'Commerce', region: user.region || '', is_active: true }); }, enabled: !!user?.id && !isCourier });
-  const { data: orders = [] } = useQuery({ queryKey: ['workspace-orders', user?.id, shop?.id, isCourier], queryFn: () => isCourier ? base44.entities.Order.filter({ driver_id: user.id }, '-created_date') : base44.entities.Order.filter({ shop_id: shop.id }, '-created_date'), enabled: !!user?.id && (isCourier || !!shop?.id) });
-  const { data: products = [] } = useQuery({ queryKey: ['workspace-products', shop?.id], queryFn: () => base44.entities.Product.filter({ shop_id: shop.id }), enabled: !!shop?.id && !isCourier });
+  const { data: shop } = useQuery({ queryKey: ['workspace-shop', user?.id], queryFn: async () => { const shops = await firebaseApi.entities.Shop.filter({ user_id: user.id }); return shops[0] || firebaseApi.entities.Shop.create({ user_id: user.id, company_name: `Boutique ${user.full_name}`, company_category: 'Commerce', region: user.region || '', is_active: true }); }, enabled: !!user?.id && !isCourier });
+  const { data: orders = [] } = useQuery({ queryKey: ['workspace-orders', user?.id, shop?.id, isCourier], queryFn: () => isCourier ? firebaseApi.entities.Order.filter({ driver_id: user.id }, '-created_date') : firebaseApi.entities.Order.filter({ shop_id: shop.id }, '-created_date'), enabled: !!user?.id && (isCourier || !!shop?.id) });
+  const { data: products = [] } = useQuery({ queryKey: ['workspace-products', shop?.id], queryFn: () => firebaseApi.entities.Product.filter({ shop_id: shop.id }), enabled: !!shop?.id && !isCourier });
 
   if (loading) return <div className="flex min-h-screen items-center justify-center bg-slate-950"><Activity className="h-8 w-8 animate-pulse text-orange-400" /></div>;
-  if (!user) return <div className="flex min-h-screen items-center justify-center bg-slate-950 p-5"><div className="max-w-sm rounded-3xl bg-white p-8 text-center"><Store className="mx-auto mb-4 h-10 w-10 text-orange-500" /><h1 className="text-xl font-black">Workspace Kairos</h1><p className="my-3 text-sm text-slate-500">Connectez-vous pour gérer votre activité.</p><Button onClick={() => base44.auth.redirectToLogin('/Dashboard')} className="w-full rounded-xl bg-slate-950">Se connecter</Button></div></div>;
+  if (!user) return <div className="flex min-h-screen items-center justify-center bg-slate-950 p-5"><div className="max-w-sm rounded-3xl bg-white p-8 text-center"><Store className="mx-auto mb-4 h-10 w-10 text-orange-500" /><h1 className="text-xl font-black">Workspace Kairos</h1><p className="my-3 text-sm text-slate-500">Connectez-vous pour gérer votre activité.</p><Button onClick={() => firebaseApi.auth.redirectToLogin('/Dashboard')} className="w-full rounded-xl bg-slate-950">Se connecter</Button></div></div>;
 
   const profileId = normalizeProfile(user.current_profile === 'entreprise' ? 'marketplace' : user.current_profile);
   const isSiteOwner = user.id === SITE_OWNER_UID;

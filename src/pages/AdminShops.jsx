@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +47,7 @@ export default function AdminShops() {
   });
 
   React.useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       if (u.role !== 'admin') {
         window.location.href = '/';
@@ -60,7 +60,7 @@ export default function AdminShops() {
   const { data: shops = [] } = useQuery({
     queryKey: ['admin-shops'],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('adminShops', { action: 'list' });
+      const { data } = await firebaseApi.functions.invoke('adminShops', { action: 'list' });
       return data.shops;
     },
     enabled: !!user
@@ -69,7 +69,7 @@ export default function AdminShops() {
   const { data: enterpriseUsers = [] } = useQuery({
     queryKey: ['enterprise-users'],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('adminShops', { action: 'listEnterpriseUsers' });
+      const { data } = await firebaseApi.functions.invoke('adminShops', { action: 'listEnterpriseUsers' });
       return data.users;
     },
     enabled: !!user
@@ -77,7 +77,7 @@ export default function AdminShops() {
 
   const createShopMutation = useMutation({
     mutationFn: async (shopData) => {
-      const { data } = await base44.functions.invoke('adminShops', { action: 'create', data: shopData });
+      const { data } = await firebaseApi.functions.invoke('adminShops', { action: 'create', data: shopData });
       return data.shop;
     },
     onSuccess: () => {
@@ -93,7 +93,7 @@ export default function AdminShops() {
 
   const updateShopMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      const result = await base44.functions.invoke('adminShops', { action: 'update', shopId: id, data });
+      const result = await firebaseApi.functions.invoke('adminShops', { action: 'update', shopId: id, data });
       return result.data.shop;
     },
     onSuccess: () => {
@@ -109,7 +109,7 @@ export default function AdminShops() {
 
   const deleteShopMutation = useMutation({
     mutationFn: async (id) => {
-      await base44.functions.invoke('adminShops', { action: 'delete', shopId: id });
+      await firebaseApi.functions.invoke('adminShops', { action: 'delete', shopId: id });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-shops']);
@@ -123,7 +123,7 @@ export default function AdminShops() {
 
     setUploading(true);
     try {
-      const { data } = await base44.functions.invoke('uploadFile', { file });
+      const { data } = await firebaseApi.functions.invoke('uploadFile', { file });
       setFormData({ ...formData, company_logo_url: data.file_url });
       toast.success('Image téléchargée');
     } catch (error) {

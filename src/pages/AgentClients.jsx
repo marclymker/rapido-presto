@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,25 +26,25 @@ export default function AgentClients() {
   });
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    firebaseApi.auth.me().then(setUser).catch(() => {});
   }, []);
 
   const { data: clients = [] } = useQuery({
     queryKey: ['agent-clients', user?.id],
-    queryFn: () => base44.entities.AgentClient.filter({ agent_id: user?.id }),
+    queryFn: () => firebaseApi.entities.AgentClient.filter({ agent_id: user?.id }),
     enabled: !!user?.id
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true })
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true })
   });
 
   const makariosShop = shops.find(s => s.company_name?.toLowerCase().includes('makarios'));
 
   const { data: products = [] } = useQuery({
     queryKey: ['makarios-products'],
-    queryFn: () => base44.entities.Product.filter({
+    queryFn: () => firebaseApi.entities.Product.filter({
       shop_id: makariosShop?.id,
       is_available: true
     }),
@@ -53,7 +53,7 @@ export default function AgentClients() {
 
   const createClientMutation = useMutation({
     mutationFn: async (clientData) => {
-      return base44.entities.AgentClient.create(clientData);
+      return firebaseApi.entities.AgentClient.create(clientData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['agent-clients']);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Toaster } from "@/components/ui/sonner";
 import { useQuery } from '@tanstack/react-query';
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
@@ -35,7 +35,7 @@ export default function Layout({ children, currentPageName }) {
 
   useEffect(() => {
     if (user && !user.current_profile && currentPageName !== 'ProfileSetup') {
-      base44.auth.updateMe({
+      firebaseApi.auth.updateMe({
         current_profile: 'client',
         profiles: {
           client: { is_active: true, created_at: new Date().toISOString() }
@@ -56,7 +56,7 @@ export default function Layout({ children, currentPageName }) {
 
   const { data: orders = [] } = useQuery({
     queryKey: ['orders', user?.id],
-    queryFn: () => base44.entities.Order.filter({ client_id: user?.id }),
+    queryFn: () => firebaseApi.entities.Order.filter({ client_id: user?.id }),
     enabled: !!user?.id
   });
 

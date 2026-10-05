@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,18 +12,18 @@ export default function AgentCommissions() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    firebaseApi.auth.me().then(setUser).catch(() => {});
   }, []);
 
   const { data: clients = [] } = useQuery({
     queryKey: ['agent-clients', user?.id],
-    queryFn: () => base44.entities.AgentClient.filter({ agent_id: user?.id }),
+    queryFn: () => firebaseApi.entities.AgentClient.filter({ agent_id: user?.id }),
     enabled: !!user?.id
   });
 
   const claimMutation = useMutation({
     mutationFn: async (clientId) => {
-      return base44.entities.AgentClient.update(clientId, {
+      return firebaseApi.entities.AgentClient.update(clientId, {
         commission_claimed: true,
         claim_date: new Date().toISOString()
       });

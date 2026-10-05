@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, MapPin, CreditCard, Lock, LogOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { createPageUrl } from '@/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ export default function AccountSection({ user, shop }) {
   const [logoFile, setLogoFile] = useState(null);
 
   const handleLogout = () => {
-    base44.auth.logout(createPageUrl('Home'));
+    firebaseApi.auth.logout(createPageUrl('Home'));
   };
 
   const handleUpdateProfile = async (e) => {
@@ -25,11 +25,11 @@ export default function AccountSection({ user, shop }) {
       let logo_url = entrepriseData.company_logo_url;
 
       if (logoFile) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: logoFile });
+        const { file_url } = await firebaseApi.integrations.Core.UploadFile({ file: logoFile });
         logo_url = file_url;
       }
 
-      await base44.auth.updateMe({
+      await firebaseApi.auth.updateMe({
         profiles: {
           ...user.profiles,
           entreprise: {
@@ -40,7 +40,7 @@ export default function AccountSection({ user, shop }) {
       });
 
       if (shop) {
-        await base44.entities.Shop.update(shop.id, { company_logo_url: logo_url });
+        await firebaseApi.entities.Shop.update(shop.id, { company_logo_url: logo_url });
       }
 
       toast.success('Profil mis à jour');

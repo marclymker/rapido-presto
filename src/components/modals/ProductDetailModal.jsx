@@ -6,7 +6,7 @@ import {
   ChevronRight, ZoomIn, ZoomOut, Download, Plus as PlusIcon, Truck, ChevronLeft
 } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { toast } from 'sonner';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { useBackButton } from '@/components/navigation/useBackButton';
@@ -40,7 +40,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   // Récupérer la boutique de l'utilisateur si c'est un vendeur
   useEffect(() => {
     if (user?.id && open) {
-      base44.entities.Shop.filter({ user_id: user.id })
+      firebaseApi.entities.Shop.filter({ user_id: user.id })
         .then(shops => {
           if (shops.length > 0) {
             setUserShop(shops[0]);
@@ -192,14 +192,14 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   };
 
   const handleContactVendor = async () => {
-    if (!user) return base44.auth.redirectToLogin(window.location.pathname);
+    if (!user) return firebaseApi.auth.redirectToLogin(window.location.pathname);
     const vendorId = shop?.user_id || product?.vendor_id;
     const shopId = shop?.id;
     if (!vendorId || !shopId) return;
 
     setIsChatLoading(true);
     try {
-      const response = await base44.functions.invoke('chatService', {
+      const response = await firebaseApi.functions.invoke('chatService', {
         action: 'init',
         vendor_id: vendorId,
         shop_id: shopId,
@@ -454,7 +454,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             className="w-full py-6 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl shadow-lg"
             onClick={() => {
               if (!user) {
-                base44.auth.redirectToLogin(window.location.pathname);
+                firebaseApi.auth.redirectToLogin(window.location.pathname);
                 return;
               }
               trackMetaEvent('InitiateCheckout', {

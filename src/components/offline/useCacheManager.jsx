@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useServiceWorker } from './useServiceWorker';
 
 export function useCacheManager(user) {
@@ -22,7 +22,7 @@ export function useCacheManager(user) {
   const { data: products } = useQuery({
     queryKey: ['products-cache'],
     queryFn: async () => {
-      const items = await base44.entities.Product.list('-created_date', 50);
+      const items = await firebaseApi.entities.Product.list('-created_date', 50);
       if (items.length > 0) {
         cacheUserData({
           'products-list': JSON.stringify(items)
@@ -39,7 +39,7 @@ export function useCacheManager(user) {
   const { data: shops } = useQuery({
     queryKey: ['shops-cache'],
     queryFn: async () => {
-      const items = await base44.entities.Shop.list('-rating', 20);
+      const items = await firebaseApi.entities.Shop.list('-rating', 20);
       if (items.length > 0) {
         cacheUserData({
           'shops-list': JSON.stringify(items)
@@ -57,7 +57,7 @@ export function useCacheManager(user) {
     queryKey: ['cart-cache', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const items = await base44.entities.CartItem.filter({ user_id: user.id });
+      const items = await firebaseApi.entities.CartItem.filter({ user_id: user.id });
       if (items.length > 0) {
         cacheUserData({
           'cart-items': JSON.stringify(items)
@@ -76,7 +76,7 @@ export function useCacheManager(user) {
     queryKey: ['orders-cache', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const items = await base44.entities.Order.filter({ client_id: user.id }, '-created_date', 20);
+      const items = await firebaseApi.entities.Order.filter({ client_id: user.id }, '-created_date', 20);
       if (items.length > 0) {
         cacheUserData({
           'orders-list': JSON.stringify(items)

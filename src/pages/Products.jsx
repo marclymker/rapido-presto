@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, X, MapPin, MessageCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -190,7 +190,7 @@ export default function Products() {
 
   const { data: firstProducts = [], isLoading } = useQuery({
     queryKey: ['products-initial'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 30),
+    queryFn: () => firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 30),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
@@ -207,7 +207,7 @@ export default function Products() {
 
   const { data: fullProducts = [] } = useQuery({
     queryKey: ['products-all'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200),
+    queryFn: () => firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 200),
     enabled: loadAll && !constrainedNetwork,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
@@ -217,13 +217,13 @@ export default function Products() {
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }, '-created_date', 60),
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true }, '-created_date', 60),
   });
 
   const { data: conversations = [] } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
-      const r = await base44.functions.invoke('chatService', { action: 'list' });
+      const r = await firebaseApi.functions.invoke('chatService', { action: 'list' });
       return Array.isArray(r.data) ? r.data : (r.data?.data || []);
     },
     // Ne charger les conversations qu'après les produits initiaux, et seulement si pas en économie de données
@@ -285,7 +285,7 @@ export default function Products() {
   const updateSellerProfileMutation = useMutation({
     mutationFn: async (data) => {
       if (!user?.id) throw new Error('Session utilisateur expirée.');
-      const saved = await base44.auth.updateMe(data);
+      const saved = await firebaseApi.auth.updateMe(data);
       if (!saved) throw new Error('Impossible de sauvegarder le profil vendeur.');
       return saved;
     },
@@ -313,10 +313,10 @@ export default function Products() {
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity }) => {
-      if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+      if (!user) { firebaseApi.auth.redirectToLogin(window.location.pathname); return; }
       const price = applyClientMargin(product.promo_price || product.price, product.shop_name);
       const shop = shopsMap[product.shop_id];
-      await base44.entities.CartItem.create({
+      await firebaseApi.entities.CartItem.create({
         user_id: user.id,
         product_id: product.id,
         product_name: product.name,
@@ -514,7 +514,7 @@ export default function Products() {
           <h1 className="text-3xl font-bold text-black tracking-tight">Kairos</h1>
           <div className="flex items-center">
             <button
-              onClick={() => user ? navigate('/Chat') : base44.auth.redirectToLogin('/Chat')}
+              onClick={() => user ? navigate('/Chat') : firebaseApi.auth.redirectToLogin('/Chat')}
               className="relative p-2.5 bg-[#E4E6EB] hover:bg-[#D8DADF] rounded-full transition-colors text-black active:scale-95"
               aria-label="Messages"
             >

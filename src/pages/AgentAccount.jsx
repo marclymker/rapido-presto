@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ export default function AgentAccount() {
   });
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       setFormData({
         full_name: u.full_name || '',
@@ -40,7 +40,7 @@ export default function AgentAccount() {
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
-      await base44.auth.updateMe({
+      await firebaseApi.auth.updateMe({
         full_name: data.full_name,
         profiles: {
           ...user.profiles,
@@ -59,7 +59,7 @@ export default function AgentAccount() {
       queryClient.invalidateQueries(['user']);
       toast.success('Profil mis à jour');
       setIsEditing(false);
-      base44.auth.me().then(setUser);
+      firebaseApi.auth.me().then(setUser);
     }
   });
 
@@ -232,7 +232,7 @@ export default function AgentAccount() {
         <Button
           variant="outline"
           className="w-full mt-4 text-red-600 hover:bg-red-50"
-          onClick={() => base44.auth.logout()}
+          onClick={() => firebaseApi.auth.logout()}
         >
           Déconnexion
         </Button>

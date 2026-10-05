@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, MapPin, Phone, Mail } from 'lucide-react';
 import ProductCard from '@/components/ui/ProductCard';
@@ -15,7 +15,7 @@ import ProductCard from '@/components/ui/ProductCard';
 export default function RobeDeMariageHaiti() {
   const { data: products = [] } = useQuery({
     queryKey: ['wedding-dresses-haiti'],
-    queryFn: () => base44.entities.Product.filter({
+    queryFn: () => firebaseApi.entities.Product.filter({
       category: 'Mariage',
       is_available: true
     }),
@@ -24,7 +24,7 @@ export default function RobeDeMariageHaiti() {
 
   const { data: shops = [] } = useQuery({
     queryKey: ['wedding-shops'],
-    queryFn: () => base44.entities.Shop.filter({
+    queryFn: () => firebaseApi.entities.Shop.filter({
       company_category: 'Mariage',
       is_active: true
     })

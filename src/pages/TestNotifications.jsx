@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bell, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
@@ -53,7 +53,7 @@ export default function TestNotifications() {
 
     // Test 7: User
     try {
-      const currentUser = await base44.auth.me();
+      const currentUser = await firebaseApi.auth.me();
       setUser(currentUser);
     } catch (e) {
       console.error(e);
@@ -104,7 +104,7 @@ export default function TestNotifications() {
     }
 
     try {
-      const { data } = await base44.functions.invoke('sendOrderNotificationOneSignal', {
+      const { data } = await firebaseApi.functions.invoke('sendOrderNotificationOneSignal', {
         userId: user.id,
         title: '🔔 Test OneSignal',
         message: 'Si vous voyez ceci, OneSignal fonctionne !',
@@ -129,7 +129,7 @@ export default function TestNotifications() {
     }
 
     try {
-      await base44.functions.invoke('sendPushNotification', {
+      await firebaseApi.functions.invoke('sendPushNotification', {
         userId: user.id,
         title: '🔔 Test Pusher',
         message: 'Si vous voyez ceci dans l\'app, Pusher fonctionne !',

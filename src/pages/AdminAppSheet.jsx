@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,7 +39,7 @@ export default function AdminAppSheet() {
     setError(null);
 
     try {
-      const response = await base44.functions.invoke('appsheetBridge', {
+      const response = await firebaseApi.functions.invoke('appsheetBridge', {
         tableName: name,
         action: 'Find',
         properties: { Locale: 'fr-FR' }

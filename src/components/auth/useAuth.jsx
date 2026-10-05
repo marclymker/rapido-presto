@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { getAccessSource, logAccessSource } from '@/components/utils/detectFacebookInApp';
 
 export function useAuth() {
@@ -7,7 +7,7 @@ export function useAuth() {
     queryKey: ['auth', 'me'],
     queryFn: async () => {
       try {
-        const currentUser = await base44.auth.me();
+        const currentUser = await firebaseApi.auth.me();
         // Log l'accès si utilisateur connecté
         if (currentUser?.id) {
           logAccessSource(currentUser.id);

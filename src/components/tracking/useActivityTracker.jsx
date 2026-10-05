@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useAuth } from '@/components/auth/useAuth';
 import { trackGA4ViewItem, trackGA4AddToCart, trackGA4BeginCheckout, trackGA4Purchase } from '@/components/tracking/GA4Tracker';
 
@@ -18,7 +18,7 @@ export function useActivityTracker() {
     try {
       const userId = user?.id || getSessionId();
 
-      await base44.entities.UserActivity.create({
+      await firebaseApi.entities.UserActivity.create({
         user_id: userId,
         ...activityData
       });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -100,7 +100,7 @@ export default function Cart() {
 
   const { data: cartItems = [], isLoading: cartLoading } = useQuery({
     queryKey: ['cart', user?.id],
-    queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
+    queryFn: () => firebaseApi.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
@@ -121,8 +121,8 @@ export default function Cart() {
 
   const updateQuantityMutation = useMutation({
     mutationFn: ({ id, quantity }) => {
-      if (quantity <= 0) return base44.entities.CartItem.delete(id);
-      return base44.entities.CartItem.update(id, { quantity });
+      if (quantity <= 0) return firebaseApi.entities.CartItem.delete(id);
+      return firebaseApi.entities.CartItem.update(id, { quantity });
     },
     onMutate: async ({ id, quantity }) => {
       await queryClient.cancelQueries(['cart', user?.id]);
@@ -137,7 +137,7 @@ export default function Cart() {
   });
 
   const deleteItemMutation = useMutation({
-    mutationFn: (id) => base44.entities.CartItem.delete(id),
+    mutationFn: (id) => firebaseApi.entities.CartItem.delete(id),
     onMutate: async (id) => {
       await queryClient.cancelQueries(['cart', user?.id]);
       const previous = queryClient.getQueryData(['cart', user?.id]);
@@ -200,7 +200,7 @@ export default function Cart() {
   const createOrderMutation = useMutation({
     mutationFn: async () => {
       const cartItemIds = cartItems.map(item => item.id);
-      const priceValidation = await base44.functions.invoke('validateOrderPrice', {
+      const priceValidation = await firebaseApi.functions.invoke('validateOrderPrice', {
         cartItemIds,
         paymentSplit
       });
@@ -230,7 +230,7 @@ export default function Cart() {
               : shopFees[shopId];
           }
 
-          const order = await base44.entities.Order.create({
+          const order = await firebaseApi.entities.Order.create({
             order_number: orderNum,
             client_id: user.id,
             client_name: user.full_name,
@@ -271,7 +271,7 @@ export default function Cart() {
         try {
           const { createdOrders, orderNumBase } = await processOrders('card');
 
-          const paymentResponse = await base44.functions.invoke('squarePayment', {
+          const paymentResponse = await firebaseApi.functions.invoke('squarePayment', {
             sourceId: squareToken,
             amount: totalAmount,
             orderId: createdOrders[0].orderNum
@@ -280,11 +280,11 @@ export default function Cart() {
           if (!paymentResponse.data.success) throw new Error('Paiement refusé');
 
           for (const order of createdOrders) {
-            await base44.functions.invoke('sendOrderNotification', { orderId: order.orderId, status: 'pending' }).catch(() => {});
-            await base44.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.orderId }).catch(() => {});
+            await firebaseApi.functions.invoke('sendOrderNotification', { orderId: order.orderId, status: 'pending' }).catch(() => {});
+            await firebaseApi.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.orderId }).catch(() => {});
           }
 
-          await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+          await Promise.all(cartItems.map(item => firebaseApi.entities.CartItem.delete(item.id)));
           return { orderNum: createdOrders[0].orderNum, code: createdOrders[0].code };
         } catch (error) {
           throw new Error(error.message || 'Erreur lors du paiement par carte');
@@ -294,9 +294,9 @@ export default function Cart() {
       if (paymentMethod === 'moncash') {
         const { createdOrders, orderNumBase } = await processOrders('moncash');
         // Attention : Suppression des articles AVANT l'aboutissement de l'URL MonCash.
-        await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+        await Promise.all(cartItems.map(item => firebaseApi.entities.CartItem.delete(item.id)));
 
-        const response = await base44.functions.invoke('moncashCreatePayment', {
+        const response = await firebaseApi.functions.invoke('moncashCreatePayment', {
           orderId: orderNumBase,
           amount: totalAmount,
           description: `Commande ${orderNumBase}`
@@ -308,7 +308,7 @@ export default function Cart() {
         }
 
         for (const order of createdOrders) {
-          await base44.entities.Order.update(order.orderId, {
+          await firebaseApi.entities.Order.update(order.orderId, {
             moncash_transaction_id: paymentData.transactionId
           });
         }

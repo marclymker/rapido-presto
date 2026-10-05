@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import GenerateAltTextsModal from '@/components/admin/GenerateAltTextsModal';
 import MigrateFbCategoriesModal from '@/components/admin/MigrateFbCategoriesModal';
@@ -21,7 +21,7 @@ export default function UpdateProducts() {
     setResult(null);
 
     try {
-      const response = await base44.functions.invoke('updateProductsDescriptions');
+      const response = await firebaseApi.functions.invoke('updateProductsDescriptions');
       setResult(response.data);
     } catch (error) {
       setResult({ error: error.message });
@@ -35,7 +35,7 @@ export default function UpdateProducts() {
     setInventoryResult(null);
 
     try {
-      const response = await base44.functions.invoke('renewInventory');
+      const response = await firebaseApi.functions.invoke('renewInventory');
       setInventoryResult(response.data);
     } catch (error) {
       setInventoryResult({ error: error.message });
@@ -49,7 +49,7 @@ export default function UpdateProducts() {
     setCompressResult(null);
 
     try {
-      const response = await base44.functions.invoke('compressAllImages');
+      const response = await firebaseApi.functions.invoke('compressAllImages');
       setCompressResult(response.data);
     } catch (error) {
       setCompressResult({ error: error.message });

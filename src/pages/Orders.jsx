@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -43,14 +43,14 @@ export default function Orders() {
   });
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
     }).catch(() => {});
   }, []);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', user?.id],
-    queryFn: () => base44.entities.Order.filter({ client_id: user?.id }, '-created_date'),
+    queryFn: () => firebaseApi.entities.Order.filter({ client_id: user?.id }, '-created_date'),
     enabled: !!user?.id,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
@@ -81,7 +81,7 @@ export default function Orders() {
   // Fetch reviews to check if order was already reviewed
   const { data: reviews = [] } = useQuery({
     queryKey: ['reviews', user?.id],
-    queryFn: () => base44.entities.Review.filter({ client_id: user?.id }),
+    queryFn: () => firebaseApi.entities.Review.filter({ client_id: user?.id }),
     enabled: !!user?.id
   });
 
@@ -91,7 +91,7 @@ export default function Orders() {
 
   const handleSubmitReview = async (orderId, reviewData) => {
     try {
-      await base44.functions.invoke('submitReview', {
+      await firebaseApi.functions.invoke('submitReview', {
         orderId,
         ...reviewData
       });
@@ -104,7 +104,7 @@ export default function Orders() {
 
   const cancelOrderMutation = useMutation({
     mutationFn: async ({ orderId, cancellationData }) => {
-      return await base44.functions.invoke('cancelOrder', {
+      return await firebaseApi.functions.invoke('cancelOrder', {
         orderId,
         ...cancellationData
       });
@@ -112,7 +112,7 @@ export default function Orders() {
     onSuccess: () => {
       queryClient.invalidateQueries(['orders']);
       queryClient.invalidateQueries(['cart']);
-      base44.auth.me().then(u => setUser(u));
+      firebaseApi.auth.me().then(u => setUser(u));
       toast.success('Commande annulée avec succès');
       setCancellingOrder(null);
     },

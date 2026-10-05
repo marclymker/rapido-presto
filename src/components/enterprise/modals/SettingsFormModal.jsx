@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
 
@@ -44,9 +44,9 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
 
     try {
       if (type === 'hours') {
-        await base44.entities.Shop.update(shop.id, { opening_hours: hours });
+        await firebaseApi.entities.Shop.update(shop.id, { opening_hours: hours });
       } else {
-        await base44.entities.Shop.update(shop.id, formData);
+        await firebaseApi.entities.Shop.update(shop.id, formData);
       }
       toast.success('Informations mises à jour');
       onSuccess?.();

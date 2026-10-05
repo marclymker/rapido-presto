@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from "sonner";
 import { Loader2, X, Upload } from 'lucide-react';
@@ -29,7 +29,7 @@ export default function BlogArticleForm({ article, onClose, onSuccess }) {
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200)
+    queryFn: () => firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 200)
   });
 
   useEffect(() => {
@@ -53,9 +53,9 @@ export default function BlogArticleForm({ article, onClose, onSuccess }) {
   const saveMutation = useMutation({
     mutationFn: async (data) => {
       if (article) {
-        return base44.entities.BlogArticle.update(article.id, data);
+        return firebaseApi.entities.BlogArticle.update(article.id, data);
       } else {
-        return base44.entities.BlogArticle.create(data);
+        return firebaseApi.entities.BlogArticle.create(data);
       }
     },
     onSuccess: () => {
@@ -71,7 +71,7 @@ export default function BlogArticleForm({ article, onClose, onSuccess }) {
 
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await firebaseApi.integrations.Core.UploadFile({ file });
       setFormData(prev => ({ ...prev, cover_image_url: file_url }));
       toast.success('Image uploadée');
     } catch (error) {

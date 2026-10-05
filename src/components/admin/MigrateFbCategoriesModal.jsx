@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ export default function MigrateFbCategoriesModal({ open, onClose }) {
   const runMigration = async (dryRun) => {
     setStep(dryRun ? 'previewing' : 'running');
     try {
-      const { data } = await base44.functions.invoke('migrateToFbCategories', {
+      const { data } = await firebaseApi.functions.invoke('migrateToFbCategories', {
         dry_run: dryRun,
         force_all: forceAll,
       });

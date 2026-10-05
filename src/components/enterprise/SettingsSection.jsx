@@ -4,7 +4,7 @@ import { Bell, Clock, MapPin, CreditCard } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import SettingsFormModal from './modals/SettingsFormModal';
 import { useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { toast } from "sonner";
 
 export default function SettingsSection({ shop }) {
@@ -13,7 +13,7 @@ export default function SettingsSection({ shop }) {
 
   const handleToggleActive = async (checked) => {
     try {
-      await base44.entities.Shop.update(shop.id, { is_active: checked });
+      await firebaseApi.entities.Shop.update(shop.id, { is_active: checked });
       queryClient.invalidateQueries(['my-shop']);
       toast.success(checked ? 'Boutique en ligne' : 'Boutique hors ligne');
     } catch (error) {

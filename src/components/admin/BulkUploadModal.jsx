@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -67,7 +67,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
     if (!file.type.startsWith('image/')) { toast.error('Fichier image requis'); return; }
     updateRow(rowId, { uploading: true });
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await firebaseApi.integrations.Core.UploadFile({ file });
       updateRow(rowId, { image_url: file_url, uploading: false });
     } catch {
       updateRow(rowId, { uploading: false });
@@ -102,7 +102,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
     const uploads = await Promise.all(
       imageFiles.map(async (file) => {
         try {
-          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          const { file_url } = await firebaseApi.integrations.Core.UploadFile({ file });
           return { file_url, name: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') };
         } catch {
           return { file_url: null, name: file.name };
@@ -152,7 +152,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
     updateRow(rowId, { aiLoading: true });
     try {
       const taxonomyList = getTaxonomyMappingPrompt();
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = await firebaseApi.integrations.Core.InvokeLLM({
        prompt: `Tu es un expert en vision par ordinateur ET en e-commerce haïtien (Kairos).
 
        ÉTAPE 1 — ANALYSE VISUELLE DE LA PHOTO :
@@ -218,7 +218,7 @@ export default function BulkUploadModal({ open, onClose, shopId, shopName, onSuc
     let saved = 0;
     for (const row of toSave) {
       const slug = generateSlug(row.name) + '-' + Date.now().toString(36);
-      await base44.entities.Product.create({
+      await firebaseApi.entities.Product.create({
         name: row.name.trim(),
         slug,
         description: row.description || '',

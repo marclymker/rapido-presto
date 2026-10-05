@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 
 const LEGACY_ID_FIELDS = ['legacy_id', 'base44_id', 'legacy_user_id', 'external_id'];
 
@@ -55,10 +55,10 @@ function isLegacyUser(user, canonicalIds) {
 
 export async function scanLegacyFirestore({ maxUsers = 1000, maxShops = 2000, maxProducts = 5000, maxActivity = 20000 } = {}) {
   const [users, shops, products, activities] = await Promise.all([
-    base44.entities.User.list('-created_date', maxUsers),
-    base44.entities.Shop.list('-created_date', maxShops),
-    base44.entities.Product.list('-created_date', maxProducts),
-    base44.entities.UserActivity.list('-created_date', maxActivity)
+    firebaseApi.entities.User.list('-created_date', maxUsers),
+    firebaseApi.entities.Shop.list('-created_date', maxShops),
+    firebaseApi.entities.Product.list('-created_date', maxProducts),
+    firebaseApi.entities.UserActivity.list('-created_date', maxActivity)
   ]);
   const canonicalIds = new Set(users.filter((user) => user.firebase_uid === user.id || user.auth_uid === user.id).map((user) => user.id));
   const indexes = indexUsers(users);
@@ -116,21 +116,21 @@ export async function executeLegacyFirestoreMigration(report) {
   const now = new Date().toISOString();
   let writes = 0;
   for (const link of report.links.users) {
-    if (link.legacyDocId) await base44.entities.User.update(link.legacyDocId, { linked_firebase_uid: link.firebaseUid, migration_status: 'linked', migration_source: 'base44', migrated_at: now });
-    const canonical = await base44.entities.User.get(link.firebaseUid);
-    const legacy = await base44.entities.User.get(link.legacyDocId);
-    await base44.entities.User.update(link.firebaseUid, { legacy_user_ids: [...new Set([...(canonical?.legacy_user_ids || []), link.legacyId])], migration_status: 'linked', migrated_at: now, ...(legacy?.profiles ? { legacy_profiles: legacy.profiles } : {}) });
-    await base44.entities.MigrationLink.update(`${link.legacyId}_user`, { type: 'user', legacy_id: link.legacyId, firebase_uid: link.firebaseUid, status: 'linked', migrated_at: now });
+    if (link.legacyDocId) await firebaseApi.entities.User.update(link.legacyDocId, { linked_firebase_uid: link.firebaseUid, migration_status: 'linked', migration_source: 'base44', migrated_at: now });
+    const canonical = await firebaseApi.entities.User.get(link.firebaseUid);
+    const legacy = await firebaseApi.entities.User.get(link.legacyDocId);
+    await firebaseApi.entities.User.update(link.firebaseUid, { legacy_user_ids: [...new Set([...(canonical?.legacy_user_ids || []), link.legacyId])], migration_status: 'linked', migrated_at: now, ...(legacy?.profiles ? { legacy_profiles: legacy.profiles } : {}) });
+    await firebaseApi.entities.MigrationLink.update(`${link.legacyId}_user`, { type: 'user', legacy_id: link.legacyId, firebase_uid: link.firebaseUid, status: 'linked', migrated_at: now });
     writes += link.legacyDocId ? 3 : 2;
   }
   for (const link of report.links.shops) {
-    await base44.entities.Shop.update(link.shopId, { user_id: link.firebaseUid, legacy_user_id: link.legacyOwner, migration_source: 'base44', migrated_at: now });
-    await base44.entities.MigrationLink.update(`${link.shopId}_shop`, { type: 'shop', legacy_id: link.shopId, firebase_uid: link.firebaseUid, status: 'linked', migrated_at: now });
+    await firebaseApi.entities.Shop.update(link.shopId, { user_id: link.firebaseUid, legacy_user_id: link.legacyOwner, migration_source: 'base44', migrated_at: now });
+    await firebaseApi.entities.MigrationLink.update(`${link.shopId}_shop`, { type: 'shop', legacy_id: link.shopId, firebase_uid: link.firebaseUid, status: 'linked', migrated_at: now });
     writes += 2;
   }
   for (const link of report.links.products) {
-    await base44.entities.Product.update(link.productId, { owner_id: link.firebaseUid, vendor_id: link.firebaseUid, legacy_owner_id: link.legacyOwner, migration_source: 'base44', migrated_at: now });
-    await base44.entities.MigrationLink.update(`${link.productId}_product`, { type: 'product', legacy_id: link.productId, firebase_uid: link.firebaseUid, shop_id: link.shopId || null, status: 'linked', migrated_at: now });
+    await firebaseApi.entities.Product.update(link.productId, { owner_id: link.firebaseUid, vendor_id: link.firebaseUid, legacy_owner_id: link.legacyOwner, migration_source: 'base44', migrated_at: now });
+    await firebaseApi.entities.MigrationLink.update(`${link.productId}_product`, { type: 'product', legacy_id: link.productId, firebase_uid: link.firebaseUid, shop_id: link.shopId || null, status: 'linked', migrated_at: now });
     writes += 2;
   }
   return { writes, linked: report.links };

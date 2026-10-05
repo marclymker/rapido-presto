@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Package } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
@@ -18,7 +18,7 @@ export default function EnterpriseDashboard() {
   const [activeTab, setActiveTab] = useState('orders');
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       if (!['marketplace', 'entreprise'].includes(u.current_profile)) {
         const redirectPages = {
@@ -33,11 +33,11 @@ export default function EnterpriseDashboard() {
   const { data: myShop } = useQuery({
     queryKey: ['my-shop', user?.id],
     queryFn: async () => {
-      const shops = await base44.entities.Shop.filter({ user_id: user.id });
+      const shops = await firebaseApi.entities.Shop.filter({ user_id: user.id });
       if (shops.length > 0) return shops[0];
 
       // Create shop automatically with default values
-      return base44.entities.Shop.create({
+      return firebaseApi.entities.Shop.create({
         user_id: user.id,
         company_name: user.profiles?.entreprise?.company_name || `Boutique ${user.full_name}`,
         company_category: user.profiles?.entreprise?.company_category || "Electronics",
@@ -53,14 +53,14 @@ export default function EnterpriseDashboard() {
 
   const { data: orders = [] } = useQuery({
     queryKey: ['shop-orders', myShop?.id],
-    queryFn: () => base44.entities.Order.filter({ shop_id: myShop?.id }, '-created_date'),
+    queryFn: () => firebaseApi.entities.Order.filter({ shop_id: myShop?.id }, '-created_date'),
     enabled: !!myShop?.id
   });
 
   // Fetch self orders (commandes passées par le marchand lui-même)
   const { data: selfOrders = [] } = useQuery({
     queryKey: ['self-orders', user?.id],
-    queryFn: () => base44.entities.Order.filter({ client_id: user?.id }, '-created_date'),
+    queryFn: () => firebaseApi.entities.Order.filter({ client_id: user?.id }, '-created_date'),
     enabled: !!user?.id
   });
 

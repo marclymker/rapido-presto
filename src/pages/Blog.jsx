@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight, Search } from 'lucide-react';
@@ -13,7 +13,7 @@ export default function Blog() {
 
   const { data: articles = [], isLoading } = useQuery({
     queryKey: ['blog-articles'],
-    queryFn: () => base44.entities.BlogArticle.filter({ is_published: true }, '-published_date', 50)
+    queryFn: () => firebaseApi.entities.BlogArticle.filter({ is_published: true }, '-published_date', 50)
   });
 
   const filteredArticles = useMemo(() => {

@@ -152,7 +152,7 @@ const createEntityHandler = (entityName) => ({
   }
 });
 
-export const base44 = {
+export const firebaseApi = {
   entities: new Proxy({}, {
     get(target, prop) {
       return createEntityHandler(prop);
@@ -252,8 +252,22 @@ export const base44 = {
 
   functions: {
     async invoke(funcName, params = {}) {
-      console.log(`Fonction ${funcName} appelée:`, params);
-      return { data: { success: true, converted: 0 } };
+      const supportedFunctions = new Set(['validateOrderPrice']);
+      if (!supportedFunctions.has(funcName)) {
+        throw new Error(`Fonction Firebase non disponible: ${funcName}`);
+      }
+      const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      if (!token) throw new Error('Connexion requise pour cette opération');
+      const response = await fetch(`/functions/${encodeURIComponent(funcName)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(params)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.success === false) {
+        throw new Error(data.error || `Erreur Firebase (${response.status})`);
+      }
+      return { data };
     }
   },
 

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
@@ -21,7 +21,7 @@ export default function BlogArticle() {
 
   const { data: articles = [] } = useQuery({
     queryKey: ['blog-articles'],
-    queryFn: () => base44.entities.BlogArticle.filter({ is_published: true })
+    queryFn: () => firebaseApi.entities.BlogArticle.filter({ is_published: true })
   });
 
   const article = useMemo(() => {
@@ -30,12 +30,12 @@ export default function BlogArticle() {
 
   const { data: allProducts = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 100)
+    queryFn: () => firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 100)
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }, '-created_date', 60)
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true }, '-created_date', 60)
   });
 
   const relatedProducts = useMemo(() => {
@@ -192,7 +192,7 @@ export default function BlogArticle() {
                       shop={shop}
                       hideId={true}
                       onAdd={() => {
-                        base44.auth.redirectToLogin(window.location.pathname);
+                        firebaseApi.auth.redirectToLogin(window.location.pathname);
                       }}
                       onClick={() => {
                         if (shop?.slug && product.id) {

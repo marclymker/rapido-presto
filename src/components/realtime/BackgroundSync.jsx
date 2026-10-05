@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 
 // Détection du type de connexion
 function getConnectionType() {
@@ -99,7 +99,7 @@ export function useBackgroundSync({ userType, enabled = true }) {
     try {
       setSyncStatus('syncing');
 
-      const response = await base44.functions.invoke('backgroundSync', {
+      const response = await firebaseApi.functions.invoke('backgroundSync', {
         action: 'sync',
         userType
       });

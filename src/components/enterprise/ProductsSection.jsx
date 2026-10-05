@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Plus, Search, Layers, Trash2, X, CheckSquare, Square } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +29,7 @@ export default function ProductsSection({ shopId }) {
 
   const { data: products = [] } = useQuery({
     queryKey: ['shop-products', shopId],
-    queryFn: () => base44.entities.Product.filter({ shop_id: shopId }),
+    queryFn: () => firebaseApi.entities.Product.filter({ shop_id: shopId }),
     enabled: !!shopId
   });
 
@@ -61,7 +61,7 @@ export default function ProductsSection({ shopId }) {
     setDeleting(true);
     try {
       for (const id of selectedIds) {
-        const res = await base44.functions.invoke('adminProducts', { action: 'delete', productId: id });
+        const res = await firebaseApi.functions.invoke('adminProducts', { action: 'delete', productId: id });
         if (res.data?.error) throw new Error(res.data.error);
       }
       toast.success(`${selectedIds.length} article(s) supprimé(s)`);

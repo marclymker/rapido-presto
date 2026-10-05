@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, lazy, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, ShoppingCart, X } from 'lucide-react';
 
@@ -47,21 +47,21 @@ export default function Home() {
 
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 60),
+    queryFn: () => firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 60),
     staleTime: 10 * 60 * 1000,
     refetchInterval: false,
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }, '-created_date', 60),
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true }, '-created_date', 60),
     staleTime: 10 * 60 * 1000,
     refetchInterval: false,
   });
 
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
-    queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
+    queryFn: () => firebaseApi.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id,
   });
 
@@ -81,9 +81,9 @@ export default function Home() {
       const price = getClientPrice(product);
       const shop = shops.find(s => s.id === product.shop_id);
       if (existing) {
-        return base44.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
+        return firebaseApi.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
       }
-      return base44.entities.CartItem.create({
+      return firebaseApi.entities.CartItem.create({
         user_id: user.id,
         product_id: product.id,
         product_name: product.name,

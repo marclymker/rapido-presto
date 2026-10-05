@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -66,19 +66,19 @@ export default function MarketingStudio() {
   const [draft, setDraft] = useState(null);
   const queryClient = useQueryClient();
 
-  React.useEffect(() => { base44.auth.me().then(setUser).catch(() => setUser(null)); }, []);
+  React.useEffect(() => { firebaseApi.auth.me().then(setUser).catch(() => setUser(null)); }, []);
 
-  const { data: shops = [] } = useQuery({ queryKey: ['marketing-shops', user?.id], queryFn: () => base44.entities.Shop.filter({ user_id: user.id }, '-created_date', 10), enabled: !!user?.id });
+  const { data: shops = [] } = useQuery({ queryKey: ['marketing-shops', user?.id], queryFn: () => firebaseApi.entities.Shop.filter({ user_id: user.id }, '-created_date', 10), enabled: !!user?.id });
   const shop = shops[0];
-  const { data: products = [], isLoading } = useQuery({ queryKey: ['marketing-products', shop?.id], queryFn: () => base44.entities.Product.filter({ shop_id: shop.id }, '-created_date', 100), enabled: !!shop?.id });
-  const { data: savedDrafts = [] } = useQuery({ queryKey: ['marketing-drafts', user?.id], queryFn: () => base44.entities.MarketingDraft.filter({ user_id: user.id }, '-created_date', 20), enabled: !!user?.id });
+  const { data: products = [], isLoading } = useQuery({ queryKey: ['marketing-products', shop?.id], queryFn: () => firebaseApi.entities.Product.filter({ shop_id: shop.id }, '-created_date', 100), enabled: !!shop?.id });
+  const { data: savedDrafts = [] } = useQuery({ queryKey: ['marketing-drafts', user?.id], queryFn: () => firebaseApi.entities.MarketingDraft.filter({ user_id: user.id }, '-created_date', 20), enabled: !!user?.id });
 
   const selectedProduct = useMemo(() => products.find((product) => product.id === selectedProductId), [products, selectedProductId]);
   const effectiveRegion = region || shop?.region || user?.region || 'Haïti';
   const isSiteOwner = user?.id === SITE_OWNER_UID;
 
   const saveMutation = useMutation({
-    mutationFn: (payload) => base44.entities.MarketingDraft.create(payload),
+    mutationFn: (payload) => firebaseApi.entities.MarketingDraft.create(payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['marketing-drafts', user?.id] }); toast.success('Brouillon marketing sauvegardé.'); },
     onError: () => toast.error('Impossible de sauvegarder ce brouillon. Vérifiez les règles Firebase.'),
   });
@@ -96,7 +96,7 @@ export default function MarketingStudio() {
 
   const copy = async (value) => { try { await navigator.clipboard.writeText(value); toast.success('Contenu copié.'); } catch (_) { toast.error('Copie non disponible sur cet appareil.'); } };
 
-  if (!user) return <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6"><div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-sm"><Sparkles className="mx-auto mb-4 h-10 w-10 text-orange-500" /><h1 className="text-xl font-black text-slate-950">Kairos Marketing Studio</h1><p className="my-3 text-sm text-slate-500">Connectez-vous avec le compte propriétaire pour accéder à cette console.</p><Button onClick={() => base44.auth.redirectToLogin('/MarketingStudio')} className="rounded-xl bg-slate-950">Se connecter</Button></div></div>;
+  if (!user) return <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6"><div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-sm"><Sparkles className="mx-auto mb-4 h-10 w-10 text-orange-500" /><h1 className="text-xl font-black text-slate-950">Kairos Marketing Studio</h1><p className="my-3 text-sm text-slate-500">Connectez-vous avec le compte propriétaire pour accéder à cette console.</p><Button onClick={() => firebaseApi.auth.redirectToLogin('/MarketingStudio')} className="rounded-xl bg-slate-950">Se connecter</Button></div></div>;
   if (!isSiteOwner) return <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6"><div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-sm"><Sparkles className="mx-auto mb-4 h-10 w-10 text-slate-400" /><h1 className="text-xl font-black text-slate-950">Accès propriétaire uniquement</h1><p className="my-3 text-sm text-slate-500">Cette console marketing est réservée au propriétaire de Kairos.</p><Button onClick={() => { window.location.href = '/Dashboard'; }} variant="outline" className="rounded-xl">Retour au dashboard</Button></div></div>;
 
   return <main className="min-h-screen bg-[#f4f6f8] pb-20 text-slate-950">

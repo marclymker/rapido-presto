@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, MapPin, Star } from 'lucide-react';
@@ -17,7 +17,7 @@ export default function ShopPage() {
 
   const { data: shops = [], isLoading: loadingShop } = useQuery({
     queryKey: ['shop-by-slug', slug],
-    queryFn: () => base44.entities.Shop.filter({ slug }),
+    queryFn: () => firebaseApi.entities.Shop.filter({ slug }),
     enabled: !!slug
   });
 
@@ -25,7 +25,7 @@ export default function ShopPage() {
 
   const { data: products = [] } = useQuery({
     queryKey: ['shop-products', shop?.id],
-    queryFn: () => base44.entities.Product.filter({
+    queryFn: () => firebaseApi.entities.Product.filter({
       shop_id: shop.id,
       is_available: true
     }),

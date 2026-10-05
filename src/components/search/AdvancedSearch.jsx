@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Search, SlidersHorizontal, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -299,7 +299,7 @@ async function performAISearch(query, filters, allProducts, shops) {
     // Use LLM for semantic search if query is complex
     if (query.split(' ').length > 2) {
       try {
-        const response = await base44.integrations.Core.InvokeLLM({
+        const response = await firebaseApi.integrations.Core.InvokeLLM({
           prompt: `Given the search query "${query}", which of these product categories and keywords are most relevant? Categories: ${results.map(p => p.category).filter((v, i, a) => a.indexOf(v) === i).join(', ')}. Return a JSON array of relevant terms.`,
           response_json_schema: {
             type: "object",

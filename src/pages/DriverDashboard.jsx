@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MapPin, Clock, CreditCard, Check, Navigation, Phone, Package, Volume2, VolumeX } from 'lucide-react';
 import ProfileSwitcher from '@/components/profile/ProfileSwitcher';
@@ -57,7 +57,7 @@ export default function DriverDashboard() {
   });
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       setIsAvailable(u.profiles?.livreur?.is_available || false);
 
@@ -83,7 +83,7 @@ export default function DriverDashboard() {
   const { data: availableOrders = [] } = useQuery({
     queryKey: ['available-orders', user?.profiles?.livreur?.commune],
     queryFn: async () => {
-      const orders = await base44.entities.Order.filter({
+      const orders = await firebaseApi.entities.Order.filter({
         status: 'searching_driver'
       }, '-created_date');
       // Filter by commune match + Anti-auto-acceptation (ne pas voir ses propres commandes)
@@ -101,7 +101,7 @@ export default function DriverDashboard() {
   // Fetch driver's orders
   const { data: myOrders = [] } = useQuery({
     queryKey: ['driver-orders', user?.id],
-    queryFn: () => base44.entities.Order.filter({ driver_id: user?.id }, '-created_date'),
+    queryFn: () => firebaseApi.entities.Order.filter({ driver_id: user?.id }, '-created_date'),
     enabled: !!user?.id,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
@@ -110,7 +110,7 @@ export default function DriverDashboard() {
   // Fetch self orders (commandes passées par le livreur lui-même)
   const { data: selfOrders = [] } = useQuery({
     queryKey: ['self-orders', user?.id],
-    queryFn: () => base44.entities.Order.filter({ client_id: user?.id }, '-created_date'),
+    queryFn: () => firebaseApi.entities.Order.filter({ client_id: user?.id }, '-created_date'),
     enabled: !!user?.id,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
@@ -120,7 +120,7 @@ export default function DriverDashboard() {
     mutationFn: (available) => {
       const profiles = { ...user.profiles };
       profiles.livreur = { ...profiles.livreur, is_available: available };
-      return base44.auth.updateMe({ profiles });
+      return firebaseApi.auth.updateMe({ profiles });
     },
     onSuccess: (_, available) => {
       setIsAvailable(available);
@@ -135,7 +135,7 @@ export default function DriverDashboard() {
         throw new Error('Vous ne pouvez pas livrer votre propre commande');
       }
 
-      const updatedOrder = await base44.entities.Order.update(order.id, {
+      const updatedOrder = await firebaseApi.entities.Order.update(order.id, {
         status: 'driver_assigned',
         driver_id: user.id,
         driver_name: user.full_name,
@@ -143,7 +143,7 @@ export default function DriverDashboard() {
       });
 
       // Notification push au client
-      await base44.functions.invoke('sendPushNotification', {
+      await firebaseApi.functions.invoke('sendPushNotification', {
         userId: updatedOrder.client_id,
         title: '🏍️ Livreur assigné',
         message: `${user.full_name} a accepté votre commande et est en route vers la boutique`,
@@ -164,11 +164,11 @@ export default function DriverDashboard() {
 
   const updateOrderMutation = useMutation({
     mutationFn: async ({ id, status }) => {
-      const updatedOrder = await base44.entities.Order.update(id, { status });
+      const updatedOrder = await firebaseApi.entities.Order.update(id, { status });
 
       // Notification push pour "en livraison"
       if (status === 'in_delivery') {
-        await base44.functions.invoke('sendPushNotification', {
+        await firebaseApi.functions.invoke('sendPushNotification', {
           userId: updatedOrder.client_id,
           title: '🚴 Livraison en route',
           message: `${updatedOrder.driver_name} est en chemin vers vous`,
@@ -187,10 +187,10 @@ export default function DriverDashboard() {
 
   const confirmDeliveryMutation = useMutation({
     mutationFn: async (id) => {
-      const updatedOrder = await base44.entities.Order.update(id, { status: 'delivered' });
+      const updatedOrder = await firebaseApi.entities.Order.update(id, { status: 'delivered' });
 
       // Notification push de livraison réussie
-      await base44.functions.invoke('sendPushNotification', {
+      await firebaseApi.functions.invoke('sendPushNotification', {
         userId: updatedOrder.client_id,
         title: '✅ Commande livrée',
         message: 'Votre commande a été livrée avec succès. Bon appétit!',

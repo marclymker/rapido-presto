@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { BUSINESS_PROFILE_IDS, deactivateOtherOperationalProfiles, getBusinessProfile } from '@/lib/businessProfiles';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 
 const LEGACY_PROFILES = {
   client: { id: 'client', label: 'Client', icon: User, color: 'text-blue-600', bgColor: 'bg-blue-100', route: 'Home' },
@@ -71,7 +71,7 @@ export default function ProfileSwitcher({ user, onProfileChange }) {
       if (nextProfiles[targetProfile]) {
         nextProfiles[targetProfile] = { ...nextProfiles[targetProfile], is_active: true, last_used: new Date().toISOString() };
       }
-      await base44.auth.updateMe({ current_profile: targetProfile, profiles: nextProfiles });
+      await firebaseApi.auth.updateMe({ current_profile: targetProfile, profiles: nextProfiles });
       onProfileChange?.(targetProfile, nextProfiles);
       toast.success(`Profil changé vers ${getConfig(targetProfile).label}`);
       const targetRoute = getConfig(targetProfile).route || 'Home';

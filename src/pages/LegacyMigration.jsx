@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { scanLegacyFirestore, executeLegacyFirestoreMigration } from '@/lib/legacyMigration';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +13,7 @@ export default function LegacyMigration() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  React.useEffect(() => { base44.auth.me().then(setUser).catch(() => setUser(null)); }, []);
+  React.useEffect(() => { firebaseApi.auth.me().then(setUser).catch(() => setUser(null)); }, []);
 
   const runScan = async () => {
     setLoading(true); setError(''); setResult(null);

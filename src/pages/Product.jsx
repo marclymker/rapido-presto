@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import {
   ArrowLeft,
   ShoppingCart,
@@ -166,7 +166,7 @@ export default function Product() {
         }
 
         // Charger le produit depuis la base de données
-        const allProducts = await base44.entities.Product.list();
+        const allProducts = await firebaseApi.entities.Product.list();
         const foundProduct = allProducts.find(p => p.id === productKey)
           || (() => {
             const matches = allProducts.filter(p => p.slug === productKey);
@@ -190,7 +190,7 @@ export default function Product() {
         setActiveImage(images[0]);
 
         // Charger la boutique
-        const allShops = await base44.entities.Shop.list();
+        const allShops = await firebaseApi.entities.Shop.list();
         const foundShop = allShops.find(s => s.id === foundProduct.shop_id);
         setShop(foundShop);
 
@@ -202,7 +202,7 @@ export default function Product() {
 
         // Charger l'utilisateur
         try {
-          const currentUser = await base44.auth.me();
+          const currentUser = await firebaseApi.auth.me();
           setUser(currentUser);
         } catch (e) {
           // Utilisateur non connecté
@@ -231,22 +231,22 @@ export default function Product() {
 
   const handleAddToCart = async () => {
     if (!user) {
-      base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+      firebaseApi.auth.redirectToLogin(window.location.pathname + window.location.search);
       return;
     }
 
     try {
-      const existingCart = await base44.entities.CartItem.filter({
+      const existingCart = await firebaseApi.entities.CartItem.filter({
         user_id: user.id,
         product_id: product.id
       });
 
       if (existingCart.length > 0) {
-        await base44.entities.CartItem.update(existingCart[0].id, {
+        await firebaseApi.entities.CartItem.update(existingCart[0].id, {
           quantity: existingCart[0].quantity + quantity
         });
       } else {
-        await base44.entities.CartItem.create({
+        await firebaseApi.entities.CartItem.create({
           user_id: user.id,
           product_id: product.id,
           product_name: product.name,

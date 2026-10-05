@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { MessageCircle, X } from 'lucide-react';
 import { createPageUrl } from '@/utils';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 
 export default function NewMessagesBanner({ user }) {
@@ -11,7 +11,7 @@ export default function NewMessagesBanner({ user }) {
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-count', user?.id],
     queryFn: async () => {
-      const response = await base44.functions.invoke('chatService', { action: 'unread-count' });
+      const response = await firebaseApi.functions.invoke('chatService', { action: 'unread-count' });
       return response.data.unreadCount;
     },
     enabled: !!user?.id,
