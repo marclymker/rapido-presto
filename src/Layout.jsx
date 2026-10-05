@@ -11,6 +11,7 @@ import { useCacheManager } from '@/components/offline/useCacheManager';
 import OfflineIndicator from '@/components/offline/OfflineIndicator';
 import ThemeProvider from '@/components/theme/ThemeProvider';
 import AppFooter from '@/components/layout/AppFooter';
+import NotificationPermission from '@/components/notifications/NotificationPermission';
 
 // Composants non-critiques chargés en différé (hors chemin critique de rendu)
 const OneSignalInit = lazy(() => import('@/components/notifications/OneSignalInit'));
@@ -87,6 +88,7 @@ export default function Layout({ children, currentPageName }) {
         <Toaster position="top-center" />
         <ThemeProvider />
         <OfflineIndicator />
+        {user && currentPageName !== 'Login' && <NotificationPermission user={user} />}
 
         {/* Composants non-critiques : chargés en différé après le rendu principal */}
         {/* Sur connexion lente, on ne charge pas les composants non-essentiels */}

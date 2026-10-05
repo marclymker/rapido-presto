@@ -3,6 +3,42 @@
 // Optimisé pour connexions lentes (Haïti)
 // ============================================================
 
+importScripts('https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: 'AIzaSyCUyAlOkYW-ytQ0YbLI477dIttYnI5Kz3Y',
+  authDomain: 'rapido-presto-f072a.firebaseapp.com',
+  projectId: 'rapido-presto-f072a',
+  storageBucket: 'rapido-presto-f072a.firebasestorage.app',
+  messagingSenderId: '553324736782',
+  appId: '1:553324736782:web:16327826263743a77a675f'
+});
+
+const firebaseMessaging = firebase.messaging();
+firebaseMessaging.onBackgroundMessage((payload) => {
+  const notification = payload.notification || {};
+  const title = notification.title || payload.data?.title || 'Kairos';
+  const options = {
+    body: notification.body || payload.data?.body || 'Vous avez une nouvelle notification.',
+    icon: notification.icon || '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    data: { url: payload.data?.url || '/Dashboard' },
+    tag: payload.data?.tag || `kairos-${Date.now()}`,
+  };
+  self.registration.showNotification(title, options);
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || '/Dashboard', self.location.origin).href;
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+    const existing = clients.find((client) => client.url.startsWith(self.location.origin));
+    if (existing) return existing.focus().then(() => existing.navigate(target));
+    return self.clients.openWindow(target);
+  }));
+});
+
 const CACHE_VERSION = 'rp-v4';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const IMAGE_CACHE   = `${CACHE_VERSION}-images`;

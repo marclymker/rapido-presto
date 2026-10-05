@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { listenForForegroundMessages, registerWebPushToken } from '@/lib/webPush';
 
-export default function NotificationPermission() {
+export default function NotificationPermission({ user }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
     // 1. On ne montre rien si les notifications ne sont pas supportées
-    if (!("Notification" in window)) return;
+    if (!user || !("Notification" in window)) return;
 
     // 2. On vérifie l'état actuel de la permission navigateur
     const currentPermission = Notification.permission;
@@ -21,7 +22,18 @@ export default function NotificationPermission() {
       const timer = setTimeout(() => setShow(true), 3000);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || !('Notification' in window) || Notification.permission !== 'granted') return undefined;
+    let unsubscribe;
+    listenForForegroundMessages((payload) => {
+      const title = payload.notification?.title || payload.data?.title || 'Kairos';
+      const body = payload.notification?.body || payload.data?.body || 'Vous avez une nouvelle notification.';
+      toast(title, { description: body });
+    }).then((cleanup) => { unsubscribe = cleanup; }).catch(() => {});
+    return () => unsubscribe?.();
+  }, [user?.id]);
 
   const handleAction = async (wantNotifications) => {
     if (wantNotifications) {
@@ -29,6 +41,15 @@ export default function NotificationPermission() {
         const permission = await Notification.requestPermission();
 
         if (permission === 'granted') {
+          if (!user?.id) {
+            toast.info('Connectez-vous pour recevoir vos alertes personnelles.');
+            setShow(false);
+            return;
+          }
+          const registration = await registerWebPushToken();
+          if (!registration.token) {
+            toast.info('Notifications autorisées sur cet appareil. La réception en arrière-plan sera activée après la configuration Firebase Web Push.');
+          }
           localStorage.setItem('rapido-notif-choice', 'granted');
           toast.success("Alertes activées !");
 

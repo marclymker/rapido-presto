@@ -20,7 +20,6 @@
     ],
     "rewrites": [
       { "source": "/functions/ogMetaTags", "function": { "functionId": "ogMetaTags", "region": "us-central1" } },
-      { "source": "/sitemap.xml", "function": { "functionId": "generateSitemapXML", "region": "us-central1" } },
       { "source": "/functions/generateSitemap", "function": { "functionId": "generateSitemap", "region": "us-central1" } },
       { "source": "/functions/generateSitemapXML", "function": { "functionId": "generateSitemapXML", "region": "us-central1" } },
       { "source": "/feeds/google-merchant.xml", "function": { "functionId": "googleMerchantFeed", "region": "us-central1" } },
