@@ -52,7 +52,7 @@ export default function Layout({ children, currentPageName }) {
     }
   }, [currentPageName]);
 
-  const noNavPages = ['ProfileSetup', 'ManageProfiles', 'AdminValidation', 'Chat'];
+  const noNavPages = ['ProfileSetup', 'ManageProfiles', 'AdminValidation', 'Chat', 'Login'];
 
   const { data: orders = [] } = useQuery({
     queryKey: ['orders', user?.id],

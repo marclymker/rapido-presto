@@ -22,6 +22,7 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   GoogleAuthProvider,
+  FacebookAuthProvider,
   OAuthProvider
 } from "firebase/auth";
 
@@ -169,21 +170,10 @@ export const firebaseApi = {
       return hydrateAuthUser(user);
     },
 
-    // Ouvre la fenêtre Google en 1 clic et redirige vers la bonne page
+    // Ouvre l'écran de choix du fournisseur et conserve la page demandée.
     async redirectToLogin(nextUrl = '/Dashboard') {
-      try {
-        const provider = new GoogleAuthProvider();
-        const cred = await signInWithPopup(auth, provider);
-        if (cred?.user) {
-          if (nextUrl && nextUrl.startsWith('/')) {
-            window.location.href = nextUrl;
-          } else {
-            window.location.reload();
-          }
-        }
-      } catch (err) {
-        console.error("Erreur connexion Google:", err);
-      }
+      const safeNext = typeof nextUrl === 'string' && nextUrl.startsWith('/') ? nextUrl : '/Dashboard';
+      window.location.href = `/Login?next=${encodeURIComponent(safeNext)}`;
     },
 
     async updateMe(data) {
@@ -221,7 +211,12 @@ export const firebaseApi = {
     },
 
     async loginWithProvider(providerName = 'google') {
-      const provider = providerName === 'apple' ? new OAuthProvider('apple.com') : new GoogleAuthProvider();
+      const provider = providerName === 'apple'
+        ? new OAuthProvider('apple.com')
+        : providerName === 'facebook'
+          ? new FacebookAuthProvider()
+          : new GoogleAuthProvider();
+      if (providerName === 'facebook') provider.setCustomParameters({ display: 'popup' });
       const cred = await signInWithPopup(auth, provider);
       return {
         access_token: await cred.user.getIdToken(),
