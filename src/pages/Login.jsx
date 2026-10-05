@@ -31,7 +31,9 @@ function friendlyError(err) {
 
 export default function Login() {
   const [searchParams] = useSearchParams();
-  const next = searchParams.get('next')?.startsWith('/') ? searchParams.get('next') : '/Dashboard';
+  const requestedNext = searchParams.get('next');
+  const savedNext = typeof window !== 'undefined' ? sessionStorage.getItem('kairos_auth_next') : null;
+  const next = requestedNext?.startsWith('/') ? requestedNext : (savedNext?.startsWith('/') ? savedNext : '/Dashboard');
   const [method, setMethod] = useState('social');
   const [loading, setLoading] = useState('');
   const [error, setError] = useState('');
@@ -42,13 +44,18 @@ export default function Login() {
   const [code, setCode] = useState('');
   const [confirmation, setConfirmation] = useState(null);
 
-  const finish = () => { window.location.href = next; };
+  const finish = () => {
+    sessionStorage.removeItem('kairos_auth_next');
+    window.location.replace(next);
+  };
 
   useEffect(() => {
     let active = true;
     firebaseApi.auth.completeRedirectLogin()
-      .then((result) => {
-        if (active && result) finish();
+      .then(async (result) => {
+        if (!active || !result) return;
+        await firebaseApi.auth.me();
+        if (active) finish();
       })
       .catch((err) => {
         console.error('Erreur retour connexion sociale:', err);

@@ -16,6 +16,8 @@ import {
 } from "firebase/firestore";
 import {
   getAuth,
+  setPersistence,
+  browserLocalPersistence,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -42,6 +44,15 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+// Garantit que la session survive au retour depuis Google/Facebook sur mobile.
+const authPersistenceReady = setPersistence(auth, browserLocalPersistence);
+const redirectResultPromise = authPersistenceReady
+  .then(() => getRedirectResult(auth))
+  .catch((error) => {
+    console.error('Erreur initialisation retour OAuth:', error);
+    throw error;
+  });
 
 let phoneRecaptchaVerifier = null;
 
@@ -239,12 +250,13 @@ export const firebaseApi = {
         : providerName === 'facebook'
           ? new FacebookAuthProvider()
           : new GoogleAuthProvider();
+      await authPersistenceReady;
       await signInWithRedirect(auth, provider);
       return null;
     },
 
     async completeRedirectLogin() {
-      const result = await getRedirectResult(auth);
+      const result = await redirectResultPromise;
       if (!result?.user) return null;
       const user = result.user;
       return {
