@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
 import { Apple, ArrowLeft, Facebook, Loader2, Mail, Phone } from 'lucide-react';
@@ -44,9 +44,25 @@ export default function Login() {
 
   const finish = () => { window.location.href = next; };
 
+  useEffect(() => {
+    let active = true;
+    firebaseApi.auth.completeRedirectLogin()
+      .then((result) => {
+        if (active && result) finish();
+      })
+      .catch((err) => {
+        console.error('Erreur retour connexion sociale:', err);
+        if (active) setError(friendlyError(err));
+      });
+    return () => { active = false; };
+  }, [next]);
+
   const loginSocial = async (provider) => {
     setLoading(provider); setError('');
-    try { await firebaseApi.auth.loginWithProvider(provider); finish(); }
+    try {
+      sessionStorage.setItem('kairos_auth_next', next);
+      await firebaseApi.auth.loginWithProvider(provider);
+    }
     catch (err) { console.error(`Erreur connexion ${provider}:`, err); setError(friendlyError(err)); }
     finally { setLoading(''); }
   };

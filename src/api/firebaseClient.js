@@ -20,7 +20,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   FacebookAuthProvider,
   OAuthProvider,
@@ -238,11 +239,17 @@ export const firebaseApi = {
         : providerName === 'facebook'
           ? new FacebookAuthProvider()
           : new GoogleAuthProvider();
-      if (providerName === 'facebook') provider.setCustomParameters({ display: 'popup' });
-      const cred = await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
+      return null;
+    },
+
+    async completeRedirectLogin() {
+      const result = await getRedirectResult(auth);
+      if (!result?.user) return null;
+      const user = result.user;
       return {
-        access_token: await cred.user.getIdToken(),
-        user: { id: cred.user.uid, email: cred.user.email, full_name: cred.user.displayName }
+        access_token: await user.getIdToken(),
+        user: { id: user.uid, email: user.email, full_name: user.displayName }
       };
     },
 
