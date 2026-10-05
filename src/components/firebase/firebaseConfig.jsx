@@ -1,20 +1,20 @@
 
-import { initializeApp } from 'firebase/app';
+import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBL6Qf3AJ2ok677k7fWXST6ERWMoBYfXR4",
-  authDomain: "rapido-presto-1c781.firebaseapp.com",
-  databaseURL: "https://rapido-presto-1c781-default-rtdb.firebaseio.com",
-  projectId: "rapido-presto-1c781",
-  storageBucket: "rapido-presto-1c781.firebasestorage.app",
-  messagingSenderId: "652897600858",
-  appId: "1:652897600858:web:8ed91cfbce1cd77debdf63",
-  measurementId: "G-KHJ8RZNBSD"
+  apiKey: "AIzaSyCUyAlOkYW-ytQ0YbLI477dIttYnI5Kz3Y",
+  authDomain: "rapido-presto-f072a.firebaseapp.com",
+  databaseURL: "https://rapido-presto-f072a-default-rtdb.firebaseio.com",
+  projectId: "rapido-presto-f072a",
+  storageBucket: "rapido-presto-f072a.firebasestorage.app",
+  messagingSenderId: "553324736782",
+  appId: "1:553324736782:web:16327826263743a77a675f",
+  measurementId: "G-NK2TS9SYQ8"
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
 export { database };

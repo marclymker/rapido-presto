@@ -74,7 +74,7 @@ export default function Layout({ children, currentPageName }) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Rapido" />
+        <meta name="apple-mobile-web-app-title" content="Kairos" />
         <link rel="alternate" hrefLang="fr-HT" href="https://makariosbridal.shop" />
         <link rel="alternate" hrefLang="fr" href="https://makariosbridal.shop" />
         <link rel="alternate" hrefLang="x-default" href="https://makariosbridal.shop" />
