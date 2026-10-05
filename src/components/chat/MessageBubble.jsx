@@ -37,7 +37,7 @@ const MessageBubble = memo(({ m, isMe, isNextSameSender, isPrevSameSender, shopL
         {m.type === 'product' && m.metadata?.productId && (
           <div
             className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow mb-1 w-[240px]"
-            onClick={() => window.open(`/product/${m.metadata.productSlug || m.metadata.productId}`, '_blank')}
+            onClick={() => window.open(`/product/${m.metadata.productId || m.metadata.productSlug}`, '_blank')}
           >
             {m.metadata.productImage && (
               <img src={`${m.metadata.productImage}?width=240&quality=60`} alt={m.metadata.productName} className="w-full h-28 object-cover" loading="lazy" />

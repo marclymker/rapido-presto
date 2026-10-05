@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Phone, Mail, Calendar, ShoppingBag, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Plus, Phone, Mail, Calendar, ShoppingBag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ProductCard from '@/components/ui/ProductCard';
 import { getClientPrice } from '@/components/utils/priceCalculation';
@@ -26,34 +26,34 @@ export default function AgentClients() {
   });
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    firebaseApi.auth.me().then(setUser).catch(() => {});
   }, []);
 
   const { data: clients = [] } = useQuery({
     queryKey: ['agent-clients', user?.id],
-    queryFn: () => base44.entities.AgentClient.filter({ agent_id: user?.id }),
+    queryFn: () => firebaseApi.entities.AgentClient.filter({ agent_id: user?.id }),
     enabled: !!user?.id
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true })
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true })
   });
 
   const makariosShop = shops.find(s => s.company_name?.toLowerCase().includes('makarios'));
 
   const { data: products = [] } = useQuery({
     queryKey: ['makarios-products'],
-    queryFn: () => base44.entities.Product.filter({ 
+    queryFn: () => firebaseApi.entities.Product.filter({
       shop_id: makariosShop?.id,
-      is_available: true 
+      is_available: true
     }),
     enabled: !!makariosShop?.id
   });
 
   const createClientMutation = useMutation({
     mutationFn: async (clientData) => {
-      return base44.entities.AgentClient.create(clientData);
+      return firebaseApi.entities.AgentClient.create(clientData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['agent-clients']);
@@ -67,8 +67,8 @@ export default function AgentClients() {
   const handleAddProduct = (product) => {
     const existing = selectedProducts.find(p => p.product_id === product.id);
     if (existing) {
-      setSelectedProducts(prev => 
-        prev.map(p => p.product_id === product.id 
+      setSelectedProducts(prev =>
+        prev.map(p => p.product_id === product.id
           ? { ...p, quantity: p.quantity + 1, total: (p.quantity + 1) * p.unit_price }
           : p
         )
@@ -157,7 +157,7 @@ export default function AgentClients() {
                       {client.event_type} {client.event_date && `- ${new Date(client.event_date).toLocaleDateString()}`}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4 mt-3">
                     <div>
                       <p className="text-xs text-slate-500">Montant</p>
@@ -220,7 +220,7 @@ export default function AgentClients() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Nom complet *</Label>
-                <Input 
+                <Input
                   value={formData.full_name}
                   onChange={(e) => setFormData({...formData, full_name: e.target.value})}
                   placeholder="Jean Dupont"
@@ -228,7 +228,7 @@ export default function AgentClients() {
               </div>
               <div>
                 <Label>Téléphone *</Label>
-                <Input 
+                <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   placeholder="+509 1234 5678"
@@ -236,7 +236,7 @@ export default function AgentClients() {
               </div>
               <div>
                 <Label>Email</Label>
-                <Input 
+                <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -261,7 +261,7 @@ export default function AgentClients() {
               </div>
               <div className="col-span-2">
                 <Label>Date de l'événement</Label>
-                <Input 
+                <Input
                   type="date"
                   value={formData.event_date}
                   onChange={(e) => setFormData({...formData, event_date: e.target.value})}
@@ -281,8 +281,8 @@ export default function AgentClients() {
                         <p className="text-sm font-medium">{item.product_name}</p>
                         <p className="text-xs text-slate-600">x{item.quantity} - {item.total.toLocaleString()} HTG</p>
                       </div>
-                      <Button 
-                        size="icon" 
+                      <Button
+                        size="icon"
                         variant="ghost"
                         onClick={() => handleRemoveProduct(item.product_id)}
                       >
@@ -325,8 +325,8 @@ export default function AgentClients() {
               <Button variant="outline" onClick={() => setShowAddModal(false)} className="flex-1">
                 Annuler
               </Button>
-              <Button 
-                onClick={handleSubmit} 
+              <Button
+                onClick={handleSubmit}
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
                 disabled={createClientMutation.isPending}
               >

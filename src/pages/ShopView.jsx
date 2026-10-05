@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -72,7 +72,7 @@ export default function ShopView() {
   // Fetch shop by slug
   const { data: shops = [], isLoading: loadingShop } = useQuery({
     queryKey: ['shop', shopSlug],
-    queryFn: () => base44.entities.Shop.filter({ slug: shopSlug }),
+    queryFn: () => firebaseApi.entities.Shop.filter({ slug: shopSlug }),
     enabled: !!shopSlug
   });
 
@@ -81,15 +81,15 @@ export default function ShopView() {
   // Fetch products for this shop
   const { data: allProducts = [] } = useQuery({
     queryKey: ['shop-products', shop?.id],
-    queryFn: () => base44.entities.Product.filter({ shop_id: shop?.id, is_available: true }),
+    queryFn: () => firebaseApi.entities.Product.filter({ shop_id: shop?.id, is_available: true }),
     enabled: !!shop?.id
   });
 
   // Navigate to product page if product slug in URL
   useEffect(() => {
     if (productSlug && allProducts.length > 0) {
-      const product = allProducts.find(p => p.slug === productSlug || p.id === productSlug);
-      if (product) navigate(`/product/${product.slug || product.id}`, { replace: true });
+      const product = allProducts.find(p => p.id === productSlug) || allProducts.find(p => p.slug === productSlug);
+      if (product) navigate(`/product/${product.id}`, { replace: true });
     }
   }, [productSlug, allProducts]);
 
@@ -140,7 +140,7 @@ export default function ShopView() {
   // Cart management
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
-    queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
+    queryFn: () => firebaseApi.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id
   });
 
@@ -149,9 +149,9 @@ export default function ShopView() {
       const existing = cartItems.find(item => item.product_id === product.id);
       const clientPrice = getClientPrice(product);
       if (existing) {
-        return base44.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
+        return firebaseApi.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
       } else {
-        return base44.entities.CartItem.create({
+        return firebaseApi.entities.CartItem.create({
           user_id: user.id,
           product_id: product.id,
           product_name: product.name,
@@ -196,7 +196,7 @@ export default function ShopView() {
       value: getClientPrice(product),
       currency: 'HTG'
     });
-    navigate(`/product/${product.slug || product.id}`);
+    navigate(`/product/${product.id}`);
   };
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -240,19 +240,19 @@ export default function ShopView() {
     return `${window.location.origin}${url}`;
   };
   const pageTitle = shop.company_name;
-  const pageDescription = `Découvrez ${shop.company_name} sur Rapido Presto. ${shop.company_category} à ${shop.region}.`;
+  const pageDescription = `Découvrez ${shop.company_name} sur Kairos. ${shop.company_category} à ${shop.region}.`;
   const pageImage = ensureAbsoluteUrl(shop.company_logo_url);
   const pageUrl = window.location.href;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <Helmet>
-        <title>{pageTitle} - Rapido Presto</title>
+        <title>{pageTitle} - Kairos</title>
         <meta name="description" content={pageDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
-        <meta property="og:site_name" content="Rapido Presto" />
+        <meta property="og:site_name" content="Kairos" />
         {pageImage && <meta property="og:image" content={pageImage} />}
         <meta property="og:url" content={pageUrl} />
         <meta property="og:locale" content="fr_HT" />

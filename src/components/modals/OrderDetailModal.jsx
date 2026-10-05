@@ -6,18 +6,18 @@ import { MapPin, Phone, User, CreditCard, Package, CheckCircle } from 'lucide-re
 import OrderStatusBadge from "@/components/ui/OrderStatusBadge";
 import { formatHaitiDate } from '@/components/utils/dateFormat';
 
-export default function OrderDetailModal({ 
-  order, 
-  open, 
-  onClose, 
+export default function OrderDetailModal({
+  order,
+  open,
+  onClose,
   userType,
   onUpdateStatus,
-  onConfirmDelivery 
+  onConfirmDelivery
 }) {
   const [confirmCode, setConfirmCode] = useState('');
   const [codeError, setCodeError] = useState('');
   const [attempts, setAttempts] = useState(0);
-  
+
   if (!order) return null;
 
   const handleConfirmDelivery = () => {
@@ -29,7 +29,7 @@ export default function OrderDetailModal({
     } else {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
-      
+
       if (newAttempts >= 3) {
         setCodeError('Trop de tentatives. Contactez le client.');
       } else {
@@ -50,7 +50,7 @@ export default function OrderDetailModal({
             {formatHaitiDate(order.created_date)}
           </p>
         </DialogHeader>
-        
+
         <div className="space-y-4 mt-4">
           {/* Client Info */}
           <div className="bg-slate-50 rounded-xl p-4 space-y-2">
@@ -67,7 +67,7 @@ export default function OrderDetailModal({
               <span>{order.client_address}, {order.client_commune}</span>
             </div>
           </div>
-          
+
           {/* Items */}
           <div className="space-y-2">
             <h4 className="font-medium flex items-center gap-2">
@@ -83,7 +83,7 @@ export default function OrderDetailModal({
               ))}
             </div>
           </div>
-          
+
           {/* Totals */}
           <div className="border-t pt-3 space-y-1">
             <div className="flex justify-between text-sm text-slate-600">
@@ -99,13 +99,13 @@ export default function OrderDetailModal({
               <span className="text-orange-500">{order.total} HTG</span>
             </div>
           </div>
-          
+
           {/* Payment */}
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <CreditCard className="w-4 h-4" />
             <span>Paiement: {order.payment_method}</span>
           </div>
-          
+
           {/* Driver Info (if assigned) */}
           {order.driver_name && (
             <div className="bg-blue-50 rounded-xl p-4">
@@ -123,7 +123,7 @@ export default function OrderDetailModal({
               <p className="text-xs text-green-600 mt-2">Donnez ce code au livreur</p>
             </div>
           )}
-          
+
           {/* Livreur Actions */}
           {userType === 'livreur' && order.status === 'in_delivery' && (
             <div className="bg-orange-50 rounded-xl p-4 space-y-3">
@@ -139,7 +139,7 @@ export default function OrderDetailModal({
                 maxLength={4}
               />
               {codeError && <p className="text-red-500 text-sm">{codeError}</p>}
-              <Button 
+              <Button
                 className="w-full bg-green-600 hover:bg-green-700"
                 onClick={handleConfirmDelivery}
                 disabled={attempts >= 3}
@@ -149,18 +149,18 @@ export default function OrderDetailModal({
               </Button>
             </div>
           )}
-          
+
           {/* Entreprise Actions */}
           {userType === 'entreprise' && order.status === 'pending' && (
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
                 onClick={() => onUpdateStatus(order.id, 'cancelled')}
               >
                 Refuser
               </Button>
-              <Button 
+              <Button
                 className="flex-1 bg-orange-500 hover:bg-orange-600"
                 onClick={() => onUpdateStatus(order.id, 'preparing')}
               >
@@ -168,26 +168,26 @@ export default function OrderDetailModal({
               </Button>
             </div>
           )}
-          
+
           {userType === 'entreprise' && order.status === 'preparing' && (
-            <Button 
+            <Button
               className="w-full bg-green-600 hover:bg-green-700"
               onClick={() => onUpdateStatus(order.id, 'ready')}
             >
               Préparation terminée
             </Button>
           )}
-          
+
           {/* Livreur Status Actions */}
           {userType === 'livreur' && order.status === 'driver_assigned' && (
             <div className="space-y-2">
-              <Button 
+              <Button
                 className="w-full bg-blue-600 hover:bg-blue-700"
                 onClick={() => onUpdateStatus(order.id, 'in_delivery')}
               >
                 Démarrer la livraison
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 className="w-full border-red-200 text-red-600 hover:bg-red-50"
                 onClick={() => onUpdateStatus(order.id, 'searching_driver')}

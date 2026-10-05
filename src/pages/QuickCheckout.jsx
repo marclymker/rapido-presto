@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Wallet, MapPin } from 'lucide-react';
@@ -21,6 +21,7 @@ export default function QuickCheckout() {
   const [searchParams] = useSearchParams();
 
   const productId = searchParams.get('product_id');
+  const variantId = searchParams.get('variant_id');
   const qty = parseInt(searchParams.get('quantity') || '1', 10);
 
   const [paymentMethod, setPaymentMethod] = useState('moncash');
@@ -32,20 +33,21 @@ export default function QuickCheckout() {
 
   const { data: products = [], isLoading: productLoading } = useQuery({
     queryKey: ['quick-product', productId],
-    queryFn: () => base44.entities.Product.filter({ id: productId }),
+    queryFn: () => firebaseApi.entities.Product.get(productId).then(p => p ? [p] : []),
     enabled: !!productId,
   });
 
   const product = products[0];
+  const selectedVariant = product?.variants?.find(v => v.id === variantId) || null;
 
   const { data: shops = [] } = useQuery({
     queryKey: ['quick-shop', product?.shop_id],
-    queryFn: () => base44.entities.Shop.filter({ id: product.shop_id }),
+    queryFn: () => firebaseApi.entities.Shop.filter({ id: product.shop_id }),
     enabled: !!product?.shop_id,
   });
 
   const shop = shops[0];
-  const price = product ? applyClientMargin(product.promo_price || product.price, shop?.company_name || product.shop_name) : 0;
+  const price = product ? applyClientMargin(selectedVariant?.promo_price || selectedVariant?.price || product.promo_price || product.price, shop?.company_name || product.shop_name) : 0;
   const total = price * qty;
 
   const createOrderMutation = useMutation({
@@ -55,7 +57,7 @@ export default function QuickCheckout() {
       const orderNum = 'RP' + Date.now().toString().slice(-6);
       const code = generateConfirmationCode();
 
-      const order = await base44.entities.Order.create({
+      const order = await firebaseApi.entities.Order.create({
         order_number: orderNum,
         client_id: user.id,
         client_name: user.full_name,
@@ -68,6 +70,9 @@ export default function QuickCheckout() {
         items: [{
           product_id: product.id,
           name: product.name,
+          variant_id: selectedVariant?.id || null,
+          variant_color: selectedVariant?.color || null,
+          variant_size: selectedVariant?.size || null,
           quantity: qty,
           unit_price: price,
           total: total,
@@ -84,21 +89,21 @@ export default function QuickCheckout() {
 
       if (paymentMethod === 'card') {
         if (!squareToken) throw new Error('Token de paiement manquant');
-        const paymentResponse = await base44.functions.invoke('squarePayment', {
+        const paymentResponse = await firebaseApi.functions.invoke('squarePayment', {
           sourceId: squareToken,
           amount: total,
           orderId: orderNum,
         });
         if (!paymentResponse.data.success) throw new Error('Paiement refusé');
 
-        await base44.functions.invoke('sendOrderNotification', { orderId: order.id, status: 'pending' }).catch(() => {});
-        await base44.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.id }).catch(() => {});
+        await firebaseApi.functions.invoke('sendOrderNotification', { orderId: order.id, status: 'pending' }).catch(() => {});
+        await firebaseApi.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.id }).catch(() => {});
         return { orderNum, code };
       }
 
       if (paymentMethod === 'moncash') {
         const payAmount = Math.round(total * splitPercent / 100);
-        const response = await base44.functions.invoke('moncashCreatePayment', {
+        const response = await firebaseApi.functions.invoke('moncashCreatePayment', {
           orderId: orderNum,
           amount: payAmount,
           description: `Commande ${orderNum} - ${product.name} (${splitPercent}%)`,
@@ -107,7 +112,7 @@ export default function QuickCheckout() {
         if (!paymentData?.success || !paymentData?.paymentUrl) {
           throw new Error(paymentData?.error || 'Erreur MonCash');
         }
-        await base44.entities.Order.update(order.id, { moncash_transaction_id: paymentData.transactionId });
+        await firebaseApi.entities.Order.update(order.id, { moncash_transaction_id: paymentData.transactionId });
         return { redirectToMoncash: true, paymentUrl: paymentData.paymentUrl, orderNum };
       }
     },

@@ -1,0 +1,203 @@
+
+/* Marketplace mobile reference: light universal shop shell, category chips and visual two-column cards */
+.rp-dark-shop {
+  --shop-bg: #ffffff;
+  --shop-panel: #f8fafc;
+  --shop-panel-2: #f1f5f9;
+  --shop-text: #111827;
+  --shop-muted: #64748b;
+  --shop-line: rgba(15,23,42,.10);
+  background: var(--shop-bg) !important;
+  color: var(--shop-text) !important;
+}
+.rp-shop-header {
+  background: rgba(255,255,255,.97) !important;
+  border-bottom: 1px solid var(--shop-line);
+  box-shadow: none !important;
+  backdrop-filter: blur(18px);
+}
+.rp-shop-header h1,
+.rp-shop-header h2,
+.rp-shop-header h3,
+.rp-shop-header span,
+.rp-shop-header label { color: var(--shop-text); }
+.rp-shop-header input { color: #111827 !important; background: transparent !important; }
+.rp-shop-header input::placeholder { color: #94a3b8 !important; }
+.rp-shop-header .bg-slate-100,
+.rp-shop-header .bg-slate-200 { background: var(--shop-panel) !important; }
+.rp-shop-header button { color: var(--shop-text); }
+.rp-shop-header .border-b,
+.rp-shop-header .border-gray-300 { border-color: var(--shop-line) !important; }
+.rp-shop-header .text-slate-400,
+.rp-shop-header .text-slate-500,
+.rp-shop-header .text-slate-600,
+.rp-shop-header .text-slate-700 { color: var(--shop-muted) !important; }
+.rp-shop-header .bg-orange-500 { background: #f97316 !important; }
+.rp-shop-header .text-orange-400 { color: #ea580c !important; }
+.rp-shop-header > div:first-of-type { min-height: 70px; }
+.rp-marketplace-header .rp-shop-header-title { color: var(--shop-text); }
+.rp-dark-shop .rp-feed,
+.rp-products-page main { color: var(--shop-text); }
+.rp-dark-shop .rp-feed > div > h2,
+.rp-dark-shop .rp-feed h2,
+.rp-dark-shop .rp-feed h3,
+.rp-products-page main h2,
+.rp-products-page main h3 { color: var(--shop-text) !important; }
+.rp-category-row { margin-bottom: 28px !important; }
+.rp-category-row > div:first-child { padding-left: 22px; padding-right: 22px; margin-bottom: 12px; }
+.rp-category-row .rp-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px 22px;
+  overflow: visible;
+}
+.rp-category-row .rp-category-grid > div { min-width: 0 !important; max-width: none !important; }
+.rp-category-row .rp-product-card { width: 100%; }
+.rp-product-card {
+  min-width: 0;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--shop-text) !important;
+  overflow: visible;
+}
+.rp-product-media {
+  position: relative;
+  aspect-ratio: 1 / 1.16;
+  overflow: hidden;
+  border-radius: 15px;
+  background: #e7e8ea;
+}
+.rp-product-image,
+.rp-product-empty { width: 100%; height: 100%; object-fit: cover; }
+.rp-product-empty { display: flex; align-items: center; justify-content: center; color: #7c8490; }
+.rp-product-gradient { display: none !important; }
+.rp-product-copy { padding: 9px 5px 0; color: var(--shop-text) !important; }
+.rp-product-seller { display: none !important; }
+.rp-product-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+  color: var(--shop-text) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+}
+.rp-product-price-row { display: none !important; }
+.rp-icon-button.rp-like-button,
+.rp-add-button { background: rgba(255,255,255,.92) !important; color: #111827 !important; border: 1px solid rgba(15,23,42,.12); }
+.rp-icon-button.rp-like-button { display: flex !important; right: 8px; bottom: 8px; top: auto !important; }
+.rp-add-button { display: none !important; }
+.rp-promo-badge { top: 8px !important; left: 8px !important; background: #ff5e34 !important; }
+.rp-dark-shop .grid.grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 22px 14px !important; }
+.rp-dark-shop .grid.grid-cols-3 > * { min-width: 0; }
+.rp-dark-shop .px-3,
+.rp-dark-shop .px-4 { color: var(--shop-text); }
+.rp-products-page main { padding-top: 18px; }
+.rp-products-page main > div > .px-3,
+.rp-products-page main > .px-3 { padding-left: 22px; padding-right: 22px; }
+.rp-products-page .bg-white { background: var(--shop-panel) !important; }
+.rp-products-page .text-slate-800,
+.rp-products-page .text-slate-900,
+.rp-products-page .text-slate-700 { color: var(--shop-text) !important; }
+.rp-products-page .text-slate-400,
+.rp-products-page .text-slate-500,
+.rp-products-page .text-slate-600 { color: var(--shop-muted) !important; }
+.rp-dark-shop .fixed.bottom-24 > div { background: var(--shop-panel) !important; border-color: #ff5e34 !important; color: #111827; }
+.rp-dark-shop .fixed.bottom-24 span { color: #111827 !important; }
+@media (min-width: 768px) {
+  .rp-category-row .rp-category-grid,
+  .rp-dark-shop .grid.grid-cols-3 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .rp-marketplace, .rp-products-page { max-width: 1180px; margin: 0 auto; }
+}
+@media (max-width: 480px) {
+  .rp-category-row .rp-category-grid { gap: 24px 16px; }
+  .rp-category-row > div:first-child { padding-left: 22px; padding-right: 22px; }
+  .rp-product-title { font-size: 13px !important; }
+}
+
+/* Hotels / Piscine: compact booking-style result cards */
+.rp-category-hotels .rp-category-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.rp-category-hotels .rp-category-grid > div { width: 100%; }
+.rp-hotel-card {
+  display: grid;
+  grid-template-columns: 42% minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px;
+  border-radius: 14px !important;
+  background: #fff !important;
+  color: #171a1f !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,.18) !important;
+}
+.rp-hotel-card .rp-product-media {
+  aspect-ratio: 4 / 5;
+  min-height: 168px;
+  border-radius: 10px;
+}
+.rp-hotel-card .rp-product-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 2px 2px 2px 0;
+  color: #171a1f !important;
+}
+.rp-hotel-card .rp-product-seller {
+  display: block !important;
+  margin-bottom: 3px;
+  color: #222 !important;
+  font-size: 12px;
+  font-weight: 800;
+}
+.rp-hotel-card .rp-seller-dot { display: none; }
+.rp-hotel-card .rp-product-title {
+  color: #15171b !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+}
+.rp-hotel-card .rp-product-price-row {
+  display: flex !important;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+.rp-hotel-card .rp-product-price {
+  color: #171a1f !important;
+  font-size: 14px;
+  font-weight: 800;
+}
+.rp-hotel-card .rp-product-price small { color: #4b5563 !important; }
+.rp-hotel-card .rp-product-old-price { color: #d23b3b !important; text-decoration: line-through; }
+.rp-hotel-card::after {
+  content: '★ Très bien noté · Piscine / séjour';
+  grid-column: 2;
+  margin-top: -8px;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 700;
+}
+.rp-hotel-card .rp-like-button {
+  top: 8px !important;
+  right: 8px;
+  bottom: auto !important;
+  background: rgba(255,255,255,.9) !important;
+  color: #171a1f !important;
+  border-color: #d7dbe1;
+}
+.rp-hotel-card .rp-promo-badge { background: #0b8f4d !important; }
+@media (min-width: 768px) {
+  .rp-category-hotels .rp-category-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.rp-space-tabs { overflow: hidden; }
+.rp-space-tabs > div { scrollbar-width: none; -ms-overflow-style: none; }
+.rp-space-tabs > div::-webkit-scrollbar { display: none; }
+.rp-space-tabs button { min-height: 44px; border: 1px solid rgba(15,23,42,.10); }
+.rp-space-tabs button[aria-pressed="true"] { box-shadow: 0 4px 14px rgba(15,23,42,.12); }

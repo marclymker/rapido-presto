@@ -1,21 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { 
-  Minus, Plus, Store, MessageSquare, Loader2, MapPin, X, 
-  ChevronRight, ZoomIn, ZoomOut, Download, RotateCcw, 
-  Share2, Plus as PlusIcon, Truck, ChevronLeft
+import {
+  Minus, Plus, Store, Loader2, MapPin, X,
+  ChevronRight, ZoomIn, ZoomOut, Download, Plus as PlusIcon, Truck, ChevronLeft
 } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { toast } from 'sonner';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { useBackButton } from '@/components/navigation/useBackButton';
-import ChatButton from '@/components/chat/ChatButton';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
-import { createPageUrl } from '@/utils';
 import ShareProductButton from '@/components/share/ShareProductButton';
+import { getProductShareUrl } from '@/lib/productShareUrl';
 import SimilarProducts from '@/components/product/SimilarProducts';
+import { getProductVariants, getVariantImages, getVariantPrice, normalizeVariant } from '@/lib/productVariants';
 
 export default function ProductDetailModal({ product, shop, open, onClose, onAddToCart, user, allProducts = [], onProductChange }) {
   const [quantity, setQuantity] = useState(1);
@@ -31,6 +30,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   const [showCreateProductModal, setShowCreateProductModal] = useState(false);
   const [userShop, setUserShop] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
 
   // Gérer le bouton retour natif pour fermer la modale
   useBackButton(() => {
@@ -40,7 +40,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   // Récupérer la boutique de l'utilisateur si c'est un vendeur
   useEffect(() => {
     if (user?.id && open) {
-      base44.entities.Shop.filter({ user_id: user.id })
+      firebaseApi.entities.Shop.filter({ user_id: user.id })
         .then(shops => {
           if (shops.length > 0) {
             setUserShop(shops[0]);
@@ -71,6 +71,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
       setPosition({ x: 0, y: 0 });
       setImageLoaded(false);
       setCurrentImageIndex(0);
+      setSelectedVariantId(null);
     }
   }, [product?.id, open]);
 
@@ -130,7 +131,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
     const newY = e.clientY - startPos.y;
     const containerRect = containerRef.current?.getBoundingClientRect();
     const imageRect = imageRef.current?.getBoundingClientRect();
-    
+
     if (containerRect && imageRect) {
       const maxX = (imageRect.width - containerRect.width) / 2;
       const maxY = (imageRect.height - containerRect.height) / 2;
@@ -155,39 +156,50 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
   }, [isDragging, zoom]);
 
   if (!product) return null;
-  
-  const price = applyClientMargin(product.promo_price || product.price);
-  
+
+  const variants = getProductVariants(product);
+  const selectedVariant = variants.find(v => v.id === selectedVariantId) || variants[0] || null;
+  const price = applyClientMargin(getVariantPrice(product, selectedVariant));
+
   // Construire la liste complète des images
-  const allImages = [
-    product.image_url,
-    ...(product.additional_images || [])
-  ].filter(Boolean);
-  
+  const allImages = getVariantImages(product, selectedVariant);
+
   const currentImage = allImages[currentImageIndex] || product.image_url;
   const hasMultipleImages = allImages.length > 1;
-  
+
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
     setZoom(1);
     setPosition({ x: 0, y: 0 });
   };
-  
+
   const handleNextImage = () => {
     setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
     setZoom(1);
     setPosition({ x: 0, y: 0 });
   };
 
+  const colors = [...new Set(variants.map(v => v.color).filter(Boolean))];
+  const sizes = [...new Set(variants.map(v => v.size).filter(Boolean))];
+  const selectVariant = (value, field) => {
+    const next = variants.find(v => v[field] === value && v.is_available) || variants.find(v => v[field] === value);
+    if (!next) return;
+    setSelectedVariantId(next.id);
+    setCurrentImageIndex(0);
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
+    setImageLoaded(false);
+  };
+
   const handleContactVendor = async () => {
-    if (!user) return base44.auth.redirectToLogin(window.location.pathname);
+    if (!user) return firebaseApi.auth.redirectToLogin(window.location.pathname);
     const vendorId = shop?.user_id || product?.vendor_id;
     const shopId = shop?.id;
     if (!vendorId || !shopId) return;
 
     setIsChatLoading(true);
     try {
-      const response = await base44.functions.invoke('chatService', {
+      const response = await firebaseApi.functions.invoke('chatService', {
         action: 'init',
         vendor_id: vendorId,
         shop_id: shopId,
@@ -222,7 +234,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <DialogContent className="max-w-md p-0 overflow-hidden bg-white flex flex-col max-h-[92vh] sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl border-none">
         <div className="overflow-y-auto flex-1 custom-scrollbar">
-          <div 
+          <div
             ref={containerRef}
             className="relative aspect-[4/3] sm:aspect-square w-full bg-slate-100 overflow-hidden cursor-move"
             onMouseDown={handleMouseDown}
@@ -230,22 +242,22 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             {/* Logo MonCash en bas à gauche */}
             {imageLoaded && (
               <img
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
+                src="/assets/product-placeholder.svg"
                 alt="MonCash"
                 className="absolute bottom-4 left-4 h-4 opacity-80 z-10"
               />
             )}
 
-            <div 
+            <div
               className="w-full h-full flex items-center justify-center transition-transform duration-200"
               style={{
                 transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
               }}
             >
-              <img 
+              <img
                 ref={imageRef}
-                src={`${currentImage}${currentImage?.includes('?') ? '&' : '?'}w=800&q=85`} 
-                alt={product.name} 
+                src={`${currentImage}${currentImage?.includes('?') ? '&' : '?'}w=800&q=85`}
+                alt={product.name}
                 className="max-w-full max-h-full object-contain transition-opacity duration-300"
                 style={{ opacity: imageLoaded ? 1 : 0 }}
                 onLoad={() => setImageLoaded(true)}
@@ -290,7 +302,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
 
              {/* BOUTON CRÉER ARTICLE - pour vendeurs/clients */}
              {user && (
-               <button 
+               <button
                  onClick={() => setShowCreateProductModal(true)}
                  title="Créer un article similaire"
                  className="absolute top-4 left-32 p-2 bg-blue-500/70 backdrop-blur-md rounded-full text-white hover:bg-blue-600 transition-colors z-10"
@@ -346,7 +358,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                   </span>
                 )}
               </div>
-              
+
               {/* Badge Livraison Gratuite si prix >= 3000 */}
               {price >= 3000 && (
                 <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg w-fit border border-green-200">
@@ -356,6 +368,33 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
               )}
             </div>
 
+            {variants.length > 0 && (
+              <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-slate-900">Options</h3>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500">Choisissez votre modèle</span>
+                </div>
+                {colors.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-bold text-slate-700">Couleur</p>
+                    <div className="flex flex-wrap gap-2">
+                      {colors.map(color => <button key={color} type="button" onClick={() => selectVariant(color, 'color')} className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${selectedVariant?.color === color ? 'border-orange-500 bg-orange-50 text-orange-700 ring-2 ring-orange-200' : 'border-slate-300 bg-white text-slate-700 hover:border-orange-300'}`}>{color}</button>)}
+                    </div>
+                  </div>
+                )}
+                {sizes.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-bold text-slate-700">Taille</p>
+                    <div className="flex flex-wrap gap-2">
+                      {sizes.map(size => <button key={size} type="button" onClick={() => selectVariant(size, 'size')} className={`min-w-12 rounded-lg border px-3 py-2 text-xs font-bold transition ${selectedVariant?.size === size ? 'border-orange-500 bg-orange-500 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-orange-300'}`}>{size}</button>)}
+                    </div>
+                  </div>
+                )}
+                {selectedVariant?.sku && <p className="text-[11px] text-slate-500">Référence : {selectedVariant.sku}</p>}
+                {selectedVariant?.stock_quantity !== null && <p className={`text-xs font-semibold ${selectedVariant.stock_quantity > 0 ? 'text-green-700' : 'text-red-600'}`}>{selectedVariant.stock_quantity > 0 ? `${selectedVariant.stock_quantity} disponibles` : 'Rupture de stock'}</p>}
+              </div>
+            )}
+
             {product.description && (
               <div className="py-2 border-t border-slate-50">
                 <h4 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Description</h4>
@@ -364,7 +403,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             )}
 
             {shop && (
-              <div 
+              <div
                 onClick={() => {
                   if (shop.slug) {
                     window.location.href = `/shop-view?slug=${shop.slug}`;
@@ -405,7 +444,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
           <div className="flex items-center justify-center gap-2 py-2 border-t border-slate-50">
             <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Paiement sécurisé</span>
             <img
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/694b478cc984102a3c47c781/47cfe0ecf_image.png"
+              src="/assets/product-placeholder.svg"
               alt="MonCash"
               className="h-4 opacity-80"
             />
@@ -415,7 +454,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             className="w-full py-6 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl shadow-lg"
             onClick={() => {
               if (!user) {
-                base44.auth.redirectToLogin(window.location.pathname);
+                firebaseApi.auth.redirectToLogin(window.location.pathname);
                 return;
               }
               trackMetaEvent('InitiateCheckout', {
@@ -426,29 +465,26 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                 currency: 'HTG',
               });
               onClose();
-              window.location.href = `/QuickCheckout?product_id=${product.id}&quantity=${quantity}`;
+              window.location.href = `/QuickCheckout?product_id=${product.id}&variant_id=${encodeURIComponent(selectedVariant?.id || '')}&quantity=${quantity}`;
             }}
           >
             Commander Maintenant
           </Button>
 
-          <Button 
+          <Button
             onClick={() => {
-              // Lien optimisé pour preview WhatsApp via fonction backend
-              const productUrl = shop?.slug && product.slug 
-                ? `${window.location.origin}/functions/ogMetaTags?slug=${shop.slug}&product=${product.slug}`
-                : `${window.location.origin}/functions/ogMetaTags?product=${product.id}`;
+              const productUrl = getProductShareUrl({ ...product, shop_slug: shop?.slug }, window.location.origin);
 
               const message = `Je suis intéressé par cet article\n${productUrl}`;
               const whatsappUrl = `https://wa.me/50948690366?text=${encodeURIComponent(message)}`;
 
               window.open(whatsappUrl, '_blank');
-            }} 
+            }}
             className="w-full py-6 bg-[#25D366] hover:bg-[#1ebd57] text-white rounded-2xl"
           >
             WhatsApp
           </Button>
-          
+
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-slate-100 rounded-xl p-1">
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus size={14} /></Button>
@@ -457,7 +493,7 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             </div>
             <Button
               className="flex-1 py-6 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-200"
-              onClick={() => { 
+              onClick={() => {
                 // Track AddToCart
                 trackMetaEvent('AddToCart', {
                   content_ids: [product.id],
@@ -467,8 +503,16 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
                   currency: 'HTG',
                 });
 
-                onAddToCart(product, quantity); 
-                onClose(); 
+                const cartProduct = selectedVariant ? {
+                  ...product,
+                  price: selectedVariant.price || product.price,
+                  promo_price: selectedVariant.promo_price || product.promo_price,
+                  image_url: selectedVariant.image_url || product.image_url,
+                  selected_variant: normalizeVariant(selectedVariant),
+                  variant_id: selectedVariant.id,
+                } : product;
+                onAddToCart(cartProduct, quantity);
+                onClose();
               }}
             >
               Ajouter au panier

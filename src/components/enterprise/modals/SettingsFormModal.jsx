@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
 
@@ -41,12 +41,12 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       if (type === 'hours') {
-        await base44.entities.Shop.update(shop.id, { opening_hours: hours });
+        await firebaseApi.entities.Shop.update(shop.id, { opening_hours: hours });
       } else {
-        await base44.entities.Shop.update(shop.id, formData);
+        await firebaseApi.entities.Shop.update(shop.id, formData);
       }
       toast.success('Informations mises à jour');
       onSuccess?.();
@@ -66,7 +66,7 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
             {type === 'location' ? 'Modifier l\'adresse' : type === 'hours' ? 'Horaires d\'ouverture' : 'Informations bancaires'}
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {type === 'hours' ? (
             <div className="space-y-3 max-h-[60vh] overflow-y-auto">
@@ -120,7 +120,7 @@ export default function SettingsFormModal({ shop, type, open, onClose, onSuccess
             <>
               <div>
                 <Label>Région/Commune *</Label>
-                <Select 
+                <Select
                   required
                   value={formData.region}
                   onValueChange={(val) => setFormData({ ...formData, region: val })}

@@ -1,11 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
 import { Calendar, ArrowRight, Search } from 'lucide-react';
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Helmet } from 'react-helmet-async';
@@ -15,13 +13,13 @@ export default function Blog() {
 
   const { data: articles = [], isLoading } = useQuery({
     queryKey: ['blog-articles'],
-    queryFn: () => base44.entities.BlogArticle.filter({ is_published: true }, '-published_date', 50)
+    queryFn: () => firebaseApi.entities.BlogArticle.filter({ is_published: true }, '-published_date', 50)
   });
 
   const filteredArticles = useMemo(() => {
     if (!searchQuery.trim()) return articles;
     const query = searchQuery.toLowerCase();
-    return articles.filter(a => 
+    return articles.filter(a =>
       a.title.toLowerCase().includes(query) ||
       a.excerpt?.toLowerCase().includes(query) ||
       a.seo_keywords?.some(k => k.toLowerCase().includes(query))
@@ -31,9 +29,9 @@ export default function Blog() {
   return (
     <>
       <Helmet>
-        <title>Blog - Rapido Presto | Articles Mariage, Mode & Décoration</title>
+        <title>Blog - Kairos | Articles Mariage, Mode & Décoration</title>
         <meta name="description" content="Découvrez nos articles de blog sur les tendances mariage, conseils mode, décoration et shopping en Haïti." />
-        <meta property="og:title" content="Blog - Rapido Presto" />
+        <meta property="og:title" content="Blog - Kairos" />
         <meta property="og:description" content="Articles, conseils et guides pour votre mariage, mode et décoration." />
         <meta name="robots" content="index, follow" />
       </Helmet>
@@ -42,7 +40,7 @@ export default function Blog() {
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white py-12 md:py-16">
           <div className="max-w-6xl mx-auto px-4">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Blog Rapido Presto</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Blog Kairos</h1>
             <p className="text-lg text-slate-300">Découvrez nos articles sur les tendances mariage, mode, décoration et shopping.</p>
           </div>
         </div>
@@ -102,11 +100,11 @@ export default function Blog() {
                       <Calendar className="w-4 h-4" />
                       <time>{format(new Date(article.published_date), 'd MMM yyyy', { locale: fr })}</time>
                     </div>
-                    
+
                     <h2 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-orange-600">
                       {article.title}
                     </h2>
-                    
+
                     <p className="text-sm text-slate-600 line-clamp-2 mb-3">
                       {article.excerpt}
                     </p>

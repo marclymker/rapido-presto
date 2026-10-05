@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, User, Mail, MapPin, Phone, CreditCard, Plus, Trash2, LogOut, Wallet, Lock, AlertCircle, Banknote, Store, Shield } from 'lucide-react';
+import { ArrowLeft, User, Mail, MapPin, Phone, CreditCard, Plus, Trash2, LogOut, Wallet, Lock, AlertCircle, Banknote, Shield } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,24 +34,33 @@ export default function Account() {
   const [convertingWhatsApp, setConvertingWhatsApp] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [userShop, setUserShop] = useState(null);
+  const [profileEditMode, setProfileEditMode] = useState(false);
+  const [profileFormData, setProfileFormData] = useState({ company_name: '', company_category: '', whatsapp_number: '' });
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       setFormData({
         phone: u.phone || '',
         address: u.address || '',
         region: u.region || ''
       });
+      const profileKey = ['food', 'hospitality', 'tickets', 'livreur', 'agent'].includes(u.current_profile) ? u.current_profile : 'client';
+      const activeProfile = u.profiles?.[profileKey] || {};
+      setProfileFormData({
+        company_name: activeProfile.company_name || '',
+        company_category: activeProfile.company_category || '',
+        whatsapp_number: activeProfile.whatsapp_number || ''
+      });
       setLoading(false);
-      
+
 
     }).catch(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     if (user?.id) {
-      base44.entities.Shop.filter({ user_id: user.id })
+      firebaseApi.entities.Shop.filter({ user_id: user.id })
         .then(shops => {
           if (shops.length > 0) {
             setUserShop(shops[0]);
@@ -69,14 +78,30 @@ export default function Account() {
         address: formData.address,
         region: formData.region
       };
-      
-      await base44.auth.updateMe(allowedFields);
+
+      await firebaseApi.auth.updateMe(allowedFields);
       setUser({ ...user, ...allowedFields });
       setEditMode(false);
       toast.success('Informations mises à jour');
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
     }
+  };
+
+  const handleSaveEstablishmentProfile = async () => {
+    const profileKey = ['food', 'hospitality', 'tickets', 'livreur', 'agent'].includes(user.current_profile) ? user.current_profile : 'client';
+    const profiles = { ...(user.profiles || {}) };
+    profiles[profileKey] = {
+      ...(profiles[profileKey] || {}),
+      company_name: profileFormData.company_name.trim(),
+      company_category: profileFormData.company_category.trim(),
+      whatsapp_number: profileFormData.whatsapp_number.trim(),
+      profile_updated_at: new Date().toISOString()
+    };
+    await firebaseApi.auth.updateMe({ profiles });
+    setUser({ ...user, profiles });
+    setProfileEditMode(false);
+    toast.success('Profil de l’établissement mis à jour');
   };
 
   const handleAddPayment = async () => {
@@ -86,9 +111,9 @@ export default function Account() {
       details: newPayment.details,
       last_digits: newPayment.details.slice(-4)
     };
-    
+
     try {
-      await base44.auth.updateMe({
+      await firebaseApi.auth.updateMe({
         payment_methods: [...payments, newPaymentMethod]
       });
       setUser({ ...user, payment_methods: [...payments, newPaymentMethod] });
@@ -103,9 +128,9 @@ export default function Account() {
   const handleDeletePayment = async (index) => {
     const payments = [...(user.payment_methods || [])];
     payments.splice(index, 1);
-    
+
     try {
-      await base44.auth.updateMe({ payment_methods: payments });
+      await firebaseApi.auth.updateMe({ payment_methods: payments });
       setUser({ ...user, payment_methods: payments });
       toast.success('Moyen de paiement supprimé');
     } catch (error) {
@@ -114,13 +139,13 @@ export default function Account() {
   };
 
   const handleLogout = () => {
-    base44.auth.logout();
+    firebaseApi.auth.logout();
   };
 
   const handleConvertWhatsApp = async () => {
     setConvertingWhatsApp(true);
     try {
-      const response = await base44.functions.invoke('convertMerchantsToWhatsApp');
+      const response = await firebaseApi.functions.invoke('convertMerchantsToWhatsApp');
       toast.success(`${response.data.converted} numéros convertis avec succès`);
     } catch (error) {
       toast.error('Erreur lors de la conversion');
@@ -142,7 +167,7 @@ export default function Account() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-500 mb-4">Veuillez vous connecter</p>
-          <Button onClick={() => base44.auth.redirectToLogin()}>
+          <Button onClick={() => firebaseApi.auth.redirectToLogin()}>
             Se connecter
           </Button>
         </div>
@@ -174,7 +199,7 @@ export default function Account() {
           <p className="text-sm text-slate-600 mb-3">
             Publiez vos produits en quelques secondes et vendez à des milliers de clients
           </p>
-          <Button 
+          <Button
             onClick={() => setShowProductForm(true)}
             className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg"
           >
@@ -259,8 +284,8 @@ export default function Account() {
             <div>
               <Label className="text-slate-500 text-sm">Région</Label>
               {editMode ? (
-                <Select 
-                  value={formData.region} 
+                <Select
+                  value={formData.region}
                   onValueChange={(val) => setFormData({ ...formData, region: val })}
                 >
                   <SelectTrigger>
@@ -279,13 +304,26 @@ export default function Account() {
           </div>
         </div>
 
+        {/* Establishment profile: editable only from Account settings */}
+        <div className="bg-white rounded-xl p-4 border border-orange-100">
+          <div className="flex items-center justify-between mb-4">
+            <div><h3 className="font-semibold">Profil de l’établissement</h3><p className="text-xs text-slate-500 mt-1">Ces informations restent attachées à votre profil actif lors des changements d’espace.</p></div>
+            {!profileEditMode ? <Button variant="ghost" size="sm" onClick={() => setProfileEditMode(true)}>Modifier</Button> : <div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => setProfileEditMode(false)}>Annuler</Button><Button size="sm" className="bg-orange-500 hover:bg-orange-600" onClick={handleSaveEstablishmentProfile}>Enregistrer</Button></div>}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div><Label className="text-slate-500 text-sm">Nom de l’établissement</Label>{profileEditMode ? <Input value={profileFormData.company_name} onChange={(e) => setProfileFormData({ ...profileFormData, company_name: e.target.value })} placeholder="Nom de votre établissement" /> : <p className="mt-1 text-slate-800">{profileFormData.company_name || 'Non défini'}</p>}</div>
+            <div><Label className="text-slate-500 text-sm">Type / catégorie</Label>{profileEditMode ? <Input value={profileFormData.company_category} onChange={(e) => setProfileFormData({ ...profileFormData, company_category: e.target.value })} placeholder="Restaurant, hôtel, tickets..." /> : <p className="mt-1 text-slate-800">{profileFormData.company_category || 'Non défini'}</p>}</div>
+            <div><Label className="text-slate-500 text-sm">WhatsApp professionnel</Label>{profileEditMode ? <Input value={profileFormData.whatsapp_number} onChange={(e) => setProfileFormData({ ...profileFormData, whatsapp_number: e.target.value })} placeholder="+509..." /> : <p className="mt-1 text-slate-800">{profileFormData.whatsapp_number || 'Non défini'}</p>}</div>
+          </div>
+        </div>
+
         {/* Security Section */}
         <div className="bg-white rounded-xl p-4">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Lock className="w-5 h-5 text-slate-600" />
             Sécurité
           </h3>
-          
+
           <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="w-full justify-start">
@@ -322,7 +360,7 @@ export default function Account() {
                     onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
                   />
                 </div>
-                <Button 
+                <Button
                   className="w-full bg-orange-500 hover:bg-orange-600"
                   onClick={() => {
                     if (passwordData.new !== passwordData.confirm) {
@@ -348,14 +386,14 @@ export default function Account() {
               <Shield className="w-5 h-5 text-purple-600" />
               <span>Outils Admin</span>
             </h3>
-            
+
             <div className="space-y-3">
               <div className="bg-white rounded-lg p-3">
                 <h4 className="text-sm font-medium mb-2">Conversion WhatsApp Marchands</h4>
                 <p className="text-xs text-slate-600 mb-3">
                   Convertit tous les numéros de téléphone des marchands au format WhatsApp (509XXXXXXXX)
                 </p>
-                <Button 
+                <Button
                   onClick={handleConvertWhatsApp}
                   disabled={convertingWhatsApp}
                   className="w-full bg-purple-600 hover:bg-purple-700"
@@ -363,17 +401,17 @@ export default function Account() {
                   {convertingWhatsApp ? 'Conversion en cours...' : 'Convertir numéros marchands'}
                 </Button>
               </div>
-              
+
               <div className="bg-white rounded-lg p-3">
                 <h4 className="text-sm font-medium mb-2">Conversion WhatsApp Clients</h4>
                 <p className="text-xs text-slate-600 mb-3">
                   Convertit tous les numéros de téléphone des clients au format WhatsApp (509XXXXXXXX)
                 </p>
-                <Button 
+                <Button
                   onClick={async () => {
                     setConvertingWhatsApp(true);
                     try {
-                      const response = await base44.functions.invoke('convertClientsToWhatsApp');
+                      const response = await firebaseApi.functions.invoke('convertClientsToWhatsApp');
                       toast.success(`${response.data.converted} numéros clients convertis`);
                     } catch (error) {
                       toast.error('Erreur lors de la conversion');
@@ -387,17 +425,17 @@ export default function Account() {
                   {convertingWhatsApp ? 'Conversion en cours...' : 'Convertir numéros clients'}
                 </Button>
               </div>
-              
+
               <div className="bg-white rounded-lg p-3">
                 <h4 className="text-sm font-medium mb-2">Générer Liens Boutiques</h4>
                 <p className="text-xs text-slate-600 mb-3">
                   Génère des liens uniques (slug) pour toutes les boutiques
                 </p>
-                <Button 
+                <Button
                   onClick={async () => {
                     setConvertingWhatsApp(true);
                     try {
-                      const response = await base44.functions.invoke('generateShopSlug');
+                      const response = await firebaseApi.functions.invoke('generateShopSlug');
                       toast.success(`${response.data.updated} liens générés`);
                     } catch (error) {
                       toast.error('Erreur lors de la génération');
@@ -411,17 +449,17 @@ export default function Account() {
                   {convertingWhatsApp ? 'Génération en cours...' : 'Générer liens boutiques'}
                 </Button>
               </div>
-              
+
               <div className="bg-white rounded-lg p-3">
                 <h4 className="text-sm font-medium mb-2">Générer Liens Produits</h4>
                 <p className="text-xs text-slate-600 mb-3">
                   Génère des liens uniques (slug) pour tous les produits
                 </p>
-                <Button 
+                <Button
                   onClick={async () => {
                     setConvertingWhatsApp(true);
                     try {
-                      const response = await base44.functions.invoke('generateProductSlugs');
+                      const response = await firebaseApi.functions.invoke('generateProductSlugs');
                       toast.success(`${response.data.updated} liens produits générés`);
                     } catch (error) {
                       toast.error('Erreur lors de la génération');
@@ -435,7 +473,7 @@ export default function Account() {
                   {convertingWhatsApp ? 'Génération en cours...' : 'Générer liens produits'}
                 </Button>
               </div>
-              
+
               <div className="bg-white rounded-lg p-3 border-2 border-blue-200">
                 <h4 className="text-sm font-medium mb-2 text-blue-700">🖼️ Compresser les images (Bulk)</h4>
                 <p className="text-xs text-slate-600 mb-3">
@@ -446,7 +484,7 @@ export default function Account() {
                     onClick={async () => {
                       setConvertingWhatsApp(true);
                       try {
-                        const response = await base44.functions.invoke('compressImages', { dry_run: true });
+                        const response = await firebaseApi.functions.invoke('compressImages', { dry_run: true });
                         toast.info(response.data.message);
                       } catch (error) {
                         toast.error('Erreur: ' + error.message);
@@ -480,7 +518,7 @@ export default function Account() {
                           onClick={async () => {
                             setConvertingWhatsApp(true);
                             try {
-                              const response = await base44.functions.invoke('compressImages', { dry_run: false });
+                              const response = await firebaseApi.functions.invoke('compressImages', { dry_run: false });
                               toast.success(response.data.message);
                             } catch (error) {
                               toast.error('Erreur: ' + error.message);
@@ -504,7 +542,7 @@ export default function Account() {
                 </p>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button 
+                    <Button
                       disabled={convertingWhatsApp}
                       className="w-full bg-red-600 hover:bg-red-700"
                     >
@@ -521,12 +559,12 @@ export default function Account() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Annuler</AlertDialogCancel>
-                      <AlertDialogAction 
+                      <AlertDialogAction
                         className="bg-red-600 hover:bg-red-700"
                         onClick={async () => {
                           setConvertingWhatsApp(true);
                           try {
-                            const response = await base44.functions.invoke('logoutAllUsers');
+                            const response = await firebaseApi.functions.invoke('logoutAllUsers');
                             toast.success(response.data.message);
                           } catch (error) {
                             toast.error('Erreur lors de la déconnexion');
@@ -551,7 +589,7 @@ export default function Account() {
         {/* Payment Methods */}
         <div className="bg-white rounded-xl p-4">
           <h3 className="font-semibold mb-4">Moyens de paiement</h3>
-          
+
           {/* Available Payment Methods */}
           <div className="mb-4 p-3 bg-slate-50 rounded-lg">
             <p className="text-xs text-slate-600 mb-2 font-medium">Méthodes acceptées:</p>
@@ -590,8 +628,8 @@ export default function Account() {
                 <div className="space-y-4 pt-4">
                   <div>
                     <Label>Type</Label>
-                    <Select 
-                      value={newPayment.type} 
+                    <Select
+                      value={newPayment.type}
                       onValueChange={(val) => setNewPayment({ ...newPayment, type: val })}
                     >
                       <SelectTrigger>
@@ -637,9 +675,9 @@ export default function Account() {
                       <p className="text-sm text-slate-500">•••• {pm.last_digits}</p>
                     </div>
                   </div>
-                  <Button 
-                    size="icon" 
-                    variant="ghost" 
+                  <Button
+                    size="icon"
+                    variant="ghost"
                     className="text-red-500"
                     onClick={() => handleDeletePayment(idx)}
                   >
@@ -653,8 +691,8 @@ export default function Account() {
 
         {/* Logout */}
         <div className="pt-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full"
             onClick={handleLogout}
           >

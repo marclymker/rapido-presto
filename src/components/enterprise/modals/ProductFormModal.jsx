@@ -20,11 +20,7 @@ SelectItem,
 
 SelectTrigger,
 
-SelectValue,
-
-SelectGroup, // Ajouté pour le correctif
-
-SelectLabel // Ajouté pour le correctif
+SelectValue // Ajouté pour le correctif
 
 } from "@/components/ui/select";
 
@@ -66,19 +62,43 @@ ShoppingBag,
 
 Type,
 
-CheckCircle2,
-
 ShieldCheck
 
 } from 'lucide-react';
 
 
 
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 
 import FbCategorySelector from '@/components/product/FbCategorySelector';
 
-import { getTaxonomyMappingPrompt, getCategoryPath } from '@/lib/fbTaxonomy';
+import { getTaxonomyMappingPrompt } from '@/lib/fbTaxonomy';
+
+const parseVariantList = (value = '') => value.split(',').map(item => item.trim()).filter(Boolean);
+
+const makeVariantRows = (colorsText = '', sizesText = '', existing = []) => {
+  const colors = parseVariantList(colorsText);
+  const sizes = parseVariantList(sizesText);
+  if (!colors.length && !sizes.length) return [];
+  const colorList = colors.length ? colors : [''];
+  const sizeList = sizes.length ? sizes : [''];
+  return colorList.flatMap(color => sizeList.map(size => {
+    const previous = existing.find(row => row.color === color && row.size === size);
+    const key = `${color || 'default'}-${size || 'default'}`.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return {
+      id: previous?.id || key,
+      sku: previous?.sku || '',
+      color,
+      size,
+      price: previous?.price ?? '',
+      promo_price: previous?.promo_price ?? '',
+      stock_quantity: previous?.stock_quantity ?? 0,
+      image_url: previous?.image_url || '',
+      additional_images: previous?.additional_images || [],
+      is_available: previous?.is_available !== false,
+    };
+  }));
+};
 
 
 
@@ -243,6 +263,7 @@ const [showGuidelines, setShowGuidelines] = useState(false);
 const [showForm, setShowForm] = useState(false);
 
 const [aiGenerated, setAiGenerated] = useState(false);
+const [variantRows, setVariantRows] = useState([]);
 
 const [formData, setFormData] = useState({
 
@@ -265,6 +286,8 @@ image_url: '',
 image_alt: '',
 
 additional_images: [],
+
+variant_options: { colors: '', sizes: '' },
 
 taille_emballage: 'Moyen',
 
@@ -318,7 +341,7 @@ if (open && !product) {
 
 // Check if user has phone number
 
-base44.auth.me().then(u => {
+firebaseApi.auth.me().then(u => {
 
 if (!u?.phone) {
 
@@ -340,6 +363,7 @@ setAiGenerated(false);
 
 // Reset form for new product
 
+setVariantRows([]);
 setFormData({
 
 name: '',
@@ -361,6 +385,8 @@ image_url: '',
 image_alt: '',
 
 additional_images: [],
+
+variant_options: { colors: '', sizes: '' },
 
 taille_emballage: 'Moyen',
 
@@ -412,6 +438,8 @@ setShowForm(true);
 
 setAiGenerated(true); // Don't auto-generate for existing products
 
+const existingVariants = Array.isArray(product.variants) ? product.variants : [];
+setVariantRows(existingVariants);
 setFormData({
 
 name: product.name || '',
@@ -432,9 +460,13 @@ image_url: product.image_url || '',
 
 image_alt: product.image_alt || '',
 
-additional_images: product.additional_images || [],
+  additional_images: product.additional_images || [],
+  variant_options: {
+    colors: (product.variants || []).map(v => v.color).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', '),
+    sizes: (product.variants || []).map(v => v.size).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', '),
+  },
 
-taille_emballage: product.taille_emballage || 'Moyen',
+  taille_emballage: product.taille_emballage || 'Moyen',
 
 delivery_time: product.delivery_time || '30-45 minutes',
 
@@ -551,7 +583,7 @@ try {
 
 // Generate slug from product name
 
-const slug = formData.name
+const slugBase = formData.name
 
 .toLowerCase()
 
@@ -565,21 +597,44 @@ const slug = formData.name
 
 .substring(0, 60);
 
+const slug = `${slugBase || 'produit'}-${product?.id || Date.now().toString(36)}`;
 
 
-const dataWithSlug = { ...formData, slug: slug || undefined, image_alt: formData.image_alt || formData.name };
+
+const generatedRows = makeVariantRows(formData.variant_options?.colors, formData.variant_options?.sizes, variantRows);
+const variants = generatedRows.map(row => ({
+  ...row,
+  price: Number(row.price || formData.price) || 0,
+  promo_price: Number(row.promo_price || formData.promo_price) || 0,
+  stock_quantity: Number(row.stock_quantity) || 0,
+  image_url: row.image_url || formData.image_url || '',
+  additional_images: row.additional_images?.length ? row.additional_images : (formData.additional_images || []),
+}));
+
+const { variant_options: _variantOptions, ...persistedFormData } = formData;
+const currentUser = await firebaseApi.auth.me();
+if (!currentUser?.id) throw new Error('Session utilisateur expirée. Reconnectez-vous.');
+const dataWithSlug = {
+  ...persistedFormData,
+  variants,
+  owner_id: currentUser.id,
+  vendor_id: currentUser.id,
+  user_id: currentUser.id,
+  slug: slug || undefined,
+  image_alt: formData.image_alt || formData.name,
+};
 
 
 
 if (product) {
 
-await base44.entities.Product.update(product.id, dataWithSlug);
+await firebaseApi.entities.Product.update(product.id, dataWithSlug);
 
 toast.success('Article mis à jour');
 
 } else {
 
-await base44.entities.Product.create({ ...dataWithSlug, shop_id: shopId });
+await firebaseApi.entities.Product.create({ ...dataWithSlug, shop_id: shopId });
 
 toast.success('Article créé');
 
@@ -619,13 +674,13 @@ toast.info('📸 Téléchargement et vérification en cours...');
 
 try {
 
-const { file_url } = await base44.integrations.Core.UploadFile({ file });
+const { file_url } = await firebaseApi.integrations.Core.UploadFile({ file });
 
 
 
 // Scan for phone numbers in the image
 
-const scanResult = await base44.integrations.Core.InvokeLLM({
+const scanResult = await firebaseApi.integrations.Core.InvokeLLM({
 
 prompt: `Analyse cette image. Y a-t-il un numéro de téléphone visible (ex: +509, 509, 3xxxxxxx, 4xxxxxxx, numéro haïtien ou autre) écrit ou imprimé sur l'image ? Réponds UNIQUEMENT par JSON : {"has_phone": true/false, "reason": "..."}`,
 
@@ -695,9 +750,9 @@ try {
 
 const taxonomyList = getTaxonomyMappingPrompt();
 
-const result = await base44.integrations.Core.InvokeLLM({
+const result = await firebaseApi.integrations.Core.InvokeLLM({
 
-prompt: `Tu es un expert en vision par ordinateur ET en e-commerce haïtien (RapidoPresto).
+prompt: `Tu es un expert en vision par ordinateur ET en e-commerce haïtien (Kairos).
 
 
 
@@ -836,7 +891,7 @@ open={showContactModal}
 
 onConfirm={async ({ phone, region }) => {
 
-await base44.auth.updateMe({ phone, region });
+await firebaseApi.auth.updateMe({ phone, region });
 
 setShowContactModal(false);
 
@@ -1402,6 +1457,39 @@ Ajouter
 </div>
 
 
+
+{/* Variantes Amazon-style */}
+<div className="border border-orange-200 bg-orange-50/50 rounded-xl overflow-hidden">
+  <div className="p-4 border-b border-orange-200">
+    <h3 className="font-semibold text-sm text-slate-800 flex items-center gap-2"><Palette className="w-4 h-4 text-orange-600" /> Variantes de l’article</h3>
+    <p className="text-xs text-slate-500 mt-1">Ajoutez plusieurs couleurs et tailles séparées par des virgules. Le système crée chaque combinaison avec son propre identifiant.</p>
+  </div>
+  <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <Label className="text-xs text-slate-900 mb-1">Couleurs disponibles</Label>
+      <Input className="bg-white h-9 text-slate-900" value={formData.variant_options?.colors || ''} onChange={e => { const colors = e.target.value; setFormData(prev => ({ ...prev, variant_options: { ...prev.variant_options, colors } })); setVariantRows(prev => makeVariantRows(colors, formData.variant_options?.sizes, prev)); }} placeholder="Noir, Blanc, Rouge" />
+    </div>
+    <div>
+      <Label className="text-xs text-slate-900 mb-1">Tailles disponibles</Label>
+      <Input className="bg-white h-9 text-slate-900" value={formData.variant_options?.sizes || ''} onChange={e => { const sizes = e.target.value; setFormData(prev => ({ ...prev, variant_options: { ...prev.variant_options, sizes } })); setVariantRows(prev => makeVariantRows(formData.variant_options?.colors, sizes, prev)); }} placeholder="S, M, L, XL" />
+    </div>
+  </div>
+  {variantRows.length > 0 && (
+    <div className="border-t border-orange-200 bg-white p-4 space-y-3">
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Détails par combinaison</p>
+      {variantRows.map((row, index) => (
+        <div key={row.id} className="grid grid-cols-2 gap-2 rounded-lg border border-slate-200 p-3 sm:grid-cols-6">
+          <div className="col-span-2 flex items-center gap-2 text-sm font-bold text-slate-800 sm:col-span-2"><span>{row.color || 'Standard'}</span>{row.size && <span className="text-slate-400">/ {row.size}</span>}</div>
+          <Input className="h-8 text-xs text-slate-900" placeholder="Prix HTG" type="number" value={row.price} onChange={e => setVariantRows(prev => prev.map((item, i) => i === index ? { ...item, price: e.target.value } : item))} />
+          <Input className="h-8 text-xs text-slate-900" placeholder="Promo" type="number" value={row.promo_price} onChange={e => setVariantRows(prev => prev.map((item, i) => i === index ? { ...item, promo_price: e.target.value } : item))} />
+          <Input className="h-8 text-xs text-slate-900" placeholder="Stock" type="number" value={row.stock_quantity} onChange={e => setVariantRows(prev => prev.map((item, i) => i === index ? { ...item, stock_quantity: e.target.value } : item))} />
+          <Input className="col-span-2 h-8 text-xs text-slate-900 sm:col-span-1" placeholder="SKU" value={row.sku} onChange={e => setVariantRows(prev => prev.map((item, i) => i === index ? { ...item, sku: e.target.value } : item))} />
+          <Input className="col-span-2 h-8 text-xs text-slate-900 sm:col-span-6" placeholder="URL photo spécifique (optionnel)" value={row.image_url} onChange={e => setVariantRows(prev => prev.map((item, i) => i === index ? { ...item, image_url: e.target.value } : item))} />
+        </div>
+      ))}
+    </div>
+  )}
+</div>
 
 {/* Section 7: Attributs Avancés */}
 

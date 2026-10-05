@@ -45,19 +45,19 @@ export default function OrderProgressBar({ status }) {
       {/* Progress Bar */}
       <div className="relative">
         <div className="absolute top-5 left-0 right-0 h-1 bg-slate-200">
-          <div 
+          <div
             className="h-full bg-orange-500 transition-all duration-500"
             style={{ width: `${(currentStepIndex / (orderSteps.length - 1)) * 100}%` }}
           />
         </div>
-        
+
         <div className="relative flex justify-between">
           {orderSteps.map((step, index) => {
             const Icon = step.icon;
             const isCompleted = index < currentStepIndex;
             const isCurrent = index === currentStepIndex;
             const isUpcoming = index > currentStepIndex;
-            
+
             return (
               <div key={step.status} className="flex flex-col items-center">
                 <div

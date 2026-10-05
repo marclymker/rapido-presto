@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /Admin
+Disallow: /Dashboard
+Disallow: /Account
+Disallow: /Chat
+Disallow: /api/
+Sitemap: https://makariosbridal.shop/sitemap.xml

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Phone, MapPin, Navigation, CheckCircle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { toast } from "sonner";
 
 export default function MerchantDeliveryTracking({ order, onClose }) {
@@ -14,7 +14,7 @@ export default function MerchantDeliveryTracking({ order, onClose }) {
       toast.error('Entrez le code de confirmation');
       return;
     }
-    
+
     if (confirmationCode !== order.confirmation_code) {
       toast.error('Code incorrect');
       return;
@@ -22,7 +22,7 @@ export default function MerchantDeliveryTracking({ order, onClose }) {
 
     setLoading(true);
     try {
-      await base44.entities.Order.update(order.id, { 
+      await firebaseApi.entities.Order.update(order.id, {
         status: 'delivered'
       });
       toast.success('✅ Livraison terminée !');

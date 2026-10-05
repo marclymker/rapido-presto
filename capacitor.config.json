@@ -1,0 +1,17 @@
+{
+  "appId": "shop.makariosbridal.kairos",
+  "appName": "Kairos",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "android": {
+    "backgroundColor": "#f4f6f8",
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#f4f6f8"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

@@ -25,7 +25,10 @@ const EnterpriseAccount = lazy(() => import('./pages/EnterpriseAccount'));
 const EnterpriseDashboard = lazy(() => import('./pages/EnterpriseDashboard'));
 const EventPlannerHaiti = lazy(() => import('./pages/EventPlannerHaiti'));
 const Home = lazy(() => import('./pages/Home'));
+const Legal = lazy(() => import('./pages/Legal'));
 const ManageProfiles = lazy(() => import('./pages/ManageProfiles'));
+const LegacyMigration = lazy(() => import('./pages/LegacyMigration'));
+const MarketingStudio = lazy(() => import('./pages/MarketingStudio'));
 const Orders = lazy(() => import('./pages/Orders'));
 const PaymentCallback = lazy(() => import('./pages/PaymentCallback'));
 const Pricing = lazy(() => import('./pages/Pricing'));
@@ -55,13 +58,19 @@ export const PAGES = {
     "CategoryPage": CategoryPage,
     "Chat": Chat,
     "Dashboard": Dashboard,
+    "FoodPOSDashboard": Dashboard,
+    "HospitalityDashboard": Dashboard,
+    "TicketDashboard": Dashboard,
     "DriverAccount": DriverAccount,
     "DriverDashboard": DriverDashboard,
     "EnterpriseAccount": EnterpriseAccount,
     "EnterpriseDashboard": EnterpriseDashboard,
     "EventPlannerHaiti": EventPlannerHaiti,
     "Home": Home,
+    "Legal": Legal,
     "ManageProfiles": ManageProfiles,
+    "LegacyMigration": LegacyMigration,
+    "MarketingStudio": MarketingStudio,
     "Orders": Orders,
     "PaymentCallback": PaymentCallback,
     "Pricing": Pricing,

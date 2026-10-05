@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -7,7 +7,6 @@ import { ArrowLeft, Plus, Minus, Trash2, CreditCard, Wallet, Clock, AlertTriangl
 import { useAuth } from '@/components/auth/useAuth';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,7 +28,7 @@ const REGION_DATA = {
   'cite soleil': { index: 5, section: 1 },
   'croix des bouquets': { index: 6, section: 1 },
   'lilavois': { index: 7, section: 1 },
-  'fontamara': { index: 8, section: 1 }, 
+  'fontamara': { index: 8, section: 1 },
   'carrefour': { index: 9, section: 2 },
   'gressier': { index: 10, section: 2 },
   'leogane': { index: 11, section: 2 },
@@ -39,7 +38,7 @@ const REGION_DATA = {
   'les gonaives': { index: 14, section: 3 },
   'plaine du nord': { index: 15, section: 3 },
   'vaudreuil': { index: 16, section: 3 },
-  'cap-haitien': { index: 17, section: 3 }, 
+  'cap-haitien': { index: 17, section: 3 },
   'madeline': { index: 18, section: 3 },
   'limonade': { index: 19, section: 3 },
   'pignon': { index: 20, section: 3 },
@@ -70,7 +69,7 @@ function calculateSpecificShopFee(clientRegionName, shopRegionName, shopItems) {
     rawFee = isSameRegion ? 245 : (245 + score) * 1.5;
   }
 
-  return Math.ceil(rawFee); 
+  return Math.ceil(rawFee);
 }
 
 function generateConfirmationCode() {
@@ -96,12 +95,12 @@ export default function Cart() {
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [redirectingToMoncash, setRedirectingToMoncash] = useState(false);
   const [squareToken, setSquareToken] = useState(null);
-  
+
   const queryClient = useQueryClient();
 
   const { data: cartItems = [], isLoading: cartLoading } = useQuery({
     queryKey: ['cart', user?.id],
-    queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
+    queryFn: () => firebaseApi.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id,
     refetchInterval: 60000,
     refetchIntervalInBackground: true
@@ -122,8 +121,8 @@ export default function Cart() {
 
   const updateQuantityMutation = useMutation({
     mutationFn: ({ id, quantity }) => {
-      if (quantity <= 0) return base44.entities.CartItem.delete(id);
-      return base44.entities.CartItem.update(id, { quantity });
+      if (quantity <= 0) return firebaseApi.entities.CartItem.delete(id);
+      return firebaseApi.entities.CartItem.update(id, { quantity });
     },
     onMutate: async ({ id, quantity }) => {
       await queryClient.cancelQueries(['cart', user?.id]);
@@ -138,7 +137,7 @@ export default function Cart() {
   });
 
   const deleteItemMutation = useMutation({
-    mutationFn: (id) => base44.entities.CartItem.delete(id),
+    mutationFn: (id) => firebaseApi.entities.CartItem.delete(id),
     onMutate: async (id) => {
       await queryClient.cancelQueries(['cart', user?.id]);
       const previous = queryClient.getQueryData(['cart', user?.id]);
@@ -161,7 +160,7 @@ export default function Cart() {
   }, 0);
 
   const shopCount = Object.keys(itemsByShop).length;
-  
+
   const hasDelmasShop = Object.keys(itemsByShop).some(shopId => {
     const shopRegion = itemsByShop[shopId][0].shop_region;
     return normalizeForRegion(shopRegion) === 'delmas';
@@ -169,7 +168,7 @@ export default function Cart() {
 
   let expressFee = 0;
   let standardFee = 0;
-  const shopFees = {}; 
+  const shopFees = {};
 
   Object.keys(itemsByShop).forEach(shopId => {
     const shopRegion = itemsByShop[shopId][0].shop_region;
@@ -201,7 +200,7 @@ export default function Cart() {
   const createOrderMutation = useMutation({
     mutationFn: async () => {
       const cartItemIds = cartItems.map(item => item.id);
-      const priceValidation = await base44.functions.invoke('validateOrderPrice', {
+      const priceValidation = await firebaseApi.functions.invoke('validateOrderPrice', {
         cartItemIds,
         paymentSplit
       });
@@ -226,12 +225,12 @@ export default function Cart() {
 
           let specificShopFee = 0;
           if (deliveryOption !== 'pickup_delimart') {
-            specificShopFee = (shopCount > 1 && deliveryOption === 'standard') 
-              ? (standardFee / shopCount) 
+            specificShopFee = (shopCount > 1 && deliveryOption === 'standard')
+              ? (standardFee / shopCount)
               : shopFees[shopId];
           }
 
-          const order = await base44.entities.Order.create({
+          const order = await firebaseApi.entities.Order.create({
             order_number: orderNum,
             client_id: user.id,
             client_name: user.full_name,
@@ -271,8 +270,8 @@ export default function Cart() {
         if (!squareToken) throw new Error('Token de paiement manquant');
         try {
           const { createdOrders, orderNumBase } = await processOrders('card');
-          
-          const paymentResponse = await base44.functions.invoke('squarePayment', {
+
+          const paymentResponse = await firebaseApi.functions.invoke('squarePayment', {
             sourceId: squareToken,
             amount: totalAmount,
             orderId: createdOrders[0].orderNum
@@ -281,11 +280,11 @@ export default function Cart() {
           if (!paymentResponse.data.success) throw new Error('Paiement refusé');
 
           for (const order of createdOrders) {
-            await base44.functions.invoke('sendOrderNotification', { orderId: order.orderId, status: 'pending' }).catch(() => {});
-            await base44.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.orderId }).catch(() => {});
+            await firebaseApi.functions.invoke('sendOrderNotification', { orderId: order.orderId, status: 'pending' }).catch(() => {});
+            await firebaseApi.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.orderId }).catch(() => {});
           }
 
-          await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+          await Promise.all(cartItems.map(item => firebaseApi.entities.CartItem.delete(item.id)));
           return { orderNum: createdOrders[0].orderNum, code: createdOrders[0].code };
         } catch (error) {
           throw new Error(error.message || 'Erreur lors du paiement par carte');
@@ -295,9 +294,9 @@ export default function Cart() {
       if (paymentMethod === 'moncash') {
         const { createdOrders, orderNumBase } = await processOrders('moncash');
         // Attention : Suppression des articles AVANT l'aboutissement de l'URL MonCash.
-        await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+        await Promise.all(cartItems.map(item => firebaseApi.entities.CartItem.delete(item.id)));
 
-        const response = await base44.functions.invoke('moncashCreatePayment', {
+        const response = await firebaseApi.functions.invoke('moncashCreatePayment', {
           orderId: orderNumBase,
           amount: totalAmount,
           description: `Commande ${orderNumBase}`
@@ -309,7 +308,7 @@ export default function Cart() {
         }
 
         for (const order of createdOrders) {
-          await base44.entities.Order.update(order.orderId, {
+          await firebaseApi.entities.Order.update(order.orderId, {
             moncash_transaction_id: paymentData.transactionId
           });
         }
@@ -323,13 +322,13 @@ export default function Cart() {
         window.location.href = data.paymentUrl;
         return;
       }
-      
+
       queryClient.invalidateQueries(['cart']);
       setOrderNumber(data.orderNum);
       setConfirmCode(data.code);
       setStep('confirmed');
       toast.success('Commande confirmée!');
-      
+
       trackPurchase({
         order_number: data.orderNum,
         total: baseTotal,
@@ -340,7 +339,7 @@ export default function Cart() {
           unit_price: item.unit_price
         }))
       });
-      
+
       if (window.fbq) {
         window.fbq('track', 'Purchase', {
           content_ids: cartItems.map(i => i.product_id),
@@ -366,8 +365,8 @@ export default function Cart() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white sticky top-0 z-40 border-b" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <div className="rp-cart-page min-h-screen">
+      <header className="rp-cart-header sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Link to={createPageUrl('Home')}>
@@ -384,7 +383,7 @@ export default function Cart() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="rp-cart-shell max-w-2xl mx-auto px-4 py-6">
         <AnimatePresence mode="wait">
           {cartItems.length === 0 && step === 'cart' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
@@ -399,7 +398,7 @@ export default function Cart() {
 
           {step === 'cart' && cartItems.length > 0 && (
             <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              
+
               {shopCount > 1 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800">
                   <p className="font-bold flex items-center gap-2">
@@ -414,8 +413,8 @@ export default function Cart() {
 
               <div className="space-y-3">
                 {cartItems.map(item => (
-                  <div key={item.id} className="bg-white rounded-xl p-4 flex gap-4 shadow-sm border border-slate-100">
-                    <div className="w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                  <div key={item.id} className="rp-cart-item bg-white rounded-xl p-4 flex gap-4 shadow-sm border border-slate-100">
+                    <div className="rp-cart-thumb w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
                       {item.product_image ? (
                         <img src={item.product_image} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -427,7 +426,7 @@ export default function Cart() {
                       <p className="text-xs text-slate-500 font-medium">
                         {item.shop_name} <span className="text-slate-400 font-normal">({item.shop_region})</span>
                       </p>
-                      
+
                       <div className="flex items-center justify-between mt-3">
                         <div>
                           <span className="font-bold text-slate-800">
@@ -514,7 +513,7 @@ export default function Cart() {
                 </div>
               )}
 
-              <div className="bg-white rounded-xl p-4 mt-6 space-y-2 shadow-sm border border-slate-100">
+              <div className="rp-cart-summary bg-white rounded-xl p-4 mt-6 space-y-2 shadow-sm border border-slate-100">
                 <div className="flex justify-between text-slate-600 text-sm">
                   <span>Sous-total</span>
                   <span className="font-medium">{subtotal} HTG</span>
@@ -551,7 +550,7 @@ export default function Cart() {
 
               <Button
                 type="button"
-                className="w-full mt-6 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
+                className="rp-primary-cta w-full mt-6 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
                 onClick={(e) => {
                   e.preventDefault();
                   try {
@@ -567,15 +566,15 @@ export default function Cart() {
             </motion.div>
           )}
 
-          {step === 'checkout' && (
+              {step === 'checkout' && (
             <motion.div
               key="checkout"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
+                className="rp-checkout space-y-6"
             >
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <div className="rp-checkout-card bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                 <h3 className="font-bold mb-4 text-slate-800">Mode de paiement</h3>
                 <RadioGroup value={paymentSplit} onValueChange={setPaymentSplit} className="space-y-3">
                   <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentSplit === 'full' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
@@ -595,7 +594,7 @@ export default function Cart() {
                 </RadioGroup>
               </div>
 
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <div className="rp-checkout-card bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                 <h3 className="font-bold mb-4 text-slate-800">Méthode de paiement</h3>
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
                   <label className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${paymentMethod === 'moncash' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
@@ -615,7 +614,7 @@ export default function Cart() {
               </div>
 
               {deliveryOption !== 'pickup_delimart' && (
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                <div className="rp-checkout-card bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                   <h3 className="font-bold mb-1 text-slate-800">Adresse de livraison</h3>
                   <p className="text-slate-600 font-medium">{user.address || 'Non définie'}</p>
                   <p className="text-slate-400 text-sm">{user.region}</p>
@@ -623,7 +622,7 @@ export default function Cart() {
               )}
 
               {deliveryOption === 'pickup_delimart' && (
-                <div className="bg-green-50 rounded-xl p-4 shadow-sm border border-green-200">
+                <div className="rp-checkout-card bg-green-50 rounded-xl p-4 shadow-sm border border-green-200">
                   <h3 className="font-bold mb-1 text-green-800 flex items-center gap-2"><MapPin className="w-4 h-4"/> Point de retrait</h3>
                   <p className="text-green-700 font-medium">Delimart, Delmas 32</p>
                   <p className="text-green-600 text-sm mt-1">Vous recevrez un message quand votre commande sera prête.</p>
@@ -638,8 +637,8 @@ export default function Cart() {
                 />
               )}
 
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-                <h3 className="font-bold mb-3 text-slate-800">Instructions spéciales</h3>
+                <div className="rp-checkout-card bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                  <h3 className="font-bold mb-3 text-slate-800">Instructions spéciales</h3>
                 <Textarea
                   placeholder={deliveryOption === 'pickup_delimart' ? "Ex: C'est mon frère qui viendra récupérer le colis..." : "Ex: Sonnez à la porte, laissez à l'accueil..."}
                   value={specialInstructions}
@@ -649,9 +648,9 @@ export default function Cart() {
                 />
               </div>
 
-              <div className="bg-slate-800 rounded-xl p-5 text-white shadow-lg">
+              <div className="rp-checkout-total bg-slate-800 rounded-xl p-5 text-white shadow-lg">
                 <h3 className="font-bold text-slate-300 mb-4 uppercase tracking-wider text-sm">Facture finale</h3>
-                
+
                 <div className="space-y-2 mb-4 text-sm text-slate-300">
                   <div className="flex justify-between">
                     <span>Sous-total articles</span>
@@ -684,17 +683,17 @@ export default function Cart() {
               </div>
 
               <div className="flex gap-3">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="h-14 px-6 bg-white border-slate-300 text-slate-700 font-bold" 
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-14 px-6 bg-white border-slate-300 text-slate-700 font-bold"
                   onClick={(e) => { e.preventDefault(); setStep('cart'); }}
                 >
                   Retour
                 </Button>
                 <Button
                   type="button"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
+                  className="rp-primary-cta flex-1 bg-orange-500 hover:bg-orange-600 h-14 text-lg font-bold shadow-lg shadow-orange-500/25 active:scale-95 transition-all"
                   onClick={(e) => {
                     e.preventDefault();
                     createOrderMutation.mutate();

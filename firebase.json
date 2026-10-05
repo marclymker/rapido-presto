@@ -1,0 +1,39 @@
+{
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
+  },
+  "hosting": {
+    "public": "dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "cleanUrls": true,
+    "headers": [
+      { "source": "**", "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(self), payment=(self)" },
+        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" }
+      ]},
+      { "source": "**/*.@(js|css|svg|png|jpg|jpeg|webp|woff2)", "headers": [{ "key": "Cache-Control", "value": "public,max-age=31536000,immutable" }] },
+      { "source": "service-worker.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+    ],
+    "rewrites": [
+      { "source": "/functions/ogMetaTags", "function": { "functionId": "ogMetaTags", "region": "us-central1" } },
+      { "source": "/sitemap.xml", "function": { "functionId": "generateSitemapXML", "region": "us-central1" } },
+      { "source": "/functions/generateSitemap", "function": { "functionId": "generateSitemap", "region": "us-central1" } },
+      { "source": "/functions/generateSitemapXML", "function": { "functionId": "generateSitemapXML", "region": "us-central1" } },
+      { "source": "/feeds/google-merchant.xml", "function": { "functionId": "googleMerchantFeed", "region": "us-central1" } },
+      { "source": "/feeds/facebook-catalog.xml", "function": { "functionId": "facebookCatalogFeed", "region": "us-central1" } },
+      { "source": "/functions/metaConversionsAPI", "function": { "functionId": "metaConversionsAPI", "region": "us-central1" } },
+      { "source": "/feeds/openai-products.json", "function": { "functionId": "openaiProductFeed", "region": "us-central1" } },
+      { "source": "/functions/getSimilarProducts", "function": { "functionId": "getSimilarProducts", "region": "us-central1" } },
+      { "source": "/functions/googleVerification", "function": { "functionId": "googleVerification", "region": "us-central1" } },
+      { "source": "/functions/googleAnalyticsFeed", "function": { "functionId": "googleAnalyticsFeed", "region": "us-central1" } },
+      { "source": "/functions/validateOrderPrice", "function": { "functionId": "validateOrderPrice", "region": "us-central1" } },
+      { "source": "**", "destination": "/index.html" }
+    ]
+  },
+  "firestore": { "rules": "firestore.rules" },
+  "storage": { "rules": "storage.rules" }
+}

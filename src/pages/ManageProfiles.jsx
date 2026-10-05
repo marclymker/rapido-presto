@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, User, Building2, Bike, Plus, Check, Clock, AlertCircle, Upload, Briefcase } from 'lucide-react';
+import { ArrowLeft, User, Bike, Plus, Check, Clock, AlertCircle, Upload, Briefcase } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from 'framer-motion';
+import { BUSINESS_PROFILES, BUSINESS_PROFILE_IDS, deactivateOtherOperationalProfiles } from '@/lib/businessProfiles';
 
 const COMPANY_CATEGORIES = [
-  "Fastfood", 
-  "Mode", 
-  "Boutique Fleurs", 
-  "Pharmacie", 
-  "Mariage", 
-  "Epicerie", 
-  "Café", 
-  "Pour Femme", 
-  "Electronics", 
-  "Pour homme", 
-  "Maison", 
-  "Bébé", 
+  "Fastfood", "Restaurant", "Nourriture",
+  "Mode",
+  "Boutique Fleurs",
+  "Pharmacie",
+  "Mariage",
+  "Epicerie",
+  "Café",
+  "Pour Femme",
+  "Electronics",
+  "Pour homme",
+  "Maison", "Hotels/Piscine", "Tickets",
+  "Bébé",
   "Outils"
 ];
 
@@ -41,7 +42,7 @@ export default function ManageProfiles() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       setLoading(false);
     }).catch(() => navigate(createPageUrl('Home')));
@@ -55,13 +56,22 @@ export default function ManageProfiles() {
       color: 'blue',
       requiresValidation: false
     },
-    entreprise: {
-      icon: Building2,
-      label: 'Entreprise',
-      description: 'Vendre et gérer vos produits',
-      color: 'orange',
-      requiresValidation: false
-    },
+    ...Object.fromEntries(BUSINESS_PROFILE_IDS.map((id) => {
+      const profile = BUSINESS_PROFILES[id];
+      return [id, {
+        icon: profile.icon,
+        label: profile.label,
+        description: id === 'food'
+          ? 'POS : commandes, préparation, retrait et livraison'
+          : id === 'hospitality'
+            ? 'Chambres, piscines, disponibilités et réservations'
+            : id === 'tickets'
+              ? 'Événements, billets, participants et scanner QR'
+              : 'Vendre et gérer vos produits',
+        color: 'orange',
+        requiresValidation: false,
+      }];
+    })),
     livreur: {
       icon: Bike,
       label: 'Livreur',
@@ -78,26 +88,48 @@ export default function ManageProfiles() {
     }
   };
 
+  const displayCurrentProfile = user?.current_profile === 'entreprise' || user?.current_profile === 'marketplace'
+    ? 'client'
+    : (user?.current_profile || 'client');
+
   const getProfileStatus = (profileType) => {
     const profiles = user?.profiles || {};
-    const profile = profiles[profileType];
-    
+    const profile = profileType === 'marketplace'
+      ? (profiles.marketplace || profiles.entreprise)
+      : profiles[profileType];
+
     if (!profile || !profile.is_active) {
       return { status: 'inactive', label: 'Inactif', color: 'bg-slate-100 text-slate-600', icon: null };
     }
-    
+
     if (profileType === 'livreur' && profile.status === 'pending') {
       return { status: 'pending', label: 'En attente', color: 'bg-yellow-100 text-yellow-700', icon: Clock };
     }
-    
+
     if (profileType === 'livreur' && profile.status === 'rejected') {
       return { status: 'rejected', label: 'Rejeté', color: 'bg-red-100 text-red-700', icon: AlertCircle };
     }
-    
+
     return { status: 'active', label: 'Actif', color: 'bg-green-100 text-green-700', icon: Check };
   };
 
-  const handleActivateProfile = (profileType) => {
+  const handleActivateProfile = async (profileType) => {
+    const storedProfile = profileType === 'marketplace' ? (user?.profiles?.marketplace || user?.profiles?.entreprise) : user?.profiles?.[profileType];
+    const alreadyConfigured = profileType === 'client' || Boolean(
+      profileType === 'livreur'
+        ? storedProfile?.vehicle_type && storedProfile?.id_document_url && storedProfile?.status !== 'pending'
+        : storedProfile?.company_name && storedProfile?.company_category
+    );
+    if (alreadyConfigured) {
+      const profiles = deactivateOtherOperationalProfiles(user?.profiles || {}, profileType === 'marketplace' ? 'client' : profileType);
+      profiles[profileType] = { ...(profiles[profileType] || {}), is_active: true, last_used: new Date().toISOString() };
+      if (profileType === 'client') profiles.client = { ...(profiles.client || {}), is_active: true };
+      await firebaseApi.auth.updateMe({ profiles, current_profile: profileType === 'marketplace' ? 'client' : profileType });
+      setUser({ ...user, profiles, current_profile: profileType === 'marketplace' ? 'client' : profileType });
+      toast.success(`Profil ${profileConfig[profileType]?.label || 'actif'} sélectionné`);
+      navigate(createPageUrl(profileType === 'livreur' ? 'Dashboard' : profileType === 'client' ? 'Home' : 'Dashboard'));
+      return;
+    }
     setSelectedProfile(profileType);
     setFormData({});
     setActivationDialog(true);
@@ -106,9 +138,9 @@ export default function ManageProfiles() {
   const handleFileUpload = async (e, field) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await firebaseApi.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, [field]: file_url });
       toast.success('Fichier téléchargé');
     } catch (error) {
@@ -118,18 +150,18 @@ export default function ManageProfiles() {
 
   const handleSubmitActivation = async () => {
     setSubmitting(true);
-    
+
     try {
-      const profiles = { ...(user.profiles || {}) };
-      
-      if (selectedProfile === 'entreprise') {
+      let profiles = { ...(user.profiles || {}) };
+
+      if (selectedProfile === 'marketplace' || selectedProfile === 'entreprise' || BUSINESS_PROFILE_IDS.includes(selectedProfile)) {
         if (!formData.company_name || !formData.company_category) {
           toast.error('Veuillez remplir tous les champs');
           setSubmitting(false);
           return;
         }
-        
-        profiles.entreprise = {
+
+        const profileData = {
           is_active: true,
           created_at: new Date().toISOString(),
           last_used: new Date().toISOString(),
@@ -142,12 +174,21 @@ export default function ManageProfiles() {
           rating: 5,
           delivery_time_minutes: 30
         };
-        
-        await base44.auth.updateMe({ profiles });
-        toast.success('Profil entreprise activé!');
+
+        profiles = deactivateOtherOperationalProfiles(profiles, selectedProfile === 'entreprise' ? 'marketplace' : selectedProfile);
+        if (selectedProfile === 'marketplace' || selectedProfile === 'entreprise') {
+          profiles.marketplace = profileData;
+          profiles.entreprise = profileData;
+        } else {
+          profiles[selectedProfile] = { ...profileData, business_profile: selectedProfile };
+        }
+
+        await firebaseApi.auth.updateMe({ profiles, current_profile: selectedProfile === 'entreprise' ? 'marketplace' : selectedProfile });
+        toast.success('Profil entreprise activé! Les autres profils opérationnels sont désactivés.');
         window.location.reload();
-        
+
       } else if (selectedProfile === 'agent') {
+        profiles = deactivateOtherOperationalProfiles(profiles, 'agent');
         profiles.agent = {
           is_active: true,
           validation_status: 'approved',
@@ -156,20 +197,20 @@ export default function ManageProfiles() {
           phone: user.phone || '',
           address: user.address || ''
         };
-        
-        await base44.auth.updateMe({ profiles });
-        toast.success('Profil Agent de Vente activé!');
+
+        await firebaseApi.auth.updateMe({ profiles, current_profile: 'agent' });
+        toast.success('Profil Agent de Vente activé! Les autres profils opérationnels sont désactivés.');
         window.location.reload();
-        
+
       } else if (selectedProfile === 'livreur') {
         if (!formData.vehicle_type || !formData.id_document_url) {
           toast.error('Veuillez remplir tous les champs et télécharger votre document');
           setSubmitting(false);
           return;
         }
-        
+
         // Create profile switch request for admin validation
-        await base44.entities.ProfileSwitch.create({
+        await firebaseApi.entities.ProfileSwitch.create({
           user_id: user.id,
           user_name: user.full_name,
           from_profile: user.current_profile,
@@ -182,7 +223,7 @@ export default function ManageProfiles() {
             commune: user.commune
           }
         });
-        
+
         // Update user profile to pending
         profiles.livreur = {
           is_active: false,
@@ -192,14 +233,14 @@ export default function ManageProfiles() {
           id_document_url: formData.id_document_url,
           is_available: false
         };
-        
-        await base44.auth.updateMe({ profiles });
+
+        await firebaseApi.auth.updateMe({ profiles });
         toast.success('Demande soumise! En attente de validation admin.');
         window.location.reload();
       }
-      
+
       setActivationDialog(false);
-      
+
     } catch (error) {
       toast.error('Erreur lors de l\'activation');
     } finally {
@@ -237,12 +278,12 @@ export default function ManageProfiles() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  {React.createElement(profileConfig[user.current_profile].icon, {
+                  {React.createElement(profileConfig[displayCurrentProfile].icon, {
                     className: 'w-8 h-8 text-orange-500'
                   })}
                   <div>
-                    <p className="font-semibold">{profileConfig[user.current_profile].label}</p>
-                    <p className="text-sm text-slate-500">{profileConfig[user.current_profile].description}</p>
+                    <p className="font-semibold">{profileConfig[displayCurrentProfile].label}</p>
+                    <p className="text-sm text-slate-500">{profileConfig[displayCurrentProfile].description}</p>
                   </div>
                 </div>
                 <Check className="w-5 h-5 text-orange-500" />
@@ -259,7 +300,7 @@ export default function ManageProfiles() {
               const Icon = config.icon;
               const status = getProfileStatus(key);
               const isCurrentProfile = key === user.current_profile;
-              
+
               return (
                 <motion.div
                   key={key}
@@ -282,26 +323,26 @@ export default function ManageProfiles() {
                               </Badge>
                             </div>
                             <p className="text-sm text-slate-500 mt-0.5">{config.description}</p>
-                            
+
                             {/* Show details for active profiles */}
-                            {status.status === 'active' && key === 'entreprise' && (
+                            {status.status === 'active' && ['marketplace', 'food', 'hospitality', 'tickets'].includes(key) && (
                               <p className="text-xs text-slate-600 mt-1">
-                                {user.profiles?.entreprise?.company_name}
+                                {(user.profiles?.[key] || user.profiles?.entreprise)?.company_name}
                               </p>
                             )}
-                            
+
                             {status.status === 'active' && key === 'livreur' && (
                               <p className="text-xs text-slate-600 mt-1">
                                 {user.profiles?.livreur?.vehicle_type}
                               </p>
                             )}
-                            
+
                             {status.status === 'pending' && (
                               <p className="text-xs text-yellow-600 mt-1">
                                 Validation en cours...
                               </p>
                             )}
-                            
+
                             {status.status === 'rejected' && (
                               <p className="text-xs text-red-600 mt-1">
                                 Demande rejetée. Contactez le support.
@@ -309,7 +350,7 @@ export default function ManageProfiles() {
                             )}
                           </div>
                         </div>
-                        
+
                         {status.status === 'inactive' && (
                           <Button
                             size="sm"
@@ -339,9 +380,9 @@ export default function ManageProfiles() {
               Activer le profil {selectedProfile && profileConfig[selectedProfile].label}
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4 pt-4">
-            {selectedProfile === 'entreprise' && (
+            {['marketplace', 'entreprise', 'food', 'hospitality', 'tickets'].includes(selectedProfile) && (
               <>
                 <div>
                   <Label>Nom de l'entreprise</Label>
@@ -353,8 +394,8 @@ export default function ManageProfiles() {
                 </div>
                 <div>
                   <Label>Catégorie</Label>
-                  <Select 
-                    value={formData.company_category || ''} 
+                  <Select
+                    value={formData.company_category || ''}
                     onValueChange={(val) => setFormData({ ...formData, company_category: val })}
                   >
                     <SelectTrigger>
@@ -399,9 +440,9 @@ export default function ManageProfiles() {
                     ) : (
                       <label className="flex flex-col items-center justify-center h-20 border-2 border-dashed rounded-lg cursor-pointer hover:border-orange-300">
                         <Upload className="w-5 h-5 text-slate-400" />
-                        <input 
-                          type="file" 
-                          accept="image/*" 
+                        <input
+                          type="file"
+                          accept="image/*"
                           className="hidden"
                           onChange={(e) => handleFileUpload(e, 'company_logo_url')}
                         />
@@ -411,7 +452,7 @@ export default function ManageProfiles() {
                 </div>
               </>
             )}
-            
+
             {selectedProfile === 'agent' && (
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
@@ -439,8 +480,8 @@ export default function ManageProfiles() {
               <>
                 <div>
                   <Label>Type de véhicule</Label>
-                  <Select 
-                    value={formData.vehicle_type || ''} 
+                  <Select
+                    value={formData.vehicle_type || ''}
                     onValueChange={(val) => setFormData({ ...formData, vehicle_type: val })}
                   >
                     <SelectTrigger>
@@ -465,9 +506,9 @@ export default function ManageProfiles() {
                       <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-lg cursor-pointer hover:border-orange-300">
                         <Upload className="w-6 h-6 text-slate-400" />
                         <span className="text-sm text-slate-500 mt-1">Télécharger votre CIN ou Permis</span>
-                        <input 
-                          type="file" 
-                          accept="image/*,.pdf" 
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
                           className="hidden"
                           onChange={(e) => handleFileUpload(e, 'id_document_url')}
                         />
@@ -482,8 +523,8 @@ export default function ManageProfiles() {
                 </div>
               </>
             )}
-            
-            <Button 
+
+            <Button
               className="w-full bg-orange-500 hover:bg-orange-600"
               onClick={handleSubmitActivation}
               disabled={submitting}

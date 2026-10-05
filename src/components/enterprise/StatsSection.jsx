@@ -11,31 +11,31 @@ export default function StatsSection({ orders = [] }) {
   const completedOrders = orders.filter(o => o.status === 'delivered').length;
 
   const stats = [
-    { 
-      label: 'Revenus Total', 
-      value: `${totalRevenue.toFixed(0)} HTG`, 
-      icon: DollarSign, 
+    {
+      label: 'Revenus Total',
+      value: `${totalRevenue.toFixed(0)} HTG`,
+      icon: DollarSign,
       color: 'bg-green-100 text-green-600',
       trend: '+12%'
     },
-    { 
-      label: 'Commandes Total', 
-      value: totalOrders, 
-      icon: Package, 
+    {
+      label: 'Commandes Total',
+      value: totalOrders,
+      icon: Package,
       color: 'bg-blue-100 text-blue-600',
       trend: '+8%'
     },
-    { 
-      label: 'En Attente', 
-      value: pendingOrders, 
-      icon: TrendingUp, 
+    {
+      label: 'En Attente',
+      value: pendingOrders,
+      icon: TrendingUp,
       color: 'bg-orange-100 text-orange-600',
       trend: `${pendingOrders} nouveau${pendingOrders > 1 ? 'x' : ''}`
     },
-    { 
-      label: 'Livrées', 
-      value: completedOrders, 
-      icon: Users, 
+    {
+      label: 'Livrées',
+      value: completedOrders,
+      icon: Users,
       color: 'bg-purple-100 text-purple-600',
       trend: 'Cette semaine'
     }
@@ -44,12 +44,12 @@ export default function StatsSection({ orders = [] }) {
   return (
     <div className="p-8">
       <h2 className="text-2xl font-black mb-6 text-gray-900">Statistiques</h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div 
+            <div
               key={index}
               className="bg-white rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all"
             >
@@ -72,7 +72,7 @@ export default function StatsSection({ orders = [] }) {
         <div className="h-64 flex items-end justify-between gap-2">
           {[30, 45, 60, 40, 70, 55, 80].map((height, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-2">
-              <div 
+              <div
                 className="w-full bg-blue-500 rounded-t-lg transition-all hover:bg-blue-600"
                 style={{ height: `${height}%` }}
               />

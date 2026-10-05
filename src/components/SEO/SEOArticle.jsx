@@ -1,9 +1,9 @@
 import { Helmet } from 'react-helmet-async';
+import { getProductCanonicalUrl } from '@/lib/productShareUrl';
 
 export default function SEOArticle({ product, shop }) {
-  const siteUrl = "https://rapido-presto.base44.app";
-  const productUrl = `${siteUrl}/product?id=${product.id}`;
-  
+  const productUrl = getProductCanonicalUrl(product);
+
   // Gestion des images
   const productImages = product.additional_images && product.additional_images.length > 0
     ? [product.image_url, ...product.additional_images].filter(Boolean)
@@ -15,9 +15,9 @@ export default function SEOArticle({ product, shop }) {
     : Math.round(product.price * 1.1);
 
   // Description optimisée pour SEO
-  const seoDescription = product.description 
-    ? `${product.description} - ${displayPrice} HTG sur Rapido Presto. Livraison rapide ${shop?.region ? `à ${shop.region}` : 'en Haïti'}.`
-    : `${product.name} disponible à ${displayPrice} HTG sur Rapido Presto. Commandez en ligne et faites-vous livrer rapidement.`;
+  const seoDescription = product.description
+    ? `${product.description} - ${displayPrice} HTG sur Kairos. Marketplace, réservations et billetterie ${shop?.region ? `à ${shop.region}` : 'en Haïti'}.`
+    : `${product.name} disponible à ${displayPrice} HTG sur Kairos. Commandez en ligne et faites-vous livrer rapidement.`;
 
   // Données structurées Schema.org
   const schemaData = {
@@ -25,10 +25,10 @@ export default function SEOArticle({ product, shop }) {
     "@type": "Product",
     "name": product.name,
     "image": productImages,
-    "description": product.description || `${product.name} disponible sur Rapido Presto`,
+    "description": product.description || `${product.name} disponible sur Kairos`,
     "brand": {
       "@type": "Brand",
-      "name": shop?.company_name || product.shop_name || "Rapido Presto"
+      "name": shop?.company_name || product.shop_name || "Kairos"
     },
     "category": product.category,
     "offers": {
@@ -42,7 +42,7 @@ export default function SEOArticle({ product, shop }) {
       "priceValidUntil": new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       "seller": {
         "@type": "Organization",
-        "name": shop?.company_name || product.shop_name || "Rapido Presto"
+        "name": shop?.company_name || product.shop_name || "Kairos"
       }
     }
   };
@@ -60,7 +60,7 @@ export default function SEOArticle({ product, shop }) {
   return (
     <Helmet>
       {/* Titre optimisé pour SEO */}
-      <title>{`${product.name} - ${displayPrice} HTG | Rapido Presto`}</title>
+      <title>{`${product.name} - ${displayPrice} HTG | Kairos`}</title>
       <meta name="description" content={seoDescription} />
       <link rel="canonical" href={productUrl} />
 
@@ -75,8 +75,8 @@ export default function SEOArticle({ product, shop }) {
       <meta property="og:description" content={seoDescription} />
       <meta property="og:image" content={product.image_url} />
       <meta property="og:url" content={productUrl} />
-      <meta property="og:site_name" content="Rapido Presto" />
-      
+      <meta property="og:site_name" content="Kairos" />
+
       {/* Open Graph Product Meta */}
       <meta property="product:price:amount" content={displayPrice} />
       <meta property="product:price:currency" content="HTG" />

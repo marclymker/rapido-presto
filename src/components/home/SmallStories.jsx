@@ -2,48 +2,32 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { categoryToSlug } from '@/components/utils/urlHelpers';
 
-export default function SmallStories({ onCategorySelect }) {
-  const stories = [
-    { id: 'Mariage', title: 'Mariage', icon: '💍', color: 'bg-pink-50' },
-    { id: 'Pour Femme', title: 'Mode Femme', icon: '👗', color: 'bg-rose-50' },
-    { id: 'Boutique Fleurs', title: 'Fleurs', icon: '💐', color: 'bg-pink-100', badge: '45 min' },
-    { id: 'Pour homme', title: 'Mode Homme', icon: '👔', color: 'bg-blue-50' },
-    { id: 'Electronics', title: 'Électronique', icon: '📱', color: 'bg-indigo-50' },
-    { id: 'Bijoux', title: 'Bijoux', icon: '💎', color: 'bg-amber-50', badge: 'NOUVEAU' },
-    { id: 'Maison', title: 'Maison', icon: '🏠', color: 'bg-teal-50' },
-    { id: 'Bébé', title: 'Bébé', icon: '👶', color: 'bg-yellow-50' },
-    { id: 'Outils', title: 'Outils', icon: '🔧', color: 'bg-slate-50' },
-    { id: 'Mode', title: 'Mode', icon: '👗', color: 'bg-red-50' },
-    { id: 'Epicerie', title: 'Épicerie', icon: '🛒', color: 'bg-cyan-50' },
-    { id: 'Café', title: 'Café', icon: '☕', color: 'bg-orange-50' },
-    { id: 'Pharmacie', title: 'Pharmacie', icon: '💊', color: 'bg-green-50' },
-  ];
+const stories = [
+  { id: 'Mariage', title: 'Mariage', icon: '💍' },
+  { id: 'Pour Femme', title: 'Mode femme', icon: '👗' },
+  { id: 'Boutique Fleurs', title: 'Fleurs', icon: '💐', badge: '45 min' },
+  { id: 'Pour homme', title: 'Mode homme', icon: '👔' },
+  { id: 'Electronics', title: 'Tech', icon: '📱' },
+  { id: 'Bijoux', title: 'Bijoux', icon: '💎', badge: 'Nouveau' },
+  { id: 'Maison', title: 'Maison', icon: '🏠' },
+  { id: 'Hotels/Piscine', title: 'Hôtels / Piscine', icon: '🏨' },
+  { id: 'Bébé', title: 'Bébé', icon: '👶' },
+  { id: 'Epicerie', title: 'Épicerie', icon: '🛒' },
+  { id: 'Café', title: 'Café', icon: '☕' },
+];
 
+export default function SmallStories({ onCategorySelect }) {
   return (
-    <div className="flex overflow-x-auto gap-3 p-4 no-scrollbar">
-      {stories.map((item) => (
-        <Link
-          key={item.id}
-          to={`?category=${categoryToSlug(item.id)}`}
-          onClick={(e) => {
-            e.preventDefault();
-            onCategorySelect(item.id);
-          }}
-          className="flex flex-col items-center min-w-[65px] cursor-pointer group"
-        >
-          <div className={`${item.color} w-14 h-14 rounded-2xl flex items-center justify-center relative shadow-sm mb-1 transition-transform group-hover:scale-105 group-active:scale-95`}>
-            {item.badge && (
-              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md">
-                {item.badge}
-              </span>
-            )}
-            <span className="text-2xl">{item.icon}</span>
-          </div>
-          <span className="text-[10px] font-medium text-slate-700 text-center leading-tight">
-            {item.title}
-          </span>
-        </Link>
-      ))}
-    </div>
+    <section className="rp-stories" aria-label="Catégories populaires">
+      <div className="rp-section-heading"><div><span className="rp-eyebrow">Découvrir</span><h2>Pour toi aujourd’hui</h2></div><span className="rp-scroll-hint">Glisser →</span></div>
+      <div className="rp-stories-scroller no-scrollbar">
+        {stories.map((item) => (
+          <Link key={item.id} to={`?category=${categoryToSlug(item.id)}`} onClick={(event) => { event.preventDefault(); onCategorySelect?.(item.id); }} className="rp-story-item">
+            <div className="rp-story-ring"><div className="rp-story-inner">{item.icon}</div>{item.badge && <span className="rp-story-badge">{item.badge}</span>}</div>
+            <span>{item.title}</span>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

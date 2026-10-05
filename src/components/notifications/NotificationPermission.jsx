@@ -13,7 +13,7 @@ export default function NotificationPermission() {
 
     // 2. On vérifie l'état actuel de la permission navigateur
     const currentPermission = Notification.permission;
-    
+
     // 3. On vérifie si l'utilisateur a déjà cliqué sur "Plus tard" récemment
     const lastChoice = localStorage.getItem('rapido-notif-choice');
 
@@ -27,15 +27,15 @@ export default function NotificationPermission() {
     if (wantNotifications) {
       try {
         const permission = await Notification.requestPermission();
-        
+
         if (permission === 'granted') {
           localStorage.setItem('rapido-notif-choice', 'granted');
           toast.success("Alertes activées !");
-          
+
           // Petit test sonore pour confirmer à l'utilisateur
           const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
           audio.play().catch(() => {});
-          
+
         } else if (permission === 'denied') {
           toast.error("Notifications bloquées par le navigateur.");
           localStorage.setItem('rapido-notif-choice', 'denied');
@@ -54,9 +54,9 @@ export default function NotificationPermission() {
 
   return (
     <AnimatePresence>
-      <motion.div 
-        initial={{ y: 100, opacity: 0 }} 
-        animate={{ y: 0, opacity: 1 }} 
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         className="fixed bottom-6 left-4 right-4 z-[9999] md:max-w-md md:mx-auto"
       >
@@ -69,13 +69,13 @@ export default function NotificationPermission() {
             <p className="text-[11px] text-slate-500 mt-1">Soyez alerté instantanément de vos nouvelles commandes.</p>
           </div>
           <div className="flex flex-col gap-1 shrink-0">
-            <Button 
-              onClick={() => handleAction(true)} 
+            <Button
+              onClick={() => handleAction(true)}
               className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-9 px-6 rounded-xl font-bold border-none"
             >
               Activer
             </Button>
-            <button 
+            <button
               onClick={() => handleAction(false)}
               className="text-[10px] text-slate-400 py-1 font-medium bg-transparent border-none hover:text-slate-600 transition-colors"
             >

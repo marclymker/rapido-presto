@@ -9,6 +9,7 @@ export const categoryToSlug = (category) => {
     'Electronics': 'electronique',
     'Bijoux': 'bijoux',
     'Maison': 'maison',
+    'Hotels/Piscine': 'hotels-piscine',
     'Bébé': 'bebe',
     'Outils': 'outils',
     'Fastfood': 'fastfood',
@@ -31,6 +32,7 @@ export const slugToCategory = (slug) => {
     'electronique': 'Electronics',
     'bijoux': 'Bijoux',
     'maison': 'Maison',
+    'hotels-piscine': 'Hotels/Piscine',
     'bebe': 'Bébé',
     'outils': 'Outils',
     'fastfood': 'Fastfood',
@@ -58,7 +60,7 @@ export const subcategoryToSlug = (subcategory) => {
 // Conversion des slugs en sous-catégories
 export const slugToSubcategory = (slug, weddingStructure) => {
   if (!slug) return null;
-  
+
   for (const group of weddingStructure) {
     if (group.subtypes) {
       for (const subtype of group.subtypes) {
@@ -75,12 +77,12 @@ export const getCategoryMeta = (category, subcategory = null) => {
   const meta = {
     'Mariage': {
       title: 'Articles de Mariage en Haïti | Robes, Décoration, Bijoux',
-      description: 'Trouvez tout pour votre mariage en Haïti : robes de mariée, bagues, accessoires, décoration. Livraison rapide.',
+      description: 'Trouvez tout pour votre mariage en Haïti : robes de mariée, bagues, accessoires, décoration. Marketplace, réservations et billetterie.',
       keywords: 'mariage haiti, robe mariée, bague mariage, decoration mariage'
     },
     'Pour Femme': {
       title: 'Mode Femme en Haïti | Vêtements et Accessoires',
-      description: 'Découvrez notre collection de vêtements pour femme en Haïti. Livraison rapide partout.',
+      description: 'Découvrez notre collection de vêtements pour femme en Haïti. Marketplace, réservations et billetterie partout.',
       keywords: 'vetement femme haiti, mode femme, robe femme'
     },
     'Boutique Fleurs': {
@@ -100,7 +102,7 @@ export const getCategoryMeta = (category, subcategory = null) => {
     },
     'Bijoux': {
       title: 'Bijoux en Haïti | Bagues, Colliers, Bracelets',
-      description: 'Collection de bijoux de qualité en Haïti. Livraison rapide.',
+      description: 'Collection de bijoux de qualité en Haïti. Marketplace, réservations et billetterie.',
       keywords: 'bijoux haiti, bague, collier'
     },
     'Maison': {
@@ -121,8 +123,8 @@ export const getCategoryMeta = (category, subcategory = null) => {
   };
 
   const baseMeta = meta[category] || {
-    title: `${category} en Haïti | Rapido Presto`,
-    description: `Achetez ${category} en Haïti avec livraison rapide.`,
+    title: `${category} en Haïti | Kairos`,
+    description: `Achetez ${category} en Haïti avec marketplace, réservations et billetterie.`,
     keywords: `${category.toLowerCase()} haiti`
   };
 

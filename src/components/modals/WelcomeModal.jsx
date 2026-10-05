@@ -21,7 +21,7 @@ export default function WelcomeModal({ user, open, onClose }) {
               <Sparkles className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Bienvenue sur Rapido Presto!
+              Bienvenue sur Kairos!
             </h2>
             <p className="text-gray-600">
               Bonjour <span className="font-semibold">{user?.full_name}</span>! 👋
@@ -54,7 +54,7 @@ export default function WelcomeModal({ user, open, onClose }) {
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={handleGetStarted}
             className="w-full bg-orange-500 hover:bg-orange-600 h-12 text-lg font-bold"
           >
