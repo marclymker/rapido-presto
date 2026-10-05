@@ -20,6 +20,11 @@ function friendlyError(err) {
   if (code === 'auth/invalid-verification-code') return 'Le code SMS est incorrect.';
   if (code === 'auth/too-many-requests') return 'Trop de tentatives. Réessayez plus tard.';
   if (code === 'auth/popup-closed-by-user') return 'La fenêtre de connexion a été fermée.';
+  if (code === 'auth/operation-not-allowed') return 'Ce moyen de connexion n’est pas encore activé dans Firebase. Utilisez Google, Facebook, email ou téléphone.';
+  if (code === 'auth/unauthorized-domain') return 'Ce domaine n’est pas autorisé dans Firebase Authentication. Ajoutez makariosbridal.shop dans les domaines autorisés.';
+  if (code === 'auth/popup-blocked') return 'Le navigateur a bloqué la fenêtre de connexion. Autorisez les fenêtres pop-up pour Kairos puis réessayez.';
+  if (code === 'auth/network-request-failed') return 'Connexion réseau impossible. Vérifiez votre connexion Internet puis réessayez.';
+  if (code === 'auth/api-key-expired') return 'La clé Firebase a expiré. La configuration doit être renouvelée par le propriétaire.';
   if (code === 'auth/account-exists-with-different-credential') return 'Cette adresse est déjà liée à un autre mode de connexion.';
   return 'Connexion impossible pour le moment. Vérifiez la configuration Firebase puis réessayez.';
 }
