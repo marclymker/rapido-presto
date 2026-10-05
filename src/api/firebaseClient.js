@@ -23,7 +23,9 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   FacebookAuthProvider,
-  OAuthProvider
+  OAuthProvider,
+  RecaptchaVerifier,
+  signInWithPhoneNumber
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -39,6 +41,14 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+let phoneRecaptchaVerifier = null;
+
+const getPhoneRecaptchaVerifier = () => {
+  if (phoneRecaptchaVerifier) return phoneRecaptchaVerifier;
+  phoneRecaptchaVerifier = new RecaptchaVerifier(auth, 'kairos-phone-recaptcha', { size: 'invisible' });
+  return phoneRecaptchaVerifier;
+};
 
 const hydrateAuthUser = async (firebaseUser) => {
   if (!firebaseUser) return null;
@@ -194,6 +204,18 @@ export const firebaseApi = {
       return {
         access_token: await cred.user.getIdToken(),
         user: { id: cred.user.uid, email: cred.user.email }
+      };
+    },
+
+    async sendPhoneCode(phoneNumber) {
+      return signInWithPhoneNumber(auth, phoneNumber, getPhoneRecaptchaVerifier());
+    },
+
+    async loginViaPhoneConfirmation(confirmation, code) {
+      const cred = await confirmation.confirm(code);
+      return {
+        access_token: await cred.user.getIdToken(),
+        user: { id: cred.user.uid, phone_number: cred.user.phoneNumber }
       };
     },
 
