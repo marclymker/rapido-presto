@@ -2,7 +2,7 @@
   "name": "rapido-presto-functions",
   "private": true,
   "main": "index.js",
-  "engines": { "node": "20" },
+  "engines": { "node": "22" },
   "scripts": { "lint": "node --check index.js" },
   "dependencies": {
     "firebase-admin": "^12.7.0",
