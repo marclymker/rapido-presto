@@ -47,12 +47,6 @@ export const auth = getAuth(app);
 
 // Garantit que la session survive au retour depuis Google/Facebook sur mobile.
 const authPersistenceReady = setPersistence(auth, browserLocalPersistence);
-const redirectResultPromise = authPersistenceReady
-  .then(() => getRedirectResult(auth))
-  .catch((error) => {
-    console.error('Erreur initialisation retour OAuth:', error);
-    throw error;
-  });
 
 let phoneRecaptchaVerifier = null;
 
@@ -256,9 +250,34 @@ export const firebaseApi = {
     },
 
     async completeRedirectLogin() {
-      const result = await redirectResultPromise;
-      if (!result?.user) return null;
-      const user = result.user;
+      await authPersistenceReady;
+      // Firebase peut restaurer la session locale sans renvoyer un objet
+      // OAuth. Dans ce cas, currentUser reste la source de vérité.
+      let result = null;
+      try {
+        result = await getRedirectResult(auth);
+      } catch (error) {
+        console.error('Erreur récupération retour OAuth:', error);
+        if (!auth.currentUser) throw error;
+      }
+      if (auth.authStateReady) await auth.authStateReady();
+      let user = result?.user || auth.currentUser;
+      if (!user) {
+        user = await new Promise((resolve) => {
+          let unsubscribe = () => {};
+          const timeout = setTimeout(() => {
+            unsubscribe();
+            resolve(null);
+          }, 8000);
+          unsubscribe = onAuthStateChanged(auth, (candidate) => {
+            if (!candidate) return;
+            clearTimeout(timeout);
+            unsubscribe();
+            resolve(candidate);
+          });
+        });
+      }
+      if (!user) return null;
       return {
         access_token: await user.getIdToken(),
         user: { id: user.uid, email: user.email, full_name: user.displayName }

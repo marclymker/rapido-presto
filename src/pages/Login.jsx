@@ -53,8 +53,10 @@ export default function Login() {
     let active = true;
     firebaseApi.auth.completeRedirectLogin()
       .then(async (result) => {
-        if (!active || !result) return;
-        await firebaseApi.auth.me();
+        if (!active || !result?.user) return;
+        // Firebase a déjà confirmé l’utilisateur. Ne bloquons pas la
+        // redirection sur une lecture Firestore du profil : AuthContext
+        // hydratera le profil après l’arrivée sur la page demandée.
         if (active) finish();
       })
       .catch((err) => {
