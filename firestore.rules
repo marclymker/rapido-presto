@@ -53,7 +53,14 @@ service cloud.firestore {
     match /Order/{id} {
       allow read: if signedIn() && (resource.data.client_id == request.auth.uid || resource.data.driver_id == request.auth.uid || resource.data.shop_owner_id == request.auth.uid || isAdmin());
       allow create: if signedIn() && request.resource.data.client_id == request.auth.uid;
-      allow update: if isAdmin() || (signedIn() && (resource.data.client_id == request.auth.uid || resource.data.driver_id == request.auth.uid || resource.data.shop_owner_id == request.auth.uid));
+      allow update: if isAdmin()
+        || (signedIn() && resource.data.client_id == request.auth.uid
+          && request.resource.data.total == resource.data.total
+          && request.resource.data.subtotal == resource.data.subtotal
+          && request.resource.data.get('payment_status', null) == resource.data.get('payment_status', null)
+          && request.resource.data.get('payment_provider', null) == resource.data.get('payment_provider', null)
+          && request.resource.data.get('payment_transaction_id', null) == resource.data.get('payment_transaction_id', null))
+        || (signedIn() && (resource.data.driver_id == request.auth.uid || resource.data.shop_owner_id == request.auth.uid));
       allow delete: if isAdmin();
     }
     match /{document=**} { allow read, write: if false; }

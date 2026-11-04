@@ -82,7 +82,9 @@ export default function QuickCheckout() {
         total: total,
         payment_method: paymentMethod,
         status: 'pending',
-        payment_status: paymentMethod === 'card' ? 'paid' : 'pending',
+        // Cloud Functions confirme le paiement ; le navigateur ne peut pas
+        // déclarer lui-même une commande comme payée.
+        payment_status: 'pending',
         confirmation_code: code,
         special_instructions: specialInstructions,
       });
@@ -91,8 +93,7 @@ export default function QuickCheckout() {
         if (!squareToken) throw new Error('Token de paiement manquant');
         const paymentResponse = await firebaseApi.functions.invoke('squarePayment', {
           sourceId: squareToken,
-          amount: total,
-          orderId: orderNum,
+          orderIds: [order.id],
         });
         if (!paymentResponse.data.success) throw new Error('Paiement refusé');
 
@@ -102,17 +103,15 @@ export default function QuickCheckout() {
       }
 
       if (paymentMethod === 'moncash') {
-        const payAmount = Math.round(total * splitPercent / 100);
         const response = await firebaseApi.functions.invoke('moncashCreatePayment', {
-          orderId: orderNum,
-          amount: payAmount,
+          orderIds: [order.id],
+          paymentSplit: splitPercent < 100 ? 'split' : 'full',
           description: `Commande ${orderNum} - ${product.name} (${splitPercent}%)`,
         });
         const paymentData = response.data;
         if (!paymentData?.success || !paymentData?.paymentUrl) {
           throw new Error(paymentData?.error || 'Erreur MonCash');
         }
-        await firebaseApi.entities.Order.update(order.id, { moncash_transaction_id: paymentData.transactionId });
         return { redirectToMoncash: true, paymentUrl: paymentData.paymentUrl, orderNum };
       }
     },

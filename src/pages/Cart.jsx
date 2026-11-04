@@ -255,7 +255,9 @@ export default function Cart() {
             payment_method: paymentMethodType,
             payment_split: paymentSplit,
             status: 'pending',
-            payment_status: paymentMethodType === 'card' ? 'paid' : 'pending',
+            // Le backend confirme le paiement. Le navigateur ne peut jamais
+            // déclarer lui-même une commande comme payée.
+            payment_status: 'pending',
             confirmation_code: code,
             special_instructions: deliveryOption === 'pickup_delimart' ? `(RETRAIT DELIMART DELMAS 32) ${specialInstructions}` : specialInstructions,
             moncash_transaction_id: transactionId
@@ -273,8 +275,7 @@ export default function Cart() {
 
           const paymentResponse = await firebaseApi.functions.invoke('squarePayment', {
             sourceId: squareToken,
-            amount: totalAmount,
-            orderId: createdOrders[0].orderNum
+            orderIds: createdOrders.map((order) => order.orderId)
           });
 
           if (!paymentResponse.data.success) throw new Error('Paiement refusé');
@@ -297,20 +298,14 @@ export default function Cart() {
         await Promise.all(cartItems.map(item => firebaseApi.entities.CartItem.delete(item.id)));
 
         const response = await firebaseApi.functions.invoke('moncashCreatePayment', {
-          orderId: orderNumBase,
-          amount: totalAmount,
+          orderIds: createdOrders.map((order) => order.orderId),
+          paymentSplit,
           description: `Commande ${orderNumBase}`
         });
 
         const paymentData = response.data;
         if (!paymentData?.success || !paymentData?.paymentUrl) {
           throw new Error(paymentData?.error || 'Erreur MonCash: URL de redirection manquante');
-        }
-
-        for (const order of createdOrders) {
-          await firebaseApi.entities.Order.update(order.orderId, {
-            moncash_transaction_id: paymentData.transactionId
-          });
         }
 
         return { redirectToMoncash: true, paymentUrl: paymentData.paymentUrl, orderNum: createdOrders[0].orderNum };

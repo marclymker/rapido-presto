@@ -43,6 +43,7 @@ try {
 const urlParams = new URLSearchParams(window.location.search);
 
 const transactionId = urlParams.get('transactionId');
+const orderId = urlParams.get('orderId');
 
 
 
@@ -61,8 +62,8 @@ return;
 // Vérifier le paiement
 
 const response = await firebaseApi.functions.invoke('moncashVerifyPayment', {
-
-transactionId: transactionId
+transactionId: transactionId,
+orderId: orderId || undefined
 
 });
 
@@ -75,11 +76,6 @@ const paymentData = response.data;
 if (paymentData.success && paymentData.status === 'success') {
 
 // Vérifier si c'est un abonnement Premium (order_id commence par SUB_)
-
-const urlParams = new URLSearchParams(window.location.search);
-
-const orderId = urlParams.get('orderId');
-
 
 if (orderId && orderId.startsWith('SUB_')) {
 
@@ -112,8 +108,7 @@ isPremium: true
 // Paiement de commande normale
 
 const orders = await firebaseApi.entities.Order.filter({
-
-moncash_transaction_id: transactionId
+payment_order_id: orderId || transactionId
 
 });
 
@@ -121,17 +116,9 @@ moncash_transaction_id: transactionId
 
 if (orders.length > 0) {
 
-// Mettre à jour TOUTES les commandes avec ce transactionId
+// La Cloud Function vient déjà de vérifier et de mettre à jour le paiement.
 
 for (const order of orders) {
-
-await firebaseApi.entities.Order.update(order.id, {
-
-payment_status: 'paid'
-
-});
-
-
 
 // ENVOYER LES NOTIFICATIONS APRÈS PAIEMENT RÉUSSI
 

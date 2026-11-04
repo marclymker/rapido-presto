@@ -323,3 +323,5 @@ exports.googleAnalyticsFeed = onRequest(async (req, res) => {
 
 // Déclencheurs FCM : commandes, messages et billets confirmés.
 Object.assign(exports, require('./notifications'));
+// Paiements : les credentials sont injectés uniquement par Secret Manager.
+Object.assign(exports, require('./payments'));

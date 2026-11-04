@@ -30,6 +30,11 @@
       { "source": "/functions/googleVerification", "function": { "functionId": "googleVerification", "region": "us-central1" } },
       { "source": "/functions/googleAnalyticsFeed", "function": { "functionId": "googleAnalyticsFeed", "region": "us-central1" } },
       { "source": "/functions/validateOrderPrice", "function": { "functionId": "validateOrderPrice", "region": "us-central1" } },
+      { "source": "/functions/squareConfig", "function": { "functionId": "squareConfig", "region": "us-central1" } },
+      { "source": "/functions/squarePayment", "function": { "functionId": "squarePayment", "region": "us-central1" } },
+      { "source": "/functions/squareWebhook", "function": { "functionId": "squareWebhook", "region": "us-central1" } },
+      { "source": "/functions/moncashCreatePayment", "function": { "functionId": "moncashCreatePayment", "region": "us-central1" } },
+      { "source": "/functions/moncashVerifyPayment", "function": { "functionId": "moncashVerifyPayment", "region": "us-central1" } },
       { "source": "**", "destination": "/index.html" }
     ]
   },

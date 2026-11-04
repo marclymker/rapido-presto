@@ -319,7 +319,13 @@ export const firebaseApi = {
 
   functions: {
     async invoke(funcName, params = {}) {
-      const supportedFunctions = new Set(['validateOrderPrice']);
+      const supportedFunctions = new Set([
+        'validateOrderPrice',
+        'squareConfig',
+        'squarePayment',
+        'moncashCreatePayment',
+        'moncashVerifyPayment',
+      ]);
       if (!supportedFunctions.has(funcName)) {
         throw new Error(`Fonction Firebase non disponible: ${funcName}`);
       }
