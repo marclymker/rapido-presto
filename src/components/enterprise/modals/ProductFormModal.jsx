@@ -76,6 +76,21 @@ import { getTaxonomyMappingPrompt } from '@/lib/fbTaxonomy';
 
 const parseVariantList = (value = '') => value.split(',').map(item => item.trim()).filter(Boolean);
 
+// Firestore refuse les propriétés `undefined`, y compris dans les objets imbriqués.
+// Cette normalisation protège les créations et les mises à jour quand un champ
+// optionnel est vide ou quand le sélecteur de taxonomie ne renvoie rien.
+const normalizeFirestoreValue = (value) => {
+  if (Array.isArray(value)) return value.map(normalizeFirestoreValue);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, nestedValue]) => nestedValue !== undefined)
+        .map(([key, nestedValue]) => [key, normalizeFirestoreValue(nestedValue)])
+    );
+  }
+  return value;
+};
+
 const makeVariantRows = (colorsText = '', sizesText = '', existing = []) => {
   const colors = parseVariantList(colorsText);
   const sizes = parseVariantList(sizesText);
@@ -614,15 +629,19 @@ const variants = generatedRows.map(row => ({
 const { variant_options: _variantOptions, ...persistedFormData } = formData;
 const currentUser = await firebaseApi.auth.me();
 if (!currentUser?.id) throw new Error('Session utilisateur expirée. Reconnectez-vous.');
-const dataWithSlug = {
+const dataWithSlug = normalizeFirestoreValue({
   ...persistedFormData,
   variants,
   owner_id: currentUser.id,
   vendor_id: currentUser.id,
   user_id: currentUser.id,
-  slug: slug || undefined,
+  slug,
   image_alt: formData.image_alt || formData.name,
-};
+  // Firestore doit recevoir null ou une chaîne vide, jamais undefined.
+  fb_category_id: formData.fb_category_id ?? null,
+  subcategory: formData.subcategory ?? '',
+  promo_price: formData.promo_price ?? null,
+});
 
 
 
