@@ -10,6 +10,12 @@ service firebase.storage {
         && request.resource.size < 10 * 1024 * 1024
         && request.resource.contentType.matches('image/.*|application/pdf');
     }
+    match /users/{uid}/products/{allPaths=**} {
+      allow read: if true;
+      allow write: if signedIn() && request.auth.uid == uid
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
     match /products/{productId}/{allPaths=**} {
       allow read: if true;
       allow write: if isAdmin() || (signedIn()

@@ -333,7 +333,10 @@ export const firebaseApi = {
         if (file.size > 10 * 1024 * 1024) throw new Error('La photo ne doit pas dépasser 10 Mo');
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
         if (!auth.currentUser?.uid) throw new Error('Connexion requise pour envoyer une photo');
-        const path = `users/${auth.currentUser.uid}/${Date.now()}-${safeName}`;
+        // Les médias ajoutés depuis le formulaire produit doivent rester
+        // visibles par les visiteurs, tandis que l’écriture reste protégée
+        // par storage.rules via l’UID du propriétaire.
+        const path = `users/${auth.currentUser.uid}/products/${Date.now()}-${safeName}`;
         const { getStorage, ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
         const storage = getStorage(app);
         const snapshot = await uploadBytes(ref(storage, path), file, { contentType: file.type || 'image/jpeg' });
