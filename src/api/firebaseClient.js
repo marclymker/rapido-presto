@@ -261,22 +261,32 @@ export const firebaseApi = {
         if (!auth.currentUser) throw error;
       }
       if (auth.authStateReady) await auth.authStateReady();
-      let user = result?.user || auth.currentUser;
-      if (!user) {
-        user = await new Promise((resolve) => {
-          let unsubscribe = () => {};
-          const timeout = setTimeout(() => {
-            unsubscribe();
-            resolve(null);
-          }, 8000);
-          unsubscribe = onAuthStateChanged(auth, (candidate) => {
-            if (!candidate) return;
-            clearTimeout(timeout);
-            unsubscribe();
-            resolve(candidate);
-          });
-        });
-      }
+      // Ne pas retourner immédiatement result.user : sur certains navigateurs,
+      // l’objet OAuth est disponible avant que la persistance locale ait fini.
+      // La page Dashboard pourrait alors démarrer avec currentUser = null et
+      // renvoyer l’utilisateur vers Login. On attend toujours l’état confirmé.
+      let user = await new Promise((resolve) => {
+        let settled = false;
+        let unsubscribe = () => {};
+        const finish = (candidate) => {
+          if (settled || !candidate) return;
+          settled = true;
+          clearTimeout(timeout);
+          unsubscribe();
+          resolve(candidate);
+        };
+        const timeout = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          unsubscribe();
+          resolve(result?.user || auth.currentUser || null);
+        }, 12000);
+        if (auth.currentUser) {
+          finish(auth.currentUser);
+          return;
+        }
+        unsubscribe = onAuthStateChanged(auth, finish);
+      });
       if (!user) return null;
       return {
         access_token: await user.getIdToken(),
