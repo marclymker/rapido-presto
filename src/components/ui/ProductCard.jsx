@@ -1,120 +1,33 @@
 import React from 'react';
-import { Plus, Zap, Truck } from 'lucide-react';
+import { Heart, Plus, Truck, Zap } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 
 const ProductCard = React.memo(function ProductCard({ product, onAdd, onClick, shop }) {
   const shopName = shop?.company_name || product.shop_name;
-  const hasPromo = product.promo_price && product.promo_price < product.price;
-  const displayPrice = hasPromo
-    ? applyClientMargin(product.promo_price, shopName)
-    : applyClientMargin(product.price, shopName);
+  const hasPromo = Number(product.promo_price) > 0 && Number(product.promo_price) < Number(product.price);
+  const displayPrice = applyClientMargin(hasPromo ? product.promo_price : product.price, shopName);
   const originalDisplayPrice = applyClientMargin(product.price, shopName);
-
-  // Texte dynamique pour le badge
-  const fastText = shop?.name === "MAKARIOS BRIDAL" ? "Réponse Rapide" : "Livraison Rapide";
+  const image = product.image_url;
+  const seller = shopName || 'Vendeur Kairos';
+  const isHotel = product.category === 'Hotels/Piscine';
 
   return (
-    <div
-      id={`product-card-${product.id}`}
-      className="group relative bg-white rounded-xl transition-all duration-300 flex flex-col h-full border border-slate-100 overflow-hidden shadow-sm hover:shadow-md"
-    >
-      {/* 1. ZONE IMAGE (Ratio Carré) */}
-      <div className="relative aspect-square overflow-hidden bg-slate-50">
-        {/* Badge Promo */}
-        {hasPromo && (
-          <div className="absolute top-1 left-1 bg-red-600 text-white text-[8px] px-1.5 py-0.5 rounded font-black z-20 shadow-sm">
-            -{Math.round((1 - product.promo_price / product.price) * 100)}%
-          </div>
-        )}
-
-        {/* Bouton Ajout Panier Rapide */}
-        {product.is_available !== false && (
-          <button
-            className="absolute top-1 right-1 z-20 bg-white/95 text-[#25D366] w-7 h-7 rounded-full shadow-md flex items-center justify-center active:scale-90 transition-transform"
-            onClick={(e) => { e.stopPropagation(); onAdd(product); }}
-          >
-            <Plus size={18} strokeWidth={3} />
-          </button>
-        )}
-
-        {/* Image du produit */}
-        <div
-          className="w-full h-full p-1 cursor-pointer"
-          onClick={() => product.is_available !== false && onClick && onClick(product)}
-        >
-          {product.image_url ? (
-            <img
-              src={`${product.image_url}${product.image_url?.includes('?') ? '&' : '?'}w=300&q=75`}
-              className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-              alt={product.image_alt || product.name}
-              loading="lazy"
-              decoding="async"
-              fetchpriority="low"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-slate-300 text-[9px] italic">
-              Pas de photo
-            </div>
-          )}
-        </div>
-
-        {/* Overlay si épuisé */}
-        {!product.is_available && (
-          <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center z-10">
-            <span className="bg-slate-800 text-white px-2 py-0.5 rounded text-[8px] font-bold uppercase">Épuisé</span>
-          </div>
-        )}
+    <article id={`product-card-${product.id}`} className={`rp-product-card ${isHotel ? 'rp-hotel-card' : ''} group`}>
+      <div className="rp-product-media" onClick={() => product.is_available !== false && onClick?.(product)} role="button" tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && onClick?.(product)}>
+        {image ? <img src={`${image}${image.includes('?') ? '&' : '?'}w=600&q=82`} className="rp-product-image" alt={product.image_alt || product.name} loading="lazy" decoding="async" /> : <div className="rp-product-empty">Pas de photo</div>}
+        <div className="rp-product-gradient" aria-hidden="true" />
+        {hasPromo && <span className="rp-promo-badge">-{Math.round((1 - product.promo_price / product.price) * 100)}%</span>}
+        <button type="button" className="rp-icon-button rp-like-button" aria-label={`Ajouter ${product.name} aux favoris`} onClick={(event) => event.stopPropagation()}><Heart size={17} strokeWidth={2.2} /></button>
+        {product.is_available !== false && <button type="button" className="rp-add-button" aria-label={`Ajouter ${product.name} au panier`} onClick={(event) => { event.stopPropagation(); onAdd?.(product); }}><Plus size={19} strokeWidth={2.8} /></button>}
+        {product.is_available === false && <span className="rp-sold-out">Épuisé</span>}
       </div>
-
-      {/* 2. ZONE CONTENU (Optimisée pour l'espace) */}
-      <div className="p-2 flex flex-col gap-0">
-        
-        {/* Badge de réassurance (Zap) */}
-        <div className="flex items-center gap-0.5 text-amber-600 mb-0.5">
-          <Zap size={8} fill="currentColor" />
-          <span className="text-[8px] font-bold uppercase tracking-tight">{fastText}</span>
-        </div>
-
-        {/* PRIX (Priorité #1 après l'image) */}
-        <div className="flex items-baseline gap-1 leading-tight">
-          <span className="text-sm font-black text-slate-900">
-            {displayPrice.toLocaleString()} <span className="text-[8px] font-bold">HTG</span>
-          </span>
-          {hasPromo && (
-            <span className="text-[8px] text-slate-400 line-through">
-              {originalDisplayPrice}
-            </span>
-          )}
-        </div>
-
-        {/* NOM DU PRODUIT (Strictement 1 ligne) */}
-        <h3 className="text-[10px] text-slate-500 font-medium truncate mt-0.5" title={product.name}>
-          {product.name}
-        </h3>
-
-        {/* Livraison Gratuite (Ultra-compact) */}
-        {displayPrice >= 3000 && (
-          <div className="flex items-center gap-1 text-green-600 text-[8px] font-bold mt-1">
-            <Truck size={10} /> Livraison Offerte
-          </div>
-        )}
-
-        {/* Infos Facebook Catalog */}
-        <div className="flex items-center justify-between mt-1 pt-1 border-t border-slate-100">
-          <span className="text-[8px] text-slate-300 font-mono truncate" title={`ID: ${product.id}`}>
-            #{product.id?.slice(-6)}
-          </span>
-          <span className={`text-[8px] font-bold px-1 rounded ${product.is_available !== false ? 'text-green-600' : 'text-red-500'}`}>
-            {product.is_available !== false ? 'in stock' : 'out of stock'}
-          </span>
-        </div>
+      <div className="rp-product-copy">
+        <div className="rp-product-seller"><span className="rp-seller-dot" />{seller}</div>
+        <h3 className="rp-product-title" title={product.name}>{product.name}</h3>
+        <div className="rp-product-price-row"><span className="rp-product-price">{Number(displayPrice || 0).toLocaleString()} <small>HTG</small></span>{hasPromo && <span className="rp-product-old-price">{Number(originalDisplayPrice || 0).toLocaleString()}</span>}</div>
+        <div className="rp-product-meta"><span><Zap size={12} fill="currentColor" /> Réponse rapide</span>{displayPrice >= 3000 && <span><Truck size={12} /> Livraison offerte</span>}</div>
       </div>
-
-      {/* 3. SECTION BOUTON CONTACT : MASQUÉE TEMPORAIREMENT */}
-      {/* Le bouton "Contacter Vendeur" / "WhatsApp" est retiré 
-          pour résoudre les problèmes de notifications et gagner de l'espace.
-      */}
-    </div>
+    </article>
   );
 });
 

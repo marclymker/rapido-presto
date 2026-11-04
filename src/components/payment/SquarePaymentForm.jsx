@@ -51,7 +51,7 @@ export default function SquarePaymentForm({ amount, onSuccess, onError }) {
 
     try {
       const result = await card.tokenize();
-      
+
       if (result.status === 'OK') {
         onSuccess(result.token);
       } else {
@@ -78,9 +78,9 @@ export default function SquarePaymentForm({ amount, onSuccess, onError }) {
           <CreditCard className="w-5 h-5 text-slate-600" />
           <h3 className="font-semibold text-slate-800">Paiement par carte</h3>
         </div>
-        
+
         <div id="card-container" className="min-h-[120px]"></div>
-        
+
         <div className="mt-4 text-xs text-slate-500 flex items-center gap-2">
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>

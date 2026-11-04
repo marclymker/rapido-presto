@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Send, Store, MapPin, Share2, MessageCircle, Loader2, CreditCard } from 'lucide-react';
+import { ArrowLeft, Send, Store, MapPin, Share2, MessageCircle, CreditCard } from 'lucide-react';
 import { cacheProduct, getCachedProduct } from '@/lib/useProductCache';
 import { Helmet } from 'react-helmet-async';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { useAuth } from '@/components/auth/useAuth';
 import { toast } from 'sonner';
+import { getProductShareUrl, getProductCanonicalUrl } from '@/lib/productShareUrl';
 import CompactProductCard from '@/components/home/CompactProductCard';
 import ProductReviews from '@/components/product/ProductReviews';
 import ProductFAQ from '@/components/product/ProductFAQ';
@@ -16,7 +17,7 @@ import ProductFAQ from '@/components/product/ProductFAQ';
 function saveScroll() {
   try { sessionStorage.setItem('marketplace_scroll', String(window.scrollY)); } catch (_) {}
 }
- 
+
 export default function ProductPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -33,14 +34,20 @@ export default function ProductPage() {
     return () => window.removeEventListener('popstate', handlePop);
   }, [navigate]);
 
-  const cached = getCachedProduct(slug);
+  const rawCached = getCachedProduct(slug);
+  const cached = rawCached?.product?.id === slug ? rawCached : null;
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['product', slug],
     queryFn: async () => {
-      const bySlug = await base44.entities.Product.filter({ slug });
-      if (bySlug.length > 0) return bySlug;
-      return base44.entities.Product.filter({ id: slug });
+      // Les nouveaux liens utilisent l'ID Firestore, qui est toujours unique.
+      const byId = await firebaseApi.entities.Product.get(slug);
+      if (byId) return [byId];
+      // Compatibilité avec les anciens liens en slug : ne résoudre que si le
+      // slug est réellement unique, sinon afficher une erreur plutôt que le
+      // premier produit arbitraire.
+      const bySlug = await firebaseApi.entities.Product.filter({ slug }, undefined, 10);
+      return bySlug.length === 1 ? bySlug : [];
     },
     enabled: !!slug,
     initialData: cached?.product ? [cached.product] : undefined,
@@ -51,7 +58,7 @@ export default function ProductPage() {
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true }),
     staleTime: 10 * 60 * 1000,
   });
 
@@ -59,24 +66,20 @@ export default function ProductPage() {
 
   const { data: sameShopProducts = [] } = useQuery({
     queryKey: ['sameShop', product?.shop_id],
-    queryFn: () => base44.entities.Product.filter({ shop_id: product.shop_id, is_available: true }, '-created_date', 20),
+    queryFn: () => firebaseApi.entities.Product.filter({ shop_id: product.shop_id, is_available: true }, '-created_date', 20),
     enabled: !!product?.shop_id,
   });
 
   const { data: similarProducts = [] } = useQuery({
     queryKey: ['similar', product?.category],
-    queryFn: () => base44.entities.Product.filter({ category: product.category, is_available: true }, '-created_date', 30),
+    queryFn: () => firebaseApi.entities.Product.filter({ category: product.category, is_available: true }, '-created_date', 30),
     enabled: !!product?.category,
   });
 
   // LOGIQUE DE PARTAGE (PREVIEW WHATSAPP)
   const getShareUrl = useCallback(() => {
     if (!product) return window.location.href;
-    const base = 'https://rapido-presto.base44.app/functions/ogMetaTags';
-    const params = new URLSearchParams();
-    if (shop?.slug) params.set('slug', shop.slug);
-    if (product.slug || product.id) params.set('product', product.slug || product.id);
-    return `${base}?${params.toString()}`;
+    return getProductShareUrl({ ...product, shop_slug: shop?.slug }, window.location.origin);
   }, [product, shop]);
 
   const handleShare = useCallback(() => {
@@ -135,12 +138,25 @@ export default function ProductPage() {
   const allImages = [product.image_url, ...(product.additional_images || [])].filter(Boolean);
   const currentImg = allImages[imgIndex] || product.image_url;
   const imgSrc = currentImg ? `${currentImg}${currentImg.includes('?') ? '&' : '?'}width=800&quality=80` : null;
+  const canonicalUrl = getProductCanonicalUrl(product);
+  const shareDescription = (product.description || `Découvrez ${product.name} sur Kairos.`).slice(0, 300);
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#f0f2f5' }}>
       <Helmet>
-        <title>{product.name} | Rapido Presto</title>
+        <title>{product.name} | Kairos</title>
+        <meta name="description" content={shareDescription} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={`${product.name} | Kairos`} />
+        <meta property="og:description" content={shareDescription} />
+        <meta property="og:url" content={canonicalUrl} />
         <meta property="og:image" content={imgSrc} />
+        <meta property="og:image:alt" content={product.name} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${product.name} | Kairos`} />
+        <meta name="twitter:description" content={shareDescription} />
+        <meta name="twitter:image" content={imgSrc} />
       </Helmet>
       {/* Schema.org Product + AggregateRating (injecté côté client pour crawlers) */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
@@ -149,7 +165,7 @@ export default function ProductPage() {
         "name": product.name,
         "description": product.description || product.name,
         "image": imgSrc,
-        "brand": { "@type": "Brand", "name": shop?.company_name || "RAPIDOPRESTO" },
+        "brand": { "@type": "Brand", "name": shop?.company_name || "KAIROS" },
         "offers": {
           "@type": "Offer",
           "priceCurrency": "HTG",
@@ -165,7 +181,7 @@ export default function ProductPage() {
           <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
         <span className="text-sm font-semibold text-gray-900 truncate flex-1">{product.name}</span>
-        
+
         <button onClick={handleShare} className="p-1.5 rounded-full hover:bg-gray-100">
           <Share2 className="w-5 h-5 text-gray-700" />
         </button>
@@ -177,7 +193,7 @@ export default function ProductPage() {
           <img src={imgSrc} alt={product.name} className="w-full h-full object-contain" />
         </div>
         {hasPromo && <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">-{Math.round((1 - product.promo_price / product.price) * 100)}%</div>}
-        
+
         <button onClick={handleShare} className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur shadow-md rounded-full">
           <Share2 className="w-4 h-4 text-gray-700" />
         </button>
@@ -202,7 +218,7 @@ export default function ProductPage() {
         {/* Bouton Commander maintenant */}
         <button
           onClick={() => {
-            if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+            if (!user) { firebaseApi.auth.redirectToLogin(window.location.pathname); return; }
             trackMetaEvent('InitiateCheckout', { content_ids: [product.id], content_type: 'product', content_name: product.name, value: price, currency: 'HTG' });
             window.location.href = `/QuickCheckout?product_id=${product.id}&quantity=1`;
           }}
@@ -261,7 +277,7 @@ export default function ProductPage() {
           <h2 className="text-sm font-bold mb-4 text-gray-900">Articles similaires</h2>
           <div className="grid grid-cols-2 gap-3">
             {relatedProducts.slice(0, relatedVisible).map(p => (
-              <CompactProductCard key={p.id} product={p} shop={shops.find(sh => sh.id === p.shop_id)} onClick={() => navigate(`/product/${p.slug || p.id}`)} />
+                <CompactProductCard key={p.id} product={p} shop={shops.find(sh => sh.id === p.shop_id)} onClick={() => navigate(`/product/${p.id}`)} />
             ))}
           </div>
           {relatedVisible < relatedProducts.length && (
@@ -280,7 +296,7 @@ export default function ProductPage() {
           <button
             onClick={() => {
               if (!user) {
-                base44.auth.redirectToLogin(window.location.pathname);
+                firebaseApi.auth.redirectToLogin(window.location.pathname);
                 return;
               }
               trackMetaEvent('InitiateCheckout', {

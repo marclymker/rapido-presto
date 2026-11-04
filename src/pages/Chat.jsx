@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { useState, useEffect, useCallback } from 'react';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, ArrowLeft, Phone, Video, Info, MessageCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -43,16 +43,16 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
-    base44.auth.me()
-      .then(u => { if (!u) base44.auth.redirectToLogin('/Chat'); else setUser(u); })
-      .catch(() => base44.auth.redirectToLogin('/Chat'));
+    firebaseApi.auth.me()
+      .then(u => { if (!u) firebaseApi.auth.redirectToLogin('/Chat'); else setUser(u); })
+      .catch(() => firebaseApi.auth.redirectToLogin('/Chat'));
   }, []);
 
   // Conversations — polling léger 15s
   const { data: conversations = [], isLoading: isLoadingConvs } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
-      const r = await base44.functions.invoke('chatService', { action: 'list' });
+      const r = await firebaseApi.functions.invoke('chatService', { action: 'list' });
       return Array.isArray(r.data) ? r.data : (r.data?.data || []);
     },
     enabled: !!user?.id,
@@ -63,7 +63,7 @@ export default function Chat() {
   // Fetch direct si pas encore dans la liste
   const { data: directConv } = useQuery({
     queryKey: ['conversation-direct', convIdFromUrl],
-    queryFn: () => base44.entities.Conversation.get(convIdFromUrl),
+    queryFn: () => firebaseApi.entities.Conversation.get(convIdFromUrl),
     enabled: !!convIdFromUrl && !!user?.id,
     staleTime: 0,
   });
@@ -79,7 +79,7 @@ export default function Chat() {
   const { data: serverMessages = [], isLoading: isLoadingMessages } = useQuery({
     queryKey: ['messages', selectedConv?.id],
     queryFn: async () => {
-      const r = await base44.functions.invoke('chatService', { action: 'messages', convId: selectedConv.id });
+      const r = await firebaseApi.functions.invoke('chatService', { action: 'messages', convId: selectedConv.id });
       const msgs = Array.isArray(r.data) ? r.data : (r.data?.data || []);
       return msgs
         .sort((a, b) => new Date(a.created_date) - new Date(b.created_date))
@@ -134,7 +134,7 @@ export default function Chat() {
   const handleSendProduct = useCallback(async (product) => {
     setSendingProduct(true);
     try {
-      await base44.functions.invoke('chatService', {
+      await firebaseApi.functions.invoke('chatService', {
         action: 'send',
         conversation_id: selectedConv.id,
         content: `🛍️ ${product.name} — ${applyClientMargin(product.promo_price || product.price).toLocaleString()} HTG`,
@@ -160,7 +160,7 @@ export default function Chat() {
   const handleOpenProductPicker = useCallback(async () => {
     setShowProductPicker(true);
     if (vendorProducts.length === 0) {
-      const r = await base44.functions.invoke('chatService', { action: 'vendor_products', convId: selectedConv.id });
+      const r = await firebaseApi.functions.invoke('chatService', { action: 'vendor_products', convId: selectedConv.id });
       setVendorProducts(Array.isArray(r.data) ? r.data : (r.data?.data || []));
     }
   }, [vendorProducts.length, selectedConv]);

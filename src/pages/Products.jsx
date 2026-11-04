@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Tag, Store, ChevronRight, X, MapPin, MessageCircle, Ticket } from 'lucide-react';
+import { Search, X, MapPin, MessageCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Button } from "@/components/ui/button";
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import { useNavigate } from 'react-router-dom';
@@ -19,12 +18,11 @@ import TrendingSection from '@/components/home/TrendingSection';
 import SEO from '@/components/SEO';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
-import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
+import { FB_TAXONOMY, findById } from '@/lib/fbTaxonomy';
+import { MARKETPLACE_SPACES, getMarketplaceSpace } from '@/lib/marketplaceSpaces';
 
 const CATEGORIES = [
-  'Pour Femme', 'Bijoux', 'Pour homme', 'Mariage', 'Boutique Fleurs',
-  'Maison', 'Electronics', 'Mode', 'Pharmacie',
-  'Epicerie', 'Café', 'Bébé', 'Outils', 'Matériels Décor', 'Tickets'
+  ...MARKETPLACE_SPACES.map((space) => space.id)
 ];
 
 const REGIONS = [
@@ -34,6 +32,9 @@ const REGIONS = [
   "Ennery", "L'Estère", "Gonaïves", "Plaine du Nord", "Vaudreuil",
   "Cap-Haïtien", "Madeline", "Limonade", "Pignon", "Hinche"
 ];
+
+const SELLER_PROFILE_DISMISS_KEY = 'rapido_seller_profile_prompt_dismissed_until';
+const SELLER_PROFILE_REOPEN_DELAY = 60 * 60 * 1000;
 
 const normalizeForRegion = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
@@ -135,6 +136,8 @@ export default function Products() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const mountTimeRef = useRef(Date.now());
+  const connection = typeof navigator !== 'undefined' ? navigator.connection : undefined;
+  const constrainedNetwork = Boolean(connection?.saveData || ['slow-2g', '2g'].includes(connection?.effectiveType));
 
   const { trackProductView, trackCategoryView, trackSearch, trackAddToCart } = useActivityTracker();
 
@@ -146,19 +149,24 @@ export default function Products() {
   const [fbLevel1Id, setFbLevel1Id] = useState(null);
   const [selectedRegion, setSelectedRegion] = useState('');
   const [editingProduct, setEditingProduct] = useState(null);
+  const [showSellerProfilePrompt, setShowSellerProfilePrompt] = useState(false);
+  const [sellerProfile, setSellerProfile] = useState({ phone: '', address: '', region: '' });
 
   const isAdmin = user?.role === 'admin';
   const referenceRegion = selectedRegion || user?.region || 'Port-au-Prince';
 
-  const [showSellerTrap, setShowSellerTrap] = useState(false);
-  const [trapData, setTrapData] = useState({ phone: '', region: '' });
 
   useEffect(() => {
     try {
       const savedSearch = sessionStorage.getItem('marketplace_search');
       if (savedSearch) setSearchQuery(savedSearch);
       const savedCategory = sessionStorage.getItem('marketplace_category');
-      if (savedCategory) setSelectedCategory(savedCategory);
+      if (savedCategory && MARKETPLACE_SPACES.some((space) => space.id === savedCategory)) {
+        setSelectedCategory(savedCategory);
+      } else if (savedCategory) {
+        sessionStorage.removeItem('marketplace_category');
+        setSelectedCategory(null);
+      }
       const savedScroll = sessionStorage.getItem('marketplace_scroll');
       if (savedScroll) {
         window.scrollTo(0, parseInt(savedScroll, 10));
@@ -171,7 +179,7 @@ export default function Products() {
     trackMetaEvent('PageView');
     if (window.gtag) {
       window.gtag('event', 'page_view', {
-        page_title: 'Marketplace - Rapido Presto',
+        page_title: 'Marketplace - Kairos',
         page_location: window.location.href,
       });
     }
@@ -182,7 +190,7 @@ export default function Products() {
 
   const { data: firstProducts = [], isLoading } = useQuery({
     queryKey: ['products-initial'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 30),
+    queryFn: () => firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 30),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
@@ -190,17 +198,17 @@ export default function Products() {
   useEffect(() => {
     if (firstProducts.length > 0 && !loadAll) {
       // Délai plus long sur connexion lente (détection via navigator.connection)
-      const slow = navigator.connection && (navigator.connection.saveData || ['slow-2g','2g'].includes(navigator.connection.effectiveType));
-      const delay = slow ? 5000 : 2000;
+      if (constrainedNetwork) return;
+      const delay = 2000;
       const t = setTimeout(() => setLoadAll(true), delay);
       return () => clearTimeout(t);
     }
-  }, [firstProducts.length, loadAll]);
+  }, [firstProducts.length, loadAll, constrainedNetwork]);
 
   const { data: fullProducts = [] } = useQuery({
     queryKey: ['products-all'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 200),
-    enabled: loadAll,
+    queryFn: () => firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 200),
+    enabled: loadAll && !constrainedNetwork,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
@@ -209,17 +217,17 @@ export default function Products() {
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true }, '-created_date', 60),
   });
 
   const { data: conversations = [] } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
-      const r = await base44.functions.invoke('chatService', { action: 'list' });
+      const r = await firebaseApi.functions.invoke('chatService', { action: 'list' });
       return Array.isArray(r.data) ? r.data : (r.data?.data || []);
     },
     // Ne charger les conversations qu'après les produits initiaux, et seulement si pas en économie de données
-    enabled: !!user?.id && firstProducts.length > 0 && !(navigator.connection?.saveData),
+    enabled: !!user?.id && firstProducts.length > 0 && !constrainedNetwork,
     refetchInterval: 60000, // Réduit à 60s pour économiser la data
     staleTime: 40 * 1000,
   });
@@ -238,44 +246,77 @@ export default function Products() {
   }, [user, shops]);
 
   useEffect(() => {
-    if (isSeller && (!user?.phone || !user?.region)) {
-      setShowSellerTrap(prev => {
-        if (!prev) {
-          setTrapData({ phone: user?.phone || '', region: user?.region || '' });
-          return true;
-        }
-        return prev;
-      });
-    } else {
-      setShowSellerTrap(false);
-    }
-  }, [isSeller, user]);
-
-  const updateUserMutation = useMutation({
-    mutationFn: async (data) => base44.entities.User.update(user.id, data),
-    onSuccess: () => {
-      toast.success('Profil mis à jour avec succès !');
-      setShowSellerTrap(false);
-      window.location.reload();
-    },
-    onError: (error) => toast.error(error.message || "Erreur lors de la mise à jour"),
-  });
-
-  const handleTrapSubmit = (e) => {
-    e.preventDefault();
-    if (!trapData.phone || !trapData.region) {
-      toast.error('Veuillez remplir tous les champs obligatoires.');
+    if (!isSeller || !user) {
+      setShowSellerProfilePrompt(false);
       return;
     }
-    updateUserMutation.mutate(trapData);
+
+    const missingContact = !user.phone || !user.address || !user.region;
+    if (!missingContact) {
+      setShowSellerProfilePrompt(false);
+      return;
+    }
+
+    const dismissedUntil = Number(localStorage.getItem(SELLER_PROFILE_DISMISS_KEY) || 0);
+    const openPrompt = () => {
+      setSellerProfile({
+        phone: user.phone || '',
+        address: user.address || '',
+        region: user.region || ''
+      });
+      setShowSellerProfilePrompt(true);
+    };
+
+    if (dismissedUntil > Date.now()) {
+      setShowSellerProfilePrompt(false);
+      const timer = window.setTimeout(openPrompt, dismissedUntil - Date.now());
+      return () => window.clearTimeout(timer);
+    }
+
+    openPrompt();
+  }, [isSeller, user]);
+
+  const dismissSellerProfilePrompt = () => {
+    const dismissedUntil = Date.now() + SELLER_PROFILE_REOPEN_DELAY;
+    localStorage.setItem(SELLER_PROFILE_DISMISS_KEY, String(dismissedUntil));
+    setShowSellerProfilePrompt(false);
   };
+
+  const updateSellerProfileMutation = useMutation({
+    mutationFn: async (data) => {
+      if (!user?.id) throw new Error('Session utilisateur expirée.');
+      const saved = await firebaseApi.auth.updateMe(data);
+      if (!saved) throw new Error('Impossible de sauvegarder le profil vendeur.');
+      return saved;
+    },
+    onSuccess: () => {
+      toast.success('Profil vendeur enregistré.');
+      setShowSellerProfilePrompt(false);
+    },
+    onError: (error) => toast.error(error.message || 'Impossible d’enregistrer le profil.')
+  });
+
+  const handleSellerProfileSubmit = (event) => {
+    event.preventDefault();
+    const { phone, address, region } = sellerProfile;
+    if (!phone.trim() || !address.trim() || !region.trim()) {
+      toast.error('Le WhatsApp, l’adresse et la région sont obligatoires.');
+      return;
+    }
+    updateSellerProfileMutation.mutate({
+      phone: phone.trim(),
+      address: address.trim(),
+      region: region.trim()
+    });
+  };
+
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity }) => {
-      if (!user) { base44.auth.redirectToLogin(window.location.pathname); return; }
+      if (!user) { firebaseApi.auth.redirectToLogin(window.location.pathname); return; }
       const price = applyClientMargin(product.promo_price || product.price, product.shop_name);
       const shop = shopsMap[product.shop_id];
-      await base44.entities.CartItem.create({
+      await firebaseApi.entities.CartItem.create({
         user_id: user.id,
         product_id: product.id,
         product_name: product.name,
@@ -322,7 +363,7 @@ export default function Products() {
 
   const filteredProducts = useMemo(() => {
     const baseFiltered = allProducts.filter(p => {
-      if (selectedCategory && p.category !== selectedCategory) return false;
+      if (selectedCategory && getMarketplaceSpace(p) !== selectedCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
       return true;
     });
@@ -400,9 +441,9 @@ export default function Products() {
     if (isFiltered) return {};
     const byCategory = {};
     allProducts.forEach(p => {
-      if (!p.category) return;
-      if (!byCategory[p.category]) byCategory[p.category] = [];
-      byCategory[p.category].push(p);
+      const space = getMarketplaceSpace(p);
+      if (!byCategory[space]) byCategory[space] = [];
+      byCategory[space].push(p);
     });
     const result = {};
     Object.keys(byCategory).forEach(cat => {
@@ -424,7 +465,7 @@ export default function Products() {
         seo_tags: product.seo_tags, category: product.category,
       }));
     } catch (_) {}
-    navigate(`/product/${product.slug || product.id}`);
+    navigate(`/product/${product.id}`);
   }, [isAdmin, shopsMap, trackProductView, navigate]);
 
   const handleSearchChange = useCallback((value) => {
@@ -443,7 +484,7 @@ export default function Products() {
   }, [trackCategoryView]);
 
   return (
-    <div className="flex flex-col min-h-screen pb-20" style={{backgroundColor: '#f0f2f5'}}>
+    <div className="rp-products-page rp-dark-shop flex flex-col min-h-screen pb-20">
       {isAdmin && editingProduct && (
         <ProductFormModal
           product={editingProduct}
@@ -462,18 +503,18 @@ export default function Products() {
         <meta name="google-adsense-account" content="ca-pub-2183521622591299" />
       </Helmet>
       <SEO
-        title={selectedCategory ? `${selectedCategory} - Marketplace Rapido Presto` : 'Marketplace - Tous les produits | Rapido Presto'}
-        description={selectedCategory ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Livraison rapide avec Rapido Presto` : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
-        keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedCategory || 'produits'].filter(Boolean)}
+        title={selectedCategory ? `${selectedCategory} - Marketplace Kairos` : 'Marketplace - Tous les produits | Kairos'}
+        description={selectedCategory ? `Découvrez tous nos produits ${selectedCategory} disponibles en Haïti - Marketplace, réservations et billetterie avec Kairos` : 'Découvrez tous les produits disponibles sur Kairos - Mode, Mariage, Fleurs, Electronics et plus. Marketplace, réservations et billetterie en Haïti.'}
+        keywords={['marketplace haïti', 'boutique en ligne haïti', 'marketplace, réservations et billetterie', selectedCategory || 'produits'].filter(Boolean)}
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 
-      <header className="sticky top-0 z-40 bg-white shadow-sm">
+      <header className="rp-products-header rp-shop-header sticky top-0 z-40">
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-black tracking-tight">Marketplace</h1>
+          <h1 className="text-3xl font-bold text-black tracking-tight">Kairos</h1>
           <div className="flex items-center">
             <button
-              onClick={() => user ? navigate('/Chat') : base44.auth.redirectToLogin('/Chat')}
+              onClick={() => user ? navigate('/Chat') : firebaseApi.auth.redirectToLogin('/Chat')}
               className="relative p-2.5 bg-[#E4E6EB] hover:bg-[#D8DADF] rounded-full transition-colors text-black active:scale-95"
               aria-label="Messages"
             >
@@ -506,167 +547,38 @@ export default function Products() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-b border-gray-300 bg-white">
-          <button
-            type="button"
-            onClick={() => user ? navigate('/Dashboard') : base44.auth.redirectToLogin('/Dashboard')}
-            className="flex-1 flex items-center justify-center gap-2 py-3 text-[#1877F2] font-semibold text-[14px] md:text-[15px] border-b-[3px] border-[#1877F2]"
-          >
-            <Store className="w-[18px] h-[18px] md:w-5 md:h-5" fill="currentColor" stroke="none" />
-            <span className="whitespace-nowrap">Ma Boutique</span>
-          </button>
+        <nav className="rp-space-tabs px-4 pb-3" aria-label="Grands espaces Kairos">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            {MARKETPLACE_SPACES.map((space) => (
+              <button
+                key={space.id}
+                type="button"
+                onClick={() => handleCategorySelect(selectedCategory === space.id ? null : space.id)}
+                aria-pressed={selectedCategory === space.id}
+                className={`shrink-0 rounded-xl px-4 py-3 text-sm font-bold transition ${selectedCategory === space.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+              >
+                <span className="mr-1.5">{space.icon}</span>{space.label}
+              </button>
+            ))}
+          </div>
+        </nav>
 
-          <div className="w-[1px] h-5 bg-gray-300"></div>
-
-          <button
-            type="button"
-            onClick={() => setShowCategories(v => !v)}
-            aria-pressed={showCategories || !!selectedCategory}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] border-b-[3px] border-transparent ${showCategories || selectedCategory ? 'text-[#1877F2]' : 'text-[#65676B]'}`}
-          >
-            <Tag className="w-[18px] h-[18px] md:w-5 md:h-5" />
-            <span className="whitespace-nowrap">{selectedCategory || 'Catégories'}</span>
-          </button>
-
-          <div className="w-[1px] h-5 bg-gray-300"></div>
-
-          <button
-            type="button"
-            onClick={() => handleCategorySelect('Tickets')}
-            aria-pressed={selectedCategory === 'Tickets'}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold text-[14px] md:text-[15px] border-b-[3px] transition-colors ${
-              selectedCategory === 'Tickets'
-                ? 'text-[#1877F2] border-[#1877F2]'
-                : 'text-[#65676B] border-transparent hover:text-[#1877F2]'
-            }`}
-          >
-            <Ticket className="w-[18px] h-[18px] md:w-5 md:h-5" fill="currentColor" stroke="none" />
-            <span className="whitespace-nowrap">Tickets</span>
-          </button>
-
-          <div className="w-[1px] h-5 bg-gray-300"></div>
-
+        <div className="flex items-center justify-between px-4 pb-3">
+          <span className="text-xs text-slate-400">{selectedCategory || 'Tous les espaces'}</span>
           <Select
             value={selectedRegion}
             onValueChange={(v) => { setSelectedRegion(v === '__all__' ? '' : v); setVisibleCount(60); }}
           >
-            <SelectTrigger
-              className="flex-shrink-0 w-16 md:w-20 flex justify-center items-center py-3 border-0 bg-transparent shadow-none focus:ring-0 p-0 h-auto text-[#65676B] rounded-none border-b-[3px] border-transparent data-[state=open]:text-[#1877F2]"
-              aria-label="Filtrer par région"
-            >
-              <MapPin className="w-5 h-5" fill="currentColor" stroke="none" />
+            <SelectTrigger className="h-9 w-auto min-w-[150px] border-0 bg-slate-100 px-3 text-xs text-slate-700 shadow-none focus:ring-0">
+              <MapPin className="mr-1.5 h-4 w-4" fill="currentColor" stroke="none" />
+              <SelectValue placeholder="Toutes les zones" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Toutes les zones</SelectItem>
-              {REGIONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              {REGIONS.map((region) => <SelectItem key={region} value={region}>{region}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
-
-        {showCategories && (
-          <div className="px-4 py-3 space-y-3 animate-in fade-in duration-200 bg-white">
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleCategorySelect(null)}
-                aria-pressed={!selectedCategory}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold border transition"
-                style={!selectedCategory ? {backgroundColor: '#1877F2', color: '#fff', borderColor: '#1877F2'} : {backgroundColor: '#fff', color: '#050505', borderColor: '#ddd'}}
-              >
-                Tous
-              </button>
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => handleCategorySelect(cat)}
-                  aria-pressed={selectedCategory === cat}
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold border transition"
-                  style={selectedCategory === cat ? {backgroundColor: '#1877F2', color: '#fff', borderColor: '#1877F2'} : {backgroundColor: '#fff', color: '#050505', borderColor: '#ddd'}}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            <div className="border-t border-gray-200 pt-2">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                Taxonomy Facebook / Google
-              </p>
-              <div className="flex flex-wrap gap-1.5 mb-1.5">
-                {FB_TAXONOMY.map(cat => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => {
-                      setFbLevel1Id(fbLevel1Id === cat.id ? null : cat.id);
-                      if (selectedFbCatId && !String(selectedFbCatId).startsWith(String(cat.id))) {
-                        setSelectedFbCatId(null);
-                      }
-                    }}
-                    aria-pressed={fbLevel1Id === cat.id}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
-                      fbLevel1Id === cat.id ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-slate-600 border-slate-200'
-                    }`}
-                  >
-                    {cat.icon} {cat.name}
-                  </button>
-                ))}
-              </div>
-
-              {fbLevel1Id && getChildren(fbLevel1Id).length > 0 && (
-                <div className="flex flex-wrap gap-1.5 ml-3 mb-1.5">
-                  <ChevronRight className="w-3 h-3 text-slate-400 self-center" />
-                  {getChildren(fbLevel1Id).map(child => (
-                    <button
-                      key={child.id}
-                      type="button"
-                      onClick={() => setSelectedFbCatId(selectedFbCatId === child.id ? null : child.id)}
-                      aria-pressed={selectedFbCatId === child.id}
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
-                        selectedFbCatId === child.id ? 'bg-blue-500 text-white border-blue-500' : 'bg-blue-50 text-blue-700 border-blue-100'
-                      }`}
-                    >
-                      {child.name}{child.children?.length > 0 && ' ›'}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {selectedFbCatId && getChildren(selectedFbCatId).length > 0 && (
-                <div className="flex flex-wrap gap-1.5 ml-6">
-                  <ChevronRight className="w-3 h-3 text-slate-400 self-center" />
-                  {getChildren(selectedFbCatId).map(child => (
-                    <button
-                      key={child.id}
-                      type="button"
-                      onClick={() => setSelectedFbCatId(prev => prev === child.id ? fbLevel1Id : child.id)}
-                      className="px-2.5 py-1 rounded-full text-[11px] font-medium border bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 transition"
-                    >
-                      {child.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {selectedFbCatId && (
-                <div className="mt-1.5 flex items-center gap-1">
-                  <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    ID {selectedFbCatId} · {findById(selectedFbCatId)?.name}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedFbCatId(null)}
-                      className="ml-0.5 hover:text-blue-900"
-                      aria-label="Supprimer le filtre"
-                    >
-                      <X className="w-2.5 h-2.5" />
-                    </button>
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </header>
 
       <main className="flex-1 pt-2 pb-4">
@@ -764,58 +676,92 @@ export default function Products() {
           </div>
         )}
 
-        {/* POP-UP PIÈGE POUR VENDEURS */}
-        <Dialog open={showSellerTrap} onOpenChange={() => {}}>
-          <DialogContent className="max-w-md bg-white rounded-2xl p-6" onInteractOutside={(e) => e.preventDefault()}>
-            <DialogHeader>
-              <DialogTitle className="text-xl font-black text-slate-800">Finalisez votre profil vendeur</DialogTitle>
-              <DialogDescription className="text-slate-500 mt-2">
-                Pour garantir un service logistique parfait à vos clients avec Rapido Presto, nous avons besoin de vos coordonnées exactes.
-              </DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleTrapSubmit} className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label className="font-bold text-slate-700">Numéro WhatsApp *</Label>
-                <Input
-                  type="tel"
-                  placeholder="Ex: +509 3000 0000"
-                  value={trapData.phone}
-                  onChange={(e) => setTrapData({ ...trapData, phone: e.target.value })}
-                  className="h-12 bg-slate-50 text-slate-900 font-bold text-lg"
-                  required
-                />
-                <p className="text-[10px] text-slate-400">Ce numéro sera utilisé pour vous contacter lors des commandes.</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="font-bold text-slate-700">Votre Région / Commune *</Label>
-                <Select
-                  value={trapData.region}
-                  onValueChange={(val) => setTrapData({ ...trapData, region: val })}
-                  required
+        {showSellerProfilePrompt && (
+          <div
+            className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-slate-950/60 p-3 sm:items-center sm:p-6"
+            role="presentation"
+          >
+            <div
+              className="my-3 w-full max-w-md rounded-2xl bg-white p-5 text-slate-900 shadow-2xl sm:my-6 sm:p-6"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="seller-profile-title"
+            >
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <h2 id="seller-profile-title" className="text-xl font-black text-slate-900">Finalisez votre profil vendeur</h2>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Ajoutez vos coordonnées pour recevoir les commandes et organiser la livraison.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={dismissSellerProfilePrompt}
+                  aria-label="Fermer et rappeler dans une heure"
+                  title="Fermer pour une heure"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
-                  <SelectTrigger className="h-12 bg-slate-50 border border-slate-200 text-slate-900 font-bold text-lg">
-                    <SelectValue placeholder="Sélectionnez votre zone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {REGIONS.map(r => (
-                      <SelectItem key={r} value={r}>{r}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <X className="h-5 w-5" />
+                </button>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg mt-6"
-                disabled={updateUserMutation.isPending || !trapData.phone || !trapData.region}
-              >
-                {updateUserMutation.isPending ? 'Mise à jour...' : 'Enregistrer et continuer'}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+              <form onSubmit={handleSellerProfileSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="seller-phone" className="font-bold text-slate-700">Numéro WhatsApp *</Label>
+                  <Input
+                    id="seller-phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="Ex: +509 3000 0000"
+                    value={sellerProfile.phone}
+                    onChange={(event) => setSellerProfile((current) => ({ ...current, phone: event.target.value }))}
+                    className="h-12 bg-white text-black caret-black font-bold text-lg placeholder:text-slate-500"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="seller-address" className="font-bold text-slate-700">Adresse de livraison / collecte *</Label>
+                  <Input
+                    id="seller-address"
+                    type="text"
+                    autoComplete="street-address"
+                    placeholder="Rue, zone, repère"
+                    value={sellerProfile.address}
+                    onChange={(event) => setSellerProfile((current) => ({ ...current, address: event.target.value }))}
+                    className="h-12 bg-white text-black caret-black font-bold placeholder:text-slate-500"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="font-bold text-slate-700">Votre région / commune *</Label>
+                  <Select
+                    value={sellerProfile.region}
+                    onValueChange={(region) => setSellerProfile((current) => ({ ...current, region }))}
+                  >
+                    <SelectTrigger className="h-12 bg-slate-50 border border-slate-200 text-slate-900 font-bold">
+                      <SelectValue placeholder="Sélectionnez votre zone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {REGIONS.map((region) => <SelectItem key={region} value={region}>{region}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg mt-6"
+                  disabled={updateSellerProfileMutation.isPending}
+                >
+                  {updateSellerProfileMutation.isPending ? 'Enregistrement...' : 'Enregistrer et continuer'}
+                </Button>
+              </form>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );

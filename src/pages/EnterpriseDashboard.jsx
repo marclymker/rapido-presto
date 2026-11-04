@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Package } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
@@ -18,9 +18,9 @@ export default function EnterpriseDashboard() {
   const [activeTab, setActiveTab] = useState('orders');
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
-      if (u.current_profile !== 'entreprise') {
+      if (!['marketplace', 'entreprise'].includes(u.current_profile)) {
         const redirectPages = {
           client: 'Home',
           livreur: 'DriverDashboard'
@@ -33,11 +33,11 @@ export default function EnterpriseDashboard() {
   const { data: myShop } = useQuery({
     queryKey: ['my-shop', user?.id],
     queryFn: async () => {
-      const shops = await base44.entities.Shop.filter({ user_id: user.id });
+      const shops = await firebaseApi.entities.Shop.filter({ user_id: user.id });
       if (shops.length > 0) return shops[0];
-      
+
       // Create shop automatically with default values
-      return base44.entities.Shop.create({
+      return firebaseApi.entities.Shop.create({
         user_id: user.id,
         company_name: user.profiles?.entreprise?.company_name || `Boutique ${user.full_name}`,
         company_category: user.profiles?.entreprise?.company_category || "Electronics",
@@ -53,18 +53,18 @@ export default function EnterpriseDashboard() {
 
   const { data: orders = [] } = useQuery({
     queryKey: ['shop-orders', myShop?.id],
-    queryFn: () => base44.entities.Order.filter({ shop_id: myShop?.id }, '-created_date'),
+    queryFn: () => firebaseApi.entities.Order.filter({ shop_id: myShop?.id }, '-created_date'),
     enabled: !!myShop?.id
   });
 
   // Fetch self orders (commandes passées par le marchand lui-même)
   const { data: selfOrders = [] } = useQuery({
     queryKey: ['self-orders', user?.id],
-    queryFn: () => base44.entities.Order.filter({ client_id: user?.id }, '-created_date'),
+    queryFn: () => firebaseApi.entities.Order.filter({ client_id: user?.id }, '-created_date'),
     enabled: !!user?.id
   });
 
-  if (!user || user.current_profile !== 'entreprise') {
+  if (!user || !['marketplace', 'entreprise'].includes(user.current_profile)) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-slate-500">Chargement...</p>
@@ -93,7 +93,7 @@ export default function EnterpriseDashboard() {
         <div className="px-4 mb-8">
           <div className="text-2xl text-center">🚀</div>
         </div>
-        
+
         <nav className="flex-1 space-y-2 px-2">
           {menuItems.map((item) => (
             <button
@@ -106,8 +106,8 @@ export default function EnterpriseDashboard() {
                 }
               }}
               className={`w-full flex flex-col items-center justify-center py-4 rounded-xl transition-all relative group ${
-                activeTab === item.id 
-                ? 'bg-blue-600 text-white shadow-lg' 
+                activeTab === item.id
+                ? 'bg-blue-600 text-white shadow-lg'
                 : 'text-gray-500 hover:bg-gray-100'
               }`}
               title={item.label}
@@ -136,9 +136,9 @@ export default function EnterpriseDashboard() {
               )}
             </div>
             <div className="text-center">
-              <Switch 
-                checked={myShop?.is_active !== false} 
-                disabled 
+              <Switch
+                checked={myShop?.is_active !== false}
+                disabled
                 className="scale-75"
               />
             </div>
@@ -164,7 +164,7 @@ export default function EnterpriseDashboard() {
       </main>
 
       {/* Business Smart Navigation */}
-      <BusinessSmartNav 
+      <BusinessSmartNav
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         userRole="entreprise"

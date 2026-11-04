@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Minus, Trash2, Link, Copy, Check, X, ShoppingBag, Send } from 'lucide-react';
+import { Plus, Minus, Trash2, Link, Copy, Check, ShoppingBag, Send } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -18,7 +18,7 @@ export default function PaymentLinkBuilder({ shop, user }) {
 
   const { data: products = [] } = useQuery({
     queryKey: ['vendor-products', shop?.id],
-    queryFn: () => base44.entities.Product.filter({ shop_id: shop?.id, is_available: true }, '-created_date', 200),
+    queryFn: () => firebaseApi.entities.Product.filter({ shop_id: shop?.id, is_available: true }, '-created_date', 200),
     enabled: !!shop?.id
   });
 
@@ -55,7 +55,7 @@ export default function PaymentLinkBuilder({ shop, user }) {
     if (!title.trim()) { toast.error('Donnez un titre à ce lien'); return; }
     setLoading(true);
     try {
-      const link = await base44.entities.PaymentLink.create({
+      const link = await firebaseApi.entities.PaymentLink.create({
         shop_id: shop.id,
         shop_name: shop.company_name,
         shop_logo: shop.company_logo_url,

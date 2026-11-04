@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo, Suspense, lazy, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState, useEffect, useMemo, lazy, useCallback } from 'react';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Tag, Store, ShoppingBag, ShoppingCart, X, Clock, ChevronRight } from 'lucide-react';
+import { Search, ShoppingCart, X } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { applyClientMargin } from '@/components/utils/priceCalculation';
 import { useAuth } from '@/components/auth/useAuth';
 const ProductDetailModal = lazy(() => import('@/components/modals/ProductDetailModal'));
 import { toast } from 'sonner';
@@ -14,14 +13,12 @@ import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { createPageUrl } from '@/utils';
 import { useGuestCart } from '@/components/cart/useGuestCart';
-import { FB_TAXONOMY, getChildren, findById } from '@/lib/fbTaxonomy';
+import { FB_TAXONOMY, findById } from '@/lib/fbTaxonomy';
 import CompactProductCard from '@/components/home/CompactProductCard';
 import CategoryRow from '@/components/home/CategoryRow';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
-import { Button } from "@/components/ui/button";
-
-const MerchantProfileAlert = lazy(() => import('@/components/home/MerchantProfileAlert'));
+import { MARKETPLACE_SPACES, getMarketplaceSpace } from '@/lib/marketplaceSpaces';
 
 export default function Home() {
   const { user } = useAuth();
@@ -35,7 +32,6 @@ export default function Home() {
   const [showCategories, setShowCategories] = useState(false);
   const [selectedFbCatId, setSelectedFbCatId] = useState(null);
   const [fbLevel1Id, setFbLevel1Id] = useState(null);
-  const [showCartReminder, setShowCartReminder] = useState(false);
   const [visibleCount, setVisibleCount] = useState(40);
 
   // Track PageView Meta Pixel
@@ -43,7 +39,7 @@ export default function Home() {
     trackMetaEvent('PageView');
     if (window.gtag) {
       window.gtag('event', 'page_view', {
-        page_title: 'Marketplace - Rapido Presto',
+        page_title: 'Marketplace - Kairos',
         page_location: window.location.href,
       });
     }
@@ -51,21 +47,21 @@ export default function Home() {
 
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.filter({ is_available: true }, '-created_date', 1000),
+    queryFn: () => firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 60),
     staleTime: 10 * 60 * 1000,
     refetchInterval: false,
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true }),
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true }, '-created_date', 60),
     staleTime: 10 * 60 * 1000,
     refetchInterval: false,
   });
 
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', user?.id],
-    queryFn: () => base44.entities.CartItem.filter({ user_id: user?.id }),
+    queryFn: () => firebaseApi.entities.CartItem.filter({ user_id: user?.id }),
     enabled: !!user?.id,
   });
 
@@ -79,22 +75,15 @@ export default function Home() {
     [cartItems]
   );
 
-  useEffect(() => {
-    if (cartItems.length > 0) {
-      const timer = setTimeout(() => setShowCartReminder(true), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [cartItems.length]);
-
   const addToCartMutation = useMutation({
     mutationFn: async ({ product, quantity }) => {
       const existing = cartItems.find(item => item.product_id === product.id);
       const price = getClientPrice(product);
       const shop = shops.find(s => s.id === product.shop_id);
       if (existing) {
-        return base44.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
+        return firebaseApi.entities.CartItem.update(existing.id, { quantity: existing.quantity + quantity });
       }
-      return base44.entities.CartItem.create({
+      return firebaseApi.entities.CartItem.create({
         user_id: user.id,
         product_id: product.id,
         product_name: product.name,
@@ -159,6 +148,7 @@ export default function Home() {
 
   const filteredProducts = useMemo(() => {
     const base = allProducts.filter(p => {
+      if (selectedCategory && getMarketplaceSpace(p) !== selectedCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
 
       // Recherche hybride multi-mots : titre + description + nom boutique + tags SEO
@@ -181,7 +171,7 @@ export default function Home() {
     });
 
     // Si recherche ou catégorie active, pas de personnalisation
-    if (searchQuery || selectedFbCatId) return base;
+    if (searchQuery || selectedCategory || selectedFbCatId) return base;
 
     // Récupérer le dernier produit visualisé
     let lastViewed = null;
@@ -223,13 +213,13 @@ export default function Home() {
     const rest = shuffle(scored.filter(p => !top10Ids.has(p.id)));
 
     return [...top10, ...rest];
-  }, [allProducts, searchQuery, selectedFbCatId]);
+  }, [allProducts, searchQuery, selectedCategory, selectedFbCatId]);
 
   const handleProductClick = useCallback((product) => {
     const shop = shops.find(s => s.id === product.shop_id);
     trackProductView(product, shop);
     try { localStorage.setItem('last_viewed_product', JSON.stringify({ id: product.id, name: product.name, seo_tags: product.seo_tags, category: product.category })); } catch (_) {}
-    navigate(`/product/${product.slug || product.id}`);
+    navigate(`/product/${product.id}`);
   }, [shops, trackProductView, navigate]);
 
   const handleSearchChange = (value) => {
@@ -246,26 +236,26 @@ export default function Home() {
     return m;
   }, [shops]);
 
-  const isFiltered = !!(searchQuery || selectedFbCatId);
+  const isFiltered = !!(searchQuery || selectedCategory || selectedFbCatId);
 
   // Group products by category for horizontal sections
   const categoryGroups = useMemo(() => {
     if (isFiltered) return {};
     const groups = {};
     allProducts.forEach(p => {
-      if (!p.category) return;
-      if (!groups[p.category]) groups[p.category] = [];
-      groups[p.category].push(p);
+      const space = getMarketplaceSpace(p);
+      if (!groups[space]) groups[space] = [];
+      groups[space].push(p);
     });
     // Sort each group by newest
     Object.keys(groups).forEach(k => {
       groups[k].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     });
-    return groups;
+    return Object.fromEntries(MARKETPLACE_SPACES.map(({ id }) => [id, groups[id] || []]).filter(([, products]) => products.length));
   }, [allProducts, isFiltered]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 pb-20">
+    <div className="rp-marketplace rp-dark-shop flex flex-col min-h-screen pb-20">
 
 
       <Helmet>
@@ -273,18 +263,17 @@ export default function Home() {
       </Helmet>
 
       <SEO
-        title={selectedFbCatId ? `${findById(selectedFbCatId)?.name} - Marketplace Rapido Presto` : 'Marketplace - Tous les produits | Rapido Presto'}
-        description={selectedFbCatId ? `Découvrez tous nos produits ${findById(selectedFbCatId)?.name} disponibles en Haïti - Livraison rapide avec Rapido Presto` : 'Découvrez tous les produits disponibles sur Rapido Presto - Mode, Mariage, Fleurs, Electronics et plus. Livraison rapide en Haïti.'}
-        keywords={['marketplace haïti', 'boutique en ligne haïti', 'livraison rapide', selectedFbCatId ? findById(selectedFbCatId)?.name : 'produits'].filter(Boolean)}
+        title={selectedFbCatId ? `${findById(selectedFbCatId)?.name} - Marketplace Kairos` : 'Marketplace - Tous les produits | Kairos'}
+        description={selectedFbCatId ? `Découvrez tous nos produits ${findById(selectedFbCatId)?.name} disponibles en Haïti - Marketplace, réservations et billetterie avec Kairos` : 'Découvrez tous les produits disponibles sur Kairos - Mode, Mariage, Fleurs, Electronics et plus. Marketplace, réservations et billetterie en Haïti.'}
+        keywords={['marketplace haïti', 'boutique en ligne haïti', 'marketplace, réservations et billetterie', selectedFbCatId ? findById(selectedFbCatId)?.name : 'produits'].filter(Boolean)}
         url={typeof window !== 'undefined' ? window.location.href : undefined}
       />
 
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <header className="rp-marketplace-header rp-shop-header sticky top-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div className="flex flex-col leading-tight cursor-pointer" onClick={() => window.location.reload()}>
-            <h1 className="text-xl font-bold tracking-tight leading-none m-0 p-0 text-slate-900">Rapido</h1>
-            <span className="text-sm text-orange-400 -mt-1 ml-4">Presto</span>
+            <h1 className="text-xl font-bold tracking-tight leading-none m-0 p-0 text-slate-900">Kairos</h1>
           </div>
           <div
             className="relative flex items-center cursor-pointer"
@@ -318,83 +307,29 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="px-4 pb-3 flex gap-2">
-          <button
-            onClick={() => navigate('/Dashboard')}
-            className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white py-2 px-4 rounded-full text-sm font-semibold hover:bg-orange-600 transition"
-          >
-            <Store className="w-4 h-4" />
-            <span>Ma boutique</span>
-          </button>
-          <button
-            onClick={() => setShowCategories(!showCategories)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm font-semibold transition ${
-              showCategories || selectedFbCatId
-                ? 'bg-orange-500 text-white'
-                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-            }`}
-          >
-            <Tag className="w-4 h-4" />
-            <span>{selectedFbCatId ? findById(selectedFbCatId)?.name : 'Catégories'}</span>
-          </button>
-        </div>
-
-        {/* Categories dropdown - Taxonomy Facebook/Google uniquement */}
-        {showCategories && (
-          <div className="px-4 pb-3 space-y-2">
-            <div className="flex flex-wrap gap-1.5">
-              {FB_TAXONOMY.map(cat => (
-                <button key={cat.id} onClick={() => { setFbLevel1Id(fbLevel1Id === cat.id ? null : cat.id); if (selectedFbCatId) setSelectedFbCatId(null); }}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${fbLevel1Id === cat.id ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-200'}`}>
-                  {cat.icon} {cat.name}
-                </button>
-              ))}
-            </div>
-            {fbLevel1Id && getChildren(fbLevel1Id).length > 0 && (
-              <div className="flex flex-wrap gap-1.5 ml-3 items-center">
-                <ChevronRight className="w-3 h-3 text-slate-400" />
-                {getChildren(fbLevel1Id).map(child => (
-                  <button key={child.id} onClick={() => setSelectedFbCatId(selectedFbCatId === child.id ? null : child.id)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${selectedFbCatId === child.id ? 'bg-orange-500 text-white border-orange-500' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
-                    {child.name}{child.children?.length > 0 && ' ›'}
-                  </button>
-                ))}
-              </div>
-            )}
-            {selectedFbCatId && getChildren(selectedFbCatId).length > 0 && (
-              <div className="flex flex-wrap gap-1.5 ml-6 items-center">
-                <ChevronRight className="w-3 h-3 text-slate-400" />
-                {getChildren(selectedFbCatId).map(child => (
-                  <button key={child.id} onClick={() => setSelectedFbCatId(child.id)}
-                    className="px-2.5 py-1 rounded-full text-[11px] font-medium border bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 transition">
-                    {child.name}
-                  </button>
-                ))}
-              </div>
-            )}
-            {selectedFbCatId && (
-              <div className="mt-1">
-                <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                  {findById(selectedFbCatId)?.name}
-                  <button onClick={() => { setSelectedFbCatId(null); setFbLevel1Id(null); }}><X className="w-2.5 h-2.5" /></button>
-                </span>
-              </div>
-            )}
+        <nav className="rp-space-tabs px-4 pb-3" aria-label="Grands espaces Kairos">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            {MARKETPLACE_SPACES.map((space) => (
+              <button
+                key={space.id}
+                type="button"
+                onClick={() => { setSelectedCategory(selectedCategory === space.id ? null : space.id); setSearchQuery(''); setShowCategories(false); }}
+                aria-pressed={selectedCategory === space.id}
+                className={`shrink-0 rounded-xl px-4 py-3 text-sm font-bold transition ${selectedCategory === space.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+              >
+                <span className="mr-1.5">{space.icon}</span>{space.label}
+              </button>
+            ))}
           </div>
-        )}
+        </nav>
       </header>
-
-      <Suspense fallback={null}>
-        <MerchantProfileAlert user={user} />
-      </Suspense>
 
       {/* Main Content */}
       <PullToRefresh onRefresh={async () => { queryClient.invalidateQueries(['all-products']); queryClient.invalidateQueries(['shops']); }}>
-        <main className="flex-1 p-4">
+        <main className="rp-feed flex-1 p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-800">
-              {selectedFbCatId ? findById(selectedFbCatId)?.name : 'Sélection du jour'}
+              {selectedCategory || 'Sélection du jour'}
             </h2>
             <span className="text-xs text-slate-400">{filteredProducts.length} produits</span>
           </div>
@@ -489,33 +424,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Cart reminder */}
-      {showCartReminder && cartCount > 0 && (
-        <div className="fixed top-32 right-4 z-50 animate-in slide-in-from-right duration-500 max-w-sm w-full md:w-80">
-          <div className="bg-white border-l-4 border-orange-500 shadow-2xl rounded-lg p-4 relative">
-            <button onClick={() => setShowCartReminder(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
-              <X className="w-4 h-4" />
-            </button>
-            <div className="flex items-start gap-3">
-              <div className="bg-orange-100 p-2 rounded-full">
-                <Clock className="w-6 h-6 text-orange-600" />
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900">N'oubliez pas vos achats !</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  Il vous reste <span className="font-bold">{cartCount} article{cartCount > 1 ? 's' : ''}</span> dans votre panier.
-                </p>
-              </div>
-            </div>
-            <Button
-              className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold"
-              onClick={() => window.location.href = createPageUrl('Cart')}
-            >
-              Finaliser ma commande
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

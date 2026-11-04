@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { X, Download, Smartphone } from 'lucide-react';
+import { X, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
 import { getAccessSource } from '@/components/utils/detectFacebookInApp';
 import { toast } from 'sonner';
 
@@ -26,7 +25,7 @@ export default function InstallPrompt() {
       const isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
       const alreadyInstalledFlag = localStorage.getItem('pwa_installed');
       const lastDismissed = localStorage.getItem('pwa_dismissed_at');
-      
+
       // Calcul du temps écoulé depuis le dernier refus
       const now = Date.now();
       const oneHour = 60 * 60 * 1000;
@@ -82,20 +81,20 @@ export default function InstallPrompt() {
                 <Smartphone className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-900 leading-none">Rapido Presto App</p>
+                <p className="text-sm font-bold text-gray-900 leading-none">Kairos App</p>
                 <p className="text-[11px] text-gray-500 mt-1">Installer pour un accès rapide</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-1">
-              <Button 
+              <Button
                 onClick={handleInstall}
-                size="sm" 
+                size="sm"
                 className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-8 px-3"
               >
                 Installer
               </Button>
-              <button 
+              <button
                 onClick={handleDismiss}
                 className="p-1 hover:bg-gray-100 rounded-full text-gray-400"
               >

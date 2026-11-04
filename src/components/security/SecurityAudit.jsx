@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { AlertTriangle, Shield, Info, CheckCircle2 } from 'lucide-react';
 
 /**
- * 🔒 AUDIT DE SÉCURITÉ COMPLET - RAPIDO PRESTO
+ * 🔒 AUDIT DE SÉCURITÉ COMPLET - KAIROS
  * Généré le: 5 février 2026
  */
 
@@ -252,7 +252,7 @@ export default function SecurityAuditReport() {
           <Shield className="w-8 h-8" />
           <h1 className="text-2xl font-bold">Audit de Sécurité</h1>
         </div>
-        <p className="text-white/90">Analyse complète des vulnérabilités - Rapido Presto</p>
+        <p className="text-white/90">Analyse complète des vulnérabilités - Kairos</p>
       </div>
 
       {/* Score */}

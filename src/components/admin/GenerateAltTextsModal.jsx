@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -26,7 +26,7 @@ export default function GenerateAltTextsModal({ open, onClose, shopId, shopName 
 
     try {
       while (true) {
-        const response = await base44.functions.invoke('generateAltTexts', {
+        const response = await firebaseApi.functions.invoke('generateAltTexts', {
           shopId: shopId || undefined,
           force_all: forceAll,
           offset,

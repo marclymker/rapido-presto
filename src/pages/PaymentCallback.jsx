@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -60,7 +60,7 @@ return;
 
 // Vérifier le paiement
 
-const response = await base44.functions.invoke('moncashVerifyPayment', {
+const response = await firebaseApi.functions.invoke('moncashVerifyPayment', {
 
 transactionId: transactionId
 
@@ -85,7 +85,7 @@ if (orderId && orderId.startsWith('SUB_')) {
 
 // C'est un abonnement Premium - appeler le webhook
 
-await base44.functions.invoke('premiumWebhook', {
+await firebaseApi.functions.invoke('premiumWebhook', {
 
 transaction_id: transactionId,
 
@@ -111,7 +111,7 @@ isPremium: true
 
 // Paiement de commande normale
 
-const orders = await base44.entities.Order.filter({
+const orders = await firebaseApi.entities.Order.filter({
 
 moncash_transaction_id: transactionId
 
@@ -125,7 +125,7 @@ if (orders.length > 0) {
 
 for (const order of orders) {
 
-await base44.entities.Order.update(order.id, {
+await firebaseApi.entities.Order.update(order.id, {
 
 payment_status: 'paid'
 
@@ -135,7 +135,7 @@ payment_status: 'paid'
 
 // ENVOYER LES NOTIFICATIONS APRÈS PAIEMENT RÉUSSI
 
-await base44.functions.invoke('sendOrderNotification', {
+await firebaseApi.functions.invoke('sendOrderNotification', {
 
 orderId: order.id,
 
@@ -152,7 +152,7 @@ console.log('=== PAYMENT CALLBACK - AVANT ENVOI WHATSAPP ===');
 console.log('Order ID:', order.id);
 
 
-const debugResult = await base44.functions.invoke('debugWhatsApp', {
+const debugResult = await firebaseApi.functions.invoke('debugWhatsApp', {
 
 orderId: order.id
 
@@ -175,7 +175,7 @@ console.log('Debug result:', debugResult.data);
 
 // Envoyer notification WhatsApp au marchand
 
-const whatsappResult = await base44.functions.invoke('sendWhatsAppOrderNotification', {
+const whatsappResult = await firebaseApi.functions.invoke('sendWhatsAppOrderNotification', {
 
 orderId: order.id
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { MessageCircle, X } from 'lucide-react';
 import { createPageUrl } from '@/utils';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 
 export default function NewMessagesBanner({ user }) {
@@ -11,7 +11,7 @@ export default function NewMessagesBanner({ user }) {
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-count', user?.id],
     queryFn: async () => {
-      const response = await base44.functions.invoke('chatService', { action: 'unread-count' });
+      const response = await firebaseApi.functions.invoke('chatService', { action: 'unread-count' });
       return response.data.unreadCount;
     },
     enabled: !!user?.id,
@@ -40,13 +40,13 @@ export default function NewMessagesBanner({ user }) {
   return (
     <div className="fixed top-32 right-4 z-50 animate-in slide-in-from-right duration-500 max-w-sm w-full md:w-80">
       <div className="bg-white border-l-4 border-blue-500 shadow-2xl rounded-lg p-4 relative">
-        <button 
-          onClick={() => setShowBanner(false)} 
+        <button
+          onClick={() => setShowBanner(false)}
           className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
         >
           <X className="w-4 h-4" />
         </button>
-        
+
         <div className="flex items-start gap-3">
           <div className="bg-blue-100 p-2 rounded-full">
             <MessageCircle className="w-6 h-6 text-blue-600" />
@@ -58,8 +58,8 @@ export default function NewMessagesBanner({ user }) {
             </p>
           </div>
         </div>
-        
-        <Button 
+
+        <Button
           className="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white font-bold"
           onClick={() => window.location.href = createPageUrl('Chat')}
         >

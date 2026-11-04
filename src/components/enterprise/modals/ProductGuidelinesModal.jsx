@@ -12,7 +12,7 @@ export default function ProductGuidelinesModal({ open, onConfirm, onCancel }) {
           <h2 className="text-xl font-bold text-gray-900 mb-6">
             Consignes pour la création d'articles
           </h2>
-          
+
           <div className="space-y-4 text-left">
             <div className="bg-orange-50 rounded-2xl p-4 flex items-start gap-3">
               <div className="text-2xl">📝</div>
@@ -46,13 +46,13 @@ export default function ProductGuidelinesModal({ open, onConfirm, onCancel }) {
           </div>
 
           <div className="space-y-3 mt-6">
-            <Button 
+            <Button
               onClick={onConfirm}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white py-6 rounded-2xl font-bold text-base"
             >
               J'ai compris
             </Button>
-            <Button 
+            <Button
               onClick={onCancel}
               variant="outline"
               className="w-full py-6 rounded-2xl font-semibold text-base"

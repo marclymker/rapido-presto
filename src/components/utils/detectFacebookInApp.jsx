@@ -12,7 +12,7 @@ export function isFacebookInAppBrowser() {
  */
 export function getAccessSource() {
   const userAgent = navigator.userAgent.toLowerCase();
-  
+
   if (/fbav|fban|facebook/.test(userAgent)) {
     return 'facebook_inapp';
   }
@@ -34,7 +34,7 @@ export function getAccessSource() {
 export function logAccessSource(userId) {
   const source = getAccessSource();
   console.log(`User ${userId} accessed via: ${source}`);
-  
+
   // Optionnel: envoyer à une base de données pour tracking
   if (window.fbq) {
     window.fbq('track', 'CustomEvent', {

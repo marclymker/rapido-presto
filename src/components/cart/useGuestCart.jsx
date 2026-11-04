@@ -23,10 +23,10 @@ export function useGuestCart() {
 
   const addToGuestCart = (item) => {
     const existing = guestCart.find(i => i.product_id === item.product_id);
-    
+
     if (existing) {
-      const updated = guestCart.map(i => 
-        i.product_id === item.product_id 
+      const updated = guestCart.map(i =>
+        i.product_id === item.product_id
           ? { ...i, quantity: i.quantity + (item.quantity || 1) }
           : i
       );
@@ -37,7 +37,7 @@ export function useGuestCart() {
   };
 
   const updateGuestCartItem = (productId, quantity) => {
-    const updated = guestCart.map(i => 
+    const updated = guestCart.map(i =>
       i.product_id === productId ? { ...i, quantity } : i
     );
     saveGuestCart(updated);

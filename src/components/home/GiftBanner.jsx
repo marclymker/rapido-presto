@@ -12,12 +12,12 @@ export default function GiftBanner() {
       const now = Date.now();
       const cycleTime = 50 * 60 * 1000; // 50 minutes
       const displayDuration = 3 * 60 * 1000; // 3 minutes
-      
+
       const timeInCycle = now % cycleTime;
       const shouldShow = timeInCycle < displayDuration;
-      
+
       setIsVisible(shouldShow);
-      
+
       if (shouldShow) {
         setTimeLeft(Math.floor((displayDuration - timeInCycle) / 1000));
       }
@@ -56,7 +56,7 @@ export default function GiftBanner() {
             <div className="relative bg-gradient-to-r from-purple-600 via-pink-500 to-red-500 rounded-2xl p-5 overflow-hidden shadow-xl">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
-              
+
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
@@ -76,7 +76,7 @@ export default function GiftBanner() {
                     <p className="text-white/90 text-sm">Fleurs • Montres • Lunettes • Paniers</p>
                   </div>
                 </div>
-                
+
                 <div className="bg-white text-pink-600 px-5 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">
                   Voir →
                 </div>

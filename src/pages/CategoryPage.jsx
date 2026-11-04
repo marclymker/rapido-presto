@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft } from 'lucide-react';
@@ -10,7 +10,7 @@ import ProductCard from '@/components/ui/ProductCard';
 /**
  * PAGE CATÉGORIE - SEO OPTIMISÉE
  * URL: /categories/{slug-categorie}
- * 
+ *
  * Exemples:
  * - /categories/mariage
  * - /categories/robes-de-mariee
@@ -32,6 +32,7 @@ export default function CategoryPage() {
     'electronique': 'Electronics',
     'bijoux': 'Bijoux',
     'maison': 'Maison',
+    'hotels-piscine': 'Hotels/Piscine',
     'bebe': 'Bébé',
     'outils': 'Outils'
   };
@@ -41,9 +42,9 @@ export default function CategoryPage() {
   // Produits de la catégorie
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['category-products', category],
-    queryFn: () => base44.entities.Product.filter({ 
+    queryFn: () => firebaseApi.entities.Product.filter({
       category,
-      is_available: true 
+      is_available: true
     }),
     enabled: category !== 'Tout'
   });
@@ -51,7 +52,7 @@ export default function CategoryPage() {
   // Boutiques actives
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true })
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true })
   });
 
   if (isLoading) {
@@ -83,8 +84,8 @@ export default function CategoryPage() {
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "name": `${category} - Rapido Presto`,
-    "description": `Découvrez notre sélection ${category.toLowerCase()} en Haïti. Livraison rapide.`,
+    "name": `${category} - Kairos`,
+    "description": `Découvrez notre sélection ${category.toLowerCase()} en Haïti. Marketplace, réservations et billetterie.`,
     "url": typeof window !== 'undefined' ? window.location.href : '',
     "numberOfItems": products.length
   };
@@ -92,15 +93,15 @@ export default function CategoryPage() {
   return (
     <>
       <Helmet>
-        <title>{category} - Livraison rapide en Haïti | Rapido Presto</title>
-        <meta 
-          name="description" 
-          content={`Découvrez ${products.length} produits dans la catégorie ${category}. Livraison rapide partout en Haïti.`}
+        <title>{category} - Marketplace, réservations et billetterie en Haïti | Kairos</title>
+        <meta
+          name="description"
+          content={`Découvrez ${products.length} produits dans la catégorie ${category}. Marketplace, réservations et billetterie partout en Haïti.`}
         />
         <meta name="keywords" content={`${category}, Haïti, livraison, e-commerce, shopping`} />
-        
+
         <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
-        
+
         <script type="application/ld+json">
           {JSON.stringify(breadcrumbSchema)}
         </script>
@@ -133,11 +134,11 @@ export default function CategoryPage() {
             {products.map(product => {
               const shop = shops.find(s => s.id === product.shop_id);
               return (
-                <a key={product.id} href={`/products/${product.slug}`}>
+                <a key={product.id} href={`/product/${product.id}`}>
                   <ProductCard
                     product={product}
                     shop={shop}
-                    onClick={() => window.location.href = `/products/${product.slug}`}
+                    onClick={() => window.location.href = `/product/${product.id}`}
                   />
                 </a>
               );

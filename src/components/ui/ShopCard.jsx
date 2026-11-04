@@ -12,8 +12,8 @@ export default function ShopCard({ shop, onClick }) {
     >
       <div className="h-32 bg-gradient-to-br from-orange-100 to-orange-50 relative overflow-hidden">
         {shop.company_logo_url ? (
-          <img 
-            src={shop.company_logo_url} 
+          <img
+            src={shop.company_logo_url}
             alt={shop.company_name}
             className="w-full h-full object-cover"
           />

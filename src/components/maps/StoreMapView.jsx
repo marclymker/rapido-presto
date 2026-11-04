@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
-import { calculateDistance, estimateDeliveryTime } from '@/components/utils/distanceCalculation';
 
 const mapStyleSilver = [
   { "elementType": "geometry", "stylers": [{ "color": "#f5f5f5" }] },
@@ -53,7 +52,7 @@ export default function StoreMapView({ stores, userLocation, onStoreSelect }) {
       }}
     >
       {/* Marqueur de l'utilisateur (Point bleu) */}
-      <Marker 
+      <Marker
         position={userLocation}
         icon={{
           path: window.google.maps.SymbolPath.CIRCLE,
@@ -78,7 +77,7 @@ export default function StoreMapView({ stores, userLocation, onStoreSelect }) {
             title={store.company_name}
             onClick={() => onStoreSelect && onStoreSelect(store)}
             icon={{
-              url: store.is_google_place 
+              url: store.is_google_place
                 ? 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
                 : 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png',
               scaledSize: new window.google.maps.Size(32, 32)
