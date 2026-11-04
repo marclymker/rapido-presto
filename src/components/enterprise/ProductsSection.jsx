@@ -58,15 +58,34 @@ export default function ProductsSection({ shopId }) {
   };
 
   const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return;
     setDeleting(true);
     try {
+      const currentUser = await firebaseApi.auth.me();
+      if (!currentUser?.id) {
+        throw new Error('Session utilisateur expirée. Reconnectez-vous.');
+      }
+
       for (const id of selectedIds) {
-        const res = await firebaseApi.functions.invoke('adminProducts', { action: 'delete', productId: id });
-        if (res.data?.error) throw new Error(res.data.error);
+        // Relecture avant suppression : ne jamais faire confiance uniquement
+        // à la liste affichée dans le navigateur.
+        const product = await firebaseApi.entities.Product.get(id);
+        if (!product) continue;
+
+        const isOwner = [product.owner_id, product.vendor_id, product.user_id]
+          .filter(Boolean)
+          .includes(currentUser.id);
+
+        if (!isOwner && currentUser.role !== 'admin' && currentUser.role !== 'owner') {
+          throw new Error(`Vous n’êtes pas autorisé à supprimer « ${product.name || 'cet article'} ».`);
+        }
+
+        // La règle Firestore vérifie une seconde fois owner_id/vendor_id côté serveur.
+        await firebaseApi.entities.Product.delete(id);
       }
       toast.success(`${selectedIds.length} article(s) supprimé(s)`);
       setSelectedIds([]);
-      queryClient.invalidateQueries(['shop-products']);
+      queryClient.invalidateQueries({ queryKey: ['shop-products', shopId] });
     } catch (err) {
       toast.error("Erreur lors de la suppression : " + (err?.message || err));
     } finally {
