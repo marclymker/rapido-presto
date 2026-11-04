@@ -4,7 +4,7 @@ import { getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUyAlOkYW-ytQ0YbLI477dIttYnI5Kz3Y",
-  authDomain: "rapido-presto-f072a.firebaseapp.com",
+  authDomain: "makariosbridal.shop",
   databaseURL: "https://rapido-presto-f072a-default-rtdb.firebaseio.com",
   projectId: "rapido-presto-f072a",
   storageBucket: "rapido-presto-f072a.firebasestorage.app",

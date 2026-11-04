@@ -8,7 +8,7 @@ importScripts('https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-com
 
 firebase.initializeApp({
   apiKey: 'AIzaSyCUyAlOkYW-ytQ0YbLI477dIttYnI5Kz3Y',
-  authDomain: 'rapido-presto-f072a.firebaseapp.com',
+  authDomain: 'makariosbridal.shop',
   projectId: 'rapido-presto-f072a',
   storageBucket: 'rapido-presto-f072a.firebasestorage.app',
   messagingSenderId: '553324736782',
