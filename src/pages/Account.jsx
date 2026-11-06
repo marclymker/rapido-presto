@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner";
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import NotificationPreferences from '@/components/notifications/NotificationPreferences';
+import { hasKairosAdminAccess } from '@/lib/adminAccess';
 
 // MISE À JOUR : Liste standardisée des régions
 const REGIONS = [
@@ -380,7 +381,7 @@ export default function Account() {
         </div>
 
         {/* Admin Tools */}
-        {user?.role === 'admin' && (
+        {hasKairosAdminAccess(user) && (
           <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
               <Shield className="w-5 h-5 text-purple-600" />

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { Plus, Store, Trash2, Edit } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
+import { hasKairosAdminAccess } from '@/lib/adminAccess';
 
 // MISE À JOUR : Liste standardisée des régions (Single Source of Truth)
 const REGIONS = [
@@ -49,7 +50,7 @@ export default function AdminShops() {
   React.useEffect(() => {
     firebaseApi.auth.me().then(u => {
       setUser(u);
-      if (u.role !== 'admin') {
+      if (!hasKairosAdminAccess(u)) {
         window.location.href = '/';
       }
     }).catch(() => {

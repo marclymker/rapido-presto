@@ -325,3 +325,5 @@ exports.googleAnalyticsFeed = onRequest(async (req, res) => {
 Object.assign(exports, require('./notifications'));
 // Paiements : les credentials sont injectés uniquement par Secret Manager.
 Object.assign(exports, require('./payments'));
+// Administration globale : accès réservé à l’adresse Kairos officielle.
+Object.assign(exports, require('./admin'));

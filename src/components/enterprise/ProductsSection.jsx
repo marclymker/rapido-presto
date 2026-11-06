@@ -16,6 +16,7 @@ import {
 import ProductFormModal from './modals/ProductFormModal';
 import BulkUploadModal from '@/components/admin/BulkUploadModal';
 import { toast } from 'sonner';
+import { hasKairosAdminAccess } from '@/lib/adminAccess';
 
 export default function ProductsSection({ shopId }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -76,7 +77,7 @@ export default function ProductsSection({ shopId }) {
           .filter(Boolean)
           .includes(currentUser.id);
 
-        if (!isOwner && currentUser.role !== 'admin' && currentUser.role !== 'owner') {
+        if (!isOwner && !hasKairosAdminAccess(currentUser)) {
           throw new Error(`Vous n’êtes pas autorisé à supprimer « ${product.name || 'cet article'} ».`);
         }
 

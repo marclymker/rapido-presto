@@ -325,6 +325,8 @@ export const firebaseApi = {
         'squarePayment',
         'moncashCreatePayment',
         'moncashVerifyPayment',
+        'adminProducts',
+        'adminShops',
       ]);
       if (!supportedFunctions.has(funcName)) {
         throw new Error(`Fonction Firebase non disponible: ${funcName}`);

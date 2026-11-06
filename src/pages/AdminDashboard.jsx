@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { hasKairosAdminAccess } from '@/lib/adminAccess';
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
@@ -36,7 +37,7 @@ export default function AdminDashboard() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['admin-all-users'],
     queryFn: () => firebaseApi.entities.User.list('-created_date'),
-    enabled: user?.role === 'admin'
+    enabled: hasKairosAdminAccess(user)
   });
 
   const { data: agentClients = [] } = useQuery({
@@ -58,7 +59,7 @@ export default function AdminDashboard() {
     claimedCommissions: agentClients.filter(c => c.commission_claimed).reduce((sum, c) => sum + c.commission_amount, 0)
   };
 
-  if (!user || user.role !== 'admin') {
+  if (!hasKairosAdminAccess(user)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">

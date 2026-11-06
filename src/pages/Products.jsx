@@ -20,6 +20,7 @@ import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { FB_TAXONOMY, findById } from '@/lib/fbTaxonomy';
 import { MARKETPLACE_SPACES, getMarketplaceSpace } from '@/lib/marketplaceSpaces';
+import { hasKairosAdminAccess } from '@/lib/adminAccess';
 
 const CATEGORIES = [
   ...MARKETPLACE_SPACES.map((space) => space.id)
@@ -152,7 +153,7 @@ export default function Products() {
   const [showSellerProfilePrompt, setShowSellerProfilePrompt] = useState(false);
   const [sellerProfile, setSellerProfile] = useState({ phone: '', address: '', region: '' });
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = hasKairosAdminAccess(user);
   const referenceRegion = selectedRegion || user?.region || 'Port-au-Prince';
 
 

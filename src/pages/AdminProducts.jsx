@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Plus, Package, Trash2, Edit, Store, UploadCloud } from 'lucide-react';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import BulkUploadModal from '@/components/admin/BulkUploadModal';
+import { hasKairosAdminAccess } from '@/lib/adminAccess';
 
 export default function AdminProducts() {
   const [user, setUser] = useState(null);
@@ -20,7 +21,7 @@ export default function AdminProducts() {
   React.useEffect(() => {
     firebaseApi.auth.me().then(u => {
       setUser(u);
-      if (u.role !== 'admin') {
+      if (!hasKairosAdminAccess(u)) {
         window.location.href = '/';
       }
     }).catch(() => {

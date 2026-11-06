@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { motion } from 'framer-motion';
+import { hasKairosAdminAccess } from '@/lib/adminAccess';
 
 export default function AdminValidation() {
   const [user, setUser] = useState(null);
@@ -24,7 +25,7 @@ export default function AdminValidation() {
   useEffect(() => {
     firebaseApi.auth.me().then(u => {
       setUser(u);
-      if (u.role !== 'admin') {
+      if (!hasKairosAdminAccess(u)) {
         window.location.href = '/';
       }
     }).catch(() => {});
@@ -223,7 +224,7 @@ export default function AdminValidation() {
     </motion.div>
   );
 
-  if (!user || user.role !== 'admin') {
+  if (!hasKairosAdminAccess(user)) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-slate-500">Accès réservé aux administrateurs</p>
