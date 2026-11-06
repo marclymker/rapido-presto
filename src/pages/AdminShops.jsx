@@ -61,8 +61,7 @@ export default function AdminShops() {
   const { data: shops = [] } = useQuery({
     queryKey: ['admin-shops'],
     queryFn: async () => {
-      const { data } = await firebaseApi.functions.invoke('adminShops', { action: 'list' });
-      return data.shops;
+      return firebaseApi.entities.Shop.list('-created_date', 1000);
     },
     enabled: !!user
   });
@@ -70,16 +69,14 @@ export default function AdminShops() {
   const { data: enterpriseUsers = [] } = useQuery({
     queryKey: ['enterprise-users'],
     queryFn: async () => {
-      const { data } = await firebaseApi.functions.invoke('adminShops', { action: 'listEnterpriseUsers' });
-      return data.users;
+      return firebaseApi.entities.User.list('-created_date', 1000);
     },
     enabled: !!user
   });
 
   const createShopMutation = useMutation({
     mutationFn: async (shopData) => {
-      const { data } = await firebaseApi.functions.invoke('adminShops', { action: 'create', data: shopData });
-      return data.shop;
+      return firebaseApi.entities.Shop.create(shopData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-shops']);
@@ -94,8 +91,7 @@ export default function AdminShops() {
 
   const updateShopMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      const result = await firebaseApi.functions.invoke('adminShops', { action: 'update', shopId: id, data });
-      return result.data.shop;
+      return firebaseApi.entities.Shop.update(id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-shops']);
@@ -110,7 +106,7 @@ export default function AdminShops() {
 
   const deleteShopMutation = useMutation({
     mutationFn: async (id) => {
-      await firebaseApi.functions.invoke('adminShops', { action: 'delete', shopId: id });
+      await firebaseApi.entities.Shop.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-shops']);

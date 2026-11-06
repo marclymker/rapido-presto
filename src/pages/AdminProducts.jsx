@@ -32,8 +32,7 @@ export default function AdminProducts() {
   const { data: shops = [] } = useQuery({
     queryKey: ['admin-shops-list'],
     queryFn: async () => {
-      const { data } = await firebaseApi.functions.invoke('adminShops', { action: 'list' });
-      return data.shops;
+      return firebaseApi.entities.Shop.list('-created_date', 1000);
     },
     enabled: !!user
   });
@@ -41,20 +40,14 @@ export default function AdminProducts() {
   const { data: products = [] } = useQuery({
     queryKey: ['admin-products', selectedShop?.id],
     queryFn: async () => {
-      const { data } = await firebaseApi.functions.invoke('adminProducts', {
-        action: 'list',
-        shopId: selectedShop.id
-      });
-      return data.products;
+      return firebaseApi.entities.Product.filter({ shop_id: selectedShop.id }, '-created_date', 1000);
     },
     enabled: !!selectedShop
   });
 
   const deleteProductMutation = useMutation({
     mutationFn: async (id) => {
-      const res = await firebaseApi.functions.invoke('adminProducts', { action: 'delete', productId: id });
-      if (res.data?.error) throw new Error(res.data.error);
-      return res.data;
+      return firebaseApi.entities.Product.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-products']);
