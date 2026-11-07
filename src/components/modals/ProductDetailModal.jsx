@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
-  Minus, Plus, Store, Loader2, MapPin, X,
+  Minus, Plus, Store, Loader2, MapPin, X, MessageCircle,
   ChevronRight, ZoomIn, ZoomOut, Download, Plus as PlusIcon, Truck, ChevronLeft
 } from 'lucide-react';
 import { applyClientMargin } from '@/components/utils/priceCalculation';
@@ -207,10 +207,10 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
         shop_logo: shop.company_logo_url,
         product_id: product.id,
         product_name: product.name,
-        initial_message: `Bonjour, je suis intéressé par : ${product.name}`
+        initial_message: 'Bonjour, cet article est-il disponible ?'
       });
       if (response?.id || response.data?.id) {
-        window.location.href = `/chat?id=${response?.id || response.data.id}`;
+        window.location.href = `/Chat?id=${response?.id || response.data.id}`;
       }
     } catch (error) {
       toast.error("Erreur lors de l'ouverture du chat");
@@ -469,6 +469,15 @@ export default function ProductDetailModal({ product, shop, open, onClose, onAdd
             }}
           >
             Commander Maintenant
+          </Button>
+
+          <Button
+            onClick={handleContactVendor}
+            disabled={isChatLoading || !shop?.user_id}
+            className="w-full py-6 bg-[#0084FF] hover:bg-[#0077E6] text-white rounded-2xl font-bold shadow-lg shadow-blue-100"
+          >
+            {isChatLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <MessageCircle className="w-5 h-5 mr-2" />}
+            {isChatLoading ? 'Ouverture de la discussion...' : 'Écrire au vendeur'}
           </Button>
 
           <Button

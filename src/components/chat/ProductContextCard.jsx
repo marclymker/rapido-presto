@@ -25,7 +25,7 @@ export default function ProductContextCard({ productId }) {
       {/* Message initial automatique */}
       <div className="flex justify-end mb-2">
         <div className="bg-orange-500 text-white p-3 rounded-2xl rounded-br-none max-w-[85%] shadow-sm text-sm">
-          Cet article est-il toujours disponible?
+          Bonjour, cet article est-il disponible ?
         </div>
       </div>
 

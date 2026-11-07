@@ -40,6 +40,26 @@ service cloud.firestore {
       allow update: if isAdmin() || (signedIn() && resource.data.user_id == request.auth.uid && request.resource.data.user_id == resource.data.user_id);
       allow delete: if isAdmin() || (signedIn() && resource.data.user_id == request.auth.uid);
     }
+    match /Conversation/{id} {
+      allow read: if signedIn() && (resource.data.customer_id == request.auth.uid || resource.data.vendor_id == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.customer_id == request.auth.uid;
+      allow update: if signedIn()
+        && (resource.data.customer_id == request.auth.uid || resource.data.vendor_id == request.auth.uid)
+        && request.resource.data.customer_id == resource.data.customer_id
+        && request.resource.data.vendor_id == resource.data.vendor_id;
+      allow delete: if signedIn() && (resource.data.customer_id == request.auth.uid || resource.data.vendor_id == request.auth.uid);
+    }
+    match /ConversationMessage/{id} {
+      allow read: if signedIn()
+        && (get(/databases/$(database)/documents/Conversation/$(resource.data.conversation_id)).data.customer_id == request.auth.uid
+          || get(/databases/$(database)/documents/Conversation/$(resource.data.conversation_id)).data.vendor_id == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.sender_id == request.auth.uid
+        && (get(/databases/$(database)/documents/Conversation/$(request.resource.data.conversation_id)).data.customer_id == request.auth.uid
+          || get(/databases/$(database)/documents/Conversation/$(request.resource.data.conversation_id)).data.vendor_id == request.auth.uid);
+      allow update: if signedIn() && resource.data.sender_id == request.auth.uid;
+      allow delete: if signedIn() && resource.data.sender_id == request.auth.uid;
+    }
     match /BlogArticle/{id} { allow read: if resource.data.is_published == true || isAdmin(); allow write: if isAdmin(); }
     match /MarketingDraft/{id} {
       allow read, update, delete: if isSiteOwner() && resource.data.user_id == request.auth.uid;

@@ -20,28 +20,16 @@ export default function ChatButton({ product, shop }) {
         return;
       }
 
-      // Vérifier si une conversation existe déjà
-      const existing = await firebaseApi.entities.Conversation.filter({
-        customer_id: user.id,
-        shop_id: shop.id
-      });
-
-      if (existing && existing.length > 0) {
-        return existing[0];
-      }
-
-      // Créer nouvelle conversation
-      return await firebaseApi.entities.Conversation.create({
-        customer_id: user.id,
-        customer_name: user.full_name,
+      const response = await firebaseApi.functions.invoke('chatService', {
+        action: 'init',
         vendor_id: shop.user_id,
         shop_id: shop.id,
         shop_name: shop.company_name,
         shop_logo: shop.company_logo_url,
-        last_message: 'Nouvelle conversation',
-        last_message_date: new Date().toISOString(),
-        product_context_id: product?.id
+        product_id: product?.id,
+        initial_message: 'Bonjour, cet article est-il disponible ?'
       });
+      return response.data?.conversation || { id: response.data?.id };
     },
     onSuccess: (conv) => {
       window.location.href = `${createPageUrl('Chat')}?id=${conv.id}`;
@@ -56,7 +44,7 @@ export default function ChatButton({ product, shop }) {
       onClick={() => createConvMutation.mutate()}
       disabled={createConvMutation.isPending}
       variant="outline"
-      className="w-full"
+      className="w-full bg-[#0084FF] hover:bg-[#0077E6] text-white"
     >
       {createConvMutation.isPending ? (
         <Loader2 className="w-4 h-4 mr-2 animate-spin" />

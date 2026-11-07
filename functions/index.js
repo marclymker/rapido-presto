@@ -327,3 +327,5 @@ Object.assign(exports, require('./notifications'));
 Object.assign(exports, require('./payments'));
 // Administration globale : accès réservé à l’adresse Kairos officielle.
 Object.assign(exports, require('./admin'));
+// Messagerie acheteur-boutique avec aperçu produit et notifications.
+Object.assign(exports, require('./chat'));
