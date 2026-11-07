@@ -54,6 +54,7 @@ export default function SmartBottomNav({ activeOrdersCount = 0, alwaysVisible = 
 
   return (
     <nav
+      style={{ display: 'block', visibility: 'visible', opacity: 1, transform: 'translateY(0)', backgroundColor: '#ffffff', color: '#111827', pointerEvents: 'auto' }}
       className={`rp-bottom-nav fixed bottom-0 left-0 right-0 min-h-16 bg-white border-t border-slate-200 shadow-[0_-4px_18px_rgba(15,23,42,0.10)] transition-transform duration-300 safe-bottom z-[60] ${
         alwaysVisible || isVisible ? 'translate-y-0' : 'translate-y-full'
       }`}
@@ -69,6 +70,7 @@ export default function SmartBottomNav({ activeOrdersCount = 0, alwaysVisible = 
             <button
               key={item.id}
               onClick={() => switchToTab(item.id)}
+              style={{ display: 'flex', visibility: 'visible', opacity: 1, color: item.id === activeTab ? '#f97316' : '#64748b' }}
               className="rp-bottom-nav-item flex flex-col items-center justify-center w-full h-full gap-1 group relative min-h-11 min-w-11 touch-manipulation"
               aria-label={item.label}
               aria-current={isActiveTab ? 'page' : undefined}

@@ -260,16 +260,6 @@ export default function ProductPage() {
           Commander Maintenant
         </button>
 
-        <button
-          type="button"
-          onClick={handleContactVendor}
-          disabled={isChatLoading}
-          className="w-full mb-4 py-3.5 bg-[#0084ff] hover:bg-[#0077e6] disabled:opacity-60 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-        >
-          {isChatLoading ? <span className="h-5 w-5 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : <MessageCircle className="w-5 h-5" fill="currentColor" />}
-          {isChatLoading ? 'Ouverture de la discussion...' : 'Écrire au vendeur'}
-        </button>
-
         {/* WhatsApp Message Box */}
         <div className="mb-4">
           <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Contacter le vendeur</div>
@@ -291,6 +281,17 @@ export default function ProductPage() {
             </div>
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={handleContactVendor}
+          disabled={isChatLoading}
+          style={{ backgroundColor: '#0084ff', color: '#ffffff' }}
+          className="w-full mb-4 py-3.5 hover:bg-[#0077e6] disabled:opacity-60 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+        >
+          {isChatLoading ? <span className="h-5 w-5 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : <MessageCircle className="w-5 h-5" fill="currentColor" />}
+          {isChatLoading ? 'Ouverture de la discussion...' : 'Écrire au vendeur'}
+        </button>
 
         {product.description && <p className="text-sm text-gray-600 mt-5 border-t border-gray-100 pt-4 leading-relaxed">{product.description}</p>}
       </div>
