@@ -3,7 +3,7 @@ import { Home, Package, User, Truck } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { useTabNavigation } from '@/lib/TabNavigationContext';
 
-export default function SmartBottomNav({ activeOrdersCount = 0 }) {
+export default function SmartBottomNav({ activeOrdersCount = 0, alwaysVisible = false }) {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { activeTab, switchToTab } = useTabNavigation();
@@ -12,7 +12,7 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       setLastScrollY(prev => {
-        if (currentScrollY > prev && currentScrollY > 100) {
+        if (!alwaysVisible && currentScrollY > prev && currentScrollY > 100) {
           setIsVisible(false);
         } else {
           setIsVisible(true);
@@ -23,7 +23,7 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [alwaysVisible]);
 
   const navItems = [
     {
@@ -54,13 +54,13 @@ export default function SmartBottomNav({ activeOrdersCount = 0 }) {
 
   return (
     <nav
-      className={`rp-bottom-nav fixed bottom-0 left-0 right-0 transition-transform duration-300 safe-bottom z-50 ${
-        isVisible ? 'translate-y-0' : 'translate-y-full'
+      className={`rp-bottom-nav fixed bottom-0 left-0 right-0 min-h-16 bg-white border-t border-slate-200 shadow-[0_-4px_18px_rgba(15,23,42,0.10)] transition-transform duration-300 safe-bottom z-[60] ${
+        alwaysVisible || isVisible ? 'translate-y-0' : 'translate-y-full'
       }`}
       aria-label="Navigation principale"
       role="navigation"
     >
-      <div className="rp-bottom-nav-inner flex justify-around items-center h-16 max-w-lg mx-auto">
+      <div className="rp-bottom-nav-inner flex justify-around items-center h-16 max-w-lg mx-auto px-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActiveTab = item.id === activeTab;

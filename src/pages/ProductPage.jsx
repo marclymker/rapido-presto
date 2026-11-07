@@ -25,6 +25,7 @@ export default function ProductPage() {
   const [imgIndex, setImgIndex] = useState(0);
   const [waMessage, setWaMessage] = useState('');
   const [waBoxOpen, setWaBoxOpen] = useState(false);
+  const [isChatLoading, setIsChatLoading] = useState(false);
   const [relatedVisible, setRelatedVisible] = useState(12);
 
   useEffect(() => {
@@ -117,6 +118,37 @@ export default function ProductPage() {
     setWaBoxOpen(false);
   }, [waMessage, getShareUrl]);
 
+  const handleContactVendor = useCallback(async () => {
+    if (!user) {
+      firebaseApi.auth.redirectToLogin(window.location.pathname);
+      return;
+    }
+    const vendorId = shop?.user_id || product?.vendor_id;
+    const shopId = shop?.id || product?.shop_id;
+    if (!vendorId || !shopId || !product?.id) {
+      toast.error('Cette boutique ne peut pas encore recevoir de messages.');
+      return;
+    }
+
+    setIsChatLoading(true);
+    try {
+      const response = await firebaseApi.functions.invoke('chatService', {
+        action: 'init',
+        vendor_id: vendorId,
+        shop_id: shopId,
+        product_id: product.id,
+        initial_message: 'Bonjour, cet article est-il disponible ?',
+      });
+      const conversationId = response?.data?.id || response?.id;
+      if (!conversationId) throw new Error('Conversation introuvable');
+      navigate(`/Chat?id=${conversationId}`);
+    } catch (error) {
+      toast.error(error.message || "Erreur lors de l'ouverture du chat");
+    } finally {
+      setIsChatLoading(false);
+    }
+  }, [user, shop, product, navigate]);
+
   const relatedProducts = React.useMemo(() => {
     if (!product) return [];
     const sameShop = sameShopProducts.filter(p => p.id !== product.id).slice(0, 7);
@@ -142,7 +174,7 @@ export default function ProductPage() {
   const shareDescription = (product.description || `Découvrez ${product.name} sur Kairos.`).slice(0, 300);
 
   return (
-    <div className="min-h-screen pb-24" style={{ backgroundColor: '#f0f2f5' }}>
+    <div className="min-h-screen pb-40" style={{ backgroundColor: '#f0f2f5' }}>
       <Helmet>
         <title>{product.name} | Kairos</title>
         <meta name="description" content={shareDescription} />
@@ -226,6 +258,16 @@ export default function ProductPage() {
         >
           <CreditCard className="w-5 h-5" />
           Commander Maintenant
+        </button>
+
+        <button
+          type="button"
+          onClick={handleContactVendor}
+          disabled={isChatLoading}
+          className="w-full mb-4 py-3.5 bg-[#0084ff] hover:bg-[#0077e6] disabled:opacity-60 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+        >
+          {isChatLoading ? <span className="h-5 w-5 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : <MessageCircle className="w-5 h-5" fill="currentColor" />}
+          {isChatLoading ? 'Ouverture de la discussion...' : 'Écrire au vendeur'}
         </button>
 
         {/* WhatsApp Message Box */}

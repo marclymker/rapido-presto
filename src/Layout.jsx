@@ -111,6 +111,7 @@ export default function Layout({ children, currentPageName }) {
         {!noNavPages.includes(currentPageName) && (
           <SmartBottomNav
             activeOrdersCount={activeOrdersCount}
+            alwaysVisible={currentPageName === 'ProductPage'}
           />
         )}
 
