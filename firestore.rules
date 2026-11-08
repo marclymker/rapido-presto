@@ -16,6 +16,7 @@ service cloud.firestore {
         && (!request.resource.data.keys().hasAny(['role', 'is_admin', 'is_owner'])
           || (request.resource.data.role == 'client' && request.resource.data.is_owner != true));
       allow update: if isAdmin() || (isOwner(uid)
+        && request.resource.data.email == resource.data.email
         && (!resource.data.keys().hasAny(['role', 'is_admin']) || request.resource.data.role == resource.data.role)
         && (!resource.data.keys().hasAny(['is_admin']) || request.resource.data.is_admin == resource.data.is_admin)
         && (!resource.data.keys().hasAny(['is_owner']) || request.resource.data.is_owner == resource.data.is_owner));
@@ -28,10 +29,13 @@ service cloud.firestore {
     }
     match /Product/{id} {
       allow read: if publicCollection() || signedIn();
-      allow create: if isAdmin() || (signedIn() && request.resource.data.owner_id == request.auth.uid);
+      allow create: if isAdmin() || (signedIn()
+        && request.resource.data.owner_id == request.auth.uid
+        && (!request.resource.data.keys().hasAny(['vendor_id']) || request.resource.data.vendor_id == request.auth.uid));
       allow update: if isAdmin() || (signedIn()
         && (resource.data.owner_id == request.auth.uid || resource.data.vendor_id == request.auth.uid)
-        && request.resource.data.owner_id == resource.data.owner_id);
+        && request.resource.data.owner_id == resource.data.owner_id
+        && request.resource.data.get('vendor_id', null) == resource.data.get('vendor_id', null));
       allow delete: if isAdmin() || (signedIn() && (resource.data.owner_id == request.auth.uid || resource.data.vendor_id == request.auth.uid));
     }
     match /Shop/{id} {
@@ -75,12 +79,14 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.client_id == request.auth.uid;
       allow update: if isAdmin()
         || (signedIn() && resource.data.client_id == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['special_instructions', 'client_phone', 'client_address', 'updated_date'])
           && request.resource.data.total == resource.data.total
           && request.resource.data.subtotal == resource.data.subtotal
           && request.resource.data.get('payment_status', null) == resource.data.get('payment_status', null)
           && request.resource.data.get('payment_provider', null) == resource.data.get('payment_provider', null)
           && request.resource.data.get('payment_transaction_id', null) == resource.data.get('payment_transaction_id', null))
-        || (signedIn() && (resource.data.driver_id == request.auth.uid || resource.data.shop_owner_id == request.auth.uid));
+        || (signedIn() && (resource.data.driver_id == request.auth.uid || resource.data.shop_owner_id == request.auth.uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'delivery_status', 'driver_id', 'driver_name', 'updated_date', 'accepted_at', 'rejected_at', 'ready_at', 'delivered_at', 'notes']));
       allow delete: if isAdmin();
     }
     match /{document=**} { allow read, write: if false; }
