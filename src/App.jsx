@@ -21,6 +21,7 @@ const DossierLookup = lazy(() => import('./pages/DossierLookup'));
 const PaymentCallback = lazy(() => import('./pages/PaymentCallback'));
 const PayLink = lazy(() => import('./pages/PayLink'));
 const QuickCheckout = lazy(() => import('./pages/QuickCheckout'));
+const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 
 const { Pages, Layout } = pagesConfig;
 
@@ -68,6 +69,11 @@ const InnerRouter = () => {
               <Products />
             </LayoutWrapper>
           } />
+          <Route path="/marketplace" element={<LayoutWrapper currentPageName="CategoryPage"><CategoryPage /></LayoutWrapper>} />
+          <Route path="/nourriture" element={<LayoutWrapper currentPageName="CategoryPage"><CategoryPage /></LayoutWrapper>} />
+          <Route path="/hotel-piscine" element={<LayoutWrapper currentPageName="CategoryPage"><CategoryPage /></LayoutWrapper>} />
+          <Route path="/tickets" element={<LayoutWrapper currentPageName="CategoryPage"><CategoryPage /></LayoutWrapper>} />
+          <Route path="/categories/:slug" element={<LayoutWrapper currentPageName="CategoryPage"><CategoryPage /></LayoutWrapper>} />
           {Object.entries(Pages).map(([path, Page]) => (
             <Route
               key={path}

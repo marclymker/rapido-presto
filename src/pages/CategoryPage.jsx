@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet-async';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ui/ProductCard';
+import { getMarketplaceSpace } from '@/lib/marketplaceSpaces';
 
 /**
  * PAGE CATÉGORIE - SEO OPTIMISÉE
@@ -17,11 +18,17 @@ import ProductCard from '@/components/ui/ProductCard';
  * - /categories/sirene
  */
 export default function CategoryPage() {
-  const { slug } = useParams();
+  const { slug: routeSlug } = useParams();
   const navigate = useNavigate();
+  const slug = routeSlug || window.location.pathname.replace(/^\//, '');
 
   // Mapping slug → catégorie
   const categoryMap = {
+    'marketplace': 'Marketplace',
+    'nourriture': 'Nourriture',
+    'hotel-piscine': 'Hotels/Piscine',
+    'hotels-piscine': 'Hotels/Piscine',
+    'tickets': 'Tickets',
     'mariage': 'Mariage',
     'robes-de-mariee': 'Mariage',
     'sirene': 'Mariage',
@@ -38,14 +45,15 @@ export default function CategoryPage() {
   };
 
   const category = categoryMap[slug] || 'Tout';
+  const isMainSpace = ['Marketplace', 'Nourriture', 'Hotels/Piscine', 'Tickets'].includes(category);
 
   // Produits de la catégorie
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['category-products', category],
-    queryFn: () => firebaseApi.entities.Product.filter({
-      category,
-      is_available: true
-    }),
+    queryFn: async () => {
+      const products = await firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 200);
+      return isMainSpace ? products.filter((product) => getMarketplaceSpace(product) === category) : products.filter((product) => product.category === category);
+    },
     enabled: category !== 'Tout'
   });
 
@@ -93,12 +101,12 @@ export default function CategoryPage() {
   return (
     <>
       <Helmet>
-        <title>{category} - Marketplace, réservations et billetterie en Haïti | Kairos</title>
+        <title>{category} en Haïti | Kairos Marketplace</title>
         <meta
           name="description"
-          content={`Découvrez ${products.length} produits dans la catégorie ${category}. Marketplace, réservations et billetterie partout en Haïti.`}
+            content={`Découvrez ${products.length} offres ${category.toLowerCase()} en Haïti sur Kairos : marketplace, réservations, billetterie et contact direct.`}
         />
-        <meta name="keywords" content={`${category}, Haïti, livraison, e-commerce, shopping`} />
+        <meta name="keywords" content={`${category}, ${category} Haïti, Kairos, marketplace Haïti, makariosbridal.shop`} />
 
         <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
 
