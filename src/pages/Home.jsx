@@ -18,7 +18,7 @@ import CompactProductCard from '@/components/home/CompactProductCard';
 import CategoryRow from '@/components/home/CategoryRow';
 import { getClientPrice } from '@/components/utils/priceCalculation';
 import PullToRefresh from '@/components/mobile/PullToRefresh';
-import { MARKETPLACE_SPACES, getMarketplaceSpace } from '@/lib/marketplaceSpaces';
+import { MARKETPLACE_SPACES, getMarketplaceSpace, getMarketplaceSpacePath } from '@/lib/marketplaceSpaces';
 
 export default function Home() {
   const { user } = useAuth();
@@ -313,8 +313,8 @@ export default function Home() {
               <button
                 key={space.id}
                 type="button"
-                onClick={() => { setSelectedCategory(selectedCategory === space.id ? null : space.id); setSearchQuery(''); setShowCategories(false); }}
-                aria-pressed={selectedCategory === space.id}
+                onClick={() => navigate(getMarketplaceSpacePath(space.id))}
+                aria-label={`Ouvrir la catégorie ${space.label}`}
                 className={`shrink-0 rounded-xl px-4 py-3 text-sm font-bold transition ${selectedCategory === space.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
               >
                 <span className="mr-1.5">{space.icon}</span>{space.label}

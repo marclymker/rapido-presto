@@ -19,7 +19,7 @@ import SEO from '@/components/SEO';
 import { useActivityTracker } from '@/components/tracking/useActivityTracker';
 import { trackMetaEvent } from '@/components/utils/metaTracking';
 import { FB_TAXONOMY, findById } from '@/lib/fbTaxonomy';
-import { MARKETPLACE_SPACES, getMarketplaceSpace } from '@/lib/marketplaceSpaces';
+import { MARKETPLACE_SPACES, getMarketplaceSpace, getMarketplaceSpacePath } from '@/lib/marketplaceSpaces';
 import { hasKairosAdminAccess } from '@/lib/adminAccess';
 
 const CATEGORIES = [
@@ -554,8 +554,8 @@ export default function Products() {
               <button
                 key={space.id}
                 type="button"
-                onClick={() => handleCategorySelect(selectedCategory === space.id ? null : space.id)}
-                aria-pressed={selectedCategory === space.id}
+                onClick={() => navigate(getMarketplaceSpacePath(space.id))}
+                aria-label={`Ouvrir la catégorie ${space.label}`}
                 className={`shrink-0 rounded-xl px-4 py-3 text-sm font-bold transition ${selectedCategory === space.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
               >
                 <span className="mr-1.5">{space.icon}</span>{space.label}

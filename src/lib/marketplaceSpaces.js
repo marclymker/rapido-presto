@@ -5,6 +5,15 @@ export const MARKETPLACE_SPACES = [
   { id: 'Tickets', label: 'Tickets', icon: '🎟️' },
 ];
 
+export function getMarketplaceSpacePath(spaceId) {
+  return {
+    Marketplace: '/marketplace',
+    Nourriture: '/nourriture',
+    'Hotels/Piscine': '/hotel-piscine',
+    Tickets: '/tickets',
+  }[spaceId] || '/marketplace';
+}
+
 const FOOD_CATEGORIES = new Set([
   'Nourriture', 'Fastfood', 'Fast Food', 'Restaurant', 'Restaurants',
   'Café', 'Boulangerie', 'Epicerie', 'Épicerie', 'Traiteur',
