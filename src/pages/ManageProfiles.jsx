@@ -38,6 +38,7 @@ export default function ManageProfiles() {
   const [activationDialog, setActivationDialog] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [formData, setFormData] = useState({});
+  const [logoPreview, setLogoPreview] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
@@ -132,6 +133,7 @@ export default function ManageProfiles() {
     }
     setSelectedProfile(profileType);
     setFormData({});
+    setLogoPreview('');
     setActivationDialog(true);
   };
 
@@ -140,11 +142,13 @@ export default function ManageProfiles() {
     if (!file) return;
 
     try {
+      setLogoPreview(URL.createObjectURL(file));
       const { file_url } = await firebaseApi.integrations.Core.UploadFile({ file });
-      setFormData({ ...formData, [field]: file_url });
+      setFormData((current) => ({ ...current, [field]: file_url }));
       toast.success('Fichier téléchargé');
     } catch (error) {
-      toast.error('Erreur lors du téléchargement');
+      console.error('Upload profil:', error);
+      toast.error('La photo n’a pas pu être téléchargée. Vous pouvez continuer sans logo.');
     }
   };
 
@@ -168,9 +172,9 @@ export default function ManageProfiles() {
           company_name: formData.company_name,
           company_category: formData.company_category,
           company_logo_url: formData.company_logo_url || '',
-          moncash_number: formData.moncash_number || '',
-          natcash_number: formData.natcash_number || '',
-          whatsapp_number: formData.whatsapp_number || '',
+          moncash_number: String(formData.moncash_number || '').replace(/[^0-9]/g, ''),
+          natcash_number: String(formData.natcash_number || '').replace(/[^0-9]/g, ''),
+          whatsapp_number: String(formData.whatsapp_number || '').replace(/[^0-9]/g, ''),
           rating: 5,
           delivery_time_minutes: 30
         };
@@ -242,7 +246,8 @@ export default function ManageProfiles() {
       setActivationDialog(false);
 
     } catch (error) {
-      toast.error('Erreur lors de l\'activation');
+      console.error('Activation profil:', error);
+      toast.error(error?.code === 'permission-denied' ? 'Firebase refuse la mise à jour du profil. Reconnectez-vous puis réessayez.' : 'Erreur lors de l\'activation. Vérifiez votre connexion et réessayez.');
     } finally {
       setSubmitting(false);
     }
@@ -435,8 +440,8 @@ export default function ManageProfiles() {
                 <div>
                   <Label>Logo (optionnel)</Label>
                   <div className="mt-2">
-                    {formData.company_logo_url ? (
-                      <img src={formData.company_logo_url} alt="" className="h-20 w-20 object-cover rounded-lg" />
+                    {(logoPreview || formData.company_logo_url) ? (
+                      <img src={logoPreview || formData.company_logo_url} alt="Aperçu du logo" className="h-20 w-20 object-cover rounded-lg" />
                     ) : (
                       <label className="flex flex-col items-center justify-center h-20 border-2 border-dashed rounded-lg cursor-pointer hover:border-orange-300">
                         <Upload className="w-5 h-5 text-slate-400" />

@@ -31,6 +31,14 @@ import {
   signInWithPhoneNumber
 } from "firebase/auth";
 
+const removeUndefined = (value) => {
+  if (Array.isArray(value)) return value.map(removeUndefined).filter((item) => item !== undefined);
+  if (value && typeof value === 'object' && !(value instanceof Date)) {
+    return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined).map(([key, item]) => [key, removeUndefined(item)]));
+  }
+  return value;
+};
+
 const firebaseConfig = {
   apiKey: "AIzaSyCUyAlOkYW-ytQ0YbLI477dIttYnI5Kz3Y",
   // Même domaine que l'application Hosting : cela évite que Chrome bloque
@@ -199,7 +207,7 @@ export const firebaseApi = {
       if (!user) return null;
       try {
         const userRef = doc(db, "User", user.uid);
-        await setDoc(userRef, { ...data, updated_date: serverTimestamp() }, { merge: true });
+        await setDoc(userRef, { ...removeUndefined(data), updated_date: serverTimestamp() }, { merge: true });
         return { id: user.uid, ...data };
       } catch (e) {
         console.error("Mise à jour profil:", e);
