@@ -233,17 +233,23 @@ exports.metaConversionsAPI = onRequest({ cors: false }, async (req, res) => {
   const accessToken = process.env.META_ACCESS_TOKEN;
   if (!pixelId || !accessToken) return res.status(503).json({ error: 'Meta Conversions API is not configured' });
   try {
-    const payload = req.body || {};
+    const body = req.body || {};
+    // Accepte à la fois le contrat Kairos simplifié et le format officiel Meta data[].
+    const payload = Array.isArray(body.data) ? (body.data[0] || {}) : body;
     const userData = payload.user_data || {};
     const customData = payload.custom_data || {};
+    const cleanValues = (values) => Object.fromEntries(
+      Object.entries(values).filter(([, value]) => value !== null && value !== undefined && value !== '')
+    );
+    const eventTime = Number(payload.event_time);
     const event = {
       event_name: String(payload.event_name || 'PageView'),
-      event_time: Math.floor(Date.now() / 1000),
+      event_time: Number.isFinite(eventTime) && eventTime > 0 ? Math.floor(eventTime) : Math.floor(Date.now() / 1000),
       event_id: String(payload.event_id || `${Date.now()}_${Math.random().toString(36).slice(2)}`),
       action_source: 'website',
       event_source_url: String(customData.event_source_url || req.get('referer') || SITE_ORIGIN),
-      user_data: Object.fromEntries(Object.entries(userData).filter(([, value]) => value !== null && value !== undefined && value !== '')),
-      custom_data: Object.fromEntries(Object.entries(customData).filter(([key]) => !['client_user_agent', 'event_source_url'].includes(key))),
+      user_data: cleanValues(userData),
+      custom_data: cleanValues(Object.fromEntries(Object.entries(customData).filter(([key]) => !['client_user_agent', 'event_source_url'].includes(key)))),
     };
     const response = await fetch(`https://graph.facebook.com/v20.0/${encodeURIComponent(pixelId)}/events?access_token=${encodeURIComponent(accessToken)}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [event] }),
