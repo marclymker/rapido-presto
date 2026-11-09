@@ -953,7 +953,7 @@ onCancel={onClose}
 
 <Dialog open={showForm} onOpenChange={onClose}>
 
-<DialogContent className="max-w-full sm:max-w-3xl h-[100vh] sm:h-[90vh] p-0 flex flex-col bg-white rounded-none sm:rounded-xl overflow-hidden">
+<DialogContent className="max-w-full w-full sm:max-w-3xl h-[100dvh] max-h-[100dvh] sm:h-[90vh] sm:max-h-[90vh] p-0 flex flex-col bg-white rounded-none sm:rounded-xl overflow-hidden">
 
 <DialogHeader className="p-4 sm:p-6 border-b bg-slate-50 flex-shrink-0">
 
@@ -984,9 +984,9 @@ onCancel={onClose}
 </DialogHeader>
 
 
-<div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50">
+<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-32 sm:p-6 sm:pb-6 bg-slate-50/50">
 
-<form onSubmit={handleSubmit} className="space-y-6 pb-20 sm:pb-0">
+<form onSubmit={handleSubmit} className="space-y-6 pb-4 sm:pb-0">
 
 
 {/* Section 1: Informations de base */}
@@ -1769,7 +1769,7 @@ placeholder={`Label ${i + 1} (ex: Soldes)`}
 
 {/* Action Buttons Footer - Sticky on Mobile */}
 
-<div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t sm:relative sm:border-t-0 sm:bg-transparent sm:p-0 flex gap-3 z-10">
+<div className="fixed inset-x-0 bottom-0 z-[70] flex gap-3 border-t bg-white/95 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(15,23,42,0.12)] backdrop-blur sm:relative sm:z-auto sm:border-t-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
 
 <Button type="button" variant="outline" onClick={onClose} className="flex-1 h-12 border-slate-300">
 
