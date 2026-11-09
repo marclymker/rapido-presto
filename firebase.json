@@ -38,8 +38,6 @@
       { "source": "/functions/squareWebhook", "function": { "functionId": "squareWebhook", "region": "us-central1" } },
       { "source": "/functions/moncashCreatePayment", "function": { "functionId": "moncashCreatePayment", "region": "us-central1" } },
       { "source": "/functions/moncashVerifyPayment", "function": { "functionId": "moncashVerifyPayment", "region": "us-central1" } },
-      { "source": "/functions/adminProducts", "function": { "functionId": "adminProducts", "region": "us-central1" } },
-      { "source": "/functions/adminShops", "function": { "functionId": "adminShops", "region": "us-central1" } },
       { "source": "/functions/chatService", "function": { "functionId": "chatService", "region": "us-central1" } },
       { "source": "**", "destination": "/index.html" }
     ]
