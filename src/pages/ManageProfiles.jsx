@@ -159,8 +159,14 @@ export default function ManageProfiles() {
       let profiles = { ...(user.profiles || {}) };
 
       if (selectedProfile === 'marketplace' || selectedProfile === 'entreprise' || BUSINESS_PROFILE_IDS.includes(selectedProfile)) {
-        if (!formData.company_name || !formData.company_category) {
-          toast.error('Veuillez remplir tous les champs');
+        const businessEmail = String(formData.email || '').trim().toLowerCase();
+        if (!formData.company_name || !formData.company_category || !businessEmail) {
+          toast.error('Le nom, la catégorie et l’email professionnel sont obligatoires');
+          setSubmitting(false);
+          return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(businessEmail)) {
+          toast.error('Veuillez saisir une adresse email valide');
           setSubmitting(false);
           return;
         }
@@ -171,6 +177,7 @@ export default function ManageProfiles() {
           last_used: new Date().toISOString(),
           company_name: formData.company_name,
           company_category: formData.company_category,
+          email: businessEmail,
           company_logo_url: formData.company_logo_url || '',
           moncash_number: String(formData.moncash_number || '').replace(/[^0-9]/g, ''),
           natcash_number: String(formData.natcash_number || '').replace(/[^0-9]/g, ''),
@@ -412,6 +419,18 @@ export default function ManageProfiles() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <Label>Email professionnel pour les commandes <span className="text-red-500">*</span></Label>
+                  <Input
+                    type="email"
+                    value={formData.email || ''}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="exemple@hotel.ht"
+                    autoComplete="email"
+                    required
+                  />
+                  <p className="mt-1 text-xs text-slate-500">Les accusés de réception et notifications de commandes pourront être envoyés à cette adresse.</p>
                 </div>
                 <div>
                   <Label>Numéro Moncash</Label>
