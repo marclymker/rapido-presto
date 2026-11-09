@@ -996,7 +996,7 @@ onCancel={onClose}
 </DialogHeader>
 
 
-<div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-4 sm:p-6 bg-slate-50/50" style={{ WebkitOverflowScrolling: 'touch' }}>
+<div className="h-0 min-h-0 flex-1 touch-pan-y overflow-y-scroll overscroll-contain p-4 sm:p-6 bg-slate-50/50" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
 
 <form id="product-form" onSubmit={handleSubmit} className="space-y-6 pb-4 sm:pb-0">
 
