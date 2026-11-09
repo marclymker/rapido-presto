@@ -62,6 +62,12 @@ const InnerRouter = () => {
               <Products />
             </LayoutWrapper>
           } />
+          {/* Les liens externes et les anciens favoris utilisent /products en minuscules. */}
+          <Route path="/products" element={
+            <LayoutWrapper currentPageName="Products">
+              <Products />
+            </LayoutWrapper>
+          } />
           {Object.entries(Pages).map(([path, Page]) => (
             <Route
               key={path}
