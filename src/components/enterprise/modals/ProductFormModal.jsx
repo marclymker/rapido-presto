@@ -957,7 +957,18 @@ onCancel={onClose}
 
 <DialogHeader className="p-4 sm:p-6 border-b bg-slate-50 flex-shrink-0">
 
-<DialogTitle className="flex items-center gap-2 text-xl">
+<div className="flex items-center gap-3 pr-8">
+<Button
+  type="submit"
+  form="product-form"
+  disabled={loading}
+  className="order-first h-10 shrink-0 bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+>
+  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+  Enregistrer
+</Button>
+
+<DialogTitle className="flex min-w-0 items-center gap-2 text-xl">
 
 <div className="bg-blue-100 p-2 rounded-full">
 
@@ -968,6 +979,7 @@ onCancel={onClose}
 {product ? 'Modifier l\'article' : 'Nouvel article'}
 
 </DialogTitle>
+</div>
 
 {aiLoading && (
 
@@ -986,7 +998,7 @@ onCancel={onClose}
 
 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 bg-slate-50/50">
 
-<form onSubmit={handleSubmit} className="space-y-6 pb-4 sm:pb-0">
+<form id="product-form" onSubmit={handleSubmit} className="space-y-6 pb-4 sm:pb-0">
 
 
 {/* Section 1: Informations de base */}
