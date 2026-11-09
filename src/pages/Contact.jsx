@@ -8,17 +8,17 @@ export default function Contact() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const subject = encodeURIComponent(`Message de ${form.name} via Rapido Presto`);
+    const subject = encodeURIComponent(`Message de ${form.name} via Kairos`);
     const body = encodeURIComponent(`Nom: ${form.name}\nEmail: ${form.email}\n\nMessage:\n${form.message}`);
-    window.location.href = `mailto:support@rapidopresto.shop?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:support@makariosbridal.shop?subject=${subject}&body=${body}`;
     setSent(true);
   };
 
   return (
     <div className="min-h-screen bg-white pb-24">
       <Helmet>
-        <title>Contactez Rapido Presto | Support & Questions</title>
-        <meta name="description" content="Contactez l'équipe Rapido Presto pour toute question, assistance ou partenariat. Disponibles par email, WhatsApp et sur les réseaux sociaux." />
+        <title>Contactez Kairos | Support & Questions</title>
+        <meta name="description" content="Contactez l'équipe Kairos pour toute question, assistance ou partenariat. Disponibles par email, WhatsApp et sur les réseaux sociaux." />
       </Helmet>
 
       <div className="max-w-2xl mx-auto px-6 py-12">
@@ -27,13 +27,13 @@ export default function Contact() {
 
         {/* Coordonnées */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-          <a href="mailto:support@rapidopresto.shop" className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+          <a href="mailto:support@makariosbridal.shop" className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
             <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
               <Mail className="w-5 h-5 text-blue-600" />
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Email</p>
-              <p className="text-sm font-semibold text-gray-800">support@rapidopresto.shop</p>
+              <p className="text-sm font-semibold text-gray-800">support@makariosbridal.shop</p>
             </div>
           </a>
 

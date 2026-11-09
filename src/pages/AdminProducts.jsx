@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState } from 'react';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,20 +7,21 @@ import { toast } from "sonner";
 import { Plus, Package, Trash2, Edit, Store, UploadCloud } from 'lucide-react';
 import ProductFormModal from '@/components/enterprise/modals/ProductFormModal';
 import BulkUploadModal from '@/components/admin/BulkUploadModal';
+import { hasKairosAdminAccess } from '@/lib/adminAccess';
 
 export default function AdminProducts() {
   const [user, setUser] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
-  
+
   const [editingProduct, setEditingProduct] = useState(null);
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
-      if (u.role !== 'admin') {
+      if (!hasKairosAdminAccess(u)) {
         window.location.href = '/';
       }
     }).catch(() => {
@@ -31,8 +32,7 @@ export default function AdminProducts() {
   const { data: shops = [] } = useQuery({
     queryKey: ['admin-shops-list'],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('adminShops', { action: 'list' });
-      return data.shops;
+      return firebaseApi.entities.Shop.list('-created_date', 1000);
     },
     enabled: !!user
   });
@@ -40,20 +40,14 @@ export default function AdminProducts() {
   const { data: products = [] } = useQuery({
     queryKey: ['admin-products', selectedShop?.id],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('adminProducts', { 
-        action: 'list', 
-        shopId: selectedShop.id 
-      });
-      return data.products;
+      return firebaseApi.entities.Product.filter({ shop_id: selectedShop.id }, '-created_date', 1000);
     },
     enabled: !!selectedShop
   });
 
   const deleteProductMutation = useMutation({
     mutationFn: async (id) => {
-      const res = await base44.functions.invoke('adminProducts', { action: 'delete', productId: id });
-      if (res.data?.error) throw new Error(res.data.error);
-      return res.data;
+      return firebaseApi.entities.Product.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-products']);
@@ -76,7 +70,7 @@ export default function AdminProducts() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-slate-800">Gestion des Articles</h1>
-          
+
         </div>
 
         {!selectedShop ? (
@@ -134,11 +128,11 @@ export default function AdminProducts() {
                   <UploadCloud className="w-4 h-4 mr-2" />
                   Ajout en masse
                 </Button>
-                <Button 
-                  onClick={() => { 
-                    setEditingProduct(null); 
+                <Button
+                  onClick={() => {
+                    setEditingProduct(null);
                     setShowForm(true);
-                  }} 
+                  }}
                   className="bg-orange-500 hover:bg-orange-600"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -223,7 +217,7 @@ export default function AdminProducts() {
         }}
       />
 
-      
+
 
       <ProductFormModal
         product={editingProduct}

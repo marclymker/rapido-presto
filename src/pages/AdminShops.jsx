@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { Plus, Store, Trash2, Edit } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
+import { hasKairosAdminAccess } from '@/lib/adminAccess';
 
 // MISE À JOUR : Liste standardisée des régions (Single Source of Truth)
 const REGIONS = [
@@ -21,8 +22,8 @@ const REGIONS = [
 ];
 
 const categories = [
-  "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Vêtements", 
-  "Epicerie", "Café", "Boulangerie", "Pour Femme", "Electronics", "Pour homme", "Maison"
+  "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Vêtements",
+  "Epicerie", "Café", "Boulangerie", "Pour Femme", "Electronics", "Pour homme", "Maison", "Hotels/Piscine"
 ];
 
 export default function AdminShops() {
@@ -47,9 +48,9 @@ export default function AdminShops() {
   });
 
   React.useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
-      if (u.role !== 'admin') {
+      if (!hasKairosAdminAccess(u)) {
         window.location.href = '/';
       }
     }).catch(() => {
@@ -60,8 +61,7 @@ export default function AdminShops() {
   const { data: shops = [] } = useQuery({
     queryKey: ['admin-shops'],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('adminShops', { action: 'list' });
-      return data.shops;
+      return firebaseApi.entities.Shop.list('-created_date', 1000);
     },
     enabled: !!user
   });
@@ -69,16 +69,14 @@ export default function AdminShops() {
   const { data: enterpriseUsers = [] } = useQuery({
     queryKey: ['enterprise-users'],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('adminShops', { action: 'listEnterpriseUsers' });
-      return data.users;
+      return firebaseApi.entities.User.list('-created_date', 1000);
     },
     enabled: !!user
   });
 
   const createShopMutation = useMutation({
     mutationFn: async (shopData) => {
-      const { data } = await base44.functions.invoke('adminShops', { action: 'create', data: shopData });
-      return data.shop;
+      return firebaseApi.entities.Shop.create(shopData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-shops']);
@@ -93,8 +91,7 @@ export default function AdminShops() {
 
   const updateShopMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      const result = await base44.functions.invoke('adminShops', { action: 'update', shopId: id, data });
-      return result.data.shop;
+      return firebaseApi.entities.Shop.update(id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-shops']);
@@ -109,7 +106,7 @@ export default function AdminShops() {
 
   const deleteShopMutation = useMutation({
     mutationFn: async (id) => {
-      await base44.functions.invoke('adminShops', { action: 'delete', shopId: id });
+      await firebaseApi.entities.Shop.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-shops']);
@@ -123,7 +120,7 @@ export default function AdminShops() {
 
     setUploading(true);
     try {
-      const { data } = await base44.functions.invoke('uploadFile', { file });
+      const { data } = await firebaseApi.functions.invoke('uploadFile', { file });
       setFormData({ ...formData, company_logo_url: data.file_url });
       toast.success('Image téléchargée');
     } catch (error) {
@@ -134,7 +131,7 @@ export default function AdminShops() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.company_name || !formData.company_category || !formData.region) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
@@ -154,7 +151,7 @@ export default function AdminShops() {
     if (formData.account_number) shopData.account_number = formData.account_number;
     if (formData.bank_name) shopData.bank_name = formData.bank_name;
     if (formData.account_holder_name) shopData.account_holder_name = formData.account_holder_name;
-    
+
     if (editingShop) {
       updateShopMutation.mutate({ id: editingShop.id, data: shopData });
     } else {
@@ -260,7 +257,7 @@ export default function AdminShops() {
           <DialogHeader>
             <DialogTitle>{editingShop ? 'Modifier' : 'Ajouter'} une boutique</DialogTitle>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">

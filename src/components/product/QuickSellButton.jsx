@@ -6,20 +6,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Upload, X, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { toast } from "sonner";
 
 const CATEGORIES = [
   "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Mariage",
   "Epicerie", "Café", "Pour Femme", "Electronics", "Pour homme",
-  "Maison", "Bébé", "Outils", "Bijoux"
+  "Maison", "Bébé", "Outils", "Bijoux", "Hotels/Piscine"
 ];
 
 export default function QuickSellButton({ user }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -35,7 +35,7 @@ export default function QuickSellButton({ user }) {
 
     setUploadingImage(true);
     try {
-      const result = await base44.integrations.Core.UploadFile({ file });
+      const result = await firebaseApi.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, image_url: result.file_url });
       toast.success('Image téléchargée');
     } catch (error) {
@@ -53,7 +53,7 @@ export default function QuickSellButton({ user }) {
 
     setLoading(true);
     try {
-      await base44.entities.Product.create({
+      await firebaseApi.entities.Product.create({
         name: formData.name,
         price: parseFloat(formData.price),
         description: formData.description,
@@ -104,9 +104,9 @@ export default function QuickSellButton({ user }) {
             <Label>Photo du produit *</Label>
             {formData.image_url ? (
               <div className="relative mt-2">
-                <img 
-                  src={formData.image_url} 
-                  alt="Preview" 
+                <img
+                  src={formData.image_url}
+                  alt="Preview"
                   className="w-full h-48 object-cover rounded-lg"
                 />
                 <button
@@ -161,8 +161,8 @@ export default function QuickSellButton({ user }) {
           {/* Category */}
           <div>
             <Label>Catégorie</Label>
-            <Select 
-              value={formData.category} 
+            <Select
+              value={formData.category}
               onValueChange={(val) => setFormData({ ...formData, category: val })}
             >
               <SelectTrigger>
@@ -198,7 +198,7 @@ export default function QuickSellButton({ user }) {
           </div>
 
           {/* Submit */}
-          <Button 
+          <Button
             onClick={handleSubmit}
             disabled={loading}
             className="w-full bg-orange-500 hover:bg-orange-600"

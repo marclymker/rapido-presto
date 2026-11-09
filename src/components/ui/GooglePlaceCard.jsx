@@ -2,11 +2,11 @@ import React from 'react';
 import { calculateDistance, estimateDeliveryTime } from '@/components/utils/distanceCalculation';
 
 export default function GooglePlaceCard({ place, userLocation, onClick }) {
-  const distance = userLocation 
+  const distance = userLocation
     ? calculateDistance(
-        userLocation.lat, 
+        userLocation.lat,
         userLocation.lng,
-        place.location.lat, 
+        place.location.lat,
         place.location.lng
       )
     : null;
@@ -15,14 +15,14 @@ export default function GooglePlaceCard({ place, userLocation, onClick }) {
   const isOpen = place.opening_hours?.open_now;
 
   return (
-    <div 
+    <div
       onClick={onClick}
       className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4 hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
     >
       {/* Image de la boutique */}
       <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden flex-shrink-0">
         {place.company_logo_url ? (
-          <img 
+          <img
             src={place.company_logo_url}
             className="w-full h-full object-cover"
             alt={place.company_name}
@@ -42,15 +42,15 @@ export default function GooglePlaceCard({ place, userLocation, onClick }) {
           </h4>
           {isOpen !== undefined && (
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase whitespace-nowrap ${
-              isOpen 
-                ? 'bg-green-100 text-green-700' 
+              isOpen
+                ? 'bg-green-100 text-green-700'
                 : 'bg-red-100 text-red-700'
             }`}>
               {isOpen ? 'Ouvert' : 'Fermé'}
             </span>
           )}
         </div>
-        
+
         {/* Rating et Distance */}
         <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
           <span className="flex items-center gap-1">

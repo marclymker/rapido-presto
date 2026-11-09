@@ -12,10 +12,10 @@ const HAITI_TIMEZONE = 'America/Port-au-Prince';
  */
 export function formatHaitiDate(date, formatStr = "d MMMM yyyy 'à' HH:mm") {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   // Convertir au fuseau horaire d'Haïti
   const haitiDate = new Date(dateObj.toLocaleString('en-US', { timeZone: HAITI_TIMEZONE }));
-  
+
   return format(haitiDate, formatStr, { locale: fr });
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,18 +12,18 @@ export default function AgentCommissions() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    firebaseApi.auth.me().then(setUser).catch(() => {});
   }, []);
 
   const { data: clients = [] } = useQuery({
     queryKey: ['agent-clients', user?.id],
-    queryFn: () => base44.entities.AgentClient.filter({ agent_id: user?.id }),
+    queryFn: () => firebaseApi.entities.AgentClient.filter({ agent_id: user?.id }),
     enabled: !!user?.id
   });
 
   const claimMutation = useMutation({
     mutationFn: async (clientId) => {
-      return base44.entities.AgentClient.update(clientId, {
+      return firebaseApi.entities.AgentClient.update(clientId, {
         commission_claimed: true,
         claim_date: new Date().toISOString()
       });
@@ -77,10 +77,10 @@ export default function AgentCommissions() {
           {clients.map(client => {
             const canClaim = client.status === 'Terminée' && !client.commission_claimed;
             const isClaimed = client.commission_claimed;
-            
+
             return (
-              <div 
-                key={client.id} 
+              <div
+                key={client.id}
                 className={`bg-white p-4 rounded-xl shadow-sm border transition-all ${
                   canClaim ? 'border-green-200 hover:border-green-400' : 'border-slate-100'
                 }`}
@@ -91,7 +91,7 @@ export default function AgentCommissions() {
                     <p className="text-sm text-slate-600 mt-1">
                       {client.event_type} • {client.event_date && new Date(client.event_date).toLocaleDateString()}
                     </p>
-                    
+
                     <div className="flex gap-4 mt-3">
                       <div>
                         <p className="text-xs text-slate-500">Total Commande</p>
@@ -131,17 +131,17 @@ export default function AgentCommissions() {
                     )}
 
                     <div className="flex gap-2 mt-2">
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
                         onClick={() => setSelectedClient(client)}
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         Détails
                       </Button>
-                      
+
                       {canClaim && (
-                        <Button 
+                        <Button
                           size="sm"
                           className="bg-green-600 hover:bg-green-700"
                           onClick={() => claimMutation.mutate(client.id)}
@@ -151,9 +151,9 @@ export default function AgentCommissions() {
                           Réclamer
                         </Button>
                       )}
-                      
+
                       {client.status !== 'Terminée' && !isClaimed && (
-                        <Button 
+                        <Button
                           size="sm"
                           disabled
                           variant="secondary"
@@ -234,7 +234,7 @@ export default function AgentCommissions() {
                 }`}>
                   Statut: {selectedClient.status}
                 </span>
-                
+
                 {selectedClient.commission_claimed && (
                   <span className="text-sm text-purple-600 font-medium">
                     Commission réclamée le {new Date(selectedClient.claim_date).toLocaleDateString()}

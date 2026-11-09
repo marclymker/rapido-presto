@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { ChevronDown } from 'lucide-react';
 
 export default function ProductFAQ({ product, shop }) {
@@ -8,7 +8,7 @@ export default function ProductFAQ({ product, shop }) {
 
   const { data, isLoading } = useQuery({
     queryKey: ['faq', product?.id],
-    queryFn: () => base44.functions.invoke('generateProductFAQ', {
+    queryFn: () => firebaseApi.functions.invoke('generateProductFAQ', {
       product_name: product.name,
       description: product.description,
       category: product.category,

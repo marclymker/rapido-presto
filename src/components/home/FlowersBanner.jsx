@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flower2, Clock } from 'lucide-react';
@@ -13,12 +12,12 @@ export default function FlowersBanner() {
       const now = Date.now();
       const cycleTime = 30 * 60 * 1000; // 30 minutes
       const displayDuration = 2 * 60 * 1000; // 2 minutes
-      
+
       const timeInCycle = now % cycleTime;
       const shouldShow = timeInCycle < displayDuration;
-      
+
       setIsVisible(shouldShow);
-      
+
       if (shouldShow) {
         setTimeLeft(Math.floor((displayDuration - timeInCycle) / 1000));
       }
@@ -57,7 +56,7 @@ export default function FlowersBanner() {
             <div className="relative bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl p-4 overflow-hidden shadow-xl">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
-              
+
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
@@ -77,7 +76,7 @@ export default function FlowersBanner() {
                     <p className="text-white/90 text-sm">Bouquets et arrangements</p>
                   </div>
                 </div>
-                
+
                 <div className="bg-white text-pink-600 px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">
                   Voir →
                 </div>

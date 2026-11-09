@@ -1,19 +1,19 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Users, PartyPopper, GraduationCap, Baby, Cake, Calendar } from 'lucide-react';
+import { Briefcase, PartyPopper, GraduationCap, Baby } from 'lucide-react';
 
 export default function EventPlannerHaiti() {
   return (
     <>
       <Helmet>
-        <title>Event Planner Haïti - Organisation Événements Corporatifs & Privés | Port-au-Prince</title>
-        <meta 
-          name="description" 
-          content="Event planner professionnel en Haïti. Organisation événements corporatifs, conférences, anniversaires, baby showers à Port-au-Prince, Pétion-Ville. Planification complète." 
+        <title>Event Planner Haïti | Kairos — Organisation Événements | Port-au-Prince</title>
+        <meta
+          name="description"
+          content="Event planner professionnel en Haïti. Organisation événements corporatifs, conférences, anniversaires, baby showers à Port-au-Prince, Pétion-Ville. Planification complète."
         />
         <meta name="keywords" content="event planner haiti, organisation événement haiti, event planner port-au-prince, événement corporatif haiti, anniversaire, baby shower, graduation" />
-        <link rel="canonical" href="https://rapidopresto.base44.app/event-planner-haiti" />
+        <link rel="canonical" href="https://makariosbridal.shop/event-planner-haiti" />
       </Helmet>
 
       <article className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -21,7 +21,7 @@ export default function EventPlannerHaiti() {
           <div className="max-w-5xl mx-auto text-center">
             <h1 className="text-5xl font-black mb-6">Event Planner en Haïti 🎉</h1>
             <p className="text-xl mb-8 max-w-3xl mx-auto">
-              Organisation professionnelle d'événements corporatifs et privés en Haïti. Conférences, séminaires, anniversaires, 
+              Organisation professionnelle d'événements corporatifs et privés en Haïti. Conférences, séminaires, anniversaires,
               baby showers, graduations à Port-au-Prince et Pétion-Ville.
             </p>
             <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
@@ -36,13 +36,13 @@ export default function EventPlannerHaiti() {
               Event Planner : Votre Partenaire pour Événements Réussis en Haïti
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Un <strong>event planner</strong> (organisateur d'événements) est un professionnel qui conçoit, planifie et coordonne 
-              tous types d'événements : corporatifs (conférences, séminaires, lancements produits) et privés (anniversaires, 
+              Un <strong>event planner</strong> (organisateur d'événements) est un professionnel qui conçoit, planifie et coordonne
+              tous types d'événements : corporatifs (conférences, séminaires, lancements produits) et privés (anniversaires,
               baby showers, graduations, fêtes familiales).
             </p>
             <p className="text-gray-700 leading-relaxed">
-              En Haïti, notamment à <strong>Port-au-Prince</strong> et <strong>Pétion-Ville</strong>, les entreprises et particuliers 
-              font de plus en plus appel à des event planners pour garantir le succès de leurs événements. L'expertise locale, 
+              En Haïti, notamment à <strong>Port-au-Prince</strong> et <strong>Pétion-Ville</strong>, les entreprises et particuliers
+              font de plus en plus appel à des event planners pour garantir le succès de leurs événements. L'expertise locale,
               la connaissance des prestataires, et la gestion logistique sont essentielles dans le contexte haïtien.
             </p>
           </section>
@@ -118,7 +118,7 @@ export default function EventPlannerHaiti() {
                   <div>
                     <h3 className="text-xl font-bold mb-2">Consultation Initiale</h3>
                     <p className="text-gray-700">
-                      Rencontre pour comprendre votre vision, objectifs, budget, nombre d'invités, date souhaitée. 
+                      Rencontre pour comprendre votre vision, objectifs, budget, nombre d'invités, date souhaitée.
                       Définition claire des attentes.
                     </p>
                   </div>
@@ -131,7 +131,7 @@ export default function EventPlannerHaiti() {
                   <div>
                     <h3 className="text-xl font-bold mb-2">Conception & Planification</h3>
                     <p className="text-gray-700">
-                      Création du concept, thème, ambiance. Élaboration du plan détaillé : lieu, décoration, traiteur, 
+                      Création du concept, thème, ambiance. Élaboration du plan détaillé : lieu, décoration, traiteur,
                       animations, timeline.
                     </p>
                   </div>
@@ -144,7 +144,7 @@ export default function EventPlannerHaiti() {
                   <div>
                     <h3 className="text-xl font-bold mb-2">Coordination Prestataires</h3>
                     <p className="text-gray-700">
-                      Sélection et négociation avec prestataires vérifiés : lieux, traiteurs, DJ, photographes, décorateurs. 
+                      Sélection et négociation avec prestataires vérifiés : lieux, traiteurs, DJ, photographes, décorateurs.
                       Gestion contrats.
                     </p>
                   </div>
@@ -157,7 +157,7 @@ export default function EventPlannerHaiti() {
                   <div>
                     <h3 className="text-xl font-bold mb-2">Exécution Jour J</h3>
                     <p className="text-gray-700">
-                      Coordination sur place : installation, gestion prestataires, respect timing, résolution imprévus. 
+                      Coordination sur place : installation, gestion prestataires, respect timing, résolution imprévus.
                       Vous profitez sans stress.
                     </p>
                   </div>

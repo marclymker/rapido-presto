@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -43,6 +43,7 @@ try {
 const urlParams = new URLSearchParams(window.location.search);
 
 const transactionId = urlParams.get('transactionId');
+const orderId = urlParams.get('orderId');
 
 
 
@@ -60,9 +61,9 @@ return;
 
 // Vérifier le paiement
 
-const response = await base44.functions.invoke('moncashVerifyPayment', {
-
-transactionId: transactionId
+const response = await firebaseApi.functions.invoke('moncashVerifyPayment', {
+transactionId: transactionId,
+orderId: orderId || undefined
 
 });
 
@@ -76,16 +77,11 @@ if (paymentData.success && paymentData.status === 'success') {
 
 // Vérifier si c'est un abonnement Premium (order_id commence par SUB_)
 
-const urlParams = new URLSearchParams(window.location.search);
-
-const orderId = urlParams.get('orderId');
-
-
 if (orderId && orderId.startsWith('SUB_')) {
 
 // C'est un abonnement Premium - appeler le webhook
 
-await base44.functions.invoke('premiumWebhook', {
+await firebaseApi.functions.invoke('premiumWebhook', {
 
 transaction_id: transactionId,
 
@@ -111,9 +107,8 @@ isPremium: true
 
 // Paiement de commande normale
 
-const orders = await base44.entities.Order.filter({
-
-moncash_transaction_id: transactionId
+const orders = await firebaseApi.entities.Order.filter({
+payment_order_id: orderId || transactionId
 
 });
 
@@ -121,21 +116,13 @@ moncash_transaction_id: transactionId
 
 if (orders.length > 0) {
 
-// Mettre à jour TOUTES les commandes avec ce transactionId
+// La Cloud Function vient déjà de vérifier et de mettre à jour le paiement.
 
 for (const order of orders) {
 
-await base44.entities.Order.update(order.id, {
-
-payment_status: 'paid'
-
-});
-
-
-
 // ENVOYER LES NOTIFICATIONS APRÈS PAIEMENT RÉUSSI
 
-await base44.functions.invoke('sendOrderNotification', {
+await firebaseApi.functions.invoke('sendOrderNotification', {
 
 orderId: order.id,
 
@@ -152,7 +139,7 @@ console.log('=== PAYMENT CALLBACK - AVANT ENVOI WHATSAPP ===');
 console.log('Order ID:', order.id);
 
 
-const debugResult = await base44.functions.invoke('debugWhatsApp', {
+const debugResult = await firebaseApi.functions.invoke('debugWhatsApp', {
 
 orderId: order.id
 
@@ -175,7 +162,7 @@ console.log('Debug result:', debugResult.data);
 
 // Envoyer notification WhatsApp au marchand
 
-const whatsappResult = await base44.functions.invoke('sendWhatsAppOrderNotification', {
+const whatsappResult = await firebaseApi.functions.invoke('sendWhatsAppOrderNotification', {
 
 orderId: order.id
 

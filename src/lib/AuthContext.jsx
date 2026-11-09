@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 
 const AuthContext = createContext();
 
@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [appPublicSettings, setAppPublicSettings] = useState({ id: 'rapido-presto' });
 
   useEffect(() => {
-    const unsubscribe = base44.auth.onAuthStateChanged((currentUser) => {
+    const unsubscribe = firebaseApi.auth.onAuthStateChanged((currentUser) => {
       if (currentUser) {
         setUser(currentUser);
         setIsAuthenticated(true);
@@ -27,13 +27,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = async () => {
-    await base44.auth.logout();
+    await firebaseApi.auth.logout();
     setUser(null);
     setIsAuthenticated(false);
   };
 
   const navigateToLogin = () => {
-    base44.auth.redirectToLogin('/Dashboard');
+    firebaseApi.auth.redirectToLogin('/Dashboard');
   };
 
   const checkAppState = async () => {
@@ -42,9 +42,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated, 
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
       isLoadingAuth,
       isLoadingPublicSettings,
       authError,

@@ -1,9 +1,0 @@
-{
-  "name": "Rapido Presto | Marketplace & E-commerce Ha\u00efti.",
-  "site": {
-    "installCommand": "npm install",
-    "buildCommand": "npm run build",
-    "serveCommand": "npm run dev",
-    "outputDirectory": "./dist"
-  }
-}

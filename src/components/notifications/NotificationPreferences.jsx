@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { toast } from 'sonner';
 import { Bell, BellOff, Package, ShoppingBag, Store, Truck, Tag, Loader2 } from 'lucide-react';
 
@@ -86,7 +86,7 @@ export default function NotificationPreferences({ user }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await base44.auth.updateMe({
+      await firebaseApi.auth.updateMe({
         notification_preferences: preferences
       });
       toast.success('Préférences enregistrées');

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, memo } from 'react';
+import { useEffect, useRef, memo } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import MessageBubble from './MessageBubble';
@@ -39,7 +39,7 @@ const MessageFeed = memo(({ messages, selectedConv, user, isLoading }) => {
         <h2 className="text-[17px] font-bold">
           {user.id === selectedConv.vendor_id ? selectedConv.customer_name : selectedConv.shop_name}
         </h2>
-        <p className="text-[12px] text-gray-400 mt-0.5">Rapido Presto · Support IA 24/7</p>
+        <p className="text-[12px] text-gray-400 mt-0.5">Kairos · Support IA 24/7</p>
       </div>
 
       {isLoading ? (

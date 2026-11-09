@@ -62,7 +62,7 @@ export default function FloatingMerchantBanner({ user }) {
                 <X className="w-4 h-4 text-white" />
               </button>
 
-              <Link 
+              <Link
                 to={createPageUrl('Dashboard')}
                 className="flex items-center gap-3"
               >
@@ -71,7 +71,7 @@ export default function FloatingMerchantBanner({ user }) {
                 </div>
                 <div className="flex-1">
                   <p className="text-white font-bold text-sm">
-                    💰 Gagnez de l'argent avec Rapido Presto
+                    💰 Gagnez de l'argent avec Kairos
                   </p>
                   <p className="text-white/90 text-xs mt-0.5">
                     Publier un article →

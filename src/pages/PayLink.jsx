@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
-import { ShoppingBag, AlertCircle, CheckCircle, Wallet, CreditCard, Loader2 } from 'lucide-react';
+import { ShoppingBag, AlertCircle, CheckCircle, Wallet, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 export default function PayLink() {
@@ -18,20 +17,20 @@ export default function PayLink() {
   const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
-    base44.auth.me()
+    firebaseApi.auth.me()
       .then(u => {
         setUser(u);
         setLoadingUser(false);
       })
       .catch(() => {
         // Non connecté → redirection vers login avec retour automatique
-        base44.auth.redirectToLogin(window.location.href);
+        firebaseApi.auth.redirectToLogin(window.location.href);
       });
   }, []);
 
   const { data: link, isLoading } = useQuery({
     queryKey: ['payment-link', linkId],
-    queryFn: () => base44.entities.PaymentLink.filter({ id: linkId }).then(r => r[0]),
+    queryFn: () => firebaseApi.entities.PaymentLink.filter({ id: linkId }).then(r => r[0]),
     enabled: !!linkId
   });
 
@@ -41,7 +40,7 @@ export default function PayLink() {
       const orderNum = 'RP' + Date.now().toString().slice(-6);
       const code = Math.floor(1000 + Math.random() * 9000).toString();
 
-      const order = await base44.entities.Order.create({
+      const order = await firebaseApi.entities.Order.create({
         order_number: orderNum,
         client_id: user.id,
         client_name: user.full_name,
@@ -68,10 +67,10 @@ export default function PayLink() {
       });
 
       // Update payment link status
-      await base44.entities.PaymentLink.update(link.id, { status: 'paid', order_id: order.id });
+      await firebaseApi.entities.PaymentLink.update(link.id, { status: 'paid', order_id: order.id });
 
       if (paymentMethod === 'moncash') {
-        const response = await base44.functions.invoke('moncashCreatePayment', {
+        const response = await firebaseApi.functions.invoke('moncashCreatePayment', {
           orderId: orderNum,
           amount: link.total,
           description: `Paiement ${link.title}`
@@ -87,8 +86,8 @@ export default function PayLink() {
       setOrderNumber(orderNum);
       setConfirmCode(code);
       setStep('done');
-      await base44.functions.invoke('sendOrderNotification', { orderId: order.id, status: 'pending' }).catch(() => {});
-      await base44.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.id }).catch(() => {});
+      await firebaseApi.functions.invoke('sendOrderNotification', { orderId: order.id, status: 'pending' }).catch(() => {});
+      await firebaseApi.functions.invoke('sendWhatsAppOrderNotification', { orderId: order.id }).catch(() => {});
     } catch (e) {
       toast.error(e.message);
       setStep('review');

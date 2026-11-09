@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 
 export default function OneSignalInit({ user }) {
   const initialized = useRef(false);
@@ -15,7 +15,7 @@ export default function OneSignalInit({ user }) {
         if (isPreview) return;
 
         // Récupération de l'App ID depuis Supabase/Backend
-        const { data } = await base44.functions.invoke('getOneSignalAppId');
+        const { data } = await firebaseApi.functions.invoke('getOneSignalAppId');
         if (!data?.appId) return;
 
         // Vérifier si déjà initialisé
@@ -48,7 +48,7 @@ export default function OneSignalInit({ user }) {
             if (!permission) {
               await OneSignal.Notifications.requestPermission();
             }
-            
+
             await OneSignal.Notifications.setDefaultNotificationUrl(window.location.origin);
 
             // Identification

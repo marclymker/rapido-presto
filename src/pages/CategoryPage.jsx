@@ -1,27 +1,34 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ui/ProductCard';
+import { getMarketplaceSpace } from '@/lib/marketplaceSpaces';
 
 /**
  * PAGE CATÉGORIE - SEO OPTIMISÉE
  * URL: /categories/{slug-categorie}
- * 
+ *
  * Exemples:
  * - /categories/mariage
  * - /categories/robes-de-mariee
  * - /categories/sirene
  */
 export default function CategoryPage() {
-  const { slug } = useParams();
+  const { slug: routeSlug } = useParams();
   const navigate = useNavigate();
+  const slug = routeSlug || window.location.pathname.replace(/^\//, '');
 
   // Mapping slug → catégorie
   const categoryMap = {
+    'marketplace': 'Marketplace',
+    'nourriture': 'Nourriture',
+    'hotel-piscine': 'Hotels/Piscine',
+    'hotels-piscine': 'Hotels/Piscine',
+    'tickets': 'Tickets',
     'mariage': 'Mariage',
     'robes-de-mariee': 'Mariage',
     'sirene': 'Mariage',
@@ -37,21 +44,22 @@ export default function CategoryPage() {
   };
 
   const category = categoryMap[slug] || 'Tout';
+  const isMainSpace = ['Marketplace', 'Nourriture', 'Hotels/Piscine', 'Tickets'].includes(category);
 
   // Produits de la catégorie
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['category-products', category],
-    queryFn: () => base44.entities.Product.filter({ 
-      category,
-      is_available: true 
-    }),
+    queryFn: async () => {
+      const products = await firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 200);
+      return isMainSpace ? products.filter((product) => getMarketplaceSpace(product) === category) : products.filter((product) => product.category === category);
+    },
     enabled: category !== 'Tout'
   });
 
   // Boutiques actives
   const { data: shops = [] } = useQuery({
     queryKey: ['shops'],
-    queryFn: () => base44.entities.Shop.filter({ is_active: true })
+    queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true })
   });
 
   if (isLoading) {
@@ -83,8 +91,8 @@ export default function CategoryPage() {
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "name": `${category} - Rapido Presto`,
-    "description": `Découvrez notre sélection ${category.toLowerCase()} en Haïti. Livraison rapide.`,
+    "name": `${category} - Kairos`,
+    "description": `Découvrez notre sélection ${category.toLowerCase()} en Haïti. Marketplace, réservations et billetterie.`,
     "url": typeof window !== 'undefined' ? window.location.href : '',
     "numberOfItems": products.length
   };
@@ -92,15 +100,15 @@ export default function CategoryPage() {
   return (
     <>
       <Helmet>
-        <title>{category} - Livraison rapide en Haïti | Rapido Presto</title>
-        <meta 
-          name="description" 
-          content={`Découvrez ${products.length} produits dans la catégorie ${category}. Livraison rapide partout en Haïti.`}
+        <title>{category} en Haïti | Kairos Marketplace</title>
+        <meta
+          name="description"
+            content={`Découvrez ${products.length} offres ${category.toLowerCase()} en Haïti sur Kairos : marketplace, réservations, billetterie et contact direct.`}
         />
-        <meta name="keywords" content={`${category}, Haïti, livraison, e-commerce, shopping`} />
-        
+        <meta name="keywords" content={`${category}, ${category} Haïti, Kairos, marketplace Haïti, makariosbridal.shop`} />
+
         <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
-        
+
         <script type="application/ld+json">
           {JSON.stringify(breadcrumbSchema)}
         </script>
@@ -133,11 +141,11 @@ export default function CategoryPage() {
             {products.map(product => {
               const shop = shops.find(s => s.id === product.shop_id);
               return (
-                <a key={product.id} href={`/products/${product.slug}`}>
+                <a key={product.id} href={`/product/${product.id}`}>
                   <ProductCard
                     product={product}
                     shop={shop}
-                    onClick={() => window.location.href = `/products/${product.slug}`}
+                    onClick={() => window.location.href = `/product/${product.id}`}
                   />
                 </a>
               );

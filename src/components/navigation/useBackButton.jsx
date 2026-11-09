@@ -23,7 +23,7 @@ export function useBackButton(onBack, enabled = true) {
 
     // Ajouter une entrée dans l'historique pour intercepter le retour
     window.history.pushState(null, '', window.location.href);
-    
+
     window.addEventListener('popstate', handlePopState);
 
     return () => {

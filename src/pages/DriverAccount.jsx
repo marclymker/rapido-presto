@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, User, Mail, Phone, Wallet, Plus, Trash2, LogOut, Landmark, Bike } from 'lucide-react';
@@ -19,11 +19,11 @@ export default function DriverAccount() {
   const [newPayment, setNewPayment] = useState({ type: 'bank', details: '' });
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    firebaseApi.auth.me().then(u => {
       setUser(u);
       setFormData({ phone: u.phone || '' });
       setLoading(false);
-      
+
       // Redirect if wrong profile
       if (u.current_profile !== 'livreur') {
         window.location.href = createPageUrl(
@@ -35,7 +35,7 @@ export default function DriverAccount() {
 
   const handleSave = async () => {
     try {
-      await base44.auth.updateMe(formData);
+      await firebaseApi.auth.updateMe(formData);
       setUser({ ...user, ...formData });
       setEditMode(false);
       toast.success('Informations mises à jour');
@@ -51,9 +51,9 @@ export default function DriverAccount() {
       details: newPayment.details,
       last_digits: newPayment.details.slice(-4)
     };
-    
+
     try {
-      await base44.auth.updateMe({
+      await firebaseApi.auth.updateMe({
         payment_methods: [...payments, newPaymentMethod]
       });
       setUser({ ...user, payment_methods: [...payments, newPaymentMethod] });
@@ -68,9 +68,9 @@ export default function DriverAccount() {
   const handleDeletePayment = async (index) => {
     const payments = [...(user.payment_methods || [])];
     payments.splice(index, 1);
-    
+
     try {
-      await base44.auth.updateMe({ payment_methods: payments });
+      await firebaseApi.auth.updateMe({ payment_methods: payments });
       setUser({ ...user, payment_methods: payments });
       toast.success('Moyen de paiement supprimé');
     } catch (error) {
@@ -79,7 +79,7 @@ export default function DriverAccount() {
   };
 
   const handleLogout = () => {
-    base44.auth.logout();
+    firebaseApi.auth.logout();
   };
 
   if (loading) {
@@ -194,8 +194,8 @@ export default function DriverAccount() {
                 <div className="space-y-4 pt-4">
                   <div>
                     <Label>Type</Label>
-                    <Select 
-                      value={newPayment.type} 
+                    <Select
+                      value={newPayment.type}
                       onValueChange={(val) => setNewPayment({ ...newPayment, type: val })}
                     >
                       <SelectTrigger>
@@ -242,9 +242,9 @@ export default function DriverAccount() {
                       <p className="text-sm text-slate-500">•••• {pm.last_digits}</p>
                     </div>
                   </div>
-                  <Button 
-                    size="icon" 
-                    variant="ghost" 
+                  <Button
+                    size="icon"
+                    variant="ghost"
                     className="text-red-500"
                     onClick={() => handleDeletePayment(idx)}
                   >
@@ -257,8 +257,8 @@ export default function DriverAccount() {
         </div>
 
         {/* Logout */}
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="w-full border-red-200 text-red-600 hover:bg-red-50"
           onClick={handleLogout}
         >

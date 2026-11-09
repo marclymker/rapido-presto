@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, MapPin, Star } from 'lucide-react';
@@ -17,7 +17,7 @@ export default function ShopPage() {
 
   const { data: shops = [], isLoading: loadingShop } = useQuery({
     queryKey: ['shop-by-slug', slug],
-    queryFn: () => base44.entities.Shop.filter({ slug }),
+    queryFn: () => firebaseApi.entities.Shop.filter({ slug }),
     enabled: !!slug
   });
 
@@ -25,9 +25,9 @@ export default function ShopPage() {
 
   const { data: products = [] } = useQuery({
     queryKey: ['shop-products', shop?.id],
-    queryFn: () => base44.entities.Product.filter({ 
+    queryFn: () => firebaseApi.entities.Product.filter({
       shop_id: shop.id,
-      is_available: true 
+      is_available: true
     }),
     enabled: !!shop?.id
   });
@@ -96,19 +96,19 @@ export default function ShopPage() {
   return (
     <>
       <Helmet>
-        <title>{shop.company_name} - {shop.region} | Rapido Presto</title>
-        <meta 
-          name="description" 
-          content={`${shop.company_name} - ${shop.company_category} à ${shop.region}. ${products.length} produits disponibles. Livraison rapide en Haïti.`}
+        <title>{shop.company_name} - {shop.region} | Kairos</title>
+        <meta
+          name="description"
+          content={`${shop.company_name} - ${shop.company_category} à ${shop.region}. ${products.length} produits disponibles. Marketplace, réservations et billetterie en Haïti.`}
         />
         <meta name="keywords" content={`${shop.company_name}, ${shop.company_category}, ${shop.region}, Haïti`} />
-        
+
         <meta property="og:title" content={shop.company_name} />
         <meta property="og:description" content={`${shop.company_category} à ${shop.region}`} />
         <meta property="og:image" content={shop.company_logo_url} />
-        
+
         <link rel="canonical" href={typeof window !== 'undefined' ? window.location.href : ''} />
-        
+
         <script type="application/ld+json">
           {JSON.stringify(organizationSchema)}
         </script>
@@ -137,8 +137,8 @@ export default function ShopPage() {
           <header className="bg-white rounded-lg shadow-sm p-6 mb-8">
             <div className="flex items-center gap-6">
               {shop.company_logo_url && (
-                <img 
-                  src={shop.company_logo_url} 
+                <img
+                  src={shop.company_logo_url}
                   alt={shop.company_name}
                   className="w-24 h-24 rounded-full object-cover border-2 border-orange-100"
                 />
@@ -164,11 +164,11 @@ export default function ShopPage() {
             <h2 className="text-2xl font-bold mb-6">Nos produits ({products.length})</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {products.map(product => (
-                <a key={product.id} href={`/products/${product.slug}`}>
+                <a key={product.id} href={`/product/${product.id}`}>
                   <ProductCard
                     product={product}
                     shop={shop}
-                    onClick={() => window.location.href = `/products/${product.slug}`}
+                    onClick={() => window.location.href = `/product/${product.id}`}
                   />
                 </a>
               ))}

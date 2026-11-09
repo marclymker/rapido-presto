@@ -1,48 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { firebaseApi } from '@/api/firebaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Package, Store, Users, DollarSign, ShoppingCart, 
-  TrendingUp, ArrowLeft, Eye, CheckCircle, XCircle
+import {
+  Package, Store, DollarSign, ShoppingCart, ArrowLeft, CheckCircle, XCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { hasKairosAdminAccess } from '@/lib/adminAccess';
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    firebaseApi.auth.me().then(setUser).catch(() => {});
   }, []);
 
   // Fetch all data
   const { data: orders = [] } = useQuery({
     queryKey: ['admin-all-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 100)
+    queryFn: () => firebaseApi.entities.Order.list('-created_date', 100)
   });
 
   const { data: shops = [] } = useQuery({
     queryKey: ['admin-all-shops'],
-    queryFn: () => base44.entities.Shop.list('-created_date')
+    queryFn: () => firebaseApi.entities.Shop.list('-created_date')
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['admin-all-products'],
-    queryFn: () => base44.entities.Product.list('-created_date')
+    queryFn: () => firebaseApi.entities.Product.list('-created_date')
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['admin-all-users'],
-    queryFn: () => base44.entities.User.list('-created_date'),
-    enabled: user?.role === 'admin'
+    queryFn: () => firebaseApi.entities.User.list('-created_date'),
+    enabled: hasKairosAdminAccess(user)
   });
 
   const { data: agentClients = [] } = useQuery({
     queryKey: ['admin-agent-clients'],
-    queryFn: () => base44.entities.AgentClient.list('-created_date')
+    queryFn: () => firebaseApi.entities.AgentClient.list('-created_date')
   });
 
   // Filter agents
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
     claimedCommissions: agentClients.filter(c => c.commission_claimed).reduce((sum, c) => sum + c.commission_amount, 0)
   };
 
-  if (!user || user.role !== 'admin') {
+  if (!hasKairosAdminAccess(user)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
                   const agentSales = agentClients.filter(c => c.agent_id === agent.id);
                   const totalSales = agentSales.reduce((sum, c) => sum + c.order_total, 0);
                   const totalCommission = agentSales.reduce((sum, c) => sum + c.commission_amount, 0);
-                  
+
                   return (
                     <div key={agent.id} className="border-b pb-3">
                       <div className="flex items-start justify-between">
@@ -263,7 +263,7 @@ export default function AdminDashboard() {
                   const shopProducts = products.filter(p => p.shop_id === shop.id);
                   const shopOrders = orders.filter(o => o.shop_id === shop.id);
                   const shopRevenue = shopOrders.reduce((sum, o) => sum + o.total, 0);
-                  
+
                   return (
                     <div key={shop.id} className="border-b pb-3 flex items-start gap-3">
                       <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
@@ -321,11 +321,11 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 {agentClients.map(client => {
                   const agent = allUsers.find(u => u.id === client.agent_id);
-                  
+
                   return (
                     <div key={client.id} className="border-b pb-3">
                       <div className="flex items-start justify-between">
