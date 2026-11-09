@@ -207,7 +207,10 @@ export const firebaseApi = {
       if (!user) return null;
       try {
         const userRef = doc(db, "User", user.uid);
-        await setDoc(userRef, { email: user.email || '', ...removeUndefined(data), updated_date: serverTimestamp() }, { merge: true });
+        const existing = await getDoc(userRef);
+        const payload = removeUndefined(data);
+        if (!existing.exists() || !existing.data()?.email) payload.email = user.email || '';
+        await setDoc(userRef, { ...payload, updated_date: serverTimestamp() }, { merge: true });
         return { id: user.uid, ...data };
       } catch (e) {
         console.error("Mise à jour profil:", e);

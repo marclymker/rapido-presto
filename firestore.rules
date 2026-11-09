@@ -18,7 +18,9 @@ service cloud.firestore {
       allow update: if isAdmin() || (isOwner(uid)
         // Les anciens comptes peuvent ne pas avoir de champ email, mais si le champ
         // existe il doit toujours rester celui du compte Firebase authentifié.
-        && request.resource.data.get('email', request.auth.token.email) == resource.data.get('email', request.auth.token.email)
+        && (!resource.data.keys().hasAny(['email'])
+          ? request.resource.data.get('email', request.auth.token.email) == request.auth.token.email
+          : request.resource.data.email == resource.data.email)
         // Aucun utilisateur ne peut ajouter ou modifier un rôle, un statut admin ou owner.
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'is_admin', 'is_owner']));
       allow delete: if isAdmin();
