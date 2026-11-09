@@ -953,7 +953,7 @@ onCancel={onClose}
 
 <Dialog open={showForm} onOpenChange={onClose}>
 
-<DialogContent className="max-w-full w-full sm:max-w-3xl h-[100dvh] max-h-[100dvh] sm:h-[90vh] sm:max-h-[90vh] p-0 flex flex-col bg-white rounded-none sm:rounded-xl overflow-hidden">
+<DialogContent className="!flex min-h-0 max-w-full w-full sm:max-w-3xl h-[100dvh] max-h-[100dvh] sm:h-[90vh] sm:max-h-[90vh] flex-col p-0 bg-white rounded-none sm:rounded-xl overflow-hidden">
 
 <DialogHeader className="p-4 sm:p-6 border-b bg-slate-50 flex-shrink-0">
 
@@ -996,7 +996,7 @@ onCancel={onClose}
 </DialogHeader>
 
 
-<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 bg-slate-50/50">
+<div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-4 sm:p-6 bg-slate-50/50" style={{ WebkitOverflowScrolling: 'touch' }}>
 
 <form id="product-form" onSubmit={handleSubmit} className="space-y-6 pb-4 sm:pb-0">
 

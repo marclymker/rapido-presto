@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { firebaseApi } from '@/api/firebaseClient';
 import { Plus, Search, Layers, Trash2, X, CheckSquare, Square } from 'lucide-react';
@@ -27,6 +27,17 @@ export default function ProductsSection({ shopId }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const queryClient = useQueryClient();
+
+  // Le tableau de bord Boutique peut déclencher l’ajout depuis le bloc Commandes.
+  // On réutilise le même modal pour conserver un seul parcours de création.
+  useEffect(() => {
+    const openCreateProduct = () => {
+      setSelectedProduct(null);
+      setShowModal(true);
+    };
+    window.addEventListener('kairos:add-product', openCreateProduct);
+    return () => window.removeEventListener('kairos:add-product', openCreateProduct);
+  }, []);
 
   const { data: products = [] } = useQuery({
     queryKey: ['shop-products', shopId],

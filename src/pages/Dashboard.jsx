@@ -68,7 +68,7 @@ function MarketplaceWorkspace({ orders, products, shop }) {
   return <>
     <div className="grid gap-3 sm:grid-cols-3"><Metric icon={Package} label="Commandes reçues" value={orders.length} tone="orange" /><Metric icon={Store} label="Articles publiés" value={products.length} tone="blue" /><Metric icon={WalletCards} label="Statut boutique" value={shop?.is_active === false ? 'Pause' : 'Active'} tone="emerald" /></div>
     <div className="grid gap-5 xl:grid-cols-[1.1fr_.9fr]">
-      <OperationalCard icon={Package} title="Commandes" detail="Les commandes qui nécessitent votre attention" accent="#f97316" action={<span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700">{orders.filter(o => o.status === 'pending').length} en attente</span>}><OrdersSection orders={orders} userType="merchant" /></OperationalCard>
+      <OperationalCard icon={Package} title="Commandes" detail="Les commandes qui nécessitent votre attention" accent="#f97316" action={<span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700">{orders.filter(o => o.status === 'pending').length} en attente</span>}><OrdersSection orders={orders} userType="merchant" onAddProduct={() => window.dispatchEvent(new Event('kairos:add-product'))} /></OperationalCard>
       <OperationalCard icon={Store} title="Catalogue" detail="Ajoutez et gérez vos articles" accent="#2563eb"><ProductsSection shopId={shop?.id} /></OperationalCard>
     </div>
   </>;
@@ -79,7 +79,7 @@ function FoodWorkspace({ orders, shop }) {
   return <>
     <div className="grid gap-3 sm:grid-cols-3"><Metric icon={Clock3} label="À traiter maintenant" value={pending} tone="amber" /><Metric icon={CheckCircle2} label="Commandes acceptées" value={orders.filter(o => ['accepted', 'preparing', 'ready'].includes(o.status)).length} tone="emerald" /><Metric icon={Truck} label="Mode boutique" value={shop?.is_active === false ? 'Fermé' : 'Ouvert'} tone="blue" /></div>
     <div className="grid gap-5 xl:grid-cols-[1.35fr_.65fr]">
-      <OperationalCard icon={Utensils} title="Commandes entrantes" detail="Accepter, refuser et préparer" accent="#16a34a" action={<span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">POS actif</span>}><OrdersSection orders={orders} userType="merchant" /></OperationalCard>
+      <OperationalCard icon={Utensils} title="Commandes entrantes" detail="Accepter, refuser et préparer" accent="#16a34a" action={<span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">POS actif</span>}><OrdersSection orders={orders} userType="merchant" onAddProduct={() => window.dispatchEvent(new Event('kairos:add-product'))} /></OperationalCard>
       <OperationalCard icon={Store} title="Catalogue rapide" detail="Les articles proposés aujourd’hui" accent="#15803d"><ProductsSection shopId={shop?.id} /></OperationalCard>
     </div>
   </>;
@@ -90,7 +90,7 @@ function HospitalityWorkspace({ orders, products, shop }) {
     <div className="grid gap-3 sm:grid-cols-3"><Metric icon={Hotel} label="Unités au catalogue" value={products.length} tone="blue" /><Metric icon={CalendarDays} label="Réservations / commandes" value={orders.length} tone="indigo" /><Metric icon={CheckCircle2} label="Disponibilité générale" value={shop?.is_active === false ? 'Fermée' : 'Ouverte'} tone="emerald" /></div>
     <div className="grid gap-5 xl:grid-cols-2">
       <OperationalCard icon={CalendarDays} title="Disponibilités" detail="Chambres, piscines et créneaux" accent="#2563eb"><div className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl bg-blue-50 p-4"><p className="text-xs font-bold uppercase tracking-wide text-blue-700">Hébergement</p><p className="mt-2 text-sm font-semibold text-slate-900">Gérer les chambres disponibles</p><Button variant="outline" className="mt-4 rounded-xl border-blue-200">Ouvrir le calendrier<ChevronRight className="ml-2 h-4 w-4" /></Button></div><div className="rounded-2xl bg-cyan-50 p-4"><p className="text-xs font-bold uppercase tracking-wide text-cyan-700">Piscine</p><p className="mt-2 text-sm font-semibold text-slate-900">Gérer les créneaux et capacités</p><Button variant="outline" className="mt-4 rounded-xl border-cyan-200">Gérer les créneaux<ChevronRight className="ml-2 h-4 w-4" /></Button></div></div></OperationalCard>
-      <OperationalCard icon={Package} title="Demandes à confirmer" detail="Réservations et commandes de services" accent="#1d4ed8"><OrdersSection orders={orders} userType="merchant" /></OperationalCard>
+      <OperationalCard icon={Package} title="Demandes à confirmer" detail="Réservations et commandes de services" accent="#1d4ed8"><OrdersSection orders={orders} userType="merchant" onAddProduct={() => window.dispatchEvent(new Event('kairos:add-product'))} /></OperationalCard>
     </div>
   </>;
 }
