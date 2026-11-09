@@ -279,6 +279,7 @@ const [showForm, setShowForm] = useState(false);
 
 const [aiGenerated, setAiGenerated] = useState(false);
 const [variantRows, setVariantRows] = useState([]);
+const [shopCategory, setShopCategory] = useState('Marketplace');
 
 const [formData, setFormData] = useState({
 
@@ -351,6 +352,14 @@ const [newTag, setNewTag] = useState('');
 
 
 useEffect(() => {
+
+if (open && shopId && !product) {
+  firebaseApi.entities.Shop.get(shopId).then((shop) => {
+    const category = shop?.company_category || 'Marketplace';
+    setShopCategory(category);
+    setFormData((current) => ({ ...current, category }));
+  }).catch((error) => console.warn('Catégorie boutique indisponible:', error));
+}
 
 if (open && !product) {
 
@@ -638,6 +647,9 @@ const dataWithSlug = normalizeFirestoreValue({
   slug,
   image_alt: formData.image_alt || formData.name,
   // Firestore doit recevoir null ou une chaîne vide, jamais undefined.
+  // À la création, la boutique est la source de vérité de l’espace Kairos.
+  // Une modification ultérieure conserve la catégorie choisie par le vendeur.
+  category: product ? formData.category : shopCategory,
   fb_category_id: formData.fb_category_id ?? null,
   subcategory: formData.subcategory ?? '',
   promo_price: formData.promo_price ?? null,

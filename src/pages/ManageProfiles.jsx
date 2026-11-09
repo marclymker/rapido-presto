@@ -254,7 +254,10 @@ export default function ManageProfiles() {
 
     } catch (error) {
       console.error('Activation profil:', error);
-      toast.error(error?.code === 'permission-denied' ? 'Firebase refuse la mise à jour du profil. Reconnectez-vous puis réessayez.' : 'Erreur lors de l\'activation. Vérifiez votre connexion et réessayez.');
+      const errorCode = error?.code || '';
+      toast.error(errorCode === 'permission-denied'
+        ? 'Firebase refuse la mise à jour du profil. Vérifiez que vous êtes connecté avec le bon compte, puis réessayez.'
+        : `Erreur lors de l’activation${errorCode ? ` (${errorCode})` : ''}. Vérifiez votre connexion et réessayez.`);
     } finally {
       setSubmitting(false);
     }
