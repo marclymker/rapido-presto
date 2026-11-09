@@ -197,8 +197,8 @@ exports.ogMetaTags = onRequest({ cors: false }, async (req, res) => {
 exports.generateSitemapXML = onRequest(async (_req, res) => {
   try {
     const [products, shops] = await Promise.all([getPublicProducts(), getPublicShops()]);
-    const staticPaths = ['/', '/Products', '/Category', '/Blog', '/robe-de-mariage-haiti', '/wedding-planner-haiti', '/event-planner-haiti'];
-    const urls = [...staticPaths.map((path) => ({ loc: `${SITE_ORIGIN}${path}` })), ...products.map((p) => ({ loc: productUrl(p), lastmod: p.updated_date || p.created_date })), ...shops.map((s) => ({ loc: `${SITE_ORIGIN}/shop/${encodeURIComponent(s.id)}`, lastmod: s.updated_date || s.created_date }))];
+    const staticPaths = ['/', '/products', '/blog', '/robe-de-mariage-haiti', '/wedding-planner-haiti', '/event-planner-haiti', '/about', '/contact', '/legal'];
+    const urls = [...staticPaths.map((path) => ({ loc: `${SITE_ORIGIN}${path}` })), ...products.map((p) => ({ loc: productUrl(p), lastmod: p.updated_date || p.created_date }))];
     const body = urls.map(({ loc, lastmod }) => `<url><loc>${escapeXml(loc)}</loc>${lastmod?.toDate ? `<lastmod>${lastmod.toDate().toISOString()}</lastmod>` : ''}<changefreq>daily</changefreq><priority>${loc === SITE_ORIGIN + '/' ? '1.0' : '0.7'}</priority></url>`).join('');
     setXmlHeaders(res, 900);
     return res.send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${body}</urlset>`);

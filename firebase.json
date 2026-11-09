@@ -19,6 +19,7 @@
       { "source": "service-worker.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
     ],
     "rewrites": [
+      { "source": "/sitemap.xml", "function": { "functionId": "generateSitemapXML", "region": "us-central1" } },
       { "source": "/functions/ogMetaTags", "function": { "functionId": "ogMetaTags", "region": "us-central1" } },
       { "source": "/functions/generateSitemap", "function": { "functionId": "generateSitemap", "region": "us-central1" } },
       { "source": "/functions/generateSitemapXML", "function": { "functionId": "generateSitemapXML", "region": "us-central1" } },
