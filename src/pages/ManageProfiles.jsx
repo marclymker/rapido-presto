@@ -119,7 +119,7 @@ export default function ManageProfiles() {
     const alreadyConfigured = profileType === 'client' || Boolean(
       profileType === 'livreur'
         ? storedProfile?.vehicle_type && storedProfile?.id_document_url && storedProfile?.status !== 'pending'
-        : storedProfile?.company_name && storedProfile?.company_category
+        : storedProfile?.company_name && storedProfile?.company_category && storedProfile?.email
     );
     if (alreadyConfigured) {
       const profiles = deactivateOtherOperationalProfiles(user?.profiles || {}, profileType === 'marketplace' ? 'client' : profileType);
