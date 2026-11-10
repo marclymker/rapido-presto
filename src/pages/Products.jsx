@@ -364,7 +364,7 @@ export default function Products() {
 
   const filteredProducts = useMemo(() => {
     const baseFiltered = allProducts.filter(p => {
-      if (selectedCategory && getMarketplaceSpace(p) !== selectedCategory) return false;
+      if (selectedCategory && getMarketplaceSpace(p, shopsMap[p.shop_id]) !== selectedCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
       return true;
     });
@@ -442,7 +442,7 @@ export default function Products() {
     if (isFiltered) return {};
     const byCategory = {};
     allProducts.forEach(p => {
-      const space = getMarketplaceSpace(p);
+      const space = getMarketplaceSpace(p, shopsMap[p.shop_id]);
       if (!byCategory[space]) byCategory[space] = [];
       byCategory[space].push(p);
     });

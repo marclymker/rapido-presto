@@ -148,7 +148,7 @@ export default function Home() {
 
   const filteredProducts = useMemo(() => {
     const base = allProducts.filter(p => {
-      if (selectedCategory && getMarketplaceSpace(p) !== selectedCategory) return false;
+      if (selectedCategory && getMarketplaceSpace(p, shops.find((shop) => shop.id === p.shop_id)) !== selectedCategory) return false;
       if (selectedFbBranchIds && !selectedFbBranchIds.has(p.fb_category_id)) return false;
 
       // Recherche hybride multi-mots : titre + description + nom boutique + tags SEO
@@ -213,7 +213,7 @@ export default function Home() {
     const rest = shuffle(scored.filter(p => !top10Ids.has(p.id)));
 
     return [...top10, ...rest];
-  }, [allProducts, searchQuery, selectedCategory, selectedFbCatId]);
+  }, [allProducts, searchQuery, selectedCategory, selectedFbCatId, shops]);
 
   const handleProductClick = useCallback((product) => {
     const shop = shops.find(s => s.id === product.shop_id);
@@ -243,7 +243,7 @@ export default function Home() {
     if (isFiltered) return {};
     const groups = {};
     allProducts.forEach(p => {
-      const space = getMarketplaceSpace(p);
+      const space = getMarketplaceSpace(p, shopsMap[p.shop_id]);
       if (!groups[space]) groups[space] = [];
       groups[space].push(p);
     });
@@ -252,7 +252,7 @@ export default function Home() {
       groups[k].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     });
     return Object.fromEntries(MARKETPLACE_SPACES.map(({ id }) => [id, groups[id] || []]).filter(([, products]) => products.length));
-  }, [allProducts, isFiltered]);
+  }, [allProducts, isFiltered, shops, shopsMap]);
 
   return (
     <div className="rp-marketplace rp-dark-shop flex flex-col min-h-screen pb-20">

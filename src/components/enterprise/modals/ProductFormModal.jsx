@@ -73,6 +73,7 @@ import { firebaseApi } from '@/api/firebaseClient';
 import FbCategorySelector from '@/components/product/FbCategorySelector';
 
 import { getTaxonomyMappingPrompt } from '@/lib/fbTaxonomy';
+import { getMarketplaceSpace } from '@/lib/marketplaceSpaces';
 
 const parseVariantList = (value = '') => value.split(',').map(item => item.trim()).filter(Boolean);
 
@@ -638,6 +639,16 @@ const variants = generatedRows.map(row => ({
 const { variant_options: _variantOptions, ...persistedFormData } = formData;
 const currentUser = await firebaseApi.auth.me();
 if (!currentUser?.id) throw new Error('Session utilisateur expirée. Reconnectez-vous.');
+const shopRecord = await firebaseApi.entities.Shop.get(shopId).catch(() => null);
+const activeBusinessProfile = ['food', 'hospitality', 'tickets'].includes(currentUser.current_profile)
+  ? currentUser.current_profile
+  : null;
+const resolvedSpace = getMarketplaceSpace({
+  category: shopRecord?.company_category || shopCategory,
+  shop_category: shopRecord?.company_category || shopCategory,
+  business_profile: activeBusinessProfile,
+  current_profile: activeBusinessProfile,
+}, shopRecord);
 const dataWithSlug = normalizeFirestoreValue({
   ...persistedFormData,
   variants,
@@ -649,7 +660,10 @@ const dataWithSlug = normalizeFirestoreValue({
   // Firestore doit recevoir null ou une chaîne vide, jamais undefined.
   // À la création, la boutique est la source de vérité de l’espace Kairos.
   // Une modification ultérieure conserve la catégorie choisie par le vendeur.
-  category: product ? formData.category : shopCategory,
+  category: product ? formData.category : resolvedSpace,
+  marketplace_space: resolvedSpace,
+  shop_category: shopRecord?.company_category || shopCategory || '',
+  business_profile: activeBusinessProfile || 'client',
   fb_category_id: formData.fb_category_id ?? null,
   subcategory: formData.subcategory ?? '',
   promo_price: formData.promo_price ?? null,

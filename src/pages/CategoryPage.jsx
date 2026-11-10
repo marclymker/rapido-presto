@@ -50,8 +50,14 @@ export default function CategoryPage() {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['category-products', category],
     queryFn: async () => {
-      const products = await firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 200);
-      return isMainSpace ? products.filter((product) => getMarketplaceSpace(product) === category) : products.filter((product) => product.category === category);
+      const [products, shops] = await Promise.all([
+        firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 200),
+        isMainSpace ? firebaseApi.entities.Shop.filter({ is_active: true }, '-created_date', 200) : Promise.resolve([]),
+      ]);
+      const shopsMap = Object.fromEntries(shops.map((shop) => [shop.id, shop]));
+      return isMainSpace
+        ? products.filter((product) => getMarketplaceSpace(product, shopsMap[product.shop_id]) === category)
+        : products.filter((product) => product.category === category);
     },
     enabled: category !== 'Tout'
   });

@@ -111,18 +111,22 @@ export default function HospitalityCategoryPage() {
   const [selected, setSelected] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [sort, setSort] = useState('recommended');
-  const { data: products = [], isLoading } = useQuery({ queryKey: ['hospitality-products'], queryFn: () => firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 200) });
   const { data: shops = [] } = useQuery({ queryKey: ['hospitality-shops'], queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true }) });
+  const shopsMap = useMemo(() => Object.fromEntries(shops.map((shop) => [shop.id, shop])), [shops]);
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['hospitality-products'],
+    queryFn: () => firebaseApi.entities.Product.filter({ is_available: true }, '-created_date', 200),
+  });
 
   const results = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     const filtered = products.filter((product) => {
-      const belongs = getMarketplaceSpace(product) === 'Hotels/Piscine' || product.category === 'Hotels/Piscine';
+      const belongs = getMarketplaceSpace(product, shopsMap[product.shop_id]) === 'Hotels/Piscine';
       const text = [product.name, product.description, product.city, product.location, product.address, product.shop_name].filter(Boolean).join(' ').toLowerCase();
       return belongs && (!normalized || text.includes(normalized));
     });
     return [...filtered].sort((a, b) => sort === 'price' ? Number(a.price || 0) - Number(b.price || 0) : 0);
-  }, [products, query, sort]);
+  }, [products, shopsMap, query, sort]);
 
   const searchState = { mode, date, time, guests, hours };
 
