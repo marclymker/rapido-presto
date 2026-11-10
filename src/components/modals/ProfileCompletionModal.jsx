@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { User, Building2, Bike, Phone, ChevronRight } from 'lucide-react';
 import { toast } from "sonner";
 import { motion, AnimatePresence } from 'framer-motion';
+import { MAIN_CATEGORIES } from '@/lib/marketplaceSpaces';
 
 // MISE À JOUR : Liste standardisée pour correspondre exactement à l'algorithme de proximité
 const REGIONS = [
@@ -19,10 +20,7 @@ const REGIONS = [
   "Cap-Haïtien", "Madeline", "Limonade", "Pignon", "Hinche"
 ];
 
-const COMPANY_CATEGORIES = [
-  "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Mariage",
-  "Epicerie", "Café", "Pour Femme", "Electronics", "Pour homme", "Maison", "Bébé", "Outils", "Hotels/Piscine"
-];
+const COMPANY_CATEGORIES = MAIN_CATEGORIES.map(({ id }) => id);
 
 const VEHICLE_TYPES = ["Moto", "Voiture", "Bicyclette"];
 

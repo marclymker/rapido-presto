@@ -75,6 +75,7 @@ const InnerRouter = () => {
           <Route path="/nourriture" element={<LayoutWrapper currentPageName="CategoryPage"><CategoryPage /></LayoutWrapper>} />
           <Route path="/hotel-piscine" element={<LayoutWrapper currentPageName="HospitalityCategoryPage"><HospitalityCategoryPage /></LayoutWrapper>} />
           <Route path="/tickets" element={<LayoutWrapper currentPageName="CategoryPage"><CategoryPage /></LayoutWrapper>} />
+          <Route path="/pharmacie" element={<LayoutWrapper currentPageName="CategoryPage"><CategoryPage /></LayoutWrapper>} />
           <Route path="/categories/:slug" element={<LayoutWrapper currentPageName="CategoryPage"><CategoryPage /></LayoutWrapper>} />
           {Object.entries(Pages).map(([path, Page]) => (
             <Route

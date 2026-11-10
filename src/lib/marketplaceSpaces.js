@@ -3,7 +3,10 @@ export const MARKETPLACE_SPACES = [
   { id: 'Nourriture', label: 'Nourriture', icon: '🍔' },
   { id: 'Hotels/Piscine', label: 'Hotels / Piscine', icon: '🏨' },
   { id: 'Tickets', label: 'Tickets', icon: '🎟️' },
+  { id: 'Pharmacie', label: 'Pharmacie', icon: '💊' },
 ];
+
+export const MAIN_CATEGORIES = MARKETPLACE_SPACES;
 
 export function getMarketplaceSpacePath(spaceId) {
   return {
@@ -11,6 +14,7 @@ export function getMarketplaceSpacePath(spaceId) {
     Nourriture: '/nourriture',
     'Hotels/Piscine': '/hotel-piscine',
     Tickets: '/tickets',
+    Pharmacie: '/pharmacie',
   }[spaceId] || '/marketplace';
 }
 
@@ -18,6 +22,8 @@ const FOOD_CATEGORIES = new Set([
   'nourriture', 'fastfood', 'fast food', 'restaurant', 'restaurants',
   'cafe', 'café', 'boulangerie', 'epicerie', 'épicerie', 'traiteur',
 ]);
+
+const PHARMACY_CATEGORIES = new Set(['pharmacie', 'pharmacy', 'parapharmacie', 'medicaments', 'medication', 'sante', 'health']);
 
 const normalizeSpaceValue = (value = '') => String(value)
   .trim()
@@ -31,6 +37,7 @@ export function mapToMarketplaceSpace(value) {
   if (!normalized) return null;
   if (['hospitality', 'hotel', 'hotels', 'hotel piscine', 'hotels piscine', 'piscine'].includes(normalized)) return 'Hotels/Piscine';
   if (['tickets', 'ticket', 'ticket / evenements', 'evenement', 'evenements', 'billetterie'].includes(normalized) || normalized.startsWith('ticket')) return 'Tickets';
+  if (PHARMACY_CATEGORIES.has(normalized) || normalized.includes('pharm')) return 'Pharmacie';
   if (FOOD_CATEGORIES.has(normalized) || normalized.includes('restaurant') || normalized.includes('food')) return 'Nourriture';
   if (['marketplace', 'client', 'entreprise', 'commerce', 'marchand', 'boutique'].includes(normalized)) return 'Marketplace';
   return null;

@@ -1,0 +1,12 @@
+{
+  "routes": [
+    { "path": "/", "title": "Kairos" },
+    { "path": "/products", "title": "Kairos Marketplace" },
+    { "path": "/marketplace", "title": "Marketplace" },
+    { "path": "/nourriture", "title": "Nourriture" },
+    { "path": "/hotel-piscine", "title": "Hôtels et Piscines" },
+    { "path": "/tickets", "title": "Tickets" },
+    { "path": "/pharmacie", "title": "Pharmacie" },
+    { "path": "/product/:id", "title": "Produit Kairos" }
+  ]
+}

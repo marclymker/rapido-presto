@@ -71,7 +71,7 @@ ShieldCheck
 import { firebaseApi } from '@/api/firebaseClient';
 
 import { getTaxonomyMappingPrompt } from '@/lib/fbTaxonomy';
-import { getMarketplaceSpace } from '@/lib/marketplaceSpaces';
+import { getMarketplaceSpace, mapToMarketplaceSpace, MAIN_CATEGORIES } from '@/lib/marketplaceSpaces';
 
 const parseVariantList = (value = '') => value.split(',').map(item => item.trim()).filter(Boolean);
 
@@ -290,7 +290,7 @@ promo_price: '',
 
 description: '',
 
-category: 'Mode',
+category: 'Marketplace',
 
 subcategory: '',
 
@@ -354,7 +354,7 @@ useEffect(() => {
 
 if (open && shopId && !product) {
   firebaseApi.entities.Shop.get(shopId).then((shop) => {
-    const category = shop?.company_category || 'Marketplace';
+    const category = mapToMarketplaceSpace(shop?.company_category) || 'Marketplace';
     setShopCategory(category);
     setFormData((current) => ({ ...current, category }));
   }).catch((error) => console.warn('Catégorie boutique indisponible:', error));
@@ -397,7 +397,7 @@ promo_price: '',
 
 description: '',
 
-category: 'Mode',
+category: 'Marketplace',
 
 subcategory: '',
 
@@ -473,7 +473,7 @@ promo_price: product.promo_price || '',
 
 description: product.description || '',
 
-category: product.category || 'Mode',
+ category: mapToMarketplaceSpace(product.category) || 'Marketplace',
 
 subcategory: product.subcategory || product.subCategory || '',
 
@@ -638,7 +638,7 @@ const { variant_options: _variantOptions, ...persistedFormData } = formData;
 const currentUser = await firebaseApi.auth.me();
 if (!currentUser?.id) throw new Error('Session utilisateur expirée. Reconnectez-vous.');
 const shopRecord = await firebaseApi.entities.Shop.get(shopId).catch(() => null);
-const activeBusinessProfile = ['food', 'hospitality', 'tickets'].includes(currentUser.current_profile)
+const activeBusinessProfile = ['food', 'hospitality', 'tickets', 'pharmacy'].includes(currentUser.current_profile)
   ? currentUser.current_profile
   : null;
 const resolvedSpace = getMarketplaceSpace({
@@ -1313,10 +1313,11 @@ className="max-w-[150px] text-slate-900"
 
 </div>
 
-<div className="rounded-xl border border-red-100 bg-red-50 p-3">
-  <p className="text-sm font-bold text-slate-900">{shopCategory || 'Marketplace'}</p>
-  <p className="mt-1 text-xs leading-relaxed text-slate-700">La grande catégorie de votre boutique est appliquée automatiquement. La taxonomie publicitaire détaillée reste facultative et peut être générée par l’IA.</p>
-</div>
+<Select value={product ? (formData.category || 'Marketplace') : (shopCategory || 'Marketplace')} onValueChange={(value) => product && setFormData({ ...formData, category: value })}>
+  <SelectTrigger className="bg-white text-slate-900" disabled={!product}><SelectValue placeholder="Choisir une catégorie" /></SelectTrigger>
+  <SelectContent>{MAIN_CATEGORIES.map((category) => <SelectItem key={category.id} value={category.id}>{category.icon} {category.label}</SelectItem>)}</SelectContent>
+</Select>
+<p className="text-xs leading-relaxed text-slate-700">À la création, la catégorie principale de la boutique est appliquée automatiquement. Lors d’une modification, l’administrateur ou le vendeur peut choisir une autre catégorie principale.</p>
 
 </div>
 

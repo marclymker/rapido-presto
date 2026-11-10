@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Plus, Store, Trash2, Edit } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { hasKairosAdminAccess } from '@/lib/adminAccess';
+import { MAIN_CATEGORIES } from '@/lib/marketplaceSpaces';
 
 // MISE À JOUR : Liste standardisée des régions (Single Source of Truth)
 const REGIONS = [
@@ -21,10 +22,7 @@ const REGIONS = [
   "Cap-Haïtien", "Madeline", "Limonade", "Pignon", "Hinche"
 ];
 
-const categories = [
-  "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Vêtements",
-  "Epicerie", "Café", "Boulangerie", "Pour Femme", "Electronics", "Pour homme", "Maison", "Hotels/Piscine"
-];
+const categories = MAIN_CATEGORIES.map(({ id }) => id);
 
 export default function AdminShops() {
   const [user, setUser] = useState(null);

@@ -29,6 +29,7 @@ export default function CategoryPage() {
     'hotel-piscine': 'Hotels/Piscine',
     'hotels-piscine': 'Hotels/Piscine',
     'tickets': 'Tickets',
+    'pharmacie': 'Pharmacie',
     'mariage': 'Mariage',
     'robes-de-mariee': 'Mariage',
     'sirene': 'Mariage',
@@ -44,7 +45,7 @@ export default function CategoryPage() {
   };
 
   const category = categoryMap[slug] || 'Tout';
-  const isMainSpace = ['Marketplace', 'Nourriture', 'Hotels/Piscine', 'Tickets'].includes(category);
+  const isMainSpace = ['Marketplace', 'Nourriture', 'Hotels/Piscine', 'Tickets', 'Pharmacie'].includes(category);
 
   // Produits de la catégorie
   const { data: products = [], isLoading } = useQuery({

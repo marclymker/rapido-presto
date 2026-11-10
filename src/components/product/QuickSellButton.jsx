@@ -8,12 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Upload, X, Loader2 } from 'lucide-react';
 import { firebaseApi } from '@/api/firebaseClient';
 import { toast } from "sonner";
+import { MAIN_CATEGORIES } from '@/lib/marketplaceSpaces';
 
-const CATEGORIES = [
-  "Fastfood", "Mode", "Boutique Fleurs", "Pharmacie", "Mariage",
-  "Epicerie", "Café", "Pour Femme", "Electronics", "Pour homme",
-  "Maison", "Bébé", "Outils", "Bijoux", "Hotels/Piscine"
-];
+const CATEGORIES = MAIN_CATEGORIES.map(({ id }) => id);
 
 export default function QuickSellButton({ user }) {
   const [open, setOpen] = useState(false);
@@ -24,7 +21,7 @@ export default function QuickSellButton({ user }) {
     name: '',
     price: '',
     description: '',
-    category: 'Pour Femme',
+    category: 'Marketplace',
     image_url: '',
     phone: user?.phone || '',
   });

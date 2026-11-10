@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import { MAIN_CATEGORIES } from '@/lib/marketplaceSpaces';
 
 export default function AdvancedSearch({ onSearch, allProducts, shops, initialQuery = '' }) {
   const [query, setQuery] = useState(initialQuery);
@@ -38,10 +39,7 @@ export default function AdvancedSearch({ onSearch, allProducts, shops, initialQu
     };
   }, [allProducts]);
 
-  const categories = [
-    'Mariage', 'Pour Femme', 'Boutique Fleurs', 'Pour homme',
-    'Electronics', 'Bijoux', 'Maison', 'Bébé', 'Outils', 'Hotels/Piscine'
-  ];
+  const categories = MAIN_CATEGORIES.map(({ id }) => id);
 
   const handleSearch = async () => {
     const searchResults = await performAISearch(query, filters, allProducts, shops);
