@@ -134,6 +134,17 @@ function productDescription(product) {
     .replace(/\s+/g, ' ').trim().slice(0, 5000);
 }
 
+const GOOGLE_HTG_PER_USD_RATE = Number(process.env.GOOGLE_HTG_PER_USD_RATE) > 0
+  ? Number(process.env.GOOGLE_HTG_PER_USD_RATE)
+  : 132;
+
+function googleUsdFeedItem(product) {
+  const htgPrice = numeric(product.promo_price ?? product.price, 0);
+  const usdPrice = (htgPrice / GOOGLE_HTG_PER_USD_RATE).toFixed(2);
+  const category = product.fb_category_id || product.category || 'Marketplace';
+  return `<item><g:id>${escapeXml(product.id)}</g:id><g:title>${escapeXml(product.name || 'Produit Kairos')}</g:title><g:description>${escapeXml(productDescription(product))}</g:description><g:link>${escapeXml(productUrl(product))}</g:link><g:image_link>${escapeXml(productImage(product))}</g:image_link><g:availability>in stock</g:availability><g:condition>new</g:condition><g:price>${usdPrice} USD</g:price><g:brand>Kairos</g:brand><g:identifier_exists>no</g:identifier_exists><g:google_product_category>${escapeXml(category)}</g:google_product_category></item>`;
+}
+
 async function getPublicProducts(limit = PUBLIC_LIMIT) {
   const snapshot = await db.collection('Product').limit(Math.min(limit, PUBLIC_LIMIT)).get();
   return snapshot.docs
@@ -275,6 +286,21 @@ exports.googleMerchantFeed = onRequest(async (_req, res) => {
   } catch (error) {
     console.error('googleMerchantFeed', error);
     return res.status(500).type('text').send('Merchant feed generation failed');
+  }
+});
+
+exports.googleMerchantUsdFeed = onRequest(async (_req, res) => {
+  try {
+    // Les vendeurs Kairos gèrent la disponibilité directement dans le catalogue.
+    // Ne pas utiliser stock_quantity ici : certains anciens produits n'ont pas ce champ
+    // ou valent zéro malgré leur disponibilité réelle.
+    const products = await getPublicProducts();
+    const items = products.map(googleUsdFeedItem).join('');
+    setXmlHeaders(res, 900);
+    return res.send(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>Kairos — Catalogue Google USD</title><link>${SITE_ORIGIN}</link><description>Catalogue Kairos converti de HTG en USD au taux ${GOOGLE_HTG_PER_USD_RATE} HTG pour 1 USD. Produits actuellement disponibles.</description>${items}</channel></rss>`);
+  } catch (error) {
+    console.error('googleMerchantUsdFeed', error);
+    return res.status(500).type('text').send('Google USD merchant feed generation failed');
   }
 });
 

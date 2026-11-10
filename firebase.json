@@ -24,6 +24,7 @@
       { "source": "/functions/generateSitemap", "function": { "functionId": "generateSitemap", "region": "us-central1" } },
       { "source": "/functions/generateSitemapXML", "function": { "functionId": "generateSitemapXML", "region": "us-central1" } },
       { "source": "/feeds/google-merchant.xml", "function": { "functionId": "googleMerchantFeed", "region": "us-central1" } },
+      { "source": "/feeds/google-merchant-usd.xml", "function": { "functionId": "googleMerchantUsdFeed", "region": "us-central1" } },
       { "source": "/feeds/facebook-catalog.xml", "function": { "functionId": "facebookCatalogFeed", "region": "us-central1" } },
       { "source": "/feeds/pinterest-catalog.xml", "function": { "functionId": "googleMerchantFeed", "region": "us-central1" } },
       { "source": "/api/functions/facebookCatalog", "function": { "functionId": "facebookCatalogFeed", "region": "us-central1" } },
