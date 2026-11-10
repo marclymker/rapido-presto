@@ -111,7 +111,17 @@ export default function HospitalityCategoryPage() {
   const [selected, setSelected] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [sort, setSort] = useState('recommended');
-  const { data: shops = [] } = useQuery({ queryKey: ['hospitality-shops'], queryFn: () => firebaseApi.entities.Shop.filter({ is_active: true }) });
+  const { data: shops = [] } = useQuery({
+    queryKey: ['hospitality-shops'],
+    queryFn: async () => {
+      const lists = await Promise.all([
+        firebaseApi.entities.Shop.filter({ company_category: 'Hotels/Piscine' }),
+        firebaseApi.entities.Shop.filter({ company_category: 'Hotel/Piscine' }),
+        firebaseApi.entities.Shop.filter({ company_category: 'Hôtel/Piscine' }),
+      ]);
+      return Array.from(new Map(lists.flat().map((shop) => [shop.id, shop])).values());
+    },
+  });
   const shopsMap = useMemo(() => Object.fromEntries(shops.map((shop) => [shop.id, shop])), [shops]);
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['hospitality-products'],

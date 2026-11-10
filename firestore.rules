@@ -8,6 +8,11 @@ service cloud.firestore {
     // d'un champ modifiable dans le profil utilisateur.
     function isSiteOwner() { return signedIn() && request.auth.uid == 'YG8mu1n9yEX0QxhCBLoSH6ao3Ol2'; }
     function publicCollection() { return resource.data.is_published == true || resource.data.is_active == true || resource.data.is_available == true; }
+    function publicHospitalityShop() {
+      return resource.data.company_category == 'Hotels/Piscine'
+        || resource.data.company_category == 'Hotel/Piscine'
+        || resource.data.company_category == 'Hôtel/Piscine';
+    }
 
     match /User/{uid} {
       allow read: if isOwner(uid) || isAdmin();
@@ -42,7 +47,7 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && (resource.data.owner_id == request.auth.uid || resource.data.vendor_id == request.auth.uid));
     }
     match /Shop/{id} {
-      allow read: if publicCollection() || signedIn();
+      allow read: if publicCollection() || publicHospitalityShop() || signedIn();
       allow create: if isAdmin() || (signedIn() && request.resource.data.user_id == request.auth.uid);
       allow update: if isAdmin() || (signedIn() && resource.data.user_id == request.auth.uid && request.resource.data.user_id == resource.data.user_id);
       allow delete: if isAdmin() || (signedIn() && resource.data.user_id == request.auth.uid);
