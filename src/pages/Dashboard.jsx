@@ -155,14 +155,45 @@ export default function Dashboard() {
   useEffect(() => { firebaseApi.auth.me().then(setUser).catch(() => setUser(null)).finally(() => setLoading(false)); }, []);
 
   const isCourier = user?.current_profile === 'livreur';
-  const { data: shop } = useQuery({ queryKey: ['workspace-shop', user?.id], queryFn: async () => { const shops = await firebaseApi.entities.Shop.filter({ user_id: user.id }); const profile = user.profiles?.[user.current_profile] || user.profiles?.entreprise || user.profiles?.marketplace || {}; return shops[0] || firebaseApi.entities.Shop.create({ user_id: user.id, company_name: profile.company_name || `Boutique ${user.full_name}`, company_category: profile.company_category || 'Commerce', email: profile.email || user.email || '', company_logo_url: profile.company_logo_url || '', region: user.region || '', is_active: true }); }, enabled: !!user?.id && !isCourier });
+  const activeProfileId = normalizeProfile(user?.current_profile === 'entreprise' ? 'marketplace' : user?.current_profile);
+  const { data: shop } = useQuery({
+    queryKey: ['workspace-shop', user?.id, activeProfileId],
+    queryFn: async () => {
+      const shops = await firebaseApi.entities.Shop.filter({ user_id: user.id });
+      const profile = user.profiles?.[activeProfileId] || user.profiles?.entreprise || user.profiles?.marketplace || {};
+      const normalizeCategory = (value) => String(value || '').toLowerCase().replace(/[éèêë]/g, 'e').replace(/\s+/g, '').replace(/\//g, '');
+      const expectedCategory = activeProfileId === 'hospitality'
+        ? 'hotelspiscine'
+        : activeProfileId === 'food'
+          ? normalizeCategory(profile.company_category || 'Nourriture')
+          : activeProfileId === 'tickets'
+            ? 'tickets'
+            : normalizeCategory(profile.company_category || '');
+      const savedShop = profile.shop_id && shops.find((candidate) => candidate.id === profile.shop_id);
+      const matchingShop = savedShop || shops.find((candidate) => expectedCategory && normalizeCategory(candidate.company_category) === expectedCategory);
+      if (matchingShop) return matchingShop;
+      const created = await firebaseApi.entities.Shop.create({
+        user_id: user.id,
+        company_name: profile.company_name || `Boutique ${user.full_name}`,
+        company_category: activeProfileId === 'hospitality' ? 'Hotels/Piscine' : profile.company_category || (activeProfileId === 'food' ? 'Nourriture' : activeProfileId === 'tickets' ? 'Tickets' : 'Commerce'),
+        email: profile.email || user.email || '',
+        company_logo_url: profile.company_logo_url || '',
+        region: user.region || '',
+        is_active: true,
+      });
+      const profiles = { ...(user.profiles || {}), [activeProfileId]: { ...profile, shop_id: created.id } };
+      await firebaseApi.auth.updateMe({ profiles });
+      return created;
+    },
+    enabled: !!user?.id && !isCourier,
+  });
   const { data: orders = [] } = useQuery({ queryKey: ['workspace-orders', user?.id, shop?.id, isCourier], queryFn: () => isCourier ? firebaseApi.entities.Order.filter({ driver_id: user.id }, '-created_date') : firebaseApi.entities.Order.filter({ shop_id: shop.id }, '-created_date'), enabled: !!user?.id && (isCourier || !!shop?.id) });
   const { data: products = [] } = useQuery({ queryKey: ['workspace-products', shop?.id], queryFn: () => firebaseApi.entities.Product.filter({ shop_id: shop.id }), enabled: !!shop?.id && !isCourier });
 
   if (loading) return <div className="flex min-h-screen items-center justify-center bg-slate-950"><Activity className="h-8 w-8 animate-pulse text-orange-400" /></div>;
   if (!user) return <div className="flex min-h-screen items-center justify-center bg-slate-950 p-5"><div className="max-w-sm rounded-3xl bg-white p-8 text-center"><Store className="mx-auto mb-4 h-10 w-10 text-orange-500" /><h1 className="text-xl font-black">Workspace Kairos</h1><p className="my-3 text-sm text-slate-500">Connectez-vous pour gérer votre activité.</p><Button onClick={() => firebaseApi.auth.redirectToLogin('/Dashboard')} className="w-full rounded-xl bg-slate-950">Se connecter</Button></div></div>;
 
-  const profileId = normalizeProfile(user.current_profile === 'entreprise' ? 'marketplace' : user.current_profile);
+  const profileId = activeProfileId;
   const isSiteOwner = user.id === SITE_OWNER_UID;
   const workspace = WORKSPACES[profileId];
   const Icon = workspace.icon;
