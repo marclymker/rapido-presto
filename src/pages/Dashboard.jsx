@@ -11,6 +11,7 @@ import {
   Bike, Hotel, Package, Plus, ScanLine, Store,
   Ticket, Truck, Utensils, Users, WalletCards
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const WORKSPACES = {
   marketplace: {
@@ -86,12 +87,47 @@ function FoodWorkspace({ orders, shop }) {
 }
 
 function HospitalityWorkspace({ orders, products, shop }) {
+  const [tool, setTool] = useState(null);
+  const [calendarDate, setCalendarDate] = useState(new Date().toISOString().slice(0, 10));
+  const [calendarStatus, setCalendarStatus] = useState('available');
+  const [calendarCapacity, setCalendarCapacity] = useState('1');
+  const [slot, setSlot] = useState({ date: new Date().toISOString().slice(0, 10), start: '09:00', end: '17:00', capacity: '10' });
+  const [savingTool, setSavingTool] = useState(false);
+
+  const saveCalendar = async () => {
+    if (!shop?.id || !calendarDate) return;
+    setSavingTool(true);
+    try {
+      const calendar = { ...(shop.availability_calendar || {}), [calendarDate]: { status: calendarStatus, capacity: Number(calendarCapacity) || 0 } };
+      await firebaseApi.entities.Shop.update(shop.id, { availability_calendar: calendar });
+      toast.success('Disponibilité enregistrée');
+      setTool(null);
+    } catch (error) {
+      toast.error(`Impossible d’enregistrer le calendrier : ${error.message}`);
+    } finally { setSavingTool(false); }
+  };
+
+  const savePoolSlot = async () => {
+    if (!shop?.id || !slot.date || !slot.start || !slot.end) return;
+    setSavingTool(true);
+    try {
+      const poolSlots = [...(shop.pool_slots || []), { ...slot, capacity: Number(slot.capacity) || 0, is_available: true }];
+      await firebaseApi.entities.Shop.update(shop.id, { pool_slots: poolSlots });
+      toast.success('Créneau piscine enregistré');
+      setTool(null);
+    } catch (error) {
+      toast.error(`Impossible d’enregistrer le créneau : ${error.message}`);
+    } finally { setSavingTool(false); }
+  };
+
   return <>
     <div className="grid gap-3 sm:grid-cols-3"><Metric icon={Hotel} label="Unités au catalogue" value={products.length} tone="blue" /><Metric icon={CalendarDays} label="Réservations / commandes" value={orders.length} tone="indigo" /><Metric icon={CheckCircle2} label="Disponibilité générale" value={shop?.is_active === false ? 'Fermée' : 'Ouverte'} tone="emerald" /></div>
     <div className="grid gap-5 xl:grid-cols-2">
-      <OperationalCard icon={CalendarDays} title="Disponibilités" detail="Chambres, piscines et créneaux" accent="#2563eb"><div className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl bg-blue-50 p-4"><p className="text-xs font-bold uppercase tracking-wide text-blue-700">Hébergement</p><p className="mt-2 text-sm font-semibold text-slate-900">Gérer les chambres disponibles</p><Button variant="outline" className="mt-4 rounded-xl border-blue-200">Ouvrir le calendrier<ChevronRight className="ml-2 h-4 w-4" /></Button></div><div className="rounded-2xl bg-cyan-50 p-4"><p className="text-xs font-bold uppercase tracking-wide text-cyan-700">Piscine</p><p className="mt-2 text-sm font-semibold text-slate-900">Gérer les créneaux et capacités</p><Button variant="outline" className="mt-4 rounded-xl border-cyan-200">Gérer les créneaux<ChevronRight className="ml-2 h-4 w-4" /></Button></div></div></OperationalCard>
+      <OperationalCard icon={CalendarDays} title="Disponibilités" detail="Chambres, piscines et créneaux" accent="#2563eb"><div className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl bg-blue-50 p-4"><p className="text-xs font-bold uppercase tracking-wide text-blue-700">Hébergement</p><p className="mt-2 text-sm font-semibold text-slate-900">Gérer les chambres disponibles</p><Button type="button" onClick={() => setTool('calendar')} variant="outline" className="mt-4 rounded-xl border-blue-200 bg-white text-slate-950 hover:bg-blue-50">Ouvrir le calendrier<ChevronRight className="ml-2 h-4 w-4" /></Button></div><div className="rounded-2xl bg-cyan-50 p-4"><p className="text-xs font-bold uppercase tracking-wide text-cyan-700">PISCINE</p><p className="mt-2 text-sm font-semibold text-slate-900">Gérer les créneaux et capacités</p><Button type="button" onClick={() => setTool('pool')} variant="outline" className="mt-4 rounded-xl border-cyan-200 bg-white text-slate-950 hover:bg-cyan-50">Gérer les créneaux<ChevronRight className="ml-2 h-4 w-4" /></Button></div></div></OperationalCard>
       <OperationalCard icon={Package} title="Demandes à confirmer" detail="Réservations et commandes de services" accent="#1d4ed8"><OrdersSection orders={orders} userType="merchant" onAddProduct={() => window.dispatchEvent(new Event('kairos:add-product'))} /></OperationalCard>
     </div>
+    <OperationalCard icon={Store} title="Catalogue hôtel / piscine" detail="Ajoutez les chambres, services et accès piscine" accent="#2563eb"><ProductsSection shopId={shop?.id} /></OperationalCard>
+    {tool && <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/60 p-3 sm:items-center"><div className="w-full max-w-lg rounded-3xl bg-white p-5 shadow-2xl"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-blue-700">Kairos Hospitality</p><h3 className="text-xl font-black text-slate-950">{tool === 'calendar' ? 'Calendrier des chambres' : 'Créneau piscine'}</h3></div><button type="button" onClick={() => setTool(null)} className="rounded-full px-3 py-1 text-2xl text-slate-500 hover:bg-slate-100" aria-label="Fermer">×</button></div>{tool === 'calendar' ? <div className="mt-5 space-y-4"><label className="block text-sm font-bold text-slate-900">Date<input type="date" value={calendarDate} onChange={(e) => setCalendarDate(e.target.value)} className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-950" /></label><label className="block text-sm font-bold text-slate-900">État<select value={calendarStatus} onChange={(e) => setCalendarStatus(e.target.value)} className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-950"><option value="available">Disponible</option><option value="blocked">Bloqué</option></select></label><label className="block text-sm font-bold text-slate-900">Chambres disponibles<input type="number" min="0" value={calendarCapacity} onChange={(e) => setCalendarCapacity(e.target.value)} className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-950" /></label><Button type="button" disabled={savingTool} onClick={saveCalendar} className="w-full rounded-xl bg-blue-700 text-white">{savingTool ? 'Enregistrement…' : 'Enregistrer la disponibilité'}</Button></div> : <div className="mt-5 space-y-4"><label className="block text-sm font-bold text-slate-900">Date<input type="date" value={slot.date} onChange={(e) => setSlot({ ...slot, date: e.target.value })} className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-950" /></label><div className="grid grid-cols-2 gap-3"><label className="block text-sm font-bold text-slate-900">Début<input type="time" value={slot.start} onChange={(e) => setSlot({ ...slot, start: e.target.value })} className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-950" /></label><label className="block text-sm font-bold text-slate-900">Fin<input type="time" value={slot.end} onChange={(e) => setSlot({ ...slot, end: e.target.value })} className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-950" /></label></div><label className="block text-sm font-bold text-slate-900">Capacité<input type="number" min="1" value={slot.capacity} onChange={(e) => setSlot({ ...slot, capacity: e.target.value })} className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-950" /></label><Button type="button" disabled={savingTool} onClick={savePoolSlot} className="w-full rounded-xl bg-blue-700 text-white">{savingTool ? 'Enregistrement…' : 'Enregistrer le créneau'}</Button></div>}</div></div>}
   </>;
 }
 
