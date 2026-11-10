@@ -92,6 +92,16 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'delivery_status', 'driver_id', 'driver_name', 'updated_date', 'accepted_at', 'rejected_at', 'ready_at', 'delivered_at', 'notes']));
       allow delete: if isAdmin();
     }
+    match /Reservation/{id} {
+      allow create: if signedIn() && request.resource.data.client_id == request.auth.uid;
+      allow read: if signedIn() && (resource.data.client_id == request.auth.uid || resource.data.shop_owner_id == request.auth.uid || isAdmin());
+      allow update: if isAdmin()
+        || (signedIn() && resource.data.shop_owner_id == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'confirmation_note', 'confirmed_at', 'rejected_at', 'updated_date']))
+        || (signedIn() && resource.data.client_id == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['client_phone', 'client_note', 'updated_date']));
+      allow delete: if isAdmin() || (signedIn() && resource.data.client_id == request.auth.uid);
+    }
     match /{document=**} { allow read, write: if false; }
   }
 }
