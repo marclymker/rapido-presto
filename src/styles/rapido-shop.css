@@ -6,7 +6,7 @@
   --shop-panel-2: #f1f5f9;
   --shop-text: #111827;
   --shop-muted: #64748b;
-  --shop-line: rgba(15,23,42,.10);
+  --shop-line: rgba(181,31,42,.16);
   background: var(--shop-bg) !important;
   color: var(--shop-text) !important;
 }
@@ -32,8 +32,8 @@
 .rp-shop-header .text-slate-500,
 .rp-shop-header .text-slate-600,
 .rp-shop-header .text-slate-700 { color: var(--shop-muted) !important; }
-.rp-shop-header .bg-orange-500 { background: #f97316 !important; }
-.rp-shop-header .text-orange-400 { color: #ea580c !important; }
+.rp-shop-header .bg-orange-500 { background: #b51f2a !important; }
+.rp-shop-header .text-orange-400 { color: #b51f2a !important; }
 .rp-shop-header > div:first-of-type { min-height: 70px; }
 .rp-marketplace-header .rp-shop-header-title { color: var(--shop-text); }
 .rp-dark-shop .rp-feed,
@@ -90,7 +90,7 @@
 .rp-add-button { background: rgba(255,255,255,.92) !important; color: #111827 !important; border: 1px solid rgba(15,23,42,.12); }
 .rp-icon-button.rp-like-button { display: flex !important; right: 8px; bottom: 8px; top: auto !important; }
 .rp-add-button { display: none !important; }
-.rp-promo-badge { top: 8px !important; left: 8px !important; background: #ff5e34 !important; }
+.rp-promo-badge { top: 8px !important; left: 8px !important; background: #b51f2a !important; }
 .rp-dark-shop .grid.grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 22px 14px !important; }
 .rp-dark-shop .grid.grid-cols-3 > * { min-width: 0; }
 .rp-dark-shop .px-3,
@@ -105,7 +105,7 @@
 .rp-products-page .text-slate-400,
 .rp-products-page .text-slate-500,
 .rp-products-page .text-slate-600 { color: var(--shop-muted) !important; }
-.rp-dark-shop .fixed.bottom-24 > div { background: var(--shop-panel) !important; border-color: #ff5e34 !important; color: #111827; }
+.rp-dark-shop .fixed.bottom-24 > div { background: var(--shop-panel) !important; border-color: #b51f2a !important; color: #111827; }
 .rp-dark-shop .fixed.bottom-24 span { color: #111827 !important; }
 @media (min-width: 768px) {
   .rp-category-row .rp-category-grid,
@@ -179,7 +179,7 @@
   content: '★ Très bien noté · Piscine / séjour';
   grid-column: 2;
   margin-top: -8px;
-  color: #2563eb;
+  color: #b51f2a;
   font-size: 11px;
   font-weight: 700;
 }
@@ -191,7 +191,7 @@
   color: #171a1f !important;
   border-color: #d7dbe1;
 }
-.rp-hotel-card .rp-promo-badge { background: #0b8f4d !important; }
+.rp-hotel-card .rp-promo-badge { background: #b51f2a !important; }
 @media (min-width: 768px) {
   .rp-category-hotels .rp-category-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

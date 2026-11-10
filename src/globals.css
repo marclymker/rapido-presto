@@ -220,3 +220,65 @@
 .animate-shimmer {
   animation: shimmer 3s infinite;
 }
+
+/* Kairos global brand system: rouge profond, blanc et texte noir.
+   Ces garde-fous couvrent les anciens accents orange/bleu/vert/violet
+   encore présents dans les écrans historiques sans modifier leur logique. */
+:root,
+.dark {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 8%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 8%;
+  --primary: 353 70% 42%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 353 100% 97%;
+  --secondary-foreground: 353 70% 25%;
+  --muted: 353 30% 96%;
+  --muted-foreground: 0 0% 32%;
+  --accent: 353 100% 96%;
+  --accent-foreground: 353 70% 25%;
+  --border: 353 35% 88%;
+  --input: 353 35% 82%;
+  --ring: 353 70% 42%;
+}
+
+html, body, #root {
+  background: #ffffff !important;
+  color: #171717 !important;
+  color-scheme: light;
+}
+
+/* Light accent surfaces become Kairos red surfaces. */
+[class*="bg-orange-50"], [class*="bg-blue-50"], [class*="bg-green-50"],
+[class*="bg-emerald-50"], [class*="bg-cyan-50"], [class*="bg-indigo-50"],
+[class*="bg-purple-50"], [class*="bg-pink-50"], [class*="bg-yellow-50"],
+[class*="bg-teal-50"] { background-color: #fff1f2 !important; }
+[class*="bg-orange-100"], [class*="bg-blue-100"], [class*="bg-green-100"],
+[class*="bg-emerald-100"], [class*="bg-cyan-100"], [class*="bg-indigo-100"],
+[class*="bg-purple-100"], [class*="bg-pink-100"], [class*="bg-yellow-100"],
+[class*="bg-teal-100"] { background-color: #ffe4e6 !important; }
+
+/* Strong buttons, badges and links share one recognizable Kairos red. */
+[class*="bg-orange-500"], [class*="bg-orange-600"], [class*="bg-orange-700"],
+[class*="bg-blue-500"], [class*="bg-blue-600"], [class*="bg-blue-700"],
+[class*="bg-green-500"], [class*="bg-green-600"], [class*="bg-green-700"],
+[class*="bg-emerald-500"], [class*="bg-emerald-600"], [class*="bg-emerald-700"],
+[class*="bg-cyan-500"], [class*="bg-cyan-600"], [class*="bg-indigo-600"],
+[class*="bg-purple-600"], [class*="bg-purple-700"], [class*="bg-pink-600"],
+[class*="bg-pink-700"], [class*="bg-teal-600"] { background-color: #b51f2a !important; }
+
+[class*="text-orange-"], [class*="text-blue-"], [class*="text-green-"],
+[class*="text-emerald-"], [class*="text-cyan-"], [class*="text-indigo-"],
+[class*="text-purple-"], [class*="text-pink-"], [class*="text-teal-"] { color: #b51f2a !important; }
+
+[class*="border-orange-"], [class*="border-blue-"], [class*="border-green-"],
+[class*="border-emerald-"], [class*="border-cyan-"], [class*="border-indigo-"],
+[class*="border-purple-"], [class*="border-pink-"], [class*="border-teal-"] { border-color: #fecdd3 !important; }
+[class*="ring-orange-"], [class*="ring-blue-"], [class*="ring-green-"],
+[class*="ring-purple-"], [class*="ring-pink-"] { --tw-ring-color: #b51f2a !important; }
+
+input:focus, textarea:focus, select:focus,
+button:focus-visible, a:focus-visible { outline-color: #b51f2a !important; }
