@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { firebaseApi } from '@/api/firebaseClient';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, User, Bike, Plus, Check, Clock, AlertCircle, Upload, Briefcase } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ export default function ManageProfiles() {
   const [logoPreview, setLogoPreview] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     firebaseApi.auth.me().then(u => {
@@ -125,7 +126,7 @@ export default function ManageProfiles() {
       const profiles = deactivateOtherOperationalProfiles(user?.profiles || {}, profileType === 'marketplace' ? 'client' : profileType);
       profiles[profileType] = { ...(profiles[profileType] || {}), is_active: true, last_used: new Date().toISOString() };
       if (profileType === 'client') profiles.client = { ...(profiles.client || {}), is_active: true };
-      await firebaseApi.auth.updateMe({ profiles, current_profile: profileType === 'marketplace' ? 'client' : profileType });
+      await firebaseApi.auth.updateMe({ profiles, current_profile: profileType === 'marketplace' ? 'client' : profileType, profile_setup_completed: true });
       setUser({ ...user, profiles, current_profile: profileType === 'marketplace' ? 'client' : profileType });
       toast.success(`Profil ${profileConfig[profileType]?.label || 'actif'} sélectionné`);
       navigate(createPageUrl(profileType === 'livreur' ? 'Dashboard' : profileType === 'client' ? 'Home' : 'Dashboard'));
@@ -136,6 +137,13 @@ export default function ManageProfiles() {
     setLogoPreview('');
     setActivationDialog(true);
   };
+
+  useEffect(() => {
+    const requestedProfile = searchParams.get('activate');
+    if (!loading && requestedProfile && profileConfig[requestedProfile]) {
+      handleActivateProfile(requestedProfile);
+    }
+  }, [loading, searchParams]);
 
   const handleFileUpload = async (e, field) => {
     const file = e.target.files[0];
@@ -179,6 +187,8 @@ export default function ManageProfiles() {
           company_category: formData.company_category,
           email: businessEmail,
           company_logo_url: formData.company_logo_url || '',
+          address: String(formData.address || '').trim(),
+          opening_hours: String(formData.opening_hours || '').trim(),
           moncash_number: String(formData.moncash_number || '').replace(/[^0-9]/g, ''),
           natcash_number: String(formData.natcash_number || '').replace(/[^0-9]/g, ''),
           whatsapp_number: String(formData.whatsapp_number || '').replace(/[^0-9]/g, ''),
@@ -194,7 +204,7 @@ export default function ManageProfiles() {
           profiles[selectedProfile] = { ...profileData, business_profile: selectedProfile };
         }
 
-        await firebaseApi.auth.updateMe({ profiles, current_profile: selectedProfile === 'entreprise' ? 'marketplace' : selectedProfile });
+        await firebaseApi.auth.updateMe({ profiles, current_profile: selectedProfile === 'entreprise' ? 'marketplace' : selectedProfile, profile_setup_completed: true });
         toast.success('Profil entreprise activé! Les autres profils opérationnels sont désactivés.');
         window.location.reload();
 
@@ -209,7 +219,7 @@ export default function ManageProfiles() {
           address: user.address || ''
         };
 
-        await firebaseApi.auth.updateMe({ profiles, current_profile: 'agent' });
+        await firebaseApi.auth.updateMe({ profiles, current_profile: 'agent', profile_setup_completed: true });
         toast.success('Profil Agent de Vente activé! Les autres profils opérationnels sont désactivés.');
         window.location.reload();
 
@@ -389,7 +399,7 @@ export default function ManageProfiles() {
 
       {/* Activation Dialog */}
       <Dialog open={activationDialog} onOpenChange={setActivationDialog}>
-        <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[92dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Activer le profil {selectedProfile && profileConfig[selectedProfile].label}
@@ -457,6 +467,22 @@ export default function ManageProfiles() {
                     value={formData.whatsapp_number || ''}
                     onChange={(e) => setFormData({ ...formData, whatsapp_number: e.target.value })}
                     placeholder="Ex: 50912345678"
+                  />
+                </div>
+                <div>
+                  <Label>Adresse de l’établissement</Label>
+                  <Input
+                    value={formData.address || ''}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Rue, commune, ville"
+                  />
+                </div>
+                <div>
+                  <Label>Horaire d’ouverture</Label>
+                  <Input
+                    value={formData.opening_hours || ''}
+                    onChange={(e) => setFormData({ ...formData, opening_hours: e.target.value })}
+                    placeholder="Ex: lundi–samedi, 8h–20h"
                   />
                 </div>
                 <div>

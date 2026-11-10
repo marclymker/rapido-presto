@@ -70,8 +70,6 @@ ShieldCheck
 
 import { firebaseApi } from '@/api/firebaseClient';
 
-import FbCategorySelector from '@/components/product/FbCategorySelector';
-
 import { getTaxonomyMappingPrompt } from '@/lib/fbTaxonomy';
 import { getMarketplaceSpace } from '@/lib/marketplaceSpaces';
 
@@ -1010,7 +1008,7 @@ onCancel={onClose}
 </DialogHeader>
 
 
-<div className="h-0 min-h-0 flex-1 touch-pan-y overflow-y-scroll overscroll-contain p-4 sm:p-6 bg-slate-50/50" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+<div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-4 sm:p-6 bg-slate-50/50" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
 
 <form id="product-form" onSubmit={handleSubmit} className="space-y-6 pb-4 sm:pb-0">
 
@@ -1056,7 +1054,7 @@ required
 <Label className="mb-2 flex items-center gap-1">Photo principale <span className="text-red-500">*</span></Label>
 
 
-<div className={`border-2 border-dashed rounded-xl p-4 transition-colors text-center ${formData.image_url ? 'border-blue-200 bg-blue-50/30' : 'border-slate-300 hover:border-blue-400 bg-slate-50'}`}>
+<div className={`relative border-2 border-dashed rounded-xl p-4 transition-colors text-center ${formData.image_url ? 'border-blue-200 bg-blue-50/30' : 'border-slate-300 hover:border-blue-400 bg-slate-50'}`}>
 
 <div className="flex flex-col items-center justify-center gap-3">
 
@@ -1304,9 +1302,8 @@ className="max-w-[150px] text-slate-900"
 
 <Layers className="w-4 h-4 text-slate-900" />
 
-<h3 className="font-semibold text-slate-900">Catégorie Facebook/Google</h3>
-
-<span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">SEO Ads</span>
+<h3 className="font-semibold text-slate-900">Catégorie de l’article</h3>
+<span className="ml-auto text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">Boutique</span>
 
 {formData.fb_category_id && (
 
@@ -1316,13 +1313,10 @@ className="max-w-[150px] text-slate-900"
 
 </div>
 
-<FbCategorySelector
-
-value={formData.fb_category_id}
-
-onChange={(id) => setFormData({ ...formData, fb_category_id: id })}
-
-/>
+<div className="rounded-xl border border-red-100 bg-red-50 p-3">
+  <p className="text-sm font-bold text-slate-900">{shopCategory || 'Marketplace'}</p>
+  <p className="mt-1 text-xs leading-relaxed text-slate-700">La grande catégorie de votre boutique est appliquée automatiquement. La taxonomie publicitaire détaillée reste facultative et peut être générée par l’IA.</p>
+</div>
 
 </div>
 

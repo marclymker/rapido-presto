@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { lazy, Suspense } from 'react';
+import ProfileSetupGate from '@/components/profile/ProfileSetupGate';
 
 const Products = lazy(() => import('./pages/Products'));
 const ProductPageFull = lazy(() => import('./pages/ProductPage'));
@@ -117,6 +118,7 @@ const AuthenticatedApp = () => {
   return (
     <TabNavigationProvider>
       <InnerRouter />
+      <ProfileSetupGate />
     </TabNavigationProvider>
   );
 };
