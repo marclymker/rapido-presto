@@ -127,6 +127,21 @@ const createEntityHandler = (entityName) => ({
     }
   },
 
+  async filterStrict(filterObj = {}, sortField, maxLimit = 100) {
+    const colRef = collection(db, entityName);
+    const constraints = [];
+    Object.entries(filterObj).forEach(([key, val]) => {
+      if (val !== undefined && val !== null) constraints.push(where(key, '==', val));
+    });
+    if (sortField) {
+      const isDesc = sortField.startsWith('-');
+      constraints.push(orderBy(sortField.slice(1) || sortField, isDesc ? 'desc' : 'asc'));
+    }
+    constraints.push(firestoreLimit(maxLimit));
+    const snapshot = await getDocs(query(colRef, ...constraints));
+    return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+  },
+
   async get(id) {
     try {
       const docRef = doc(db, entityName, id);
