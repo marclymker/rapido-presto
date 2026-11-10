@@ -36,7 +36,7 @@ export default function Account() {
   const [showProductForm, setShowProductForm] = useState(false);
   const [userShop, setUserShop] = useState(null);
   const [profileEditMode, setProfileEditMode] = useState(false);
-  const [profileFormData, setProfileFormData] = useState({ company_name: '', company_category: '', whatsapp_number: '' });
+  const [profileFormData, setProfileFormData] = useState({ company_name: '', company_category: '', whatsapp_number: '', address: '', opening_hours: '' });
 
   useEffect(() => {
     firebaseApi.auth.me().then(u => {
@@ -51,7 +51,9 @@ export default function Account() {
       setProfileFormData({
         company_name: activeProfile.company_name || '',
         company_category: activeProfile.company_category || '',
-        whatsapp_number: activeProfile.whatsapp_number || ''
+        whatsapp_number: activeProfile.whatsapp_number || '',
+        address: activeProfile.address || '',
+        opening_hours: activeProfile.opening_hours || ''
       });
       setLoading(false);
 
@@ -97,6 +99,8 @@ export default function Account() {
       company_name: profileFormData.company_name.trim(),
       company_category: profileFormData.company_category.trim(),
       whatsapp_number: profileFormData.whatsapp_number.trim(),
+      address: profileFormData.address.trim(),
+      opening_hours: profileFormData.opening_hours.trim(),
       profile_updated_at: new Date().toISOString()
     };
     await firebaseApi.auth.updateMe({ profiles });
@@ -315,6 +319,8 @@ export default function Account() {
             <div><Label className="text-slate-500 text-sm">Nom de l’établissement</Label>{profileEditMode ? <Input value={profileFormData.company_name} onChange={(e) => setProfileFormData({ ...profileFormData, company_name: e.target.value })} placeholder="Nom de votre établissement" /> : <p className="mt-1 text-slate-800">{profileFormData.company_name || 'Non défini'}</p>}</div>
             <div><Label className="text-slate-500 text-sm">Type / catégorie</Label>{profileEditMode ? <Input value={profileFormData.company_category} onChange={(e) => setProfileFormData({ ...profileFormData, company_category: e.target.value })} placeholder="Restaurant, hôtel, tickets..." /> : <p className="mt-1 text-slate-800">{profileFormData.company_category || 'Non défini'}</p>}</div>
             <div><Label className="text-slate-500 text-sm">WhatsApp professionnel</Label>{profileEditMode ? <Input value={profileFormData.whatsapp_number} onChange={(e) => setProfileFormData({ ...profileFormData, whatsapp_number: e.target.value })} placeholder="+509..." /> : <p className="mt-1 text-slate-800">{profileFormData.whatsapp_number || 'Non défini'}</p>}</div>
+            <div><Label className="text-slate-500 text-sm">Adresse</Label>{profileEditMode ? <Input value={profileFormData.address} onChange={(e) => setProfileFormData({ ...profileFormData, address: e.target.value })} placeholder="Rue, commune, ville" /> : <p className="mt-1 text-slate-800">{profileFormData.address || 'Non définie'}</p>}</div>
+            <div><Label className="text-slate-500 text-sm">Horaire d’ouverture</Label>{profileEditMode ? <Input value={profileFormData.opening_hours} onChange={(e) => setProfileFormData({ ...profileFormData, opening_hours: e.target.value })} placeholder="Ex: lundi–samedi, 8h–20h" /> : <p className="mt-1 text-slate-800">{profileFormData.opening_hours || 'Non défini'}</p>}</div>
           </div>
         </div>
 

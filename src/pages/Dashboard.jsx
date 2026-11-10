@@ -178,6 +178,8 @@ export default function Dashboard() {
         company_category: activeProfileId === 'hospitality' ? 'Hotels/Piscine' : profile.company_category || (activeProfileId === 'food' ? 'Nourriture' : activeProfileId === 'tickets' ? 'Tickets' : 'Commerce'),
         email: profile.email || user.email || '',
         company_logo_url: profile.company_logo_url || '',
+        address: profile.address || user.address || '',
+        opening_hours: profile.opening_hours || '',
         region: user.region || '',
         is_active: true,
       });
