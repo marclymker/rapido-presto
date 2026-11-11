@@ -127,7 +127,10 @@ export default function HospitalityCategoryPage() {
   const shopsMap = useMemo(() => Object.fromEntries(shops.map((shop) => [shop.id, shop])), [shops]);
   const { data: products = [], isLoading, isError, error } = useQuery({
     queryKey: ['hospitality-catalog-products'],
-    queryFn: () => firebaseApi.entities.Product.filterStrict({ is_available: true }, null, 200),
+    queryFn: () => firebaseApi.entities.Product.filterStrict({
+      is_available: true,
+      marketplace_space: 'Hotels/Piscine',
+    }, null, 200),
   });
 
   const results = useMemo(() => {
